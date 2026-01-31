@@ -1,0 +1,491 @@
+{
+  "common": {
+    "locale": "nl",
+    "language": "Nederlands",
+    "footer_copyright": "© {year} NauticSell. Alle rechten voorbehouden.",
+    "footer_about": "Onze Vloot",
+    "footer_contact": "Contact met de Makelaar",
+    "footer_privacy_policy": "Privacybeleid",
+    "footer": {
+      "tagline": "Uw betrouwbare partner voor de aankoop van luxe jachten en maritieme uitmuntendheid.",
+      "quick_links": "Snelle links",
+      "about": "Over NauticSell",
+      "pricing": "Inventaris",
+      "faq": "Veelgestelde Vragen",
+      "contact": "Contact",
+      "legal": "Juridisch",
+      "no_pages": "Geen juridische pagina's beschikbaar",
+      "all_rights": "Alle rechten voorbehouden."
+    }
+  },
+  "NotificationBanner": {
+    "title": "Blijf op de hoogte met NauticSell-meldingen",
+    "subtitle": "Ontvang direct meldingen over nieuwe schepen en prijswijzigingen",
+    "enable": "Inschakelen",
+    "requesting": "Bezig met aanvragen..."
+  },
+  "HeroSection": {
+    "hero_badge": "Exclusieve Jachtmakelaardij",
+    "hero_title_1": "Naadloze Jachtverwerving & Beheer",
+    "hero_title_2": "Luxe op de Oceaan",
+    "hero_button_1": "Bekijk Vloot",
+    "hero_button_2": "Virtuele Tour",
+    "hero_imageOne_alt": "exterieur-luxe-jacht",
+    "hero_imageTwo_alt": "moderne-cockpit",
+    "hero_imageThree_alt": "master-suite"
+  },
+  "DownloadApp": {
+    "section_title": "NauticSell Mobiele Conciërge",
+    "section_subtitle": "Download onze app om ook op zee toegang te hebben tot onze volledige inventaris.",
+    "appstore_alt": "Download in de App Store",
+    "googleplay_alt": "Download op Google Play",
+    "modal_title": "Installeer de App",
+    "modal_subtitle": "Voor snellere offline toegang tot scheepsspecificaties.",
+    "already_installed": "App is al geïnstalleerd.",
+    "uninstall_first": "Verwijder eerst de app om deze opnieuw te installeren.",
+    "manual_add": "U kunt de app handmatig aan uw startscherm toevoegen via het browsermenu voor volledig offline gebruik.",
+    "install_button": "Installeren",
+    "later_button": "Later",
+    "not_available_localhost": "Installatieprompt niet beschikbaar op localhost.",
+    "not_available_other": "Installatieprompt niet beschikbaar. Gebruik de optie 'Toevoegen aan startscherm' van uw browser."
+  },
+  "FeatureSection": {
+    "section_title": "Exclusieve Functies",
+    "heading": {
+      "line1": "Vind uw droomjacht",
+      "line2": "met Maritieme Precisie"
+    },
+    "subheading": "NauticSell optimaliseert uw zoektocht 24/7. Bekijk specificaties, vergelijk schepen en plan bezichtigingen, zelfs als u offline bent.",
+    "learn_more": "Meer informatie",
+    "show_less": "Toon minder",
+    "features": [
+      {
+        "title": "Wereldwijde Scheepszoeker",
+        "description": "AI-gestuurde zoekmogelijkheden op basis van lengte, diepgang, motoruren en werf voor maximale relevantie."
+      },
+      {
+        "title": "Scheeps-auditor",
+        "description": "Uitgebreide audits die onderhoudshistorie, technische staat en marktwaarde identificeren."
+      },
+      {
+        "title": "Concurrentieanalyse",
+        "description": "Volg vergelijkbare jachten in de markt, houd prijswijzigingen bij en krijg inzicht in verkoopstrategieën."
+      },
+      {
+        "title": "Professionele Dossiers",
+        "description": "Op maat gemaakte specificatiebladen en downloadbare PDF's, perfect voor financieringsaanvragen."
+      },
+      {
+        "title": "AI-Waardebepaling",
+        "description": "Dagelijkse AI-gegenereerde aanbevelingen over marktconforme prijzen en investeringskansen."
+      },
+      {
+        "title": "Slimme Meldingen",
+        "description": "Directe meldingen bij prijsverlagingen of wanneer een gewenst type schip op de markt komt."
+      }
+    ]
+  },
+  "AudienceSection": {
+    "section_title": "Voor wie wij varen",
+    "heading": {
+      "line1": "Ontworpen voor",
+      "line2": "de moderne kapitein"
+    },
+    "subheading": "Of u nu een particuliere koper, een charterbureau of een makelaar bent, NauticSell past zich aan.",
+    "learn_more": "Meer informatie",
+    "audiences": [
+      {
+        "title": "Particuliere Eigenaren",
+        "description": "Perfect voor liefhebbers die hun eigen jacht willen beheren en de ROI willen maximaliseren zonder tussenkomst van dure consultancy.",
+        "benefits": [
+          "Bespaar op makelaarskosten",
+          "Direct inzicht in onderhoud",
+          "Bespaar tijd bij aankoop"
+        ]
+      },
+      {
+        "title": "Charterbureaus",
+        "description": "Ideaal voor bedrijven die meerdere schepen beheren met white-label rapportage en geavanceerde beheertools.",
+        "benefits": [
+          "Schaalbaar vlootbeheer",
+          "Professionele presentaties",
+          "Hogere bezettingsgraad"
+        ]
+      },
+      {
+        "title": "Zelfstandige Makelaars",
+        "description": "Ontworpen voor onafhankelijke brokers die krachtige tools nodig hebben om te concurreren met grote jachthuizen.",
+        "benefits": [
+          "Automatiseer administratie",
+          "Betere resultaten voor kopers",
+          "Beheer meer dossiers"
+        ]
+      }
+    ]
+  },
+  "ContactPage": {
+    "contactBadge": "Neem contact op",
+    "title": "Neem contact op",
+    "subtitle": "Klaar om uw maritieme droom te verwezenlijken? Laten we praten over hoe NauticSell u kan helpen.",
+    "form": {
+      "fullName": "Volledige naam",
+      "email": "E-mailadres",
+      "company": "Bedrijfsnaam (Optioneel)",
+      "message": "Bericht / Interesse in schip",
+      "submit": "Verstuur aanvraag"
+    },
+    "contactInfo": {
+      "title": "Contactgegevens",
+      "emailLabel": "E-mail",
+      "emailValue": "concierge@nauticsell.nl",
+      "phoneLabel": "Telefoon",
+      "phoneValue": "+31 20 123 4567",
+      "locationLabel": "Haven",
+      "locationValue": "Amsterdam Marina, Nederland"
+    },
+    "quickResponse": {
+      "title": "Snel antwoord",
+      "description": "Onze makelaars reageren doorgaans binnen 24 uur. Voor dringende bezichtigingen, bel ons direct."
+    }
+  },
+  "Dashboard": {
+    "title": "Mijn Vloot",
+    "subtitle": "Bewaak de waarde en prestaties van uw schepen",
+    "loading": "Scheepsgegevens laden...",
+    "stats": {
+      "totalSpend": "Marktwaarde",
+      "totalClicks": "Bekeken Specificaties",
+      "totalImpressions": "Aantal Vertoningen",
+      "ctr": "Inquiry Ratio"
+    },
+    "sections": {
+      "campaigns": "Mijn Gevolgde Schepen",
+      "aiTips": "Marktkansen",
+      "quickActions": "Directe Acties",
+      "performance": "Portefeuille Overzicht"
+    },
+    "actions": {
+      "viewAll": "Alles Weergeven",
+      "applyTip": "Aanbod Bekijken",
+      "dismiss": "Negeren",
+      "seeMore": "Details Bekijken"
+    },
+    "emptyStates": {
+      "noCampaigns": "Geen schepen gevonden",
+      "noTips": "Geen nieuwe marktkansen beschikbaar"
+    }
+  },
+  "Navigation": {
+    "account": "Mijn Account",
+    "chat": "Berichten",
+    "wallet": "Vermogen",
+    "plans": "Lidmaatschappen",
+    "blog": "Logboek",
+    "yacht": "Jachten",
+    "webshop": "Inventaris",
+    "home": "Home",
+    "faq": "FAQ",
+    "pricing": "Vloot",
+    "about": "Over Ons",
+    "contact": "Contact",
+    "login": "Inloggen",
+    "startFreeTrial": "Word Lid",
+    "userMenu": {
+      "profile": "Profiel",
+      "logOut": "Uitloggen"
+    },
+    "admin": {
+      "planManagement": "Beheer Abonnementen",
+      "userManagement": "Beheer Gebruikers"
+    }
+  },
+  "WalletPage": {
+    "title": "Maritiem Vermogen",
+    "subtitle": "Beheer uw deposito's en transacties",
+    "accountDetails": {
+      "title": "Portfolio-gegevens",
+      "memberSince": "Eigenaar sinds"
+    },
+    "balance": {
+      "title": "Huidig Saldo",
+      "available": "Beschikbaar voor Aankoop",
+      "currency": "Valuta",
+      "walletType": "Digitale Kluis"
+    },
+    "addMoney": {
+      "title": "Saldo Toevoegen",
+      "button": "Storten"
+    },
+    "transactions": {
+      "title": "Transactieoverzicht",
+      "subtitle": "Recente maritieme activiteit",
+      "headers": {
+        "transaction": "Omschrijving",
+        "dateTime": "Datum & Tijd",
+        "amount": "Bedrag",
+        "status": "Status",
+        "actions": "Actie"
+      },
+      "view": "Bekijken",
+      "downloadPdf": "Factuur PDF",
+      "noTransactions": "Geen transacties gevonden.",
+      "error": "Fout bij het ophalen van de historie"
+    },
+    "status": {
+      "active": "Gereserveerd",
+      "pending": "In behandeling",
+      "paid": "Voldaan"
+    },
+    "transactionTypes": {
+      "wallet": "Storting",
+      "expense": "Betaling"
+    }
+  },
+  "SignInPage": {
+    "hero": {
+      "weeklyOptimization": "Wekelijkse Updates",
+      "withNoHassle": "Zonder Zorgen!",
+      "includeSearchTerms": "Bekijk schepen geselecteerd door AI",
+      "withinCampaignScope": "passend bij uw levensstijl"
+    },
+    "title": "Inloggen",
+    "email": "E-mail",
+    "enterEmail": "Uw e-mailadres",
+    "password": "Wachtwoord",
+    "forgotPassword": "Wachtwoord vergeten?",
+    "login": "Inloggen",
+    "noAccount": "Nog geen lid?",
+    "signUpWithEmailFreeTrial": "Start Uw Gratis Toegang",
+    "or": "OF",
+    "signInWithGoogle": "Inloggen met Google",
+    "signUpWithGoogle": "Aanmelden met Google",
+    "welcomeBack": "Welkom terug, Kapitein.",
+    "continueWithEmail": "Doorgaan met e-mail",
+    "termsText": "Door verder te gaan gaat u akkoord met de",
+    "termsOfService": "Maritieme Voorwaarden",
+    "privacyPolicy": "Privacybeleid",
+    "alreadyCustomer": "Al geregistreerd?",
+    "signupPartner": "Registreren",
+    "signUp": {
+      "title": "Start uw exclusieve toegang",
+      "signUpWithEmail": "Aanmelden met e-mail",
+      "accountDetails": "Eigenaarsgegevens",
+      "welcomeMessage": "Welkom bij de club...",
+      "profilePicture": "Avatar",
+      "fullName": "Volledige naam",
+      "passwordAgain": "Wachtwoord (opnieuw)",
+      "strongPassword": "Wachtwoordeisen:",
+      "passwordRequirements": [
+        "Minstens 1 hoofdletter",
+        "Minstens 1 kleine letter",
+        "Minstens 1 cijfer",
+        "Minstens 6 tekens"
+      ],
+      "removePicture": "Verwijder afbeelding",
+      "continueButton": "Doorgaan",
+      "subscriptionPlans": "Lidmaatschappen",
+      "selectPlan": "Kies het niveau dat bij uw vlootbeheer past.",
+      "plans": {
+        "launch": {
+          "name": "Matroos",
+          "description": "Zoek en volg jachten met basis AI-prijsbewaking.",
+          "credits": "Fleet-updates/maand",
+          "trial": "7 Dagen Gratis Proberen",
+          "startTrial": "Start Proefperiode",
+          "featuresLabel": "Functies",
+          "features": [
+            "1 Gevolgd schip",
+            "Basis specificaties",
+            "Wekelijkse updates"
+          ]
+        },
+        "growth": {
+          "name": "Kapitein",
+          "description": "Perfect voor actieve kopers die meerdere schepen vergelijken.",
+          "credits": "Fleet-updates/maand",
+          "trial": "7 Dagen Gratis Proberen",
+          "startTrial": "Start Proefperiode",
+          "featuresLabel": "Functies",
+          "features": [
+            "5 Gevolgde schepen",
+            "Direct contact makelaar",
+            "Dagelijkse updates"
+          ]
+        },
+        "enterprise": {
+          "name": "Admiraal",
+          "description": "Ontworpen voor vlootbeheerders en professionele charterbedrijven.",
+          "credits": "Fleet-updates/maand",
+          "trial": "7 Dagen Gratis Proberen",
+          "startTrial": "Start Proefperiode",
+          "featuresLabel": "Functies",
+          "features": [
+            "Onbeperkt aantal schepen",
+            "API-toegang",
+            "Professionele taxaties"
+          ]
+        }
+      }
+    },
+    "errors": {
+      "fullNameRequired": "Naam is verplicht.",
+      "passwordRequired": "Wachtwoord is verplicht.",
+      "passwordAgainRequired": "Bevestig uw wachtwoord.",
+      "passwordsDontMatch": "Wachtwoorden komen niet overeen.",
+      "invalidFileType": "Alleen afbeeldingen toegestaan.",
+      "fileTooLarge": "Bestand is groter dan 5MB"
+    }
+  },
+  "AboutPage": {
+    "title": "Over NauticSell",
+    "subtitle": "Onze missie is om jachtbezit transparant en toegankelijk te maken door middel van technologie.",
+    "ctaButton": "Ontdek de Vloot",
+    "story": {
+      "title": "Ons Verhaal",
+      "content": "<p>In de traditionele maritieme wereld was het kopen van een boot onnodig ingewikkeld. Kopers verdwaalden in papierwerk en onduidelijke prijzen.</p><p>NauticSell is opgericht met een simpel geloof: <strong>elke kapitein verdient toegang tot de beste technologie</strong>, ongeacht het budget.</p><p>Wij zijn een technologieplatform dat de kracht van AI-gestuurde marktanalyses direct in uw handen legt, om uw volgende horizon te vinden.</p>"
+    },
+    "mission": {
+      "title": "Onze Missie",
+      "description": "Het digitaliseren van de maritieme sector door geavanceerde optimalisatie toegankelijk te maken voor elke koper en verkoper."
+    },
+    "vision": {
+      "title": "Onze Visie",
+      "description": "Een wereld waarin het vinden en beheren van een schip net zo eenvoudig is als een klik op de knop."
+    },
+    "values": {
+      "title": "Onze Standaarden",
+      "subtitle": "Onze waarden bepalen hoe wij de maritieme wereld verbeteren.",
+      "values": [
+        {
+          "icon": "Anchor",
+          "title": "Eenvoud Eerst",
+          "description": "Wij maken het complex proces van jachtverkoop simpel door technologie."
+        },
+        {
+          "icon": "TrendingUp",
+          "title": "Resultaatgericht",
+          "description": "Elke functie is ontworpen om uw maritieme investering te optimaliseren."
+        },
+        {
+          "icon": "Users",
+          "title": "Klantgericht",
+          "description": "NauticSell is gebouwd voor echte zeilers met echte uitdagingen."
+        }
+      ]
+    },
+    "journey": {
+      "title": "Onze Reis",
+      "subtitle": "Van een idee aan de kade tot duizenden schepen wereldwijd.",
+      "milestones": [
+        {
+          "year": "2023",
+          "title": "De Start",
+          "description": "Opgericht om de jachtmakelaardij te moderniseren."
+        },
+        {
+          "year": "2024",
+          "title": "Digitale Vloot",
+          "description": "Lancering van onze geavanceerde offshore-first app."
+        },
+        {
+          "year": "Vandaag",
+          "title": "Volle Kracht Vooruit",
+          "description": "We bedienen wereldwijd meer dan 10.000 klanten bij hun zoektocht op zee."
+        }
+      ]
+    },
+    "whyUs": {
+      "title": "Waarom NauticSell?",
+      "subtitle": "Wij zijn meer dan een advertentieplatform. Wij zijn uw digitale eerste stuurman.",
+      "features": [
+        "Geen verborgen kosten of contracten",
+        "AI die marktprijzen continu monitort",
+        "Offline-first catalogus voor gebruik op zee",
+        "24/7 geautomatiseerde meldingen",
+        "Virtuele boarding en inspecties",
+        "Toegewijde maritieme ondersteuning"
+      ]
+    }
+  },
+  "COOKIES": {
+    "title": "Cookie Voorkeuren",
+    "description": "Wij gebruiken cookies om uw ervaring bij het browsen door de vloot te verbeteren.",
+    "manageSettings": "Instellingen Beheren",
+    "savePreferences": "Opslaan",
+    "acceptAll": "Alles Accepteren",
+    "types": {
+      "functional": {
+        "title": "Functionele Cookies",
+        "description": "Essentieel voor inloggen en het zoeken naar schepen."
+      },
+      "analytics": {
+        "title": "Analytische Cookies",
+        "description": "Helpen ons het platform en de zoekervaring te verbeteren."
+      },
+      "marketing": {
+        "title": "Marketing Cookies",
+        "description": "Tonen u relevante schepen op basis van uw eerdere zoekopdrachten."
+      }
+    }
+  },
+  "Faq": {
+    "badge": "Concierge Intelligentie",
+    "title": "Hoe kunnen wij u <span>van dienst zijn?</span>",
+    "subtitle": "Raadpleeg de Answer24 kennisbank of stel uw vraag aan ons AI Command Center.",
+    "searchPlaceholder": "Doorzoek onze protocollen...",
+    "askButton": "AI Raadplegen",
+    "aiBadge": "Geverifieerd Antwoord",
+    "aiName": "Answer24 Smart Assistent",
+    "aiLoading": "Intelligentielagen worden geladen...",
+    "aiError": "Onze systemen verwerken momenteel een grote hoeveelheid data. Gelieve onze gecureerde categorieën hieronder te raadplegen.",
+    "aiSystemPrompt": "ROL: Answer24 Elite Assistent. TOON: Sophisticated, behulpzaam, beknopt. CONTEXT: Luxe maritieme sector en vlootbeheer. DATA: {data}. RICHTLIJN: Max 3 zinnen. Better Deals, Better Life.",
+    "slogan": "Better Deals, Better Life",
+    "protocolCount": "{count} Protocollen Beschikbaar",
+    "generalCategory": "Algemene Protocollen"
+  },
+  "Pricing": {
+    "badge": "Elite Lidmaatschap",
+    "title": "Investeer in <span>Intelligentie.</span>",
+    "subtitle": "Kies een niveau dat uw ambitie weerspiegelt. Altijd wijzigen of opzeggen.",
+    "mostPopular": "Meest Gekozen",
+    "month": "Maand",
+    "cta": "Plan Selecteren",
+    "fallback": {
+      "basicDesc": "Fundamentele tools voor opkomende maritieme leiders.",
+      "premiumDesc": "Geavanceerde AI-mogelijkheden voor groeiende vlootoperaties."
+    },
+    "faq": {
+      "q1": "Kan ik op elk moment upgraden?",
+      "a1": "Ja. Upgrades zijn direct van kracht, met pro-rata aanpassingen op uw account.",
+      "q2": "Is er een proefperiode?",
+      "a2": "Wij bieden een ontdekkingsperiode van 14 dagen voor alle Professional niveaus.",
+      "q3": "Veilig betalen?",
+      "a3": "Alle transacties zijn versleuteld via bank-grade protocollen en beveiligd door Stripe.",
+      "q4": "Annuleringsbeleid?",
+      "a4": "U kunt uw lidmaatschap op elk moment opzeggen. Toegang blijft behouden tot het einde van de cyclus."
+    }
+  },
+  "BlogPage": {
+    "new_updates_label": "Redactionele Intelligentie",
+    "title": "Journal van <span>Better Living.</span>",
+    "subtitle": "Verdiepingen in vlootoptimalisatie, maritieme luxe en de toekomst van zakelijke intelligentie.",
+    "search_placeholder": "Doorzoek de archieven...",
+    "read_more": "Protocol Lezen",
+    "more_articles": "Uitgebreid Archief",
+    "read_time": "{min} Min Leestijd",
+    "newsletter_title": "Het Concierge Rapport",
+    "newsletter_subtitle": "Exclusieve inzichten maandelijks in uw inbox. Geen ruis, alleen essentie.",
+    "subscribed": "Abonneren op Rapporten",
+    "error_fetch": "Redactionele gegevens kunnen momenteel niet worden opgehaald."
+  },
+  "BlogDetails": {
+    "back_to_insights": "Terug naar Inzichten",
+    "read_time": "{min} Min Leestijd",
+    "published_by": "Gepubliceerd door",
+    "editorial_team": "Redactie Team",
+    "related_reading": "Gerelateerd Protocol",
+    "further_reading": "Verder Lezen",
+    "view_all": "Bekijk Archief"
+  }
+
+}

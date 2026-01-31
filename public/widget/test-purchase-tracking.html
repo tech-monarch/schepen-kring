@@ -1,0 +1,651 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Test Widget Purchase Tracking - 10% Cashback</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
+          Cantarell, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      .header {
+        background: white;
+        padding: 30px;
+        border-radius: 16px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        margin-bottom: 30px;
+        text-align: center;
+      }
+
+      .header h1 {
+        color: #1f2937;
+        margin-bottom: 10px;
+      }
+
+      .header p {
+        color: #6b7280;
+        font-size: 16px;
+      }
+
+      .badge {
+        display: inline-block;
+        background: #10b981;
+        color: white;
+        padding: 6px 16px;
+        border-radius: 20px;
+        font-size: 14px;
+        font-weight: 600;
+        margin-top: 10px;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 30px;
+        margin-bottom: 30px;
+      }
+
+      @media (max-width: 768px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .card {
+        background: white;
+        padding: 30px;
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      }
+
+      .card h2 {
+        color: #1f2937;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .product {
+        border: 2px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 15px;
+        cursor: pointer;
+        transition: all 0.3s;
+      }
+
+      .product:hover {
+        border-color: #667eea;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+        transform: translateY(-2px);
+      }
+
+      .product-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        margin-bottom: 10px;
+      }
+
+      .product-name {
+        font-weight: 600;
+        color: #1f2937;
+        font-size: 18px;
+      }
+
+      .product-price {
+        font-size: 24px;
+        font-weight: 700;
+        color: #667eea;
+      }
+
+      .product-description {
+        color: #6b7280;
+        font-size: 14px;
+        margin-bottom: 15px;
+      }
+
+      .cashback-info {
+        background: #f0fdf4;
+        border: 1px solid #86efac;
+        padding: 10px;
+        border-radius: 8px;
+        color: #166534;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 15px;
+      }
+
+      .btn {
+        width: 100%;
+        padding: 14px 24px;
+        border: none;
+        border-radius: 10px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+      }
+
+      .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+      }
+
+      .btn-primary:hover {
+        opacity: 0.9;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+      }
+
+      .btn-success {
+        background: #10b981;
+        color: white;
+      }
+
+      .btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      .log-entry {
+        background: #f9fafb;
+        border-left: 4px solid #667eea;
+        padding: 15px;
+        margin-bottom: 10px;
+        border-radius: 4px;
+        font-family: "Courier New", monospace;
+        font-size: 13px;
+      }
+
+      .log-success {
+        border-left-color: #10b981;
+        background: #f0fdf4;
+      }
+
+      .log-error {
+        border-left-color: #ef4444;
+        background: #fef2f2;
+      }
+
+      .log-time {
+        color: #6b7280;
+        font-size: 11px;
+        margin-bottom: 5px;
+      }
+
+      .log-message {
+        color: #1f2937;
+      }
+
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 15px;
+        margin-top: 20px;
+      }
+
+      .stat-card {
+        background: #f9fafb;
+        padding: 20px;
+        border-radius: 10px;
+        text-align: center;
+      }
+
+      .stat-value {
+        font-size: 32px;
+        font-weight: 700;
+        color: #667eea;
+        margin-bottom: 5px;
+      }
+
+      .stat-label {
+        color: #6b7280;
+        font-size: 14px;
+      }
+
+      .alert {
+        padding: 16px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+      }
+
+      .alert-info {
+        background: #dbeafe;
+        border: 1px solid #93c5fd;
+        color: #1e40af;
+      }
+
+      .alert-success {
+        background: #d1fae5;
+        border: 1px solid #6ee7b7;
+        color: #065f46;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <!-- Header -->
+      <div class="header">
+        <h1>🛒 Test Webshop - Widget Purchase Tracking</h1>
+        <p>Test the 10% cashback system by making test purchases below</p>
+        <span class="badge">✓ Widget Active</span>
+        <span class="badge" id="user-status">Loading user...</span>
+      </div>
+
+      <!-- Main Grid -->
+      <div class="grid">
+        <!-- Products Section -->
+        <div class="card">
+          <h2>
+            <span>🛍️</span>
+            Available Products
+          </h2>
+
+          <div class="alert alert-info">
+            <strong>How it works:</strong> Click "Buy Now" to simulate a
+            purchase. The widget will automatically track it and credit 10%
+            cashback to your wallet!
+          </div>
+
+          <!-- Product 1 -->
+          <div class="product">
+            <div class="product-header">
+              <div class="product-name">Premium Headphones</div>
+              <div class="product-price">€99.99</div>
+            </div>
+            <div class="product-description">
+              Wireless noise-canceling headphones with 30h battery life
+            </div>
+            <div class="cashback-info">
+              <span>💰</span>
+              <span>Earn €10.00 cashback (10%)</span>
+            </div>
+            <button
+              class="btn btn-primary"
+              onclick="makePurchase('PROD-001', 99.99, 'Premium Headphones')"
+            >
+              Buy Now
+            </button>
+          </div>
+
+          <!-- Product 2 -->
+          <div class="product">
+            <div class="product-header">
+              <div class="product-name">Smart Watch</div>
+              <div class="product-price">€249.00</div>
+            </div>
+            <div class="product-description">
+              Fitness tracker with heart rate monitor and GPS
+            </div>
+            <div class="cashback-info">
+              <span>💰</span>
+              <span>Earn €24.90 cashback (10%)</span>
+            </div>
+            <button
+              class="btn btn-primary"
+              onclick="makePurchase('PROD-002', 249.0, 'Smart Watch')"
+            >
+              Buy Now
+            </button>
+          </div>
+
+          <!-- Product 3 -->
+          <div class="product">
+            <div class="product-header">
+              <div class="product-name">Laptop Bag</div>
+              <div class="product-price">€45.50</div>
+            </div>
+            <div class="product-description">
+              Durable laptop bag with multiple compartments
+            </div>
+            <div class="cashback-info">
+              <span>💰</span>
+              <span>Earn €4.55 cashback (10%)</span>
+            </div>
+            <button
+              class="btn btn-primary"
+              onclick="makePurchase('PROD-003', 45.5, 'Laptop Bag')"
+            >
+              Buy Now
+            </button>
+          </div>
+
+          <!-- Custom Amount -->
+          <div class="product" style="border-style: dashed">
+            <div class="product-name" style="margin-bottom: 15px">
+              Custom Test Purchase
+            </div>
+            <div style="display: flex; gap: 10px; margin-bottom: 15px">
+              <input
+                type="number"
+                id="custom-amount"
+                placeholder="Enter amount (e.g., 100.00)"
+                step="0.01"
+                min="1"
+                style="
+                  flex: 1;
+                  padding: 12px;
+                  border: 2px solid #e5e7eb;
+                  border-radius: 8px;
+                  font-size: 16px;
+                "
+              />
+            </div>
+            <button class="btn btn-success" onclick="makeCustomPurchase()">
+              Make Custom Purchase
+            </button>
+          </div>
+        </div>
+
+        <!-- Tracking Log Section -->
+        <div class="card">
+          <h2>
+            <span>📊</span>
+            Purchase Tracking Log
+          </h2>
+
+          <!-- Stats -->
+          <div class="stats">
+            <div class="stat-card">
+              <div class="stat-value" id="total-purchases">0</div>
+              <div class="stat-label">Total Purchases</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value" id="total-spent">€0.00</div>
+              <div class="stat-label">Total Spent</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value" id="total-cashback">€0.00</div>
+              <div class="stat-label">Total Cashback</div>
+            </div>
+          </div>
+
+          <!-- Log -->
+          <div style="margin-top: 30px">
+            <div
+              style="
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 15px;
+              "
+            >
+              <h3 style="color: #1f2937">Activity Log</h3>
+              <button
+                class="btn btn-primary"
+                style="width: auto; padding: 8px 16px; font-size: 14px"
+                onclick="clearLog()"
+              >
+                Clear Log
+              </button>
+            </div>
+            <div id="log-container" style="max-height: 400px; overflow-y: auto">
+              <div class="log-entry">
+                <div class="log-time">Waiting for purchases...</div>
+                <div class="log-message">
+                  Make a purchase to see tracking in action!
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Instructions -->
+      <div class="card">
+        <h2>📝 Testing Instructions</h2>
+        <ol style="line-height: 2; color: #4b5563">
+          <li>
+            <strong>Make sure you're logged in</strong> - Check the badge at the
+            top shows your user ID
+          </li>
+          <li>
+            <strong>Click "Buy Now"</strong> on any product to simulate a
+            purchase
+          </li>
+          <li>
+            <strong>Watch the log</strong> on the right to see the tracking
+            process
+          </li>
+          <li>
+            <strong>Check your wallet</strong> - Go to Dashboard → Wallet to see
+            your cashback
+          </li>
+          <li>
+            <strong>Verify in console</strong> - Press F12 to see detailed API
+            responses
+          </li>
+        </ol>
+
+        <div class="alert alert-info" style="margin-top: 20px">
+          <strong>💡 Tip:</strong> Try the custom amount feature to test
+          specific values. The system automatically calculates 10% cashback on
+          any purchase amount!
+        </div>
+      </div>
+    </div>
+
+    <!-- Answer24 Widget -->
+    <script
+      src="http://localhost:3000/widget/answer24-widget.js"
+      data-public-key="test-key-123"
+    ></script>
+
+    <!-- Testing Script -->
+    <script>
+      let purchaseCount = 0;
+      let totalSpent = 0;
+      let totalCashback = 0;
+
+      // Check user status
+      async function checkUserStatus() {
+        try {
+          const token = localStorage.getItem("auth_token");
+          const userData = localStorage.getItem("user_data");
+
+          if (token && userData) {
+            const user = JSON.parse(userData);
+            document.getElementById("user-status").textContent =
+              `✓ Logged in (User ID: ${user.id})`;
+            document.getElementById("user-status").style.background = "#10b981";
+            return user;
+          } else {
+            document.getElementById("user-status").textContent =
+              "✗ Not logged in";
+            document.getElementById("user-status").style.background = "#ef4444";
+            return null;
+          }
+        } catch (error) {
+          console.error("Error checking user status:", error);
+          return null;
+        }
+      }
+
+      // Make a purchase
+      async function makePurchase(productId, amount, productName) {
+        const user = await checkUserStatus();
+
+        if (!user) {
+          alert("Please log in first! Go to http://localhost:3000/nl/login");
+          addLog("error", "Purchase failed - user not logged in");
+          return;
+        }
+
+        const orderId = "ORDER_" + Date.now();
+        const cashback = Math.round(amount * 0.1 * 100) / 100;
+
+        addLog(
+          "info",
+          `🛒 Initiating purchase: ${productName} (€${amount.toFixed(2)})`,
+        );
+
+        try {
+          // Track purchase via API
+          const response = await fetch(
+            "http://localhost:3000/api/v1/widget/track-purchase",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                user_id: user.id.toString(),
+                order_value: amount,
+                order_id: orderId,
+                shop_name: "Test Webshop",
+                public_key: "test-key-123",
+                timestamp: new Date().toISOString(),
+                product_name: productName,
+                product_id: productId,
+              }),
+            },
+          );
+
+          const result = await response.json();
+
+          if (result.success) {
+            addLog("success", `✅ Purchase tracked successfully!`);
+            addLog(
+              "success",
+              `💰 Cashback credited: €${cashback.toFixed(
+                2,
+              )} (10% of €${amount.toFixed(2)})`,
+            );
+            addLog("success", `💳 Order ID: ${orderId}`);
+
+            // Update stats
+            purchaseCount++;
+            totalSpent += amount;
+            totalCashback += cashback;
+            updateStats();
+
+            // Show success notification
+            if (window.Answer24Widget) {
+              setTimeout(() => {
+                Answer24Widget.open();
+                Answer24Widget.sendMessage(
+                  `🎉 Congratulations! You earned €${cashback.toFixed(
+                    2,
+                  )} cashback on your purchase of ${productName}!`,
+                );
+              }, 500);
+            }
+          } else {
+            addLog(
+              "error",
+              `❌ Purchase tracking failed: ${result.error || "Unknown error"}`,
+            );
+          }
+
+          console.log("📥 API Response:", result);
+        } catch (error) {
+          console.error("Purchase error:", error);
+          addLog("error", `❌ Error: ${error.message}`);
+        }
+      }
+
+      // Make custom purchase
+      async function makeCustomPurchase() {
+        const amountInput = document.getElementById("custom-amount");
+        const amount = parseFloat(amountInput.value);
+
+        if (!amount || amount <= 0) {
+          alert("Please enter a valid amount");
+          return;
+        }
+
+        await makePurchase(
+          "CUSTOM-" + Date.now(),
+          amount,
+          `Custom Purchase (€${amount.toFixed(2)})`,
+        );
+        amountInput.value = "";
+      }
+
+      // Add log entry
+      function addLog(type, message) {
+        const container = document.getElementById("log-container");
+        const entry = document.createElement("div");
+        entry.className = `log-entry log-${type}`;
+
+        const time = new Date().toLocaleTimeString();
+        entry.innerHTML = `
+        <div class="log-time">${time}</div>
+        <div class="log-message">${message}</div>
+      `;
+
+        // Clear initial message if exists
+        if (
+          container.children.length === 1 &&
+          container.children[0].textContent.includes("Waiting for purchases")
+        ) {
+          container.innerHTML = "";
+        }
+
+        container.insertBefore(entry, container.firstChild);
+
+        // Keep only last 10 entries
+        while (container.children.length > 10) {
+          container.removeChild(container.lastChild);
+        }
+      }
+
+      // Update stats
+      function updateStats() {
+        document.getElementById("total-purchases").textContent = purchaseCount;
+        document.getElementById("total-spent").textContent =
+          `€${totalSpent.toFixed(2)}`;
+        document.getElementById("total-cashback").textContent =
+          `€${totalCashback.toFixed(2)}`;
+      }
+
+      // Clear log
+      function clearLog() {
+        const container = document.getElementById("log-container");
+        container.innerHTML = `
+        <div class="log-entry">
+          <div class="log-time">Log cleared</div>
+          <div class="log-message">Ready for new purchases!</div>
+        </div>
+      `;
+        purchaseCount = 0;
+        totalSpent = 0;
+        totalCashback = 0;
+        updateStats();
+      }
+
+      // Initialize
+      window.addEventListener("load", () => {
+        checkUserStatus();
+        addLog("info", "🚀 Purchase tracking system initialized");
+        addLog("info", "💡 Make a purchase to test the 10% cashback system");
+        console.log(
+          "%c🛒 Test Purchase Tracking Ready!",
+          "color: #10b981; font-size: 16px; font-weight: bold;",
+        );
+        console.log("Make a purchase to see the tracking in action!");
+      });
+    </script>
+  </body>
+</html>

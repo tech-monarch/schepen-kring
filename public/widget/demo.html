@@ -1,0 +1,512 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Answer24 Widget Demo - External Website Example</title>
+    <style>
+      body {
+        font-family:
+          system-ui,
+          -apple-system,
+          sans-serif;
+        margin: 0;
+        padding: 40px 20px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+      }
+
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+        background: white;
+        padding: 40px;
+        border-radius: 16px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      }
+
+      h1 {
+        color: #1f2937;
+        margin-bottom: 16px;
+      }
+
+      .badge {
+        display: inline-block;
+        background: #10b981;
+        color: white;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 14px;
+        margin-bottom: 24px;
+      }
+
+      p {
+        color: #6b7280;
+        line-height: 1.6;
+        margin-bottom: 16px;
+      }
+
+      .code-block {
+        background: #1f2937;
+        color: #10b981;
+        padding: 20px;
+        border-radius: 8px;
+        overflow-x: auto;
+        margin: 24px 0;
+      }
+
+      .code-block code {
+        font-family: "Courier New", monospace;
+        font-size: 14px;
+      }
+
+      .feature {
+        background: #f3f4f6;
+        padding: 16px;
+        border-radius: 8px;
+        margin-bottom: 12px;
+      }
+
+      .feature h3 {
+        margin: 0 0 8px 0;
+        color: #1f2937;
+        font-size: 16px;
+      }
+
+      .feature p {
+        margin: 0;
+        font-size: 14px;
+      }
+
+      .btn {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 16px;
+        margin-right: 12px;
+        margin-bottom: 12px;
+      }
+
+      .btn:hover {
+        opacity: 0.9;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🤖 Answer24 Widget Demo</h1>
+      <span class="badge">✓ Successfully Embedded</span>
+
+      <p>
+        This is a demo page showing how the Answer24 chat widget appears on an
+        external website. The widget is loaded from your Answer24 dashboard and
+        inherits all your custom settings.
+      </p>
+
+      <h2>📋 How to Embed on Your Website</h2>
+
+      <div class="code-block">
+        <code
+          >&lt;!-- Add this script before closing &lt;/body&gt; tag --&gt;<br />
+          &lt;script src="/widget/answer24-widget.js"
+          data-public-key="YOUR_PUBLIC_KEY"&gt;&lt;/script&gt;</code
+        >
+      </div>
+
+      <h2>✨ Features</h2>
+
+      <div class="feature">
+        <h3>🎨 Customizable Appearance</h3>
+        <p>
+          All colors, fonts, and styling are controlled from your dashboard at
+          <code>http://localhost:3000/nl/dashboard/admin/widget</code>
+        </p>
+      </div>
+
+      <div class="feature">
+        <h3>🔄 Live Updates</h3>
+        <p>
+          When you change settings in your dashboard, the widget updates
+          automatically - no code changes needed!
+        </p>
+      </div>
+
+      <div class="feature">
+        <h3>📱 Fully Responsive</h3>
+        <p>Works perfectly on desktop, tablet, and mobile devices</p>
+      </div>
+
+      <div class="feature">
+        <h3>🤖 AI-Powered</h3>
+        <p>Connected to your AI assistant with context-aware responses</p>
+      </div>
+
+      <h2>🛒 Demo Products - Test Purchase Tracking</h2>
+      <p>
+        Make a purchase below to test the 10% cashback system. When you embed
+        the widget on your webshop, purchases will be automatically tracked!
+      </p>
+
+      <div
+        style="
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+          gap: 20px;
+          margin: 24px 0;
+        "
+      >
+        <!-- Product 1 -->
+        <div
+          style="
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 20px;
+            background: #f9fafb;
+          "
+        >
+          <div style="font-size: 48px; text-align: center; margin-bottom: 12px">
+            🎧
+          </div>
+          <h3 style="margin: 0 0 8px 0; color: #1f2937">Premium Headphones</h3>
+          <p style="margin: 0 0 12px 0; color: #6b7280; font-size: 14px">
+            Wireless noise-canceling headphones
+          </p>
+          <div
+            style="
+              font-size: 24px;
+              font-weight: bold;
+              color: #10b981;
+              margin-bottom: 8px;
+            "
+          >
+            €99.99
+          </div>
+          <div style="font-size: 12px; color: #6b7280; margin-bottom: 16px">
+            💰 Earn €10.00 cashback (10%)
+          </div>
+          <button
+            class="btn"
+            onclick="makePurchase('PROD-001', 99.99, 'Premium Headphones')"
+            style="width: 100%"
+          >
+            Buy Now
+          </button>
+        </div>
+
+        <!-- Product 2 -->
+        <div
+          style="
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 20px;
+            background: #f9fafb;
+          "
+        >
+          <div style="font-size: 48px; text-align: center; margin-bottom: 12px">
+            ⌚
+          </div>
+          <h3 style="margin: 0 0 8px 0; color: #1f2937">Smart Watch</h3>
+          <p style="margin: 0 0 12px 0; color: #6b7280; font-size: 14px">
+            Fitness tracking smartwatch with GPS
+          </p>
+          <div
+            style="
+              font-size: 24px;
+              font-weight: bold;
+              color: #10b981;
+              margin-bottom: 8px;
+            "
+          >
+            €199.99
+          </div>
+          <div style="font-size: 12px; color: #6b7280; margin-bottom: 16px">
+            💰 Earn €20.00 cashback (10%)
+          </div>
+          <button
+            class="btn"
+            onclick="makePurchase('PROD-002', 199.99, 'Smart Watch')"
+            style="width: 100%"
+          >
+            Buy Now
+          </button>
+        </div>
+
+        <!-- Product 3 -->
+        <div
+          style="
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 20px;
+            background: #f9fafb;
+          "
+        >
+          <div style="font-size: 48px; text-align: center; margin-bottom: 12px">
+            📱
+          </div>
+          <h3 style="margin: 0 0 8px 0; color: #1f2937">Wireless Charger</h3>
+          <p style="margin: 0 0 12px 0; color: #6b7280; font-size: 14px">
+            Fast wireless charging pad
+          </p>
+          <div
+            style="
+              font-size: 24px;
+              font-weight: bold;
+              color: #10b981;
+              margin-bottom: 8px;
+            "
+          >
+            €29.99
+          </div>
+          <div style="font-size: 12px; color: #6b7280; margin-bottom: 16px">
+            💰 Earn €3.00 cashback (10%)
+          </div>
+          <button
+            class="btn"
+            onclick="makePurchase('PROD-003', 29.99, 'Wireless Charger')"
+            style="width: 100%"
+          >
+            Buy Now
+          </button>
+        </div>
+      </div>
+
+      <div
+        style="
+          background: #f0fdf4;
+          border: 1px solid #86efac;
+          border-radius: 8px;
+          padding: 16px;
+          margin: 24px 0;
+        "
+      >
+        <strong>💡 How Purchase Tracking Works:</strong>
+        <ol style="margin: 8px 0 0 0; padding-left: 20px; color: #166534">
+          <li>
+            When a user makes a purchase on your webshop, the widget
+            automatically tracks it
+          </li>
+          <li>
+            The system records: <code>user_id</code> and
+            <code>order_value</code>
+          </li>
+          <li>
+            10% of the order value is automatically credited to the user's
+            wallet
+          </li>
+          <li>User receives a notification about their cashback</li>
+        </ol>
+      </div>
+
+      <div
+        id="purchase-status"
+        style="margin: 20px 0; padding: 12px; border-radius: 8px; display: none"
+      ></div>
+
+      <hr style="margin: 40px 0; border: none; border-top: 1px solid #e5e7eb" />
+
+      <h2>🎮 Try the Widget</h2>
+      <p>
+        Look for the chat button in the bottom-right corner! You can also
+        control it programmatically:
+      </p>
+
+      <button class="btn" onclick="Answer24Widget.open()">Open Widget</button>
+      <button class="btn" onclick="Answer24Widget.close()">Close Widget</button>
+      <button
+        class="btn"
+        onclick="Answer24Widget.sendMessage('Hello from demo!')"
+      >
+        Send Test Message
+      </button>
+
+      <hr style="margin: 40px 0; border: none; border-top: 1px solid #e5e7eb" />
+
+      <h2>⚙️ Current Settings</h2>
+      <p>
+        The widget below is using the settings from your Answer24 dashboard. Try
+        changing the colors in
+        <strong>Dashboard → Admin → Widget Management → Appearance</strong>
+        and watch it update in real-time!
+      </p>
+
+      <p style="font-size: 14px; color: #9ca3af">
+        💡 <strong>Tip:</strong> Open your dashboard in another tab, change the
+        primary color, and watch the widget update without refreshing this page!
+      </p>
+    </div>
+
+    <!-- Answer24 Widget - This is what you add to your website -->
+    <!-- The public key will be loaded from your saved widget settings -->
+    <script>
+      // Get public key from URL parameter or use default from saved settings
+      const urlParams = new URLSearchParams(window.location.search);
+      let publicKey = urlParams.get("key");
+
+      // If no key in URL, try to get the most recent one from saved settings
+      // This will use the public key from the settings file in public/widget/settings/
+      if (!publicKey) {
+        // Try to get from localStorage if available (from admin dashboard)
+        try {
+          const savedSettings = localStorage.getItem("widget-settings");
+          if (savedSettings) {
+            const parsed = JSON.parse(savedSettings);
+            if (parsed.public_key) {
+              publicKey = parsed.public_key;
+              console.log("📦 Using public key from localStorage:", publicKey);
+            }
+          }
+        } catch (e) {
+          console.warn("Could not read public key from localStorage:", e);
+        }
+
+        // Fallback to default key
+        if (!publicKey) {
+          publicKey = "PUB_aa986ff6713d887e27713cb3457c17cd";
+        }
+      }
+
+      const apiBase = window.location.origin + "/api/v1";
+
+      // Create script tag dynamically with the correct public key
+      const script = document.createElement("script");
+      script.src = "/widget/answer24-widget.js?_v=" + Date.now(); // Cache buster
+      script.setAttribute("data-public-key", publicKey);
+      script.setAttribute("data-api-base", apiBase);
+
+      script.onload = function () {
+        // Show widget info in console
+        console.log(
+          "%c🤖 Answer24 Widget Loaded!",
+          "color: #10b981; font-size: 16px; font-weight: bold;",
+        );
+        console.log("📝 Using Public Key:", publicKey);
+        console.log("🔗 API Base:", apiBase);
+        console.log(
+          "💡 To use a different key, add ?key=YOUR_PUBLIC_KEY to the URL",
+        );
+        console.log(
+          "💡 Get your public key from: http://localhost:3000/nl/dashboard/admin/widget",
+        );
+
+        // Force reload settings when page loads to get latest changes
+        setTimeout(() => {
+          if (window.Answer24Widget) {
+            console.log("✅ Widget API:", window.Answer24Widget);
+            // Trigger settings reload
+            window.dispatchEvent(new CustomEvent("widget-settings-updated"));
+          }
+        }, 1500);
+      };
+
+      document.body.appendChild(script);
+
+      // Purchase tracking function
+
+      async function makePurchase(productId, amount, productName) {
+        const statusDiv = document.getElementById("purchase-status");
+
+        // Get user data from localStorage
+        let userId = null;
+        try {
+          const userData = localStorage.getItem("user_data");
+          if (userData) {
+            const user = JSON.parse(userData);
+            userId = user.id || user.uuid || user.userId;
+            console.log("👤 Found user ID:", userId);
+          }
+        } catch (e) {
+          console.error("Error reading user data:", e);
+        }
+
+        if (!userId) {
+          statusDiv.style.display = "block";
+          statusDiv.style.background = "#fef2f2";
+          statusDiv.style.border = "1px solid #fecaca";
+          statusDiv.style.color = "#991b1b";
+          statusDiv.innerHTML =
+            '⚠️ Please log in first! <a href="/nl/login" style="color: #dc2626; text-decoration: underline;">Go to login page</a>';
+          return;
+        }
+
+        const orderId =
+          "ORD_" + Date.now() + "_" + Math.random().toString(36).substr(2, 5);
+        const cashbackAmount = Math.round(amount * 0.1 * 100) / 100;
+
+        statusDiv.style.display = "block";
+        statusDiv.style.background = "#fffbeb";
+        statusDiv.style.border = "1px solid #fcd34d";
+        statusDiv.style.color = "#92400e";
+        statusDiv.innerHTML = `⏳ Processing purchase: ${productName} (€${amount.toFixed(
+          2,
+        )})...`;
+
+        try {
+          // 🟩 Directly call Laravel backend (bypassing Next.js)
+          const walletEndpoint =
+            "https://api.answer24.nl/api/v1/wallet/add-money";
+          // const walletEndpoint = 'https://api.answer24.nl/api/v1/wallet/add-money';
+          const response = await fetch(walletEndpoint, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Accept: "application/json",
+            },
+            body: JSON.stringify({
+              user_id: userId.toString(),
+              amount: cashbackAmount,
+              type: "cashback",
+              description: `Cashback from ${productName}`,
+              order_id: orderId,
+              shop_name: "Demo Webshop",
+            }),
+          });
+
+          const result = await response.json();
+
+          if (response.ok) {
+            statusDiv.style.background = "#f0fdf4";
+            statusDiv.style.border = "1px solid #86efac";
+            statusDiv.style.color = "#166534";
+            statusDiv.innerHTML = `
+        <strong>✅ Purchase Tracked & Wallet Credited!</strong><br>
+        📦 Order: ${productName}<br>
+        💰 Order Value: €${amount.toFixed(2)}<br>
+        🎁 Cashback Credited: €${cashbackAmount.toFixed(2)} (10%)<br>
+        💳 Order ID: ${orderId}<br>
+        ${
+          result.data?.balance
+            ? `💵 New Wallet Balance: €${result.data.balance.toFixed(2)}`
+            : ""
+        }
+      `;
+
+            console.log("✅ Wallet credited successfully:", result);
+
+            // 🎉 Notify widget
+            if (window.Answer24Widget) {
+              setTimeout(() => {
+                Answer24Widget.open();
+                Answer24Widget.sendMessage(
+                  `🎉 Congratulations! You earned €${cashbackAmount.toFixed(
+                    2,
+                  )} cashback on your purchase of ${productName}!`,
+                );
+              }, 800);
+            }
+          } else {
+            throw new Error(result.message || "Failed to credit wallet");
+          }
+        } catch (error) {
+          statusDiv.style.background = "#fef2f2";
+          statusDiv.style.border = "1px solid #fecaca";
+          statusDiv.style.color = "#991b1b";
+          statusDiv.innerHTML = `❌ Error: ${error.message}`;
+          console.error("❌ Wallet credit error:", error);
+        }
+      }
+    </script>
+  </body>
+</html>

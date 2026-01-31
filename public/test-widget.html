@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Widget Test Page</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 40px;
+        background-color: #f5f5f5;
+      }
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+        background: white;
+        padding: 40px;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+      h1 {
+        color: #333;
+        margin-bottom: 20px;
+      }
+      p {
+        color: #666;
+        line-height: 1.6;
+      }
+      .info {
+        background: #e3f2fd;
+        padding: 20px;
+        border-radius: 5px;
+        margin: 20px 0;
+      }
+      .code {
+        background: #f5f5f5;
+        padding: 10px;
+        border-radius: 5px;
+        font-family: monospace;
+        margin: 10px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🧪 Widget Testing Page</h1>
+
+      <p>
+        This page tests the Answer24 widget integration. The widget should
+        appear as a button on the right side of the screen.
+      </p>
+
+      <div class="info">
+        <h3>📋 Testing Checklist:</h3>
+        <ul>
+          <li>✅ Widget button appears on the right side</li>
+          <li>✅ Widget opens when clicked</li>
+          <li>✅ Chat feature works (if enabled)</li>
+          <li>✅ Wallet feature works (if enabled)</li>
+          <li>✅ Settings panel works</li>
+          <li>✅ No console errors</li>
+        </ul>
+      </div>
+
+      <div class="info">
+        <h3>🔧 Widget Configuration:</h3>
+        <div class="code">
+          Public Key: <span id="public-key">Loading...</span><br />
+          Theme: Auto<br />
+          Position: Right<br />
+          Features: Chat, Wallet
+        </div>
+      </div>
+
+      <p>
+        <strong>Note:</strong> If you don't see the widget button, check the
+        browser console for any errors.
+      </p>
+    </div>
+
+    <!-- Widget Embed Code -->
+    <script
+      src="http://localhost:3000/widget/v1/answer24.js"
+      async
+      data-public-key="PUB_test123"
+      data-locale="en-US"
+      data-theme="auto"
+      data-color-primary="#0059ff"
+      data-position="right"
+    ></script>
+
+    <script>
+      // Display the public key being used
+      document.getElementById("public-key").textContent = "PUB_test123";
+
+      // Log widget loading
+      console.log("🧪 Widget Test Page Loaded");
+      console.log(
+        "📡 Widget Script URL: http://localhost:3000/widget/v1/answer24.js",
+      );
+      console.log("🔑 Public Key: PUB_test123");
+
+      // Check if widget loads
+      window.addEventListener("load", function () {
+        setTimeout(function () {
+          if (window.Answer24Widget) {
+            console.log("✅ Widget loaded successfully");
+          } else {
+            console.log("❌ Widget not loaded - check for errors");
+          }
+        }, 2000);
+      });
+    </script>
+  </body>
+</html>

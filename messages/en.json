@@ -1,0 +1,484 @@
+{
+  "common": {
+    "locale": "en",
+    "language": "English",
+    "footer_copyright": "© {year} NauticSell. All rights reserved.",
+    "footer_about": "Our Fleet",
+    "footer_contact": "Contact Broker",
+    "footer_privacy_policy": "Privacy Policy",
+    "footer": {
+      "tagline": "The world's premier digital marketplace for luxury yachts and maritime excellence.",
+      "quick_links": "Quick Links",
+      "about": "About the Brand",
+      "pricing": "Inventory",
+      "faq": "Ownership FAQ",
+      "contact": "Contact Us",
+      "legal": "Legal",
+      "no_pages": "No legal pages available",
+      "all_rights": "All rights reserved."
+    }
+  },
+  "NotificationBanner": {
+    "title": "Stay updated with NauticSell alerts",
+    "subtitle": "Get instant notifications on price drops and new offshore listings",
+    "enable": "Enable Alerts",
+    "requesting": "Syncing..."
+  },
+  "HeroSection": {
+    "hero_badge": "Exclusive Yacht Brokerage",
+    "hero_title_1": "Seamless Yacht Acquisition & Management",
+    "hero_title_2": "Luxury at Sea",
+    "hero_button_1": "Explore Fleet",
+    "hero_button_2": "Virtual Tour",
+    "hero_imageOne_alt": "luxury-yacht-exterior",
+    "hero_imageTwo_alt": "modern-cockpit",
+    "hero_imageThree_alt": "master-suite"
+  },
+  "DownloadApp": {
+    "section_title": "NauticSell Mobile Concierge",
+    "section_subtitle": "Access our global vessel inventory even while offshore.",
+    "appstore_alt": "Download on App Store",
+    "googleplay_alt": "Get it on Google Play",
+    "modal_title": "Install Mobile Catalog",
+    "modal_subtitle": "For faster offline access to vessel specs, install the app.",
+    "already_installed": "App is already installed.",
+    "uninstall_first": "To reinstall, please remove the current version first.",
+    "manual_add": "Add to home screen manually via your browser for full offline capabilities.",
+    "install_button": "Install App",
+    "later_button": "Dismiss",
+    "not_available_localhost": "PWA install requires a secure connection or deployment.",
+    "not_available_other": "Install prompt unavailable. Please use browser menu to 'Add to Home Screen'."
+  },
+  "FeatureSection": {
+    "section_title": "Vessel Features",
+    "heading": {
+      "line1": "Everything you need to",
+      "line2": "Find Your Perfect Vessel"
+    },
+    "subheading": "Curated maritime tools designed to streamline the luxury boat buying experience.",
+    "learn_more": "View Specs",
+    "show_less": "Show less",
+    "features": [
+      {
+        "title": "Global Vessel Finder",
+        "description": "Search worldwide listings with filters for length, draft, engine hours, and shipyard."
+      },
+      {
+        "title": "Marine Survey Auditor",
+        "description": "Comprehensive digital audits identifying maintenance history and vessel condition."
+      },
+      {
+        "title": "Market Comparison",
+        "description": "Monitor similar listings to ensure you are getting the best value in the current market."
+      },
+      {
+        "title": "Charter Ready Reporting",
+        "description": "Professional documentation and ROI projections for yachts entering charter programs."
+      },
+      {
+        "title": "AI Value Estimation",
+        "description": "Daily price analysis based on global sales data and shipyard trends."
+      },
+      {
+        "title": "Maintenance Alerts",
+        "description": "Instant notifications for scheduled service, winterization, and dockage renewals."
+      }
+    ]
+  },
+  "AudienceSection": {
+    "section_title": "Our Clients",
+    "heading": {
+      "line1": "Built for",
+      "line2": "The Modern Mariner"
+    },
+    "subheading": "Whether you are a first-time buyer or a fleet owner, NauticSell scales to your lifestyle.",
+    "learn_more": "Learn more",
+    "audiences": [
+      {
+        "title": "Private Owners",
+        "description": "Perfect for individuals seeking the freedom of the seas with simplified acquisition and management.",
+        "benefits": [
+          "Curated vessel matching",
+          "Seamless closing process",
+          "Local dockage discovery"
+        ]
+      },
+      {
+        "title": "Charter Agencies",
+        "description": "Ideal for companies managing multiple yachts with white-label inventory and availability tracking.",
+        "benefits": [
+          "Scale fleet visibility",
+          "Professional brochures",
+          "Streamlined inquiries"
+        ]
+      },
+      {
+        "title": "Independent Brokers",
+        "description": "Built for brokers who need powerful CRM and listing tools to close deals faster.",
+        "benefits": [
+          "Automate lead followup",
+          "Global market reach",
+          "Verified vessel data"
+        ]
+      }
+    ]
+  },
+  "ContactPage": {
+    "contactBadge": "Contact Broker",
+    "title": "Inquire Today",
+    "subtitle": "Ready to step aboard? Let's discuss your maritime requirements and find your ideal yacht.",
+    "form": {
+      "fullName": "Full Name",
+      "email": "Email Address",
+      "company": "Organization (Optional)",
+      "message": "Interested in (Vessel Name/Type)",
+      "submit": "Send Inquiry"
+    },
+    "contactInfo": {
+      "title": "Brokerage Office",
+      "emailLabel": "Email",
+      "emailValue": "concierge@nauticsell.com",
+      "phoneLabel": "Phone",
+      "phoneValue": "+31 20 123 4567",
+      "locationLabel": "Marina",
+      "locationValue": "Amsterdam Port, Netherlands"
+    },
+    "quickResponse": {
+      "title": "Priority Response",
+      "description": "Our brokers respond to all inquiries within 24 hours. For immediate boarding, please call."
+    }
+  },
+  "AboutPage": {
+    "title": "About NauticSell",
+    "subtitle": "We are on a mission to make yacht ownership accessible, transparent, and digital-first.",
+    "ctaButton": "Explore the Fleet",
+    "story": {
+      "title": "The NauticSell Story",
+      "content": "<p>In the traditional maritime world, buying a boat was unnecessarily complex. Buyers were lost in paperwork and opaque pricing.</p><p>We founded NauticSell with a simple belief: <strong>Every captain deserves access to elite maritime technology</strong>, regardless of their vessel size.</p><p>We are a technology-first brokerage platform that puts the power of AI-driven market analysis in your hands, working 24/7 to find your next horizon.</p>"
+    },
+    "mission": {
+      "title": "Our Mission",
+      "description": "To digitize the shipyard-to-sea pipeline, making luxury yachting accessible to a new generation of owners through data and transparency."
+    },
+    "vision": {
+      "title": "Our Vision",
+      "description": "A world where the sea is closer than ever, and vessel ownership is as simple as a single tap on your screen."
+    },
+    "values": {
+      "title": "Maritime Standards",
+      "subtitle": "Our values guide every listing we host and every client we serve.",
+      "values": [
+        {
+          "icon": "Anchor",
+          "title": "Integrity First",
+          "description": "Transparency in vessel history and pricing is our baseline. No hidden damages, no hidden fees."
+        },
+        {
+          "icon": "Compass",
+          "title": "Precision Guided",
+          "description": "Our AI helps navigate market fluctuations to ensure your maritime investment is sound."
+        },
+        {
+          "icon": "Users",
+          "title": "Community Driven",
+          "description": "NauticSell is built for mariners. Your seafaring needs shape our technology."
+        }
+      ]
+    },
+    "journey": {
+      "title": "Our Voyage",
+      "subtitle": "From a local harbor idea to serving thousands of mariners worldwide.",
+      "milestones": [
+        {
+          "year": "2023",
+          "title": "The Launch",
+          "description": "Founded to modernize the yacht brokerage experience."
+        },
+        {
+          "year": "2024",
+          "title": "Digital Fleet",
+          "description": "Launched our offshore-first PWA for global yacht management."
+        },
+        {
+          "year": "Today",
+          "title": "Full Sail",
+          "description": "Connecting 10,000+ owners with their dream vessels globally."
+        }
+      ]
+    },
+    "whyUs": {
+      "title": "Why NauticSell?",
+      "subtitle": "We aren't just a listing site. We are your digital first mate.",
+      "features": [
+        "No hidden brokerage fees",
+        "AI-powered market valuation",
+        "Offline-first vessel catalogs",
+        "24/7 automated listing monitoring",
+        "Virtual boarding and VR tours",
+        "Dedicated maritime support"
+      ]
+    }
+  },
+  "SignInPage": {
+    "hero": {
+      "weeklyOptimization": "Fleet Updates",
+      "withNoHassle": "Zero Stress!",
+      "includeSearchTerms": "Get AI-recommended listings",
+      "withinCampaignScope": "matching your lifestyle requirements"
+    },
+    "title": "Owner Login",
+    "email": "Email",
+    "enterEmail": "Enter your email",
+    "password": "Password",
+    "forgotPassword": "Forgot Password?",
+    "login": "Sign In",
+    "noAccount": "New to NauticSell?",
+    "signUpWithEmailFreeTrial": "Create Account",
+    "or": "OR",
+    "signInWithGoogle": "Sign in with Google",
+    "signUpWithGoogle": "Sign up with Google",
+    "welcomeBack": "Welcome back, Captain.",
+    "continueWithEmail": "Continue with email",
+    "termsText": "By continuing you agree to NauticSell's",
+    "termsOfService": "Maritime Terms",
+    "privacyPolicy": "Privacy Policy",
+    "alreadyCustomer": "Already an owner?",
+    "signupPartner": "Register",
+    "signUp": {
+      "title": "Register Vessel",
+      "signUpWithEmail": "Sign up with email",
+      "accountDetails": "Owner Details",
+      "welcomeMessage": "Welcome to the club...",
+      "profilePicture": "Owner Avatar",
+      "fullName": "Full Name",
+      "passwordAgain": "Confirm Password",
+      "strongPassword": "Security Requirements:",
+      "passwordRequirements": [
+        "At least 1 uppercase letter",
+        "At least 1 lowercase letter",
+        "At least 1 number",
+        "At least 6 characters"
+      ],
+      "removePicture": "Remove image",
+      "continueButton": "Proceed",
+      "subscriptionPlans": "Membership Tiers",
+      "selectPlan": "Choose the membership level that suits your fleet management needs.",
+      "plans": {
+        "launch": {
+          "name": "Deckhand",
+          "description": "Explore and save yacht listings with basic AI price tracking.",
+          "credits": "Fleet alerts/month",
+          "trial": "7-Day Premium Access",
+          "startTrial": "Start Free Trial",
+          "featuresLabel": "Features",
+          "features": "1 Saved Vessel, Basic Specs, Weekly Price Updates"
+        },
+        "growth": {
+          "name": "Captain",
+          "description": "Perfect for active buyers managing multiple inquiries and sea trials.",
+          "credits": "Fleet alerts/month",
+          "trial": "7-Day Premium Access",
+          "startTrial": "Start Free Trial",
+          "featuresLabel": "Features",
+          "features": "5 Saved Vessels, Direct Broker Chat, Daily Market Updates"
+        },
+        "enterprise": {
+          "name": "Commodore",
+          "description": "Designed for fleet managers and professional charter companies.",
+          "credits": "Fleet alerts/month",
+          "trial": "7-Day Premium Access",
+          "startTrial": "Start Free Trial",
+          "featuresLabel": "Features",
+          "features": "Unlimited Vessels, API Access, Professional Appraisals"
+        }
+      },
+      "partnerSignUpTitle": "Broker Registration"
+    },
+    "errors": {
+      "fullNameRequired": "Full name is required.",
+      "emailRequired": "Valid email required.",
+      "phoneRequired": "Phone number required for verification.",
+      "passwordRequired": "Security password required.",
+      "confirmPasswordRequired": "Please confirm password.",
+      "passwordsDontMatch": "Passwords do not match.",
+      "invalidFileType": "Image files only.",
+      "fileTooLarge": "Max size 5MB.",
+      "invalidEmail": "Check email format.",
+      "passwordTooShort": "Minimum 6 characters.",
+      "agreeTermsRequired": "Agreement required."
+    }
+  },
+  "Dashboard": {
+    "title": "My Fleet",
+    "subtitle": "Monitor your saved vessels and maritime equity",
+    "loading": "Loading shipyard data...",
+    "stats": {
+      "totalSpend": "Market Value",
+      "totalClicks": "Spec Views",
+      "totalImpressions": "Listing Reach",
+      "ctr": "Inquiry Rate"
+    },
+    "sections": {
+      "campaigns": "Watched Vessels",
+      "aiTips": "Market Opportunities",
+      "quickActions": "Broker Actions",
+      "performance": "Portfolio Overview"
+    },
+    "actions": {
+      "viewAll": "View Fleet",
+      "applyTip": "View Offer",
+      "dismiss": "Hide",
+      "seeMore": "Full Specs"
+    },
+    "emptyStates": {
+      "noCampaigns": "No vessels watched",
+      "noTips": "No price changes today"
+    }
+  },
+  "Navigation": {
+    "account": "My Profile",
+    "chat": "Messages",
+    "wallet": "Equity",
+    "plans": "Membership",
+    "webshop": "Inventory",
+    "home": "Home",
+    "blog": "Logbook",
+    "yacht": "Yachts",
+    "faq": "FAQ",
+    "pricing": "Fleet",
+    "about": "About",
+    "contact": "Contact",
+    "login": "Sign In",
+    "startFreeTrial": "Join Club",
+    "userMenu": {
+      "profile": "Settings",
+      "logOut": "Logout"
+    },
+    "admin": {
+      "planManagement": "Membership Admin",
+      "userManagement": "Client Admin"
+    }
+  },
+  "WalletPage": {
+    "title": "Maritime Equity",
+    "subtitle": "Manage deposits and brokerage transactions",
+    "accountDetails": {
+      "title": "Portfolio Details",
+      "memberSince": "Chartering Since"
+    },
+    "balance": {
+      "title": "Available Funds",
+      "available": "Holding Balance",
+      "currency": "USD",
+      "walletType": "Escrow Wallet"
+    },
+    "addMoney": {
+      "title": "Add Funds",
+      "button": "Deposit"
+    },
+    "transactions": {
+      "title": "Ledger",
+      "subtitle": "Recent maritime activity",
+      "headers": {
+        "transaction": "Description",
+        "dateTime": "Date",
+        "amount": "Value",
+        "status": "Status",
+        "actions": "Action"
+      },
+      "view": "Details",
+      "downloadPdf": "Invoice",
+      "noTransactions": "No history found.",
+      "error": "Error fetching ledger"
+    },
+    "status": {
+      "active": "In Escrow",
+      "pending": "Clearing",
+      "paid": "Finalized"
+    },
+    "transactionTypes": {
+      "wallet": "Funding",
+      "expense": "Payment"
+    }
+  },
+  "COOKIES": {
+    "title": "Preference Settings",
+    "description": "We use cookies to personalize your yacht browsing experience.",
+    "manageSettings": "Configure Settings",
+    "savePreferences": "Save",
+    "acceptAll": "Accept All",
+    "types": {
+      "functional": {
+        "title": "Crucial Data",
+        "description": "Required for secure login and vessel searching."
+      },
+      "analytics": {
+        "title": "Usage Data",
+        "description": "Helps us improve the catalog and listing performance."
+      },
+      "marketing": {
+        "title": "Personalized Listings",
+        "description": "Shows you vessels tailored to your search history."
+      }
+    }
+  },
+  "Faq": {
+    "badge": "Concierge Intelligence",
+    "title": "How may we <span>assist you?</span>",
+    "subtitle": "Access the Answer24 knowledge base or query our AI Command Center.",
+    "searchPlaceholder": "Search our protocols...",
+    "askButton": "Query AI",
+    "aiBadge": "Verified Response",
+    "aiName": "Answer24 Smart Assistant",
+    "aiLoading": "Accessing Intelligence Layers...",
+    "aiError": "Our intelligence systems are currently processing high-volume data. Please browse our curated categories below.",
+    "aiSystemPrompt": "ROLE: Answer24 Elite Assistant. TONE: Sophisticated, helpful, concise. CONTEXT: Luxury maritime and fleet management. DATA: {data}. GUIDELINE: Max 3 sentences. Better Deals, Better Life.",
+    "slogan": "Better Deals, Better Life",
+    "protocolCount": "{count} Protocols Available",
+    "generalCategory": "General Protocols"
+  },
+  "Pricing": {
+    "badge": "Elite Membership",
+    "title": "Invest in <span>Intelligence.</span>",
+    "subtitle": "Select a tier that reflects your ambition. Switch or cancel at any time.",
+    "mostPopular": "Most Popular",
+    "month": "Month",
+    "cta": "Select Plan",
+    "fallback": {
+      "basicDesc": "Foundational tools for emerging maritime leaders.",
+      "premiumDesc": "Enhanced AI capabilities for growing fleet operations."
+    },
+    "faq": {
+      "q1": "Can I upgrade anytime?",
+      "a1": "Yes. Upgrades are immediate, with pro-rated adjustments applied to your obsidian account.",
+      "q2": "Is there a trial?",
+      "a2": "We offer a 14-day discovery period for all Professional tiers to experience our intelligence layers.",
+      "q3": "Secure Payments?",
+      "a3": "All transactions are encrypted via bank-grade protocols and secured by Stripe.",
+      "q4": "Cancellation Policy?",
+      "a4": "You may terminate your membership at any time. Your access remains active until the end of the cycle."
+    }
+  },
+  "BlogPage": {
+    "new_updates_label": "Editorial Intelligence",
+    "title": "Journal of <span>Better Living.</span>",
+    "subtitle": "Deep dives into fleet optimization, maritime luxury, and the future of business intelligence.",
+    "search_placeholder": "Search the archives...",
+    "read_more": "Read Protocol",
+    "more_articles": "Extended Archive",
+    "read_time": "{min} Min Read",
+    "newsletter_title": "The Concierge Report",
+    "newsletter_subtitle": "Exclusive insights delivered to your inbox once a month. No noise, just signal.",
+    "subscribed": "Subscribe to Reports",
+    "error_fetch": "Unable to retrieve editorial data at this time."
+  },
+  "BlogDetails": {
+    "back_to_insights": "Back to Insights",
+    "read_time": "{min} Min Read",
+    "published_by": "Published by",
+    "editorial_team": "Editorial Team",
+    "related_reading": "Related Protocol",
+    "further_reading": "Further Reading",
+    "view_all": "View Archives"
+  }
+}
