@@ -14,22 +14,22 @@ export function HeroSection() {
   const router = useRouter();
 
   return (
-    <section className="relative min-h-[110vh] bg-[#f8fafc] text-[#003566] overflow-hidden flex items-center">
+    <section className="relative min-h-screen lg:min-h-[110vh] bg-[#f8fafc] text-[#003566] overflow-hidden flex items-center py-20 lg:py-0">
       {/* Background Ambient Glows - Soft Sea Tones */}
       <div className="absolute top-[-10%] left-[-5%] w-[40%] h-[60%] bg-blue-200/20 blur-[120px] rounded-full" />
       <div className="absolute bottom-[5%] right-[-5%] w-[30%] h-[50%] bg-slate-200/40 blur-[120px] rounded-full" />
 
-      <div className="container mx-auto px-8 grid lg:grid-cols-12 gap-12 relative z-10">
+      <div className="container mx-auto px-6 md:px-8 grid lg:grid-cols-12 gap-12 relative z-10">
         
         {/* Left Content - The Editorial Column */}
         <div className="lg:col-span-6 flex flex-col justify-center">
           <motion.div 
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="flex items-center gap-4 mb-10"
+            className="flex items-center gap-4 mb-6 lg:mb-10"
           >
-            <div className="w-12 h-[1px] bg-[#003566]" />
-            <span className="text-[#003566] uppercase tracking-[0.5em] text-[10px] font-bold">
+            <div className="w-8 lg:w-12 h-[1px] bg-[#003566]" />
+            <span className="text-[#003566] uppercase tracking-[0.5em] text-[9px] lg:text-[10px] font-bold">
               {t("hero_badge")}
             </span>
           </motion.div>
@@ -38,7 +38,7 @@ export function HeroSection() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-            className="text-7xl md:text-[100px] font-serif leading-[0.9] mb-8 tracking-tight"
+            className="text-5xl md:text-7xl lg:text-[100px] font-serif leading-[1] lg:leading-[0.9] mb-6 lg:mb-8 tracking-tight"
           >
             {t("hero_title_1")}<br />
             <span className="italic text-blue-500/80 font-light drop-shadow-sm">{t("hero_title_2")}</span>
@@ -48,7 +48,7 @@ export function HeroSection() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.4 }}
-            className="text-slate-500 text-lg max-w-md leading-relaxed mb-12 font-light tracking-wide"
+            className="text-slate-500 text-base lg:text-lg max-w-md leading-relaxed mb-8 lg:mb-12 font-light tracking-wide"
           >
             A seamless blend of AI-driven intelligence and exclusive human curation for the world&apos;s most prestigious vessels.
           </motion.p>
@@ -57,22 +57,22 @@ export function HeroSection() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.6 }}
-            className="flex flex-wrap gap-10 items-center"
+            className="flex flex-col sm:flex-row flex-wrap gap-6 lg:gap-10 items-start sm:items-center"
           >
             <button 
               onClick={() => router.push('/signup')}
-              className="group relative px-10 py-5 bg-[#003566] text-white font-sans font-bold text-[11px] tracking-[0.25em] uppercase transition-all hover:bg-[#001d3d] shadow-2xl shadow-blue-900/20"
+              className="group relative w-full sm:w-auto px-8 lg:px-10 py-4 lg:py-5 bg-[#003566] text-white font-sans font-bold text-[10px] lg:text-[11px] tracking-[0.25em] uppercase transition-all hover:bg-[#001d3d] shadow-2xl shadow-blue-900/20"
             >
-              <span className="relative z-10 flex items-center gap-3">
+              <span className="relative z-10 flex items-center justify-center gap-3">
                 Explore Fleet <ArrowUpRight size={16} />
               </span>
             </button>
 
             <button className="flex items-center gap-4 group">
-              <div className="w-14 h-14 rounded-full border border-slate-200 flex items-center justify-center group-hover:bg-[#003566] group-hover:border-[#003566] transition-all duration-500">
-                <Play size={18} className="fill-[#003566] text-[#003566] group-hover:fill-white group-hover:text-white transition-colors ml-1" />
+              <div className="w-12 h-12 lg:w-14 lg:h-14 rounded-full border border-slate-200 flex items-center justify-center group-hover:bg-[#003566] group-hover:border-[#003566] transition-all duration-500">
+                <Play size={16} className="fill-[#003566] text-[#003566] group-hover:fill-white group-hover:text-white transition-colors ml-1" />
               </div>
-              <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-slate-400 group-hover:text-[#003566] transition-colors">Virtual Tour</span>
+              <span className="text-[9px] lg:text-[10px] font-bold tracking-[0.2em] uppercase text-slate-400 group-hover:text-[#003566] transition-colors">Virtual Tour</span>
             </button>
           </motion.div>
         </div>
