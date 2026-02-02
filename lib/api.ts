@@ -1,27 +1,31 @@
 import axios from "axios";
 
-const isLocal = typeof window !== "undefined" && window.location.hostname === "localhost";
-const BASE_URL = isLocal 
-  ? "http://127.0.0.1:8000/api" 
+const isLocal =
+  typeof window !== "undefined" && window.location.hostname === "localhost";
+const BASE_URL = isLocal
+  ? "http://kring.answer24.nl/api"
   : "https://your-server-ip/api";
 
 export const api = axios.create({
   baseURL: BASE_URL,
   headers: {
-    "Accept": "application/json",
+    Accept: "application/json",
     // Remove "Content-Type" here; Axios will auto-set it for JSON or FormData
   },
 });
 
 // This "Interceptor" runs BEFORE every single request
-api.interceptors.request.use((config) => {
-  if (typeof window !== "undefined") {
-    const token = localStorage.getItem("auth_token");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+api.interceptors.request.use(
+  (config) => {
+    if (typeof window !== "undefined") {
+      const token = localStorage.getItem("auth_token");
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
     }
-  }
-  return config;
-}, (error) => {
-  return Promise.reject(error);
-});
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  },
+);

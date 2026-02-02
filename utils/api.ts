@@ -10,14 +10,14 @@ const getBaseUrl = () => {
     const { hostname } = window.location;
     // If you are on localhost, assume Laravel is also on localhost:8000
     if (hostname === "localhost" || hostname === "127.0.0.1") {
-      return "http://127.0.0.1:8000/api";
+      return "http://kring.answer24.nl/api";
     }
     // For production or local network testing (e.g. 192.168.1.50)
     return `http://${hostname}:8000/api`;
   }
 
   // 3. Fallback for Server Side Rendering
-  return "http://127.0.0.1:8000/api";
+  return "http://kring.answer24.nl/api";
 };
 
 export const api = axios.create({

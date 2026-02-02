@@ -3,6 +3,7 @@
 ## Problem
 
 The pricing page was showing the fallback warning:
+
 ```
 ⚠️ Using fallback pricing data. Some information may not be current.
 ```
@@ -42,11 +43,12 @@ The backend endpoint is now working correctly:
 
 ```bash
 curl --request GET \
-  --url http://127.0.0.1:8000/api/v1/plans \
+  --url http://kring.answer24.nl/api/v1/plans \
   --header 'Accept: application/json'
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -70,6 +72,7 @@ curl --request GET \
 ## Environment Configuration
 
 Your `.env.local` is correctly configured:
+
 ```bash
 NEXT_PUBLIC_API_BASE_URL=http://localhost:8000/api/v1
 ```
@@ -119,6 +122,7 @@ NEXT_PUBLIC_API_BASE_URL=http://localhost:8000/api/v1
 ## Debug Information Available
 
 The `Pricing.tsx` component now includes detailed logging:
+
 - 🔍 Shows the full URL being called
 - 📍 Shows the base URL and endpoint being used
 - 📥 Shows the response status code
@@ -126,4 +130,3 @@ The `Pricing.tsx` component now includes detailed logging:
 - ❌ Shows error details (on failure)
 
 Check your browser console to see these logs!
-

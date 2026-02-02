@@ -12,7 +12,7 @@ Make sure your `.env.local` file has the correct API base URL:
 
 ```env
 # Chat System API Configuration
-NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000/api/v1
+NEXT_PUBLIC_API_BASE_URL=http://kring.answer24.nl/api/v1
 
 # Or for production:
 # NEXT_PUBLIC_API_BASE_URL=https://your-domain.com/api/v1
@@ -31,16 +31,19 @@ Ensure your Laravel backend has:
 ### 3. Testing the Integration
 
 1. **Start your Laravel backend:**
+
    ```bash
    php artisan serve
    ```
 
 2. **Start your Next.js frontend:**
+
    ```bash
    npm run dev
    ```
 
 3. **Navigate to the chat page:**
+
    ```
    http://localhost:3000/nl/dashboard/chat
    ```

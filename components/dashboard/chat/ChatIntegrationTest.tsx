@@ -74,7 +74,8 @@ export function ChatIntegrationTest() {
     );
     try {
       const baseUrl =
-        process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8000/api/v1";
+        process.env.NEXT_PUBLIC_API_BASE_URL ||
+        "http://kring.answer24.nl/api/v1";
       const response = await fetch(`${baseUrl}/chats`, {
         method: "GET",
         headers: {
