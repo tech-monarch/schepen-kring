@@ -11,7 +11,7 @@ const vessels = [
     name: "M/Y SOVEREIGN",
     price: "$12,500,000",
     status: "Auction Active",
-    image: "https://images.unsplash.com/photo-1567891299233-13fb1a720dc1?auto=format&fit=crop&q=60&w=800&fm=webp",
+    image: "https://images.unsplash.com/photo-1524522173746-f628baad3644?auto=format&fit=crop&q=60&w=800&fm=webp",
     specs: "45m / 2023 / 12 Guests"
   },
   {
