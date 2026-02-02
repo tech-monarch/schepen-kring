@@ -17,9 +17,9 @@
   if (!apiBase) {
     const currentHost = window.location.host;
     if (currentHost.includes("localhost") || currentHost.startsWith("127.")) {
-      apiBase = "https://api.answer24.nl/api/v1";
+      apiBase = "https://kring.answer24.nl/api/v1";
     } else {
-      apiBase = "https://api.answer24.nl/api/v1";
+      apiBase = "https://kring.answer24.nl/api/v1";
     }
   }
 

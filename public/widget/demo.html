@@ -446,8 +446,8 @@
         try {
           // 🟩 Directly call Laravel backend (bypassing Next.js)
           const walletEndpoint =
-            "https://api.answer24.nl/api/v1/wallet/add-money";
-          // const walletEndpoint = 'https://api.answer24.nl/api/v1/wallet/add-money';
+            "https://kring.answer24.nl/api/v1/wallet/add-money";
+          // const walletEndpoint = 'https://kring.answer24.nl/api/v1/wallet/add-money';
           const response = await fetch(walletEndpoint, {
             method: "POST",
             headers: {

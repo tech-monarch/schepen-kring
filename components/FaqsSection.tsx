@@ -20,7 +20,7 @@ export function FaqsSection() {
   useEffect(() => {
     const fetchFaqs = async () => {
       try {
-        const response = await fetch("https://api.answer24.nl/api/v1/faqs", {
+        const response = await fetch("https://kring.answer24.nl/api/v1/faqs", {
           headers: { Accept: "application/json" },
         });
 
@@ -78,7 +78,9 @@ export function FaqsSection() {
   return (
     <div className="border-2 border-slate-200 rounded-2xl bg-white/80 backdrop-blur-sm hover:shadow-lg transition-all duration-300">
       <div className="p-6 border-b border-slate-100">
-        <h3 className="text-lg font-medium text-slate-800">Frequently Asked Questions</h3>
+        <h3 className="text-lg font-medium text-slate-800">
+          Frequently Asked Questions
+        </h3>
       </div>
       <div className="divide-y divide-slate-100">
         {faqs.map((faq) => (

@@ -1,12 +1,12 @@
 // src/lib/translations/translationService.ts
-import axios from 'axios';
+import axios from "axios";
 
 export interface TranslationKey {
   key: string;
   [lang: string]: string; // dynamic keys for languages like en, nl, es, etc.
 }
 
-const API_BASE = 'https://api.answer24.nl/api/v1';
+const API_BASE = "https://kring.answer24.nl/api/v1";
 
 export const translationService = {
   // Fetch translations for a specific language
@@ -17,26 +17,29 @@ export const translationService = {
 
       const translations: Record<string, string> = {};
       allTranslations.forEach((item) => {
-        translations[item.key] = item[language] || '';
+        translations[item.key] = item[language] || "";
       });
 
       return translations;
     } catch (error) {
-      console.error('Failed to fetch translations:', error);
+      console.error("Failed to fetch translations:", error);
       return {};
     }
   },
 
   // Update a translation for a specific key and language
   async updateTranslation(key: string, langCode: string, text: string) {
-    const response = await fetch(`https://api.answer24.nl/api/v1/admin/translations/${key}/${langCode}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token')}` // Ensure admin token is sent
+    const response = await fetch(
+      `https://kring.answer24.nl/api/v1/admin/translations/${key}/${langCode}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`, // Ensure admin token is sent
+        },
+        body: JSON.stringify({ text }),
       },
-      body: JSON.stringify({ text })
-    });
+    );
     return response.ok;
   },
 
@@ -46,7 +49,7 @@ export const translationService = {
       await axios.post(`${API_BASE}/translations/key`, { key });
       return true;
     } catch (error) {
-      console.error('Failed to add translation key:', error);
+      console.error("Failed to add translation key:", error);
       return false;
     }
   },
@@ -57,7 +60,7 @@ export const translationService = {
       const res = await axios.get(`${API_BASE}/translations/languages`);
       return res.data;
     } catch (error) {
-      console.error('Failed to fetch languages:', error);
+      console.error("Failed to fetch languages:", error);
       return [];
     }
   },
@@ -68,8 +71,8 @@ export const translationService = {
       await axios.post(`${API_BASE}/translations/languages`, { code, name });
       return true;
     } catch (error) {
-      console.error('Failed to add language:', error);
+      console.error("Failed to add language:", error);
       return false;
     }
-  }
+  },
 };

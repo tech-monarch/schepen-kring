@@ -33,7 +33,7 @@ interface RequestedDeal {
   deal_price?: string | number;
 }
 
-const API_BASE = "https://api.answer24.nl/api/v1";
+const API_BASE = "https://kring.answer24.nl/api/v1";
 const dummyDealsForWebshops = [
   {
     id: "w1",

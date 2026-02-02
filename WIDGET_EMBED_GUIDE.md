@@ -174,7 +174,7 @@ Partners can view:
 
 ### **For Developers:**
 
-- API Docs: https://api.answer24.com/docs
+- API Docs: https://kring.answer24.com/docs
 - GitHub: https://github.com/answer24/widget
 - Issues: https://github.com/answer24/widget/issues
 

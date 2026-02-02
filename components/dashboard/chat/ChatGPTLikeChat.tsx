@@ -121,7 +121,7 @@ export function ChatGPTLikeChat() {
     try {
       // 3. Notify the backend to flag the chat for human intervention
       await fetch(
-        `https://api.answer24.nl/api/v1/history/${currentSessionId}/escalate`,
+        `https://kring.answer24.nl/api/v1/history/${currentSessionId}/escalate`,
         {
           method: "POST",
           headers: {
@@ -150,9 +150,12 @@ export function ChatGPTLikeChat() {
       if (!currentSession?.isHumanMode) return;
 
       try {
-        const response = await fetch("https://api.answer24.nl/api/v1/history", {
-          headers: { Authorization: `Bearer ${tokenUtils.getToken()}` },
-        });
+        const response = await fetch(
+          "https://kring.answer24.nl/api/v1/history",
+          {
+            headers: { Authorization: `Bearer ${tokenUtils.getToken()}` },
+          },
+        );
         const data = await response.json();
 
         // Update local sessions with fresh data from DB
@@ -226,7 +229,7 @@ export function ChatGPTLikeChat() {
   // --- API HELPER: SYNC TO DB ---
   const syncToDatabase = async (session: ChatSession) => {
     try {
-      await fetch("https://api.answer24.nl/api/v1/history", {
+      await fetch("https://kring.answer24.nl/api/v1/history", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -332,7 +335,7 @@ export function ChatGPTLikeChat() {
 
   //       // MODIFIED: Point to your NEW Laravel Controller Route
   //       // Ensure this URL matches your Laravel API route
-  //       const response = await fetch("https://api.answer24.nl/api/v1/chat-storage", {
+  //       const response = await fetch("https://kring.answer24.nl/api/v1/chat-storage", {
   //         method: "POST",
   //         headers: {
   //           // "Content-Type": "application/json", <--- Removed so browser sets boundary
@@ -448,7 +451,7 @@ export function ChatGPTLikeChat() {
         if (selectedImage) formData.append("image", selectedImage);
 
         const response = await fetch(
-          "https://api.answer24.nl/api/v1/chat-storage",
+          "https://kring.answer24.nl/api/v1/chat-storage",
           {
             method: "POST",
             headers: { Authorization: `Bearer ${tokenUtils.getToken()}` },
@@ -527,9 +530,12 @@ export function ChatGPTLikeChat() {
     const fetchHistory = async () => {
       setIsFetchingHistory(true);
       try {
-        const response = await fetch("https://api.answer24.nl/api/v1/history", {
-          headers: { Authorization: `Bearer ${tokenUtils.getToken()}` },
-        });
+        const response = await fetch(
+          "https://kring.answer24.nl/api/v1/history",
+          {
+            headers: { Authorization: `Bearer ${tokenUtils.getToken()}` },
+          },
+        );
 
         if (!response.ok) throw new Error("Connection failed");
 
@@ -575,10 +581,13 @@ export function ChatGPTLikeChat() {
   const handleDelete = async () => {
     if (!sessionToDelete) return;
     try {
-      await fetch(`https://api.answer24.nl/api/v1/history/${sessionToDelete}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${tokenUtils.getToken()}` },
-      });
+      await fetch(
+        `https://kring.answer24.nl/api/v1/history/${sessionToDelete}`,
+        {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${tokenUtils.getToken()}` },
+        },
+      );
       const newSessions = sessions.filter((s) => s.id !== sessionToDelete);
       setSessions(newSessions);
       if (currentSessionId === sessionToDelete) {

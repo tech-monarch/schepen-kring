@@ -149,7 +149,7 @@ async function creditUserWallet(
     // Call Laravel backend to credit wallet using the correct endpoint
     const backendUrl =
       process.env.NEXT_PUBLIC_API_BASE_URL?.replace("/api/v1", "") ||
-      "https://api.answer24.nl";
+      "https://kring.answer24.nl";
     const walletEndpoint = `${backendUrl}/api/v1/wallet/add-money`;
 
     console.log(`📤 Calling backend wallet endpoint: ${walletEndpoint}`);
@@ -233,7 +233,7 @@ async function creditUserWalletFallback(
   try {
     const backendUrl =
       process.env.NEXT_PUBLIC_API_BASE_URL?.replace("/api/v1", "") ||
-      "https://api.answer24.nl";
+      "https://kring.answer24.nl";
 
     // Try alternative endpoint formats
     const alternativeEndpoints = [

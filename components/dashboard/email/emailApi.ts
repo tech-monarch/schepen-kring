@@ -38,7 +38,7 @@ import { tokenUtils } from "@/utils/auth";
 */
 
 const API_BASE =
-  (process.env.NEXT_PUBLIC_API_BASE_URL || "https://api.answer24.nlapi") // no trailing /v1 here if you prefer
+  (process.env.NEXT_PUBLIC_API_BASE_URL || "https://kring.answer24.nlapi") // no trailing /v1 here if you prefer
     .replace(/\/$/, "") + "/v1";
 
 function authHeaders() {

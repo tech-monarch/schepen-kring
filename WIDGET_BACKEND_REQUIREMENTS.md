@@ -9,6 +9,7 @@ Based on the widget system specification, here are the **backend requirements** 
 ## 🗄️ **Database Schema**
 
 ### **1. Widget Settings Table**
+
 ```sql
 CREATE TABLE widget_settings (
     id VARCHAR(36) PRIMARY KEY,
@@ -31,6 +32,7 @@ CREATE TABLE widget_settings (
 ```
 
 ### **2. Key Rotation Log Table**
+
 ```sql
 CREATE TABLE widget_key_rotations (
     id VARCHAR(36) PRIMARY KEY,
@@ -43,6 +45,7 @@ CREATE TABLE widget_key_rotations (
 ```
 
 ### **3. Widget Analytics Table**
+
 ```sql
 CREATE TABLE widget_analytics (
     id VARCHAR(36) PRIMARY KEY,
@@ -64,6 +67,7 @@ CREATE TABLE widget_analytics (
 ## 🏗️ **Laravel Models**
 
 ### **1. WidgetSettings Model**
+
 ```php
 <?php
 
@@ -106,6 +110,7 @@ class WidgetSettings extends Model
 ```
 
 ### **2. WidgetKeyRotation Model**
+
 ```php
 <?php
 
@@ -130,6 +135,7 @@ class WidgetKeyRotation extends Model
 ```
 
 ### **3. WidgetAnalytics Model**
+
 ```php
 <?php
 
@@ -165,6 +171,7 @@ class WidgetAnalytics extends Model
 ## 🎯 **Laravel Controllers**
 
 ### **1. WidgetConfigController**
+
 ```php
 <?php
 
@@ -180,13 +187,13 @@ class WidgetConfigController extends Controller
     public function getConfig(Request $request): JsonResponse
     {
         $publicKey = $request->query('key');
-        
+
         if (!$publicKey) {
             return response()->json(['error' => 'Public key is required'], 400);
         }
 
         $settings = WidgetSettings::where('public_key', $publicKey)->first();
-        
+
         if (!$settings) {
             return response()->json(['error' => 'Invalid public key'], 404);
         }
@@ -234,11 +241,11 @@ class WidgetConfigController extends Controller
         $origin = $request->header('origin');
         $host = $request->header('host');
         $referer = $request->header('referer');
-        
+
         $requestDomain = $origin ?: $host ?: ($referer ? parse_url($referer, PHP_URL_HOST) : null);
-        
+
         if (!$requestDomain) return false;
-        
+
         foreach ($allowedDomains as $domain) {
             if (str_starts_with($domain, '*.')) {
                 $baseDomain = substr($domain, 2);
@@ -249,7 +256,7 @@ class WidgetConfigController extends Controller
                 return true;
             }
         }
-        
+
         return false;
     }
 
@@ -257,11 +264,11 @@ class WidgetConfigController extends Controller
     {
         $key = "widget_rate_limit:{$publicKey}:{$ip}";
         $current = Cache::get($key, 0);
-        
+
         if ($current >= 60) { // 60 requests per minute
             return false;
         }
-        
+
         Cache::put($key, $current + 1, 60);
         return true;
     }
@@ -275,6 +282,7 @@ class WidgetConfigController extends Controller
 ```
 
 ### **2. WidgetSettingsController**
+
 ```php
 <?php
 
@@ -290,9 +298,9 @@ class WidgetSettingsController extends Controller
     public function index(Request $request): JsonResponse
     {
         $companyId = $request->user()->company_id;
-        
+
         $settings = WidgetSettings::where('company_id', $companyId)->first();
-        
+
         if (!$settings) {
             return response()->json(['error' => 'Widget settings not found'], 404);
         }
@@ -306,7 +314,7 @@ class WidgetSettingsController extends Controller
         $updates = $request->all();
 
         $settings = WidgetSettings::where('company_id', $companyId)->first();
-        
+
         if (!$settings) {
             // Create new settings
             $settings = WidgetSettings::create([
@@ -399,6 +407,7 @@ class WidgetSettingsController extends Controller
 ```
 
 ### **3. WidgetKeyRotationController**
+
 ```php
 <?php
 
@@ -415,9 +424,9 @@ class WidgetKeyRotationController extends Controller
     public function rotate(Request $request): JsonResponse
     {
         $companyId = $request->user()->company_id;
-        
+
         $settings = WidgetSettings::where('company_id', $companyId)->first();
-        
+
         if (!$settings) {
             return response()->json(['error' => 'Widget settings not found'], 404);
         }
@@ -452,7 +461,7 @@ class WidgetKeyRotationController extends Controller
     public function history(Request $request): JsonResponse
     {
         $companyId = $request->user()->company_id;
-        
+
         $rotations = WidgetKeyRotation::where('company_id', $companyId)
             ->orderBy('created_at', 'desc')
             ->get();
@@ -481,7 +490,7 @@ Add these routes to your `routes/api.php`:
 Route::prefix('v1/widget')->group(function () {
     // Public routes (no auth required)
     Route::get('/config', [WidgetConfigController::class, 'getConfig']);
-    
+
     // Protected routes (require authentication)
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('/settings', [WidgetSettingsController::class, 'index']);
@@ -502,7 +511,7 @@ Add these to your `.env` file:
 # Widget Configuration
 WIDGET_SIGNING_SECRET=your-widget-signing-secret-here
 WIDGET_CDN_URL=https://cdn.answer24.nl
-WIDGET_API_URL=https://api.answer24.nl
+WIDGET_API_URL=https://kring.answer24.nl
 
 # AI Service Configuration
 AI_SERVICE_URL=https://api.openai.com/v1/chat/completions
@@ -519,6 +528,7 @@ REDIS_PORT=6379
 ## 🔧 **Additional Requirements**
 
 ### **1. Redis Setup**
+
 Install and configure Redis for rate limiting:
 
 ```bash
@@ -531,18 +541,20 @@ sudo systemctl enable redis-server
 ```
 
 ### **2. CORS Configuration**
+
 Update your CORS configuration to allow widget domains:
 
 ```php
 // config/cors.php
 'allowed_origins' => [
     'https://cdn.answer24.nl',
-    'https://api.answer24.nl',
+    'https://kring.answer24.nl',
     // Add your widget domains here
 ],
 ```
 
 ### **3. Cache Configuration**
+
 Ensure Redis is configured for caching:
 
 ```php
@@ -555,22 +567,25 @@ Ensure Redis is configured for caching:
 ## 🧪 **Testing Endpoints**
 
 ### **1. Test Config Endpoint**
+
 ```bash
-curl -X GET "https://api.answer24.nl/v1/widget/config?key=PUB_abc123" \
+curl -X GET "https://kring.answer24.nl/v1/widget/config?key=PUB_abc123" \
   -H "Accept: application/json"
 ```
 
 ### **2. Test Settings Endpoint**
+
 ```bash
-curl -X POST "https://api.answer24.nl/v1/widget/settings" \
+curl -X POST "https://kring.answer24.nl/v1/widget/settings" \
   -H "Authorization: Bearer YOUR_JWT_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"theme": {"primary": "#ff0000"}}'
 ```
 
 ### **3. Test Key Rotation**
+
 ```bash
-curl -X POST "https://api.answer24.nl/v1/widget/rotate-key" \
+curl -X POST "https://kring.answer24.nl/v1/widget/rotate-key" \
   -H "Authorization: Bearer YOUR_JWT_TOKEN" \
   -H "Content-Type: application/json"
 ```
@@ -580,6 +595,7 @@ curl -X POST "https://api.answer24.nl/v1/widget/rotate-key" \
 ## 📊 **Monitoring & Analytics**
 
 ### **1. Track Widget Events**
+
 ```php
 // In your WidgetAnalytics model
 public function trackEvent(string $companyId, string $publicKey, string $eventType, array $eventData = []): void
@@ -597,13 +613,14 @@ public function trackEvent(string $companyId, string $publicKey, string $eventTy
 ```
 
 ### **2. Analytics Dashboard**
+
 Create endpoints to retrieve analytics data:
 
 ```php
 public function getAnalytics(Request $request): JsonResponse
 {
     $companyId = $request->user()->company_id;
-    
+
     $analytics = WidgetAnalytics::where('company_id', $companyId)
         ->selectRaw('event_type, COUNT(*) as count, DATE(created_at) as date')
         ->groupBy('event_type', 'date')

@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { tokenUtils } from "@/utils/auth";
 
 // ✅ Hardcoded API domain
-const API_URL = "https://api.answer24.nl/api/v1";
+const API_URL = "https://kring.answer24.nl/api/v1";
 
 // Zod schema for blog post
 const blogSchema = z.object({
@@ -20,7 +20,9 @@ const blogSchema = z.object({
 export async function createBlog(formData: FormData, token: string) {
   try {
     if (!token) {
-      return { errors: { _form: ["Authentication required. Please log in again."] } };
+      return {
+        errors: { _form: ["Authentication required. Please log in again."] },
+      };
     }
 
     const title = formData.get("title") as string;
@@ -29,8 +31,15 @@ export async function createBlog(formData: FormData, token: string) {
     const excerpt = formData.get("excerpt") as string;
     const slug = formData.get("slug") as string;
 
-    const validated = blogSchema.safeParse({ title, content, status, excerpt, slug });
-    if (!validated.success) return { errors: validated.error.flatten().fieldErrors };
+    const validated = blogSchema.safeParse({
+      title,
+      content,
+      status,
+      excerpt,
+      slug,
+    });
+    if (!validated.success)
+      return { errors: validated.error.flatten().fieldErrors };
 
     const finalSlug =
       slug ||
@@ -72,10 +81,15 @@ export async function createBlog(formData: FormData, token: string) {
     if (!response.ok) {
       if (response.status === 401) {
         tokenUtils.removeToken();
-        return { errors: { _form: ["Your session has expired. Please log in again."] } };
+        return {
+          errors: { _form: ["Your session has expired. Please log in again."] },
+        };
       }
-      if (response.status === 422 && result.errors) return { errors: result.errors };
-      throw new Error(result.message || `Failed to create blog (Status: ${response.status})`);
+      if (response.status === 422 && result.errors)
+        return { errors: result.errors };
+      throw new Error(
+        result.message || `Failed to create blog (Status: ${response.status})`,
+      );
     }
 
     revalidatePath("/blogs");
@@ -84,15 +98,25 @@ export async function createBlog(formData: FormData, token: string) {
     return { success: true, data: result.data };
   } catch (error) {
     console.error("Create blog error:", error);
-    return { errors: { _form: [error instanceof Error ? error.message : "Unexpected error"] } };
+    return {
+      errors: {
+        _form: [error instanceof Error ? error.message : "Unexpected error"],
+      },
+    };
   }
 }
 
 // ✅ UPDATE BLOG
-export async function updateBlog(id: string, formData: FormData, token: string) {
+export async function updateBlog(
+  id: string,
+  formData: FormData,
+  token: string,
+) {
   try {
     if (!token) {
-      return { errors: { _form: ["Authentication required. Please log in again."] } };
+      return {
+        errors: { _form: ["Authentication required. Please log in again."] },
+      };
     }
 
     const title = formData.get("title") as string;
@@ -101,8 +125,15 @@ export async function updateBlog(id: string, formData: FormData, token: string) 
     const excerpt = formData.get("excerpt") as string;
     const slug = formData.get("slug") as string;
 
-    const validated = blogSchema.safeParse({ title, content, status, excerpt, slug });
-    if (!validated.success) return { errors: validated.error.flatten().fieldErrors };
+    const validated = blogSchema.safeParse({
+      title,
+      content,
+      status,
+      excerpt,
+      slug,
+    });
+    if (!validated.success)
+      return { errors: validated.error.flatten().fieldErrors };
 
     const apiFormData = new FormData();
     apiFormData.append("title", title.trim());
@@ -136,10 +167,15 @@ export async function updateBlog(id: string, formData: FormData, token: string) 
     if (!response.ok) {
       if (response.status === 401) {
         tokenUtils.removeToken();
-        return { errors: { _form: ["Your session has expired. Please log in again."] } };
+        return {
+          errors: { _form: ["Your session has expired. Please log in again."] },
+        };
       }
-      if (response.status === 422 && result.errors) return { errors: result.errors };
-      throw new Error(result.message || `Failed to update blog (Status: ${response.status})`);
+      if (response.status === 422 && result.errors)
+        return { errors: result.errors };
+      throw new Error(
+        result.message || `Failed to update blog (Status: ${response.status})`,
+      );
     }
 
     // revalidatePath("/admin/blogs");
@@ -149,7 +185,11 @@ export async function updateBlog(id: string, formData: FormData, token: string) 
     return { success: true, data: result.data };
   } catch (error) {
     console.error("Update blog error:", error);
-    return { errors: { _form: [error instanceof Error ? error.message : "Unexpected error"] } };
+    return {
+      errors: {
+        _form: [error instanceof Error ? error.message : "Unexpected error"],
+      },
+    };
   }
 }
 
@@ -184,7 +224,9 @@ export async function getAllBlogs(): Promise<BlogData> {
 export async function deleteBlog(id: string, token: string) {
   try {
     if (!token) {
-      return { errors: { _form: ["Authentication required. Please log in again."] } };
+      return {
+        errors: { _form: ["Authentication required. Please log in again."] },
+      };
     }
 
     const response = await fetch(`${API_URL}/blogs/${id}`, {

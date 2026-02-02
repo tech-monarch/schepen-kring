@@ -3,7 +3,7 @@
 import { Blog, BlogData, BlogResponse, BlogsResponse } from "@/types/blog.d";
 import BLOGIMAGEPLACEHOLDER from "@/public/image.png";
 
-const BASE_BLOG_URL = "https://api.answer24.nl/api/v1";
+const BASE_BLOG_URL = "https://kring.answer24.nl/api/v1";
 
 // Client-side function to delete a blog post
 export async function deleteBlog(id: string, token: string) {

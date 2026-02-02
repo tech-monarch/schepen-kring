@@ -51,7 +51,7 @@ type FAQFormData = {
   [key: string]: string | string[] | boolean | number | undefined;
 };
 
-const API_BASE = "https://api.answer24.nl";
+const API_BASE = "https://kring.answer24.nl";
 
 const groupFAQs = (faqs: FAQItem[] | any) => {
   if (!Array.isArray(faqs)) return {};
@@ -73,8 +73,12 @@ export default function FaqAdmin() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [faqs, setFaqs] = useState<FAQItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({});
-  const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({});
+  const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>(
+    {},
+  );
+  const [expandedCategories, setExpandedCategories] = useState<
+    Record<string, boolean>
+  >({});
   const [formData, setFormData] = useState<FAQFormData>({
     question: "",
     answer: "",
@@ -150,7 +154,7 @@ export default function FaqAdmin() {
       (faq) =>
         faq.question.toLowerCase().includes(lower) ||
         faq.answer.toLowerCase().includes(lower) ||
-        (faq.tags || []).some((tag) => tag.toLowerCase().includes(lower))
+        (faq.tags || []).some((tag) => tag.toLowerCase().includes(lower)),
     );
   }, [faqs, searchTerm]);
 
@@ -161,7 +165,7 @@ export default function FaqAdmin() {
     setExpandedCategories((prev) => ({ ...prev, [cat]: !prev[cat] }));
 
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -178,7 +182,10 @@ export default function FaqAdmin() {
   };
 
   const removeTag = (tag: string) =>
-    setFormData((prev) => ({ ...prev, tags: prev.tags.filter((t) => t !== tag) }));
+    setFormData((prev) => ({
+      ...prev,
+      tags: prev.tags.filter((t) => t !== tag),
+    }));
 
   const openEditPanel = (faq: FAQItem) => {
     setFormData({
@@ -193,7 +200,13 @@ export default function FaqAdmin() {
   };
 
   const openCreatePanel = () => {
-    setFormData({ question: "", answer: "", category: "General", subcategory: "General", tags: [] });
+    setFormData({
+      question: "",
+      answer: "",
+      category: "General",
+      subcategory: "General",
+      tags: [],
+    });
     setEditingFaq(null);
     setIsPanelOpen(true);
   };
@@ -204,7 +217,7 @@ export default function FaqAdmin() {
       if (editingFaq) {
         const updated = await updateFaq(editingFaq.id, formData);
         setFaqs((prev) =>
-          prev.map((f) => (f.id === editingFaq.id ? updated.data : f))
+          prev.map((f) => (f.id === editingFaq.id ? updated.data : f)),
         );
         toast.success("FAQ updated successfully");
       } else {
@@ -348,7 +361,10 @@ export default function FaqAdmin() {
       )}
 
       {/* AlertDialog for delete */}
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+      <AlertDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete FAQ?</AlertDialogTitle>
@@ -421,7 +437,11 @@ export default function FaqAdmin() {
               ))}
             </div>
             <div className="flex justify-between mt-4">
-              <Button type="button" variant="outline" onClick={() => setIsPanelOpen(false)}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsPanelOpen(false)}
+              >
                 Cancel
               </Button>
               <Button type="submit">{editingFaq ? "Update" : "Create"}</Button>

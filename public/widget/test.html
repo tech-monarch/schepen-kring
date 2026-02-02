@@ -1,79 +1,117 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Cashback/Discount Integration</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f8fafc;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-        }
-        .container {
-            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.1), 0 0 15px -5px rgba(0, 0, 0, 0.05);
-        }
-        .text-cashback-earn { color: #16a34a; }
-        .text-discount-use { color: #2563eb; }
+      body {
+        font-family: "Inter", sans-serif;
+        background-color: #f8fafc;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+      }
+      .container {
+        box-shadow:
+          0 20px 40px -10px rgba(0, 0, 0, 0.1),
+          0 0 15px -5px rgba(0, 0, 0, 0.05);
+      }
+      .text-cashback-earn {
+        color: #16a34a;
+      }
+      .text-discount-use {
+        color: #2563eb;
+      }
     </style>
-</head>
-<body onload="checkDiscountStatus()">
-
+  </head>
+  <body onload="checkDiscountStatus()">
     <div class="container bg-white p-8 rounded-2xl w-full max-w-xl">
-        <h1 class="text-3xl font-extrabold text-indigo-700 mb-2 border-b pb-4">Webshop Checkout</h1>
-        <p class="text-gray-500 mb-6">Choose whether to use a discount code now or earn cashback later.</p>
+      <h1 class="text-3xl font-extrabold text-indigo-700 mb-2 border-b pb-4">
+        Webshop Checkout
+      </h1>
+      <p class="text-gray-500 mb-6">
+        Choose whether to use a discount code now or earn cashback later.
+      </p>
 
-        <div class="border border-indigo-200 rounded-xl p-5 mb-6 flex items-center bg-indigo-50">
-            <div class="w-16 h-16 rounded-lg mr-4 flex items-center justify-center text-4xl bg-white shadow-md">
-                ⭐
-            </div>
-            <div class="flex-grow">
-                <h2 class="text-xl font-semibold text-gray-800">Advanced Analytics Tool Suite</h2>
-                <p class="text-gray-500 text-sm">Lifetime Access License</p>
-            </div>
-            <p class="text-2xl font-bold text-indigo-600" id="product-price-display">$159.99</p>
-        </div>
-
-        <div class="space-y-3 mb-6 p-4 border rounded-lg bg-gray-50">
-            <h2 class="text-lg font-bold text-discount-use">Option 1: Use Discount Code</h2>
-            <div class="flex space-x-2">
-                <input 
-                    type="text" 
-                    id="discount-code-input" 
-                    placeholder="Enter Discount Code (e.g., SAVE10)"
-                    class="flex-grow p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                >
-                <button 
-                    id="get-discount-button"
-                    onclick="getDiscountCode()"
-                    class="px-3 py-2 text-sm font-semibold rounded-md text-white bg-blue-500 hover:bg-blue-600 transition"
-                >
-                    Get Code
-                </button>
-            </div>
-            <p id="discount-status" class="text-sm italic text-gray-500">
-                Click "Get Code" (widget simulation) or enter a code to apply it at purchase.
-            </p>
-        </div>
-
-        <div id="result-message" class="mt-4 p-4 rounded-xl text-center font-medium hidden" role="alert"></div>
-
-        <button 
-            id="purchase-button"
-            onclick="completePurchaseAndTriggerCashback()"
-            class="w-full flex justify-center items-center px-4 py-4 border border-transparent text-xl font-bold rounded-lg shadow-lg text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150"
+      <div
+        class="border border-indigo-200 rounded-xl p-5 mb-6 flex items-center bg-indigo-50"
+      >
+        <div
+          class="w-16 h-16 rounded-lg mr-4 flex items-center justify-center text-4xl bg-white shadow-md"
         >
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-            </svg>
-            Complete Purchase
-        </button>
+          ⭐
+        </div>
+        <div class="flex-grow">
+          <h2 class="text-xl font-semibold text-gray-800">
+            Advanced Analytics Tool Suite
+          </h2>
+          <p class="text-gray-500 text-sm">Lifetime Access License</p>
+        </div>
+        <p
+          class="text-2xl font-bold text-indigo-600"
+          id="product-price-display"
+        >
+          $159.99
+        </p>
+      </div>
 
-        <!-- <div class="mt-6 pt-6 border-t border-gray-200">
+      <div class="space-y-3 mb-6 p-4 border rounded-lg bg-gray-50">
+        <h2 class="text-lg font-bold text-discount-use">
+          Option 1: Use Discount Code
+        </h2>
+        <div class="flex space-x-2">
+          <input
+            type="text"
+            id="discount-code-input"
+            placeholder="Enter Discount Code (e.g., SAVE10)"
+            class="flex-grow p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+          />
+          <button
+            id="get-discount-button"
+            onclick="getDiscountCode()"
+            class="px-3 py-2 text-sm font-semibold rounded-md text-white bg-blue-500 hover:bg-blue-600 transition"
+          >
+            Get Code
+          </button>
+        </div>
+        <p id="discount-status" class="text-sm italic text-gray-500">
+          Click "Get Code" (widget simulation) or enter a code to apply it at
+          purchase.
+        </p>
+      </div>
+
+      <div
+        id="result-message"
+        class="mt-4 p-4 rounded-xl text-center font-medium hidden"
+        role="alert"
+      ></div>
+
+      <button
+        id="purchase-button"
+        onclick="completePurchaseAndTriggerCashback()"
+        class="w-full flex justify-center items-center px-4 py-4 border border-transparent text-xl font-bold rounded-lg shadow-lg text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-6 w-6 mr-3"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"
+          />
+        </svg>
+        Complete Purchase
+      </button>
+
+      <!-- <div class="mt-6 pt-6 border-t border-gray-200">
             <h2 class="text-lg font-bold text-gray-700 mb-3">Local Cache Status (For Testing)</h2>
             <div class="flex space-x-2 mb-3">
                 <button 
@@ -99,265 +137,299 @@
                 Click a button above to verify Local Storage entries.
             </div>
         </div> -->
-
     </div>
 
     <script>
-        // --- Widget Constants & Configuration ---
-        const CACHE_KEY_PENDING = 'answer24_pending_actions';
-        const CACHE_KEY_DISCOUNT = 'answer24_active_discount';
-        const PRODUCT_PRICE = 159.99;
-        const DISCOUNT_AMOUNT = 15.00; // Mock fixed discount amount
-        const API_ENDPOINT = "https://api.answer24.nl/api/v1";
+      // --- Widget Constants & Configuration ---
+      const CACHE_KEY_PENDING = "answer24_pending_actions";
+      const CACHE_KEY_DISCOUNT = "answer24_active_discount";
+      const PRODUCT_PRICE = 159.99;
+      const DISCOUNT_AMOUNT = 15.0; // Mock fixed discount amount
+      const API_ENDPOINT = "https://kring.answer24.nl/api/v1";
 
-        // =================================================================
-        // --- CORE WIDGET LOGIC (Simulating answer24-widget.js) ---
-        // =================================================================
+      // =================================================================
+      // --- CORE WIDGET LOGIC (Simulating answer24-widget.js) ---
+      // =================================================================
 
-        // Helper to cache a pending cashback transaction
-        function cachePendingAction(action) {
-            try {
-                const cachedActions = JSON.parse(localStorage.getItem(CACHE_KEY_PENDING) || '[]');
-                cachedActions.push(action);
-                localStorage.setItem(CACHE_KEY_PENDING, JSON.stringify(cachedActions));
-            } catch (e) { console.error("Cache Save Error:", e); }
+      // Helper to cache a pending cashback transaction
+      function cachePendingAction(action) {
+        try {
+          const cachedActions = JSON.parse(
+            localStorage.getItem(CACHE_KEY_PENDING) || "[]",
+          );
+          cachedActions.push(action);
+          localStorage.setItem(
+            CACHE_KEY_PENDING,
+            JSON.stringify(cachedActions),
+          );
+        } catch (e) {
+          console.error("Cache Save Error:", e);
+        }
+      }
+
+      // Simulates an API call (50% success for discount code, 80% for cashback)
+      function simulatedApiCall(type) {
+        const successRate = type === "discount" ? 0.5 : 0.8;
+        return Math.random() < successRate
+          ? Promise.resolve({ success: true, message: `${type} successful.` })
+          : Promise.reject(new Error(`Simulated API failure for ${type}.`));
+      }
+
+      /**
+       * Logic to FETCH & CACHE DISCOUNT CODE (Simulates widget's action).
+       */
+      async function getDiscountCode() {
+        const statusEl = document.getElementById("discount-status");
+        statusEl.className = "text-sm italic text-indigo-500";
+        statusEl.textContent = "Fetching discount code...";
+
+        try {
+          await simulatedApiCall("discount"); // Try API
+
+          // API Success: Generate code and save directly (or clear cache if code is single use)
+          const code = "SAVE" + Math.floor(Math.random() * 9000 + 1000);
+          const expiresAt = new Date(
+            new Date().getTime() + 15 * 60 * 1000,
+          ).toISOString();
+
+          const discountData = {
+            code: code,
+            amount: DISCOUNT_AMOUNT.toFixed(2),
+            expiresAt: expiresAt,
+          };
+          localStorage.setItem(
+            CACHE_KEY_DISCOUNT,
+            JSON.stringify(discountData),
+          );
+
+          statusEl.className = "text-sm italic text-green-600 font-bold";
+          statusEl.innerHTML = `✅ Code **${code}** available! (Expires in 15 min)`;
+          document.getElementById("discount-code-input").value = code;
+        } catch (error) {
+          // API Failure: Store action in PENDING CACHE (If the widget manages generating it later)
+          // For a discount code, this is less common, but we'll show a fail state.
+          statusEl.className = "text-sm italic text-red-600 font-bold";
+          statusEl.textContent = "❌ API Failed. Could not generate code.";
+        } finally {
+          checkDiscountStatus();
+        }
+      }
+
+      /**
+       * Logic to EARN CASHBACK (Simulates widget's action).
+       */
+      async function triggerCashbackEarn() {
+        const cashbackAmount = (PRODUCT_PRICE * 0.1).toFixed(2);
+
+        const payload = {
+          userId: "shop_user_456",
+          amount: cashbackAmount,
+          transactionAmount: PRODUCT_PRICE.toFixed(2),
+          currency: "USD",
+        };
+
+        const resultEl = document.getElementById("result-message");
+        resultEl.classList.remove("hidden");
+        resultEl.className =
+          "p-4 rounded-xl text-center font-medium bg-indigo-100 text-indigo-700";
+        resultEl.innerHTML = `Attempting to award ${cashbackAmount} cashback...`;
+
+        try {
+          await simulatedApiCall("cashback");
+
+          // API Success
+          resultEl.className =
+            "p-4 rounded-xl text-center font-medium bg-green-100 text-green-700";
+          resultEl.innerHTML = `<p class="text-xl font-bold">🎉 Order Confirmed!</p><p>Cashback of $${cashbackAmount} **INSTANTLY** recorded on server.</p>`;
+        } catch (error) {
+          // API Failure -> Cache Reward in PENDING ACTIONS
+          const actionToCache = {
+            type: "cashback",
+            data: payload,
+            timestamp: Date.now(),
+            token: "widget_auth_token_xyz",
+          };
+          cachePendingAction(actionToCache);
+
+          resultEl.className =
+            "p-4 rounded-xl text-center font-medium bg-red-100 text-red-700";
+          resultEl.innerHTML = `<p class="text-xl font-bold">⚠️ Order Confirmed, BUT Reward is Pending.</p><p>Cashback of $${cashbackAmount} saved to Local Storage.</p>`;
+        }
+      }
+
+      // =================================================================
+      // --- SHOP FRONT-END LOGIC (The purchase process) ---
+      // =================================================================
+
+      /**
+       * Validates and applies the discount code during checkout.
+       */
+      function applyDiscountCode(inputCode) {
+        const resultEl = document.getElementById("result-message");
+        resultEl.classList.remove("hidden");
+
+        const cachedDiscount = localStorage.getItem(CACHE_KEY_DISCOUNT);
+
+        if (!cachedDiscount) {
+          resultEl.className =
+            "p-4 rounded-xl text-center font-medium bg-yellow-100 text-yellow-700";
+          resultEl.innerHTML = `<p class="font-bold">Invalid Discount!</p><p>Code entered, but no active codes found in cache or DB.</p>`;
+          return;
         }
 
-        // Simulates an API call (50% success for discount code, 80% for cashback)
-        function simulatedApiCall(type) {
-            const successRate = (type === 'discount') ? 0.5 : 0.8; 
-            return (Math.random() < successRate) 
-                ? Promise.resolve({ success: true, message: `${type} successful.` }) 
-                : Promise.reject(new Error(`Simulated API failure for ${type}.`));
+        try {
+          const discountData = JSON.parse(cachedDiscount);
+
+          if (inputCode === discountData.code) {
+            const discountAmount = parseFloat(discountData.amount);
+            const newTotal = (PRODUCT_PRICE - discountAmount).toFixed(2);
+
+            // Successful Use: Clear the discount code cache as it's single use
+            localStorage.removeItem(CACHE_KEY_DISCOUNT);
+
+            resultEl.className =
+              "p-4 rounded-xl text-center font-medium bg-blue-100 text-blue-700";
+            resultEl.innerHTML = `<p class="text-xl font-bold">✅ Discount Applied!</p><p>You saved $${discountAmount.toFixed(2)}. New Total: $${newTotal}. **No Cashback Earned.**</p>`;
+            document.getElementById("discount-code-input").value = "";
+          } else {
+            resultEl.className =
+              "p-4 rounded-xl text-center font-medium bg-yellow-100 text-yellow-700";
+            resultEl.innerHTML = `<p class="font-bold">Invalid Code!</p><p>The code entered does not match the active cached code.</p>`;
+          }
+        } catch (e) {
+          resultEl.className =
+            "p-4 rounded-xl text-center font-medium bg-red-100 text-red-700";
+          resultEl.innerHTML = `<p class="font-bold">Error Processing Discount!</p>`;
+        }
+      }
+
+      /**
+       * Main logic: Decides whether to Apply Discount or Earn Cashback.
+       */
+      function completePurchaseAndTriggerCashback() {
+        const button = document.getElementById("purchase-button");
+        button.disabled = true;
+        button.innerHTML = "Processing...";
+
+        const discountInput = document
+          .getElementById("discount-code-input")
+          .value.trim();
+
+        if (discountInput.length > 0) {
+          // PATH 1: User chose to use a code -> APPLY DISCOUNT
+          applyDiscountCode(discountInput);
+        } else {
+          // PATH 2: User did not use a code -> EARN CASHBACK
+          triggerCashbackEarn();
         }
 
-        /**
-         * Logic to FETCH & CACHE DISCOUNT CODE (Simulates widget's action).
-         */
-        async function getDiscountCode() {
-            const statusEl = document.getElementById('discount-status');
-            statusEl.className = 'text-sm italic text-indigo-500';
-            statusEl.textContent = 'Fetching discount code...';
-            
-            try {
-                await simulatedApiCall('discount'); // Try API
-                
-                // API Success: Generate code and save directly (or clear cache if code is single use)
-                const code = "SAVE" + Math.floor(Math.random() * 9000 + 1000);
-                const expiresAt = new Date(new Date().getTime() + (15 * 60 * 1000)).toISOString();
-                
-                const discountData = { code: code, amount: DISCOUNT_AMOUNT.toFixed(2), expiresAt: expiresAt };
-                localStorage.setItem(CACHE_KEY_DISCOUNT, JSON.stringify(discountData));
-                
-                statusEl.className = 'text-sm italic text-green-600 font-bold';
-                statusEl.innerHTML = `✅ Code **${code}** available! (Expires in 15 min)`;
-                document.getElementById('discount-code-input').value = code;
+        button.disabled = false;
+        button.innerHTML =
+          '<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg>Complete Purchase';
 
-            } catch (error) {
-                // API Failure: Store action in PENDING CACHE (If the widget manages generating it later)
-                // For a discount code, this is less common, but we'll show a fail state.
-                statusEl.className = 'text-sm italic text-red-600 font-bold';
-                statusEl.textContent = '❌ API Failed. Could not generate code.';
-            } finally {
-                checkDiscountStatus();
-            }
-        }
+        // Final check to update status display
+        checkDiscountStatus();
+        checkPendingActionsStatus();
+      }
 
-        /**
-         * Logic to EARN CASHBACK (Simulates widget's action).
-         */
-        async function triggerCashbackEarn() {
-            const cashbackAmount = (PRODUCT_PRICE * 0.10).toFixed(2);
-            
-            const payload = {
-                userId: 'shop_user_456', 
-                amount: cashbackAmount,
-                transactionAmount: PRODUCT_PRICE.toFixed(2),
-                currency: 'USD',
-            };
-            
-            const resultEl = document.getElementById('result-message');
-            resultEl.classList.remove('hidden');
-            resultEl.className = 'p-4 rounded-xl text-center font-medium bg-indigo-100 text-indigo-700';
-            resultEl.innerHTML = `Attempting to award ${cashbackAmount} cashback...`;
+      // =================================================================
+      // --- CACHE INSPECTION LOGIC ---
+      // =================================================================
 
-            try {
-                await simulatedApiCall('cashback');
-                
-                // API Success
-                resultEl.className = 'p-4 rounded-xl text-center font-medium bg-green-100 text-green-700';
-                resultEl.innerHTML = `<p class="text-xl font-bold">🎉 Order Confirmed!</p><p>Cashback of $${cashbackAmount} **INSTANTLY** recorded on server.</p>`;
+      /**
+       * Checks the discount code cache.
+       */
+      function checkDiscountStatus() {
+        const cachedData = localStorage.getItem(CACHE_KEY_DISCOUNT);
+        const statusEl = document.getElementById("cache-status-output");
 
-            } catch (error) {
-                // API Failure -> Cache Reward in PENDING ACTIONS
-                const actionToCache = { 
-                    type: 'cashback', 
-                    data: payload, 
-                    timestamp: Date.now(), 
-                    token: 'widget_auth_token_xyz'
-                };
-                cachePendingAction(actionToCache);
-                
-                resultEl.className = 'p-4 rounded-xl text-center font-medium bg-red-100 text-red-700';
-                resultEl.innerHTML = `<p class="text-xl font-bold">⚠️ Order Confirmed, BUT Reward is Pending.</p><p>Cashback of $${cashbackAmount} saved to Local Storage.</p>`;
-            }
-        }
-
-
-        // =================================================================
-        // --- SHOP FRONT-END LOGIC (The purchase process) ---
-        // =================================================================
-
-        /**
-         * Validates and applies the discount code during checkout.
-         */
-        function applyDiscountCode(inputCode) {
-            const resultEl = document.getElementById('result-message');
-            resultEl.classList.remove('hidden');
-            
-            const cachedDiscount = localStorage.getItem(CACHE_KEY_DISCOUNT);
-
-            if (!cachedDiscount) {
-                resultEl.className = 'p-4 rounded-xl text-center font-medium bg-yellow-100 text-yellow-700';
-                resultEl.innerHTML = `<p class="font-bold">Invalid Discount!</p><p>Code entered, but no active codes found in cache or DB.</p>`;
-                return;
-            }
-
-            try {
-                const discountData = JSON.parse(cachedDiscount);
-                
-                if (inputCode === discountData.code) {
-                    const discountAmount = parseFloat(discountData.amount);
-                    const newTotal = (PRODUCT_PRICE - discountAmount).toFixed(2);
-                    
-                    // Successful Use: Clear the discount code cache as it's single use
-                    localStorage.removeItem(CACHE_KEY_DISCOUNT); 
-                    
-                    resultEl.className = 'p-4 rounded-xl text-center font-medium bg-blue-100 text-blue-700';
-                    resultEl.innerHTML = `<p class="text-xl font-bold">✅ Discount Applied!</p><p>You saved $${discountAmount.toFixed(2)}. New Total: $${newTotal}. **No Cashback Earned.**</p>`;
-                    document.getElementById('discount-code-input').value = '';
-                } else {
-                    resultEl.className = 'p-4 rounded-xl text-center font-medium bg-yellow-100 text-yellow-700';
-                    resultEl.innerHTML = `<p class="font-bold">Invalid Code!</p><p>The code entered does not match the active cached code.</p>`;
-                }
-
-            } catch (e) {
-                resultEl.className = 'p-4 rounded-xl text-center font-medium bg-red-100 text-red-700';
-                resultEl.innerHTML = `<p class="font-bold">Error Processing Discount!</p>`;
-            }
-        }
-
-        /**
-         * Main logic: Decides whether to Apply Discount or Earn Cashback.
-         */
-        function completePurchaseAndTriggerCashback() {
-            const button = document.getElementById('purchase-button');
-            button.disabled = true;
-            button.innerHTML = 'Processing...';
-
-            const discountInput = document.getElementById('discount-code-input').value.trim();
-
-            if (discountInput.length > 0) {
-                // PATH 1: User chose to use a code -> APPLY DISCOUNT
-                applyDiscountCode(discountInput);
-            } else {
-                // PATH 2: User did not use a code -> EARN CASHBACK
-                triggerCashbackEarn();
-            }
-
-            button.disabled = false;
-            button.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg>Complete Purchase';
-            
-            // Final check to update status display
-            checkDiscountStatus();
-            checkPendingActionsStatus();
-        }
-
-
-        // =================================================================
-        // --- CACHE INSPECTION LOGIC ---
-        // =================================================================
-
-        /**
-         * Checks the discount code cache.
-         */
-        function checkDiscountStatus() {
-            const cachedData = localStorage.getItem(CACHE_KEY_DISCOUNT);
-            const statusEl = document.getElementById('cache-status-output');
-            
-            if (cachedData) {
-                try {
-                    const data = JSON.parse(cachedData);
-                    statusEl.className = 'p-3 bg-yellow-100 border border-yellow-400 rounded-lg text-yellow-800';
-                    statusEl.innerHTML = `<p class="font-bold">Discount Cache Verified (Active Code Found):</p>
+        if (cachedData) {
+          try {
+            const data = JSON.parse(cachedData);
+            statusEl.className =
+              "p-3 bg-yellow-100 border border-yellow-400 rounded-lg text-yellow-800";
+            statusEl.innerHTML = `<p class="font-bold">Discount Cache Verified (Active Code Found):</p>
                         <ul class="list-disc ml-4">
                             <li>Code: **${data.code}**</li>
                             <li>Value: $${data.amount}</li>
                             <li>Expires: ${new Date(data.expiresAt).toLocaleTimeString()}</li>
                         </ul>
                     `;
-                } catch (e) {
-                    statusEl.innerHTML = `<p class="font-bold text-red-600">ERROR: Could not parse discount cache data.</p>`;
-                }
-            } else {
-                statusEl.className = 'p-3 bg-gray-100 border border-gray-300 rounded-lg text-gray-700';
-                statusEl.innerHTML = `<p class="font-semibold">Discount Code Cache is empty. (No code available).</p>`;
-            }
+          } catch (e) {
+            statusEl.innerHTML = `<p class="font-bold text-red-600">ERROR: Could not parse discount cache data.</p>`;
+          }
+        } else {
+          statusEl.className =
+            "p-3 bg-gray-100 border border-gray-300 rounded-lg text-gray-700";
+          statusEl.innerHTML = `<p class="font-semibold">Discount Code Cache is empty. (No code available).</p>`;
         }
+      }
 
-        /**
-         * Checks the pending cashback cache.
-         */
-        function checkPendingActionsStatus() {
-            const cachedData = localStorage.getItem(CACHE_KEY_PENDING);
-            const statusEl = document.getElementById('cache-status-output');
-            
-            if (cachedData) {
-                try {
-                    const actions = JSON.parse(cachedData);
-                    const cashbackActions = actions.filter(a => a.type === 'cashback');
-                    
-                    if (cashbackActions.length > 0) {
-                        const totalCashback = cashbackActions.reduce((sum, action) => sum + parseFloat(action.data.amount), 0).toFixed(2);
-                        
-                        statusEl.className = 'p-3 bg-green-100 border border-green-400 rounded-lg text-green-800';
-                        statusEl.innerHTML = `<p class="font-bold">Pending Actions Verified (Cashback):</p>
+      /**
+       * Checks the pending cashback cache.
+       */
+      function checkPendingActionsStatus() {
+        const cachedData = localStorage.getItem(CACHE_KEY_PENDING);
+        const statusEl = document.getElementById("cache-status-output");
+
+        if (cachedData) {
+          try {
+            const actions = JSON.parse(cachedData);
+            const cashbackActions = actions.filter(
+              (a) => a.type === "cashback",
+            );
+
+            if (cashbackActions.length > 0) {
+              const totalCashback = cashbackActions
+                .reduce(
+                  (sum, action) => sum + parseFloat(action.data.amount),
+                  0,
+                )
+                .toFixed(2);
+
+              statusEl.className =
+                "p-3 bg-green-100 border border-green-400 rounded-lg text-green-800";
+              statusEl.innerHTML = `<p class="font-bold">Pending Actions Verified (Cashback):</p>
                             <p class="mt-1">Widget is holding <span class="font-extrabold text-xl">$${totalCashback}</span> in unsynced rewards.</p>
                             <p class="text-sm italic">Total pending cashback requests: ${cashbackActions.length}</p>
                         `;
-                    } else {
-                        statusEl.className = 'p-3 bg-gray-100 border border-gray-300 rounded-lg text-gray-700';
-                        statusEl.innerHTML = `<p class="font-semibold">Pending Actions Cache is clean. (No failed cashback sends).</p>`;
-                    }
-
-                } catch (e) {
-                    statusEl.innerHTML = `<p class="font-bold text-red-600">ERROR: Could not parse pending actions data.</p>`;
-                }
             } else {
-                statusEl.className = 'p-3 bg-gray-100 border border-gray-300 rounded-lg text-gray-700';
-                statusEl.innerHTML = `<p class="font-semibold">Pending Actions Cache is empty. (No failed cashback sends).</p>`;
+              statusEl.className =
+                "p-3 bg-gray-100 border border-gray-300 rounded-lg text-gray-700";
+              statusEl.innerHTML = `<p class="font-semibold">Pending Actions Cache is clean. (No failed cashback sends).</p>`;
             }
+          } catch (e) {
+            statusEl.innerHTML = `<p class="font-bold text-red-600">ERROR: Could not parse pending actions data.</p>`;
+          }
+        } else {
+          statusEl.className =
+            "p-3 bg-gray-100 border border-gray-300 rounded-lg text-gray-700";
+          statusEl.innerHTML = `<p class="font-semibold">Pending Actions Cache is empty. (No failed cashback sends).</p>`;
         }
+      }
 
-        /**
-         * Utility to clear all cache keys.
-         */
-        function clearAllCache() {
-            localStorage.removeItem(CACHE_KEY_PENDING);
-            localStorage.removeItem(CACHE_KEY_DISCOUNT);
-            document.getElementById('result-message').classList.add('hidden');
-            document.getElementById('discount-code-input').value = '';
-            
-            const statusEl = document.getElementById('cache-status-output');
-            statusEl.className = 'p-3 bg-gray-100 border border-gray-300 rounded-lg text-gray-700';
-            statusEl.innerHTML = `<p class="font-bold">All Local Storage keys have been reset.</p>`;
+      /**
+       * Utility to clear all cache keys.
+       */
+      function clearAllCache() {
+        localStorage.removeItem(CACHE_KEY_PENDING);
+        localStorage.removeItem(CACHE_KEY_DISCOUNT);
+        document.getElementById("result-message").classList.add("hidden");
+        document.getElementById("discount-code-input").value = "";
 
-            checkDiscountStatus();
-        }
+        const statusEl = document.getElementById("cache-status-output");
+        statusEl.className =
+          "p-3 bg-gray-100 border border-gray-300 rounded-lg text-gray-700";
+        statusEl.innerHTML = `<p class="font-bold">All Local Storage keys have been reset.</p>`;
+
+        checkDiscountStatus();
+      }
     </script>
-  <script src="http://localhost:3000/widget/answer24-widget.js" data-public-key="PUB_e46c9c26a8f37916f6a645e74005076c"></script>
-
+    <script
+      src="http://localhost:3000/widget/answer24-widget.js"
+      data-public-key="PUB_e46c9c26a8f37916f6a645e74005076c"
+    ></script>
   </body>
 </html>
 
- python3 -m http.server 8000
+python3 -m http.server 8000

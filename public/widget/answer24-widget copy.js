@@ -18,11 +18,11 @@
     const currentHost = window.location.host;
     if (currentHost.includes("localhost") || currentHost.startsWith("127.")) {
       // Use local Next.js API for localhost development
-      apiBase = "https://api.answer24.nl/api/v1";
+      apiBase = "https://kring.answer24.nl/api/v1";
     } else if (currentHost.includes("answer24.nl")) {
-      apiBase = "https://api.answer24.nl/api/v1";
+      apiBase = "https://kring.answer24.nl/api/v1";
     } else {
-      apiBase = "https://api.answer24.nl/api/v1";
+      apiBase = "https://kring.answer24.nl/api/v1";
     }
   }
 
@@ -1009,7 +1009,7 @@
   async function sendMessage(message, options = {}) {
     const { file } = options;
     try {
-      const url = `https://api.answer24.nl/api/v1/gemini-chat`;
+      const url = `https://kring.answer24.nl/api/v1/gemini-chat`;
 
       let body;
       let headers = {};

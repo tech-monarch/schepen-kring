@@ -1,14 +1,14 @@
-'use client';
-import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+"use client";
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-  CardFooter
-} from '@/components/ui/card';
+  CardFooter,
+} from "@/components/ui/card";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,7 +18,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+} from "@/components/ui/alert-dialog";
 import {
   Table,
   TableBody,
@@ -26,64 +26,81 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from "@/components/ui/table";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { PlusCircle, Edit, Trash2, FileText, FileImage, AlertCircle, Calendar, Eye, Search, MoreHorizontal } from 'lucide-react';
+} from "@/components/ui/select";
+import {
+  PlusCircle,
+  Edit,
+  Trash2,
+  FileText,
+  FileImage,
+  AlertCircle,
+  Calendar,
+  Eye,
+  Search,
+  MoreHorizontal,
+} from "lucide-react";
 import { toast } from "react-toastify";
-import { Blog } from '@/types/blog.d';
-import BlogSkeleton from '@/components/blog/BlogSkeleton';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
-import { Link } from '@/i18n/navigation';
+import { Blog } from "@/types/blog.d";
+import BlogSkeleton from "@/components/blog/BlogSkeleton";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import { Link } from "@/i18n/navigation";
 
-const API_BASE = 'https://api.answer24.nl/api/v1/blogs';
+const API_BASE = "https://kring.answer24.nl/api/v1/blogs";
 
 // 🔹 Get all blogs
 const getAllBlogs = async () => {
-  const token = localStorage.getItem('auth_token');
-  if (!token) throw new Error('No auth token found');
+  const token = localStorage.getItem("auth_token");
+  if (!token) throw new Error("No auth token found");
 
   const res = await fetch(API_BASE, {
     headers: { Authorization: `Bearer ${token}` },
   });
 
-  if (!res.ok) throw new Error('Failed to fetch blogs');
+  if (!res.ok) throw new Error("Failed to fetch blogs");
   return await res.json();
 };
 
 // 🔹 Delete a blog
 const deleteBlog = async (id: string) => {
-  const token = localStorage.getItem('auth_token');
-  if (!token) throw new Error('No auth token found');
+  const token = localStorage.getItem("auth_token");
+  if (!token) throw new Error("No auth token found");
 
   const res = await fetch(`${API_BASE}/${id}`, {
-    method: 'DELETE',
+    method: "DELETE",
     headers: { Authorization: `Bearer ${token}` },
   });
 
-  if (!res.ok) throw new Error('Failed to delete blog');
+  if (!res.ok) throw new Error("Failed to delete blog");
   return await res.json();
 };
 
 // 🔹 Update blog (toggle publish/draft)
 const updateBlog = async (id: string, formData: FormData) => {
-  const token = localStorage.getItem('auth_token');
-  if (!token) throw new Error('No auth token found');
+  const token = localStorage.getItem("auth_token");
+  if (!token) throw new Error("No auth token found");
 
   const res = await fetch(`${API_BASE}/${id}`, {
-    method: 'POST',
+    method: "POST",
     headers: { Authorization: `Bearer ${token}` },
     body: formData,
   });
 
-  if (!res.ok) throw new Error('Failed to update blog');
+  if (!res.ok) throw new Error("Failed to update blog");
   return await res.json();
 };
 
@@ -92,9 +109,11 @@ const BlogManagement = () => {
   const [filteredBlogs, setFilteredBlogs] = useState<Blog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'published' | 'draft'>('all');
-  const [viewMode, setViewMode] = useState<'table' | 'grid'>('grid');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<
+    "all" | "published" | "draft"
+  >("all");
+  const [viewMode, setViewMode] = useState<"table" | "grid">("grid");
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [blogToDelete, setBlogToDelete] = useState<string | null>(null);
 
@@ -105,7 +124,7 @@ const BlogManagement = () => {
         const blogData = await getAllBlogs();
         setBlogs(blogData.data.data || []);
       } catch (err: any) {
-        setError(err.message || 'Failed to fetch blogs.');
+        setError(err.message || "Failed to fetch blogs.");
       } finally {
         setIsLoading(false);
       }
@@ -116,13 +135,15 @@ const BlogManagement = () => {
   useEffect(() => {
     let filtered = blogs;
     if (searchTerm) {
-      filtered = filtered.filter(blog => 
-        blog.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (blog.excerpt && blog.excerpt.toLowerCase().includes(searchTerm.toLowerCase()))
+      filtered = filtered.filter(
+        (blog) =>
+          blog.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (blog.excerpt &&
+            blog.excerpt.toLowerCase().includes(searchTerm.toLowerCase())),
       );
     }
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(blog => blog.status === statusFilter);
+    if (statusFilter !== "all") {
+      filtered = filtered.filter((blog) => blog.status === statusFilter);
     }
     setFilteredBlogs(filtered);
   }, [blogs, searchTerm, statusFilter]);
@@ -146,22 +167,26 @@ const BlogManagement = () => {
   };
 
   const toggleStatus = async (blog: Blog) => {
-    const newStatus = blog.status === 'published' ? 'draft' : 'published';
+    const newStatus = blog.status === "published" ? "draft" : "published";
     try {
       const formData = new FormData();
-      formData.append('title', blog.title);
-      formData.append('slug', blog.slug || '');
-      formData.append('content', blog.content);
-      formData.append('excerpt', blog.excerpt || '');
-      formData.append('status', newStatus);
-      formData.append('_method', 'PATCH');
+      formData.append("title", blog.title);
+      formData.append("slug", blog.slug || "");
+      formData.append("content", blog.content);
+      formData.append("excerpt", blog.excerpt || "");
+      formData.append("status", newStatus);
+      formData.append("_method", "PATCH");
 
       const result = await updateBlog(blog.id, formData);
       if (result.success && result.data) {
-        setBlogs(blogs.map((b) => (b.id === blog.id ? result.data as Blog : b)));
-        toast.success(`Blog ${newStatus === 'published' ? 'published' : 'unpublished'} successfully`);
+        setBlogs(
+          blogs.map((b) => (b.id === blog.id ? (result.data as Blog) : b)),
+        );
+        toast.success(
+          `Blog ${newStatus === "published" ? "published" : "unpublished"} successfully`,
+        );
       } else {
-        toast.error('Failed to update status');
+        toast.error("Failed to update status");
       }
     } catch (err: any) {
       toast.error(err.message);
@@ -173,17 +198,24 @@ const BlogManagement = () => {
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="container mx-auto px-4 py-8">
-        <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialog
+          open={isDeleteDialogOpen}
+          onOpenChange={setIsDeleteDialogOpen}
+        >
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>Delete Blog Post</AlertDialogTitle>
               <AlertDialogDescription>
-                Are you sure you want to delete this blog post? This action cannot be undone.
+                Are you sure you want to delete this blog post? This action
+                cannot be undone.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={handleDeleteConfirm} className="bg-red-600 hover:bg-red-700">
+              <AlertDialogAction
+                onClick={handleDeleteConfirm}
+                className="bg-red-600 hover:bg-red-700"
+              >
                 Delete
               </AlertDialogAction>
             </AlertDialogFooter>
@@ -191,21 +223,27 @@ const BlogManagement = () => {
         </AlertDialog>
 
         {error && (
-          <Alert className='mb-6 border-red-200 bg-red-50'>
+          <Alert className="mb-6 border-red-200 bg-red-50">
             <AlertCircle className="h-4 w-4 text-red-600" />
             <AlertTitle className="text-red-800">Error</AlertTitle>
-            <AlertDescription className="text-red-700">{error}</AlertDescription>
+            <AlertDescription className="text-red-700">
+              {error}
+            </AlertDescription>
           </Alert>
         )}
 
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-slate-900">Blog Management</h1>
+            <h1 className="text-3xl font-bold text-slate-900">
+              Blog Management
+            </h1>
             <p className="text-slate-600 mt-1">Manage your blog posts</p>
           </div>
           <Link href="/dashboard/admin/blog/create" passHref>
             <Button asChild className="bg-blue-600 hover:bg-blue-700">
-              <b><PlusCircle className="h-4 w-4 mr-2" /> New Post</b>
+              <b>
+                <PlusCircle className="h-4 w-4 mr-2" /> New Post
+              </b>
             </Button>
           </Link>
         </div>
@@ -217,7 +255,12 @@ const BlogManagement = () => {
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full sm:w-80"
           />
-          <Select value={statusFilter} onValueChange={(value: 'all' | 'published' | 'draft') => setStatusFilter(value)}>
+          <Select
+            value={statusFilter}
+            onValueChange={(value: "all" | "published" | "draft") =>
+              setStatusFilter(value)
+            }
+          >
             <SelectTrigger className="w-full sm:w-40">
               <SelectValue placeholder="Filter by status" />
             </SelectTrigger>
@@ -230,7 +273,7 @@ const BlogManagement = () => {
         </div>
 
         {filteredBlogs.length > 0 ? (
-          viewMode === 'table' ? (
+          viewMode === "table" ? (
             <div className="bg-white rounded-lg border shadow-sm">
               <Table>
                 <TableHeader>
@@ -246,14 +289,20 @@ const BlogManagement = () => {
                     <TableRow key={blog.id}>
                       <TableCell>{blog.title}</TableCell>
                       <TableCell>
-                        <Badge 
-                          variant={blog.status === 'published' ? 'default' : 'secondary'}
+                        <Badge
+                          variant={
+                            blog.status === "published"
+                              ? "default"
+                              : "secondary"
+                          }
                           onClick={() => toggleStatus(blog)}
                         >
                           {blog.status}
                         </Badge>
                       </TableCell>
-                      <TableCell>{new Date(blog.created_at || '').toLocaleDateString()}</TableCell>
+                      <TableCell>
+                        {new Date(blog.created_at || "").toLocaleDateString()}
+                      </TableCell>
                       <TableCell>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -262,17 +311,29 @@ const BlogManagement = () => {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <Link href={`/dashboard/admin/blog/update/${blog.slug}`} passHref>
+                            <Link
+                              href={`/dashboard/admin/blog/update/${blog.slug}`}
+                              passHref
+                            >
                               <DropdownMenuItem asChild>
-                                <a><Edit className="h-4 w-4 mr-2" /> Edit</a>
+                                <a>
+                                  <Edit className="h-4 w-4 mr-2" /> Edit
+                                </a>
                               </DropdownMenuItem>
                             </Link>
-                            <DropdownMenuItem onClick={() => toggleStatus(blog)}>
+                            <DropdownMenuItem
+                              onClick={() => toggleStatus(blog)}
+                            >
                               <Eye className="h-4 w-4 mr-2" />
-                              {blog.status === 'published' ? 'Unpublish' : 'Publish'}
+                              {blog.status === "published"
+                                ? "Unpublish"
+                                : "Publish"}
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem className="text-red-600" onClick={() => handleDeleteClick(blog.id)}>
+                            <DropdownMenuItem
+                              className="text-red-600"
+                              onClick={() => handleDeleteClick(blog.id)}
+                            >
                               <Trash2 className="h-4 w-4 mr-2" /> Delete
                             </DropdownMenuItem>
                           </DropdownMenuContent>
@@ -286,14 +347,23 @@ const BlogManagement = () => {
           ) : (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredBlogs.map((blog) => (
-                <Card key={blog.id} className="hover:shadow-lg transition-shadow">
+                <Card
+                  key={blog.id}
+                  className="hover:shadow-lg transition-shadow"
+                >
                   <CardHeader>
                     <CardTitle>{blog.title}</CardTitle>
                   </CardHeader>
                   <CardContent>{blog.excerpt}</CardContent>
                   <CardFooter className="flex justify-between">
-                    <Badge onClick={() => toggleStatus(blog)}>{blog.status}</Badge>
-                    <Button variant="outline" size="sm" onClick={() => handleDeleteClick(blog.id)}>
+                    <Badge onClick={() => toggleStatus(blog)}>
+                      {blog.status}
+                    </Badge>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDeleteClick(blog.id)}
+                    >
                       <Trash2 className="h-4 w-4 mr-1" /> Delete
                     </Button>
                   </CardFooter>
@@ -305,11 +375,17 @@ const BlogManagement = () => {
           <Card className="border-dashed border-2 text-center py-16">
             <CardContent>
               <FileText className="mx-auto mb-4 text-slate-400 h-12 w-12" />
-              <h3 className="text-lg font-semibold text-slate-700">No posts yet</h3>
-              <p className="text-slate-500 mb-6">Start by creating your first blog post.</p>
+              <h3 className="text-lg font-semibold text-slate-700">
+                No posts yet
+              </h3>
+              <p className="text-slate-500 mb-6">
+                Start by creating your first blog post.
+              </p>
               <Link href="/dashboard/admin/blog/create" passHref>
                 <Button asChild className="bg-blue-600 hover:bg-blue-700">
-                  <b><PlusCircle className="h-4 w-4 mr-2" /> Create Post</b>
+                  <b>
+                    <PlusCircle className="h-4 w-4 mr-2" /> Create Post
+                  </b>
                 </Button>
               </Link>
             </CardContent>

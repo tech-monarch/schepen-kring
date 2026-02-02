@@ -1,8 +1,14 @@
 "use client";
 
-import { Blog, BlogData, BlogResponse, BlogsResponse, BlogFormData } from "@/types/blog.d";
+import {
+  Blog,
+  BlogData,
+  BlogResponse,
+  BlogsResponse,
+  BlogFormData,
+} from "@/types/blog.d";
 
-const BASE_BLOG_URL = "https://api.answer24.nl/api/v1";
+const BASE_BLOG_URL = "https://kring.answer24.nl/api/v1";
 
 /* =====================
    GET ALL BLOGS
@@ -108,7 +114,11 @@ export async function createBlog(data: BlogFormData, token: string) {
 /* =====================
    UPDATE BLOG
 ===================== */
-export async function updateBlog(id: string, data: BlogFormData, token: string) {
+export async function updateBlog(
+  id: string,
+  data: BlogFormData,
+  token: string,
+) {
   try {
     if (!token) {
       return { errors: { _form: ["Authentication required. Please log in."] } };

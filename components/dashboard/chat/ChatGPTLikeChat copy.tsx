@@ -127,7 +127,7 @@ export function ChatGPTLikeChat() {
         const currentSession = sessions.find((s) => s.id === currentSessionId);
         const history = currentSession ? currentSession.messages : [];
 
-        const response = await fetch("https://api.answer24.nl/api/v1/chat", {
+        const response = await fetch("https://kring.answer24.nl/api/v1/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({

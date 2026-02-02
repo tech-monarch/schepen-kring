@@ -12,7 +12,8 @@ import {
   Bell,
   CreditCard,
   ChevronRight,
-  Building, Bot
+  Building,
+  Bot,
 } from "lucide-react";
 import { Security } from "./Security";
 import { Notifications } from "./Notifications";
@@ -40,7 +41,8 @@ const updateUserProfile = async (data: {
 
     const response = await fetch(
       `${
-        process.env.NEXT_PUBLIC_API_BASE_URL || "https://api.answer24.nl/api/v1"
+        process.env.NEXT_PUBLIC_API_BASE_URL ||
+        "https://kring.answer24.nl/api/v1"
       }/profile`,
       {
         method: "PUT",
@@ -48,7 +50,7 @@ const updateUserProfile = async (data: {
           Authorization: `Bearer ${tokenUtils.getToken()}`,
         },
         body: formData,
-      }
+      },
     );
 
     if (!response.ok) {
@@ -202,9 +204,9 @@ const ProfileContent = ({
                 </Label>
                 <Input
                   id="phone"
-                  className="w-full" // Removed bg-gray-50 to indicate it is editable 
+                  className="w-full" // Removed bg-gray-50 to indicate it is editable
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value)} // Enabled editing 
+                  onChange={(e) => setPhone(e.target.value)} // Enabled editing
                   placeholder={phone || "Your phone number"}
                 />
                 <p className="mt-1 text-xs text-gray-500">
@@ -230,8 +232,11 @@ export function Profile() {
   const [isLoading, setIsLoading] = useState(true);
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
-  const [profilePictureFile, setProfilePictureFile] = useState<File | null>(null);
-  const [profilePicturePreview, setProfilePicturePreview] = useState<string>("");
+  const [profilePictureFile, setProfilePictureFile] = useState<File | null>(
+    null,
+  );
+  const [profilePicturePreview, setProfilePicturePreview] =
+    useState<string>("");
   const [phone, setPhone] = useState("");
   const [userRole, setUserRole] = useState<string>("client"); // Default role [cite: 1]
   const pathname = usePathname();
@@ -251,13 +256,13 @@ export function Profile() {
 
     window.addEventListener(
       "userDataUpdated",
-      handleUserDataUpdate as EventListener
+      handleUserDataUpdate as EventListener,
     );
 
     const fetchUserData = () => {
       try {
         const userData = tokenUtils.getUser();
-        const role = localStorage.getItem("user_role") || "client"; // Fetch current role 
+        const role = localStorage.getItem("user_role") || "client"; // Fetch current role
         setUserRole(role);
 
         if (
@@ -297,7 +302,7 @@ export function Profile() {
       return () => {
         window.removeEventListener(
           "userDataUpdated",
-          handleUserDataUpdate as EventListener
+          handleUserDataUpdate as EventListener,
         );
         clearInterval(retryInterval);
       };
@@ -306,12 +311,14 @@ export function Profile() {
     return () => {
       window.removeEventListener(
         "userDataUpdated",
-        handleUserDataUpdate as EventListener
+        handleUserDataUpdate as EventListener,
       );
     };
   }, []);
 
-  const handleProfilePictureChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleProfilePictureChange = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -323,14 +330,17 @@ export function Profile() {
 
     try {
       toast.info("Updating profile picture...");
-      
-      const response = await fetch("https://api.answer24.nl/api/v1/user/update-image", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${tokenUtils.getToken()}`,
+
+      const response = await fetch(
+        "https://kring.answer24.nl/api/v1/user/update-image",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${tokenUtils.getToken()}`,
+          },
+          body: formData,
         },
-        body: formData,
-      });
+      );
 
       const data = await response.json();
 
@@ -369,7 +379,12 @@ export function Profile() {
     if (profilePictureFile) payload.profile_picture = profilePictureFile;
     if (phone.trim() && phone !== user?.phone) payload.phone = phone.trim();
 
-    if (!payload.name && !payload.profile_picture && !payload.phone && !payload.email) {
+    if (
+      !payload.name &&
+      !payload.profile_picture &&
+      !payload.phone &&
+      !payload.email
+    ) {
       toast.info("No changes to update");
       return;
     }
@@ -396,7 +411,7 @@ export function Profile() {
     }
   };
 
-  // Filter tabs: Shoppers (clients) cannot see Billing or Company Details 
+  // Filter tabs: Shoppers (clients) cannot see Billing or Company Details
   const tabs = [
     { id: "profile", icon: User, label: "Profile" },
     { id: "security", icon: Shield, label: "Security" },
@@ -404,7 +419,7 @@ export function Profile() {
     { id: "billing", icon: CreditCard, label: "Billing" },
     { id: "company", icon: Building, label: "Company Details" },
     // { id: "AI", icon: Bot, label: "Communication Logs" },
-  ].filter(tab => {
+  ].filter((tab) => {
     if (userRole === "client") {
       return !["billing", "company", "AI"].includes(tab.id);
     }
@@ -467,11 +482,15 @@ export function Profile() {
 
   useEffect(() => {
     const isShopper = userRole === "client";
-    
+
     if (pathname?.includes("security")) setActiveTab("security");
     else if (pathname?.includes("notifications")) setActiveTab("notifications");
-    else if (pathname?.includes("billing") && !isShopper) setActiveTab("billing");
-    else if ((pathname?.includes("company") || pathname?.includes("details")) && !isShopper)
+    else if (pathname?.includes("billing") && !isShopper)
+      setActiveTab("billing");
+    else if (
+      (pathname?.includes("company") || pathname?.includes("details")) &&
+      !isShopper
+    )
       setActiveTab("company");
     else setActiveTab("profile");
   }, [pathname, userRole]);

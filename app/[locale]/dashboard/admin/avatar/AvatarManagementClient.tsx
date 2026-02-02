@@ -1,7 +1,16 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Edit, Trash2, User, Search, Filter, Grid3x3, List } from "lucide-react";
+import {
+  Plus,
+  Edit,
+  Trash2,
+  User,
+  Search,
+  Filter,
+  Grid3x3,
+  List,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "@/i18n/navigation";
 import {
@@ -41,7 +50,7 @@ export default function AdminAvatarPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [avatarToDelete, setAvatarToDelete] = useState<string | null>(null);
 
-  const API_BASE = "https://api.answer24.nl/api/v1";
+  const API_BASE = "https://kring.answer24.nl/api/v1";
 
   useEffect(() => {
     loadAvatars();
@@ -107,9 +116,11 @@ export default function AdminAvatarPage() {
       searchTerm === "" ||
       avatar.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       avatar.role?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (avatar.description && avatar.description.toLowerCase().includes(searchTerm.toLowerCase()));
+      (avatar.description &&
+        avatar.description.toLowerCase().includes(searchTerm.toLowerCase()));
 
-    const matchesPlan = filterPlan === "all" || avatar.required_plan === filterPlan;
+    const matchesPlan =
+      filterPlan === "all" || avatar.required_plan === filterPlan;
 
     return matchesSearch && matchesPlan;
   });
@@ -123,7 +134,9 @@ export default function AdminAvatarPage() {
               <h1 className="text-4xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
                 Avatar Management
               </h1>
-              <p className="text-slate-600 mt-2">Create and manage your AI avatars with ease</p>
+              <p className="text-slate-600 mt-2">
+                Create and manage your AI avatars with ease
+              </p>
             </div>
             <Link href="/dashboard/admin/avatar/create">
               <button className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-medium rounded-xl hover:from-indigo-700 hover:to-violet-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
@@ -165,7 +178,9 @@ export default function AdminAvatarPage() {
               <button
                 onClick={() => setViewMode("grid")}
                 className={`p-2 rounded-lg transition-all ${
-                  viewMode === "grid" ? "bg-indigo-100 text-indigo-600" : "text-slate-400 hover:text-slate-600"
+                  viewMode === "grid"
+                    ? "bg-indigo-100 text-indigo-600"
+                    : "text-slate-400 hover:text-slate-600"
                 }`}
               >
                 <Grid3x3 className="h-4 w-4" />
@@ -173,7 +188,9 @@ export default function AdminAvatarPage() {
               <button
                 onClick={() => setViewMode("list")}
                 className={`p-2 rounded-lg transition-all ${
-                  viewMode === "list" ? "bg-indigo-100 text-indigo-600" : "text-slate-400 hover:text-slate-600"
+                  viewMode === "list"
+                    ? "bg-indigo-100 text-indigo-600"
+                    : "text-slate-400 hover:text-slate-600"
                 }`}
               >
                 <List className="h-4 w-4" />
@@ -191,7 +208,9 @@ export default function AdminAvatarPage() {
             <div className="mx-auto h-24 w-24 text-slate-300 mb-6">
               <User className="h-full w-full" />
             </div>
-            <h3 className="text-xl font-semibold text-slate-800 mb-2">No avatars found</h3>
+            <h3 className="text-xl font-semibold text-slate-800 mb-2">
+              No avatars found
+            </h3>
             <p className="text-slate-600 mb-6">
               {searchTerm || filterPlan !== "all"
                 ? "Try adjusting your search or filter criteria"
@@ -221,11 +240,19 @@ export default function AdminAvatarPage() {
                   viewMode === "list" ? "flex items-center p-6" : "p-6"
                 }`}
               >
-                <div className={`flex ${viewMode === "list" ? "items-center space-x-6 flex-1" : "flex-col"}`}>
-                  <div className={`relative ${viewMode === "list" ? "flex-shrink-0" : "mb-4 self-center"}`}>
+                <div
+                  className={`flex ${viewMode === "list" ? "items-center space-x-6 flex-1" : "flex-col"}`}
+                >
+                  <div
+                    className={`relative ${viewMode === "list" ? "flex-shrink-0" : "mb-4 self-center"}`}
+                  >
                     <div className="w-20 h-20 rounded-2xl overflow-hidden bg-gradient-to-br from-slate-100 to-slate-200 ring-4 ring-white shadow-lg">
                       {avatar.image ? (
-                        <img src={avatar.image} alt={avatar.name} className="w-full h-full object-cover" />
+                        <img
+                          src={avatar.image}
+                          alt={avatar.name}
+                          className="w-full h-full object-cover"
+                        />
                       ) : (
                         <div className="w-full h-full bg-gradient-to-br from-indigo-100 to-violet-100 flex items-center justify-center">
                           <User className="w-8 h-8 text-indigo-400" />
@@ -239,14 +266,26 @@ export default function AdminAvatarPage() {
                     </div>
                   </div>
 
-                  <div className={`flex-1 ${viewMode === "list" ? "min-w-0" : ""}`}>
-                    <div className={`${viewMode === "list" ? "flex items-start justify-between" : ""}`}>
-                      <div className={`${viewMode === "list" ? "flex-1 min-w-0 pr-4" : "text-center mb-4"}`}>
-                        <h3 className="font-bold text-slate-800 text-lg mb-1 truncate">{avatar.name}</h3>
-                        <p className="text-indigo-600 font-medium text-sm mb-2 truncate">{avatar.role}</p>
+                  <div
+                    className={`flex-1 ${viewMode === "list" ? "min-w-0" : ""}`}
+                  >
+                    <div
+                      className={`${viewMode === "list" ? "flex items-start justify-between" : ""}`}
+                    >
+                      <div
+                        className={`${viewMode === "list" ? "flex-1 min-w-0 pr-4" : "text-center mb-4"}`}
+                      >
+                        <h3 className="font-bold text-slate-800 text-lg mb-1 truncate">
+                          {avatar.name}
+                        </h3>
+                        <p className="text-indigo-600 font-medium text-sm mb-2 truncate">
+                          {avatar.role}
+                        </p>
                         <p
                           className={`text-slate-600 text-sm leading-relaxed ${
-                            viewMode === "grid" ? "line-clamp-2" : "line-clamp-1"
+                            viewMode === "grid"
+                              ? "line-clamp-2"
+                              : "line-clamp-1"
                           }`}
                         >
                           {avatar.description}
@@ -260,7 +299,9 @@ export default function AdminAvatarPage() {
                             : "flex justify-center space-x-2 mt-4"
                         }`}
                       >
-                        <Link href={`/dashboard/admin/avatar/update/${avatar.id}`}>
+                        <Link
+                          href={`/dashboard/admin/avatar/update/${avatar.id}`}
+                        >
                           <button className="p-2.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all duration-200 group">
                             <Edit className="h-4 w-4" />
                           </button>
@@ -278,12 +319,16 @@ export default function AdminAvatarPage() {
                             <AlertDialogHeader>
                               <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                               <AlertDialogDescription>
-                                This action cannot be undone. This will permanently delete the avatar.
+                                This action cannot be undone. This will
+                                permanently delete the avatar.
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
                               <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={handleDelete} disabled={isDeleting}>
+                              <AlertDialogAction
+                                onClick={handleDelete}
+                                disabled={isDeleting}
+                              >
                                 {isDeleting ? "Deleting..." : "Delete"}
                               </AlertDialogAction>
                             </AlertDialogFooter>
@@ -293,18 +338,26 @@ export default function AdminAvatarPage() {
                     </div>
 
                     {avatar.functions && avatar.functions.length > 0 && (
-                      <div className={`flex flex-wrap gap-2 ${viewMode === "list" ? "mt-3" : "mt-4"}`}>
-                        {avatar.functions.slice(0, viewMode === "list" ? 4 : 3).map((func: string, index: number) => (
-                          <span
-                            key={index}
-                            className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200"
-                          >
-                            {func}
-                          </span>
-                        ))}
-                        {avatar.functions.length > (viewMode === "list" ? 4 : 3) && (
+                      <div
+                        className={`flex flex-wrap gap-2 ${viewMode === "list" ? "mt-3" : "mt-4"}`}
+                      >
+                        {avatar.functions
+                          .slice(0, viewMode === "list" ? 4 : 3)
+                          .map((func: string, index: number) => (
+                            <span
+                              key={index}
+                              className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200"
+                            >
+                              {func}
+                            </span>
+                          ))}
+                        {avatar.functions.length >
+                          (viewMode === "list" ? 4 : 3) && (
                           <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 text-slate-500 border border-slate-200">
-                            +{avatar.functions.length - (viewMode === "list" ? 4 : 3)} more
+                            +
+                            {avatar.functions.length -
+                              (viewMode === "list" ? 4 : 3)}{" "}
+                            more
                           </span>
                         )}
                       </div>
