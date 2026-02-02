@@ -1,16 +1,15 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, Anchor, ArrowRight, Gavel, Loader2 } from "lucide-react";
+import { Search, Anchor, ArrowRight, Gavel, Loader2, Tag } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { api } from "@/lib/api";
 
-// 1. IMPORT LOCAL PLACEHOLDER
+// Placeholder import (ensure you have this or remove it)
 import YachtPlaceholder from "@/components/homepage/yacht.jpg";
 
-// The storage URL for your Laravel backend
 const STORAGE_URL = "http://127.0.0.1:8000/storage/";
 
 export default function PublicFleetGallery() {
@@ -19,7 +18,6 @@ export default function PublicFleetGallery() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
 
-  // 2. FETCH FLEET FROM API
   useEffect(() => {
     const fetchFleet = async () => {
       try {
@@ -34,11 +32,10 @@ export default function PublicFleetGallery() {
     fetchFleet();
   }, []);
 
-  // 3. FILTER LOGIC (Aligned with BidController Statuses)
   const filteredVessels = vessels.filter((v: any) => {
     const matchesFilter =
       filter === "All" ||
-      (filter === "Auction" && v.status === "For Bid") || // Matches Controller check
+      (filter === "Auction" && v.status === "For Bid") ||
       (filter === "Sale" && v.status === "For Sale");
 
     const matchesSearch = 
@@ -61,7 +58,7 @@ export default function PublicFleetGallery() {
     <div className="min-h-screen bg-white text-[#003566] selection:bg-blue-100">
       
       {/* HEADER SECTION */}
-      <section className="relative w-full h-[85vh] flex flex-col justify-center overflow-hidden">
+      <section className="relative w-full h-[60vh] md:h-[70vh] flex flex-col justify-center overflow-hidden">
         <div className="absolute inset-0 z-0">
           <img 
             src="https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?w=1600" 
@@ -72,17 +69,17 @@ export default function PublicFleetGallery() {
           <div className="absolute inset-0 bg-gradient-to-t from-[#000814] via-transparent to-[#001D3D]/40" />
         </div>
 
-        <header className="relative z-10 px-6 md:px-12 max-w-[1400px] mx-auto w-full">
+        <header className="relative z-10 px-6 md:px-12 max-w-[1400px] mx-auto w-full pt-20">
           <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-12 border-b border-white/20 pb-16">
             <div className="space-y-6">
               <div className="flex items-center gap-4">
                 <span className="w-12 h-[1px] bg-blue-400" />
                 <p className="text-[11px] font-black uppercase tracking-[0.5em] text-blue-300">
-                  Current Inventory
+                  Global Inventory
                 </p>
               </div>
-              <h1 className="text-7xl md:text-9xl font-serif tracking-tighter leading-[0.8] text-white">
-                The <span className="italic font-light text-white/40">Fleet</span>
+              <h1 className="text-6xl md:text-8xl font-serif tracking-tighter leading-[0.9] text-white">
+                The <span className="italic font-light text-white/40">Manifest</span>
               </h1>
             </div>
             
@@ -92,7 +89,7 @@ export default function PublicFleetGallery() {
                 <input 
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search Vessels..." 
+                  placeholder="SEARCH FLEET..." 
                   className="bg-white/10 backdrop-blur-md border border-white/10 pl-12 pr-6 py-4 text-[10px] uppercase font-bold tracking-widest text-white outline-none focus:bg-white focus:text-[#003566] transition-all w-full sm:w-64"
                 />
               </div>
@@ -104,7 +101,7 @@ export default function PublicFleetGallery() {
                     onClick={() => setFilter(cat)}
                     className={cn(
                       "px-8 py-3 text-[10px] font-black uppercase tracking-widest transition-all",
-                      filter === cat ? "bg-white text-[#003566]" : "text-white/60"
+                      filter === cat ? "bg-white text-[#003566]" : "text-white/60 hover:text-white"
                     )}
                   >
                     {cat}
@@ -135,17 +132,31 @@ export default function PublicFleetGallery() {
                     className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" 
                     alt={v.name} 
                   />
+                  
+                  {/* Status Badges */}
                   <div className="absolute top-6 left-6 flex gap-2">
                     <span className={cn(
-                      "px-4 py-2 text-[9px] font-black uppercase tracking-widest backdrop-blur-md",
+                      "px-4 py-2 text-[9px] font-black uppercase tracking-widest backdrop-blur-md shadow-sm",
                       v.status === 'For Bid' ? "bg-blue-600 text-white" : "bg-white text-[#003566]"
                     )}>
-                      {v.status === 'For Bid' ? "Auction" : "Direct Sale"}
+                      {v.status === 'For Bid' ? "Live Auction" : "Direct Sale"}
                     </span>
                     {v.status === 'Sold' && (
-                      <span className="px-4 py-2 text-[9px] font-black uppercase tracking-widest bg-red-600 text-white">Sold</span>
+                      <span className="px-4 py-2 text-[9px] font-black uppercase tracking-widest bg-red-600 text-white shadow-sm">Sold</span>
                     )}
                   </div>
+
+                  {/* Quick Action Overlay */}
+                  {v.status !== 'Sold' && (
+                    <div className="absolute inset-0 bg-[#003566]/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                      <div className="text-center transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
+                        <p className="text-white text-[10px] font-black uppercase tracking-[0.3em] mb-4">View Details</p>
+                        <div className="w-12 h-12 rounded-full border border-white/30 flex items-center justify-center mx-auto text-white">
+                          <ArrowRight size={20} />
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </Link>
 
                 <div className="pt-8">
@@ -160,45 +171,54 @@ export default function PublicFleetGallery() {
                     </div>
                   </div>
 
-                  {/* VESSEL SPECS */}
+                  {/* SPECS */}
                   <div className="grid grid-cols-3 gap-2 border-y border-slate-50 py-6 mb-8">
                     <div className="text-center border-r border-slate-50">
                       <p className="text-[8px] font-black uppercase text-slate-400 mb-1">Length</p>
-                      <p className="text-sm font-serif italic">{v.length}</p>
+                      <p className="text-sm font-serif italic">{v.length}m</p>
                     </div>
                     <div className="text-center border-r border-slate-50">
                       <p className="text-[8px] font-black uppercase text-slate-400 mb-1">Year</p>
                       <p className="text-sm font-serif italic">{v.year}</p>
                     </div>
                     <div className="text-center">
-                      <p className="text-[8px] font-black uppercase text-slate-400 mb-1">Cabins</p>
-                      <p className="text-sm font-serif italic">{v.cabins || '0'}</p>
+                      <p className="text-[8px] font-black uppercase text-slate-400 mb-1">Guests</p>
+                      <p className="text-sm font-serif italic">{v.cabins ? v.cabins * 2 : 'N/A'}</p>
                     </div>
                   </div>
 
-                  {/* PRICING & CTA (Synchronized with BidController) */}
+                  {/* ACTION FOOTER */}
                   <div className="flex justify-between items-center">
                     <div>
                       <p className="text-[9px] font-black uppercase text-blue-600 tracking-widest mb-1">
-                        {v.status === 'For Bid' ? "Current High Bid" : "Valuation"}
+                        {v.status === 'For Bid' ? "Current Bid" : "Valuation"}
                       </p>
-                      <p className="text-3xl font-serif tracking-tighter">
-                        {/* Show current_bid if it exists, otherwise base price */}
+                      <p className="text-3xl font-serif tracking-tighter text-[#003566]">
                         €{new Intl.NumberFormat().format(v.current_bid || v.price)}
                       </p>
                     </div>
                     
+                    {/* BUTTONS LINKING TO BIDS PAGE */}
                     <div className="flex gap-2">
-                      {v.status === 'For Bid' && (
-                        <Link href={`/bids/${v.id}`}>
-                          <button className="w-12 h-12 flex items-center justify-center rounded-full bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-all shadow-sm">
-                            <Gavel size={20} />
+                      {v.status !== 'Sold' && (
+                        <Link href={`/nl/bids/${v.id}`}>
+                          <button 
+                            className={cn(
+                              "w-12 h-12 flex items-center justify-center rounded-full transition-all shadow-sm",
+                              v.status === 'For Bid' 
+                                ? "bg-blue-600 text-white hover:bg-blue-700" 
+                                : "bg-blue-50 text-blue-600 hover:bg-blue-100"
+                            )}
+                            title={v.status === 'For Bid' ? "Enter Auction" : "Book Test Sail"}
+                          >
+                            {v.status === 'For Bid' ? <Gavel size={18} /> : <Anchor size={18} />}
                           </button>
                         </Link>
                       )}
+                      
                       <Link href={`/fleet/${v.id}`}>
                         <button className="w-12 h-12 flex items-center justify-center rounded-full border border-slate-200 hover:border-[#003566] hover:bg-[#003566] hover:text-white transition-all">
-                          <ArrowRight size={20} />
+                          <ArrowRight size={18} />
                         </button>
                       </Link>
                     </div>
@@ -212,7 +232,7 @@ export default function PublicFleetGallery() {
 
       {/* FOOTER CTA */}
       <section className="max-w-[1400px] mx-auto px-6 md:px-12 py-32">
-        <div className="bg-[#003566] p-16 md:p-24 relative overflow-hidden group">
+        <div className="bg-[#003566] p-16 md:p-24 relative overflow-hidden group shadow-2xl">
           <div className="absolute top-0 right-0 p-20 opacity-10 group-hover:rotate-12 transition-transform duration-1000">
              <Anchor size={300} className="text-white" />
           </div>
