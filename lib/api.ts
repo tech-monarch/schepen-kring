@@ -4,7 +4,7 @@ const isLocal =
   typeof window !== "undefined" && window.location.hostname === "localhost";
 const BASE_URL = isLocal
   ? "http://kring.answer24.nl/api"
-  : "https://your-server-ip/api";
+  : "http://kring.answer24.nl/api";
 
 export const api = axios.create({
   baseURL: BASE_URL,
