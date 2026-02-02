@@ -36,7 +36,7 @@ export function PrivateNavbar() {
 
   const navItems = [
     { name: t("home"), href: "/" },
-    { name: t("yacht"), href: "/yacht" },
+    { name: t("yacht"), href: "/yachts" },
     { name: t("blog"), href: "/blog" },
     { name: t("faq"), href: "/faq" },
     { name: t("contact"), href: "/contact" },
