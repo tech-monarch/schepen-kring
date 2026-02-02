@@ -309,6 +309,11 @@
     }
   },
   "Dashboard": {
+    "admin_label": "Administration",
+    "overview": "Overview",
+    "fleet_management": "Fleet Management",
+    "task_board": "Task Board",
+    "system_status_live": "System Operational",
     "title": "My Fleet",
     "subtitle": "Monitor your saved vessels and maritime equity",
     "loading": "Loading shipyard data...",
@@ -425,14 +430,14 @@
   "Faq": {
     "badge": "Concierge Intelligence",
     "title": "How may we <span>assist you?</span>",
-    "subtitle": "Access the Answer24 knowledge base or query our AI Command Center.",
+    "subtitle": "Access the Schepenkring.nlknowledge base or query our AI Command Center.",
     "searchPlaceholder": "Search our protocols...",
     "askButton": "Query AI",
     "aiBadge": "Verified Response",
-    "aiName": "Answer24 Smart Assistant",
+    "aiName": "Schepenkring.nlSmart Assistant",
     "aiLoading": "Accessing Intelligence Layers...",
     "aiError": "Our intelligence systems are currently processing high-volume data. Please browse our curated categories below.",
-    "aiSystemPrompt": "ROLE: Answer24 Elite Assistant. TONE: Sophisticated, helpful, concise. CONTEXT: Luxury maritime and fleet management. DATA: {data}. GUIDELINE: Max 3 sentences. Better Deals, Better Life.",
+    "aiSystemPrompt": "ROLE: Schepenkring.nlElite Assistant. TONE: Sophisticated, helpful, concise. CONTEXT: Luxury maritime and fleet management. DATA: {data}. GUIDELINE: Max 3 sentences. Better Deals, Better Life.",
     "slogan": "Better Deals, Better Life",
     "protocolCount": "{count} Protocols Available",
     "generalCategory": "General Protocols"

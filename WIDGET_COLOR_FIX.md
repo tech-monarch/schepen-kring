@@ -60,7 +60,7 @@ const theme = React.useMemo(
       background: "#ffffff",
       radius: 18,
       fontFamily: "Inter, ui-sans-serif",
-      logoUrl: "/Answer24Logo.png",
+      logoUrl: "/schepenkring-logo.png",
     },
   [settings?.theme],
 );

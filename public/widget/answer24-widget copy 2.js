@@ -1,5 +1,5 @@
 /**
- * Answer24 Embeddable Chat Widget
+ * Schepenkring.nlEmbeddable Chat Widget
  * Version: 4.0.0 - SaaS Booking & Slot Management
  * * Usage:
  * <script src="https://yourdomain.com/widget/answer24-widget.js" data-public-key="YOUR_PUBLIC_KEY"></script>
@@ -25,11 +25,14 @@
 
   if (!publicKey) {
     console.error(
-      "[Answer24 Widget] Error: data-public-key attribute is required. Continuing with fallback key.",
+      "[Schepenkring.nlWidget] Error: data-public-key attribute is required. Continuing with fallback key.",
     );
   }
 
-  console.log("[Answer24 Widget] Initializing with public key:", publicKey);
+  console.log(
+    "[Schepenkring.nlWidget] Initializing with public key:",
+    publicKey,
+  );
 
   // --- BOOKING STATE VARIABLES ---
   let bookingMode = 0; // 0 = Cashback, 1 = Booking
@@ -55,10 +58,10 @@
         auth.isAuthenticated = true;
         auth.userToken = parsedAuth.userToken;
         auth.userId = parsedAuth.userId;
-        console.log("[Answer24 Widget] User session loaded.");
+        console.log("[Schepenkring.nlWidget] User session loaded.");
       }
     } catch (e) {
-      console.warn("[Answer24 Widget] Could not load auth state:", e);
+      console.warn("[Schepenkring.nlWidget] Could not load auth state:", e);
     }
   }
 
@@ -114,7 +117,7 @@
   if (!effectivePublicKey || effectivePublicKey === "demo-key-123") {
     effectivePublicKey = "PUB_demo_testkey";
     console.warn(
-      "[Answer24 Widget] Using fallback demo public key: PUB_demo_testkey",
+      "[Schepenkring.nlWidget] Using fallback demo public key: PUB_demo_testkey",
     );
   }
 
@@ -140,7 +143,7 @@
         }
       }
     } catch (err) {
-      console.warn("[Answer24 Widget] Domain init failed:", err);
+      console.warn("[Schepenkring.nlWidget] Domain init failed:", err);
     }
   }
 
@@ -262,7 +265,7 @@
         }
       }
     } catch (apiErr) {
-      console.warn("[Answer24 Widget] Failed to fetch settings", apiErr);
+      console.warn("[Schepenkring.nlWidget] Failed to fetch settings", apiErr);
     }
 
     try {
@@ -283,7 +286,7 @@
   // --- GEMINI AI & CHAT LOGIC ---
   const predefinedResponses = {
     "What is answer24?":
-      "answer24 is an all-in-one smart widget that provides AI-powered chat support, loyalty features like cashback, and personalized interactions.",
+      "Schepenkring.nlis an all-in-one smart widget that provides AI-powered chat support, loyalty features like cashback, and personalized interactions.",
     "Contact support":
       "For direct support, please visit our dedicated help center at [https://support.answer24.nl](https://support.answer24.nl) or email us directly at support@answer24.nl.",
     "How do I use the cashback feature?":
@@ -339,7 +342,7 @@
           data.content || data.response || "Response received successfully.",
       };
     } catch (error) {
-      console.error("[Answer24 Widget] Error sending message:", error);
+      console.error("[Schepenkring.nlWidget] Error sending message:", error);
       return {
         content:
           "Sorry, something went wrong connecting to the AI. Please try again.",
@@ -395,7 +398,7 @@
     const typingDiv = document.createElement("div");
     typingDiv.id = "answer24-typing-indicator";
     typingDiv.className = "answer24-typing";
-    typingDiv.innerHTML = `<span></span><span></span><span></span><span class="answer24-typing-text">answer24 is typing…</span>`;
+    typingDiv.innerHTML = `<span></span><span></span><span></span><span class="answer24-typing-text">Schepenkring.nlis typing…</span>`;
     messagesContainer.appendChild(typingDiv);
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
   }
@@ -1241,7 +1244,7 @@
 
             <div id="answer24-auth-screen" class="answer24-screen" style="align-items: center; justify-content: center; padding: 24px;">
               <h3 style="color:${theme.primary}; margin-bottom:10px;">Login Required</h3>
-              <p style="color:#6b7280; font-size:14px; text-align:center; margin-bottom:20px;">Please log in to your Answer24 account to continue.</p>
+              <p style="color:#6b7280; font-size:14px; text-align:center; margin-bottom:20px;">Please log in to your Schepenkring.nlaccount to continue.</p>
               <form class="answer24-form">
                 <input type="email" placeholder="Email Address" class="answer24-input-field" required>
                 <input type="password" placeholder="Password" class="answer24-input-field" required>

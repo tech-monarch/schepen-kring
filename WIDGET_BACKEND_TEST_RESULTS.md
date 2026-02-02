@@ -5,10 +5,13 @@
 ### **🔌 API Endpoints Testing**
 
 #### **1. Widget Configuration API**
+
 ```bash
 curl "http://localhost:3000/api/v1/widget/config?key=PUB_abc123"
 ```
+
 **✅ Result:** Returns complete widget configuration
+
 ```json
 {
   "company": {"id": "cmp_123", "name": "Shop BV", "brand": "Shop"},
@@ -22,30 +25,37 @@ curl "http://localhost:3000/api/v1/widget/config?key=PUB_abc123"
 ```
 
 #### **2. Widget Settings API**
+
 ```bash
 curl -X POST "http://localhost:3000/api/v1/widget/settings" \
   -H "Content-Type: application/json" \
   -d '{"theme": {"primary": "#ff0000"}}'
 ```
+
 **✅ Result:** Returns "Authentication required" (expected for protected endpoint)
 
 #### **3. Widget Chat API**
+
 ```bash
 curl -X POST "http://localhost:3000/api/v1/widget/chat" \
   -H "Authorization: Bearer PUB_abc123" \
   -H "Content-Type: application/json" \
   -d '{"message": "Hello", "companyId": "cmp_123"}'
 ```
+
 **✅ Result:** Returns "Invalid public key" (expected - key validation working)
 
 #### **4. Widget Script Delivery**
+
 ```bash
 curl "http://localhost:3000/widget/v1/answer24.js"
 ```
+
 **✅ Result:** Returns complete widget JavaScript code
+
 ```javascript
 /**
- * Answer24 Advanced Embeddable Widget v2.0.0
+ * Schepenkring.nlAdvanced Embeddable Widget v2.0.0
  * Multi-tenant widget with public key authentication, domain validation, and advanced features
  */
 ```
@@ -83,29 +93,36 @@ curl "http://localhost:3000/widget/v1/answer24.js"
 ## 🧪 **Complete Testing Workflow**
 
 ### **Step 1: Admin Dashboard**
+
 ```
 URL: http://localhost:3000/en/dashboard/admin/widget
 ```
+
 **✅ Status:** Default settings created automatically
 **✅ Features:** Theme customization, feature toggles, domain management
 
 ### **Step 2: Widget Configuration**
+
 ```bash
 # Test widget config
 curl "http://localhost:3000/api/v1/widget/config?key=PUB_abc123"
 ```
+
 **✅ Status:** Returns complete configuration
 **✅ Features:** Theme, behavior, features, i18n, integrations
 
 ### **Step 3: Widget Script**
+
 ```bash
 # Test widget script
 curl "http://localhost:3000/widget/v1/answer24.js"
 ```
+
 **✅ Status:** Returns complete widget JavaScript
 **✅ Features:** Public key auth, domain validation, HMAC signatures
 
 ### **Step 4: Widget Embed**
+
 ```html
 <!-- Test embed code -->
 <script
@@ -118,6 +135,7 @@ curl "http://localhost:3000/widget/v1/answer24.js"
   data-position="right"
 ></script>
 ```
+
 **✅ Status:** Widget script loads successfully
 **✅ Features:** Advanced widget with all features
 
@@ -126,8 +144,9 @@ curl "http://localhost:3000/widget/v1/answer24.js"
 ## 🚀 **Backend Requirements Status**
 
 ### **✅ Implemented:**
+
 - ✅ **Widget Configuration API** - Complete
-- ✅ **Widget Settings API** - Complete  
+- ✅ **Widget Settings API** - Complete
 - ✅ **Widget Chat API** - Complete
 - ✅ **Public Key Authentication** - Working
 - ✅ **Domain Validation** - Working
@@ -137,6 +156,7 @@ curl "http://localhost:3000/widget/v1/answer24.js"
 - ✅ **Static File Serving** - Working
 
 ### **🔄 Ready for Backend Database:**
+
 - 🔄 **Database Schema** - Needs backend implementation
 - 🔄 **JWT Token Validation** - Needs backend integration
 - 🔄 **AI Service Integration** - Needs backend setup
@@ -148,6 +168,7 @@ curl "http://localhost:3000/widget/v1/answer24.js"
 ## 🎉 **Test Results Summary**
 
 ### **✅ All Tests Passed:**
+
 1. **API Endpoints** - All 4 endpoints working
 2. **Widget Script** - Accessible and functional
 3. **Admin Dashboard** - Default settings created
@@ -156,6 +177,7 @@ curl "http://localhost:3000/widget/v1/answer24.js"
 6. **Security** - Domain validation and HMAC signatures working
 
 ### **🚀 Ready for Production:**
+
 - ✅ **Frontend** - Complete and functional
 - ✅ **API Routes** - All working
 - ✅ **Widget Script** - Advanced features implemented
@@ -176,9 +198,10 @@ curl "http://localhost:3000/widget/v1/answer24.js"
 
 ## 🏆 **Conclusion**
 
-**The widget system is fully functional and ready for production!** 
+**The widget system is fully functional and ready for production!**
 
 All frontend components are working perfectly:
+
 - ✅ **Widget Script** - Advanced features implemented
 - ✅ **API Endpoints** - All 4 endpoints working
 - ✅ **Admin Dashboard** - Complete management interface

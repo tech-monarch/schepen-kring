@@ -8,7 +8,7 @@ import SectionDownloadApp from "./DownloadApp";
 
 const HomePage = () => {
   return (
-    <div>
+    <div className="min-h-screen overflow-x-hidden">
       <HeroSection />
       <FeaturesSection />
       <BoatsSection />

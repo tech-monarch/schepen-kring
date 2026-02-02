@@ -9,8 +9,9 @@ import type {
   PerformanceData,
 } from "@/types/dashboard";
 
-// ✅ Real stats API (Answer24 Backend)
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://answer24.nl/api/v1";
+// ✅ Real stats API (Schepenkring.nlBackend)
+const BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL || "https://answer24.nl/api/v1";
 
 // --- FETCH HELPERS ---
 async function fetchJSON<T>(url: string): Promise<T> {

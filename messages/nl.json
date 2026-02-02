@@ -149,30 +149,35 @@
     }
   },
   "Dashboard": {
+    "admin_label": "Administratie",
+    "overview": "Overzicht",
+    "fleet_management": "Vlootbeheer",
+    "task_board": "Takenbord",
+    "system_status_live": "Systeem Operationeel",
     "title": "Mijn Vloot",
-    "subtitle": "Bewaak de waarde en prestaties van uw schepen",
-    "loading": "Scheepsgegevens laden...",
+    "subtitle": "Beheer uw opgeslagen vaartuigen en maritiem vermogen",
+    "loading": "Scheepswerf gegevens laden...",
     "stats": {
       "totalSpend": "Marktwaarde",
-      "totalClicks": "Bekeken Specificaties",
-      "totalImpressions": "Aantal Vertoningen",
-      "ctr": "Inquiry Ratio"
+      "totalClicks": "Specificatie Weergaven",
+      "totalImpressions": "Bereik Advertentie",
+      "ctr": "Aanvraagpercentage"
     },
     "sections": {
-      "campaigns": "Mijn Gevolgde Schepen",
+      "campaigns": "Gevolgde Schepen",
       "aiTips": "Marktkansen",
-      "quickActions": "Directe Acties",
-      "performance": "Portefeuille Overzicht"
+      "quickActions": "Makelaar Acties",
+      "performance": "Portfolio Overzicht"
     },
     "actions": {
-      "viewAll": "Alles Weergeven",
-      "applyTip": "Aanbod Bekijken",
-      "dismiss": "Negeren",
-      "seeMore": "Details Bekijken"
+      "viewAll": "Bekijk Vloot",
+      "applyTip": "Bekijk Aanbod",
+      "dismiss": "Verbergen",
+      "seeMore": "Volledige Specs"
     },
     "emptyStates": {
-      "noCampaigns": "Geen schepen gevonden",
-      "noTips": "Geen nieuwe marktkansen beschikbaar"
+      "noCampaigns": "Geen gevolgde vaartuigen",
+      "noTips": "Geen prijswijzigingen vandaag"
     }
   },
   "Navigation": {
@@ -431,14 +436,14 @@
   "Faq": {
     "badge": "Concierge Intelligentie",
     "title": "Hoe kunnen wij u <span>van dienst zijn?</span>",
-    "subtitle": "Raadpleeg de Answer24 kennisbank of stel uw vraag aan ons AI Command Center.",
+    "subtitle": "Raadpleeg de Schepenkring.nlkennisbank of stel uw vraag aan ons AI Command Center.",
     "searchPlaceholder": "Doorzoek onze protocollen...",
     "askButton": "AI Raadplegen",
     "aiBadge": "Geverifieerd Antwoord",
-    "aiName": "Answer24 Smart Assistent",
+    "aiName": "Schepenkring.nlSmart Assistent",
     "aiLoading": "Intelligentielagen worden geladen...",
     "aiError": "Onze systemen verwerken momenteel een grote hoeveelheid data. Gelieve onze gecureerde categorieën hieronder te raadplegen.",
-    "aiSystemPrompt": "ROL: Answer24 Elite Assistent. TOON: Sophisticated, behulpzaam, beknopt. CONTEXT: Luxe maritieme sector en vlootbeheer. DATA: {data}. RICHTLIJN: Max 3 zinnen. Better Deals, Better Life.",
+    "aiSystemPrompt": "ROL: Schepenkring.nlElite Assistent. TOON: Sophisticated, behulpzaam, beknopt. CONTEXT: Luxe maritieme sector en vlootbeheer. DATA: {data}. RICHTLIJN: Max 3 zinnen. Better Deals, Better Life.",
     "slogan": "Better Deals, Better Life",
     "protocolCount": "{count} Protocollen Beschikbaar",
     "generalCategory": "Algemene Protocollen"
@@ -487,5 +492,4 @@
     "further_reading": "Verder Lezen",
     "view_all": "Bekijk Archief"
   }
-
 }

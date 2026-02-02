@@ -1,6 +1,6 @@
 /**
  * Widget Configuration
- * Centralized configuration for the Answer24 Widget System
+ * Centralized configuration for the Schepenkring.nlWidget System
  */
 
 export const WIDGET_CONFIG = {

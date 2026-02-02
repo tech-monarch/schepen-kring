@@ -93,12 +93,11 @@ export const getNotifications = async (
             ? {
                 name: notification.data.sender.name || "System",
                 avatar:
-                  notification.data.sender.avatar ||
-                  "/answerLogobgRemover-removebg-preview.png",
+                  notification.data.sender.avatar || "/schepenkring-logo.png",
               }
             : {
                 name: "System",
-                avatar: "/answerLogobgRemover-removebg-preview.png",
+                avatar: "/schepenkring-logo.png",
               },
         }),
       );
@@ -303,12 +302,11 @@ export const getUnreadNotifications = async (
             ? {
                 name: notification.data.sender.name || "System",
                 avatar:
-                  notification.data.sender.avatar ||
-                  "/answerLogobgRemover-removebg-preview.png",
+                  notification.data.sender.avatar || "/schepenkring-logo.png",
               }
             : {
                 name: "System",
-                avatar: "/answerLogobgRemover-removebg-preview.png",
+                avatar: "/schepenkring-logo.png",
               },
         }),
       );

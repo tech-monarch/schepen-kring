@@ -1,6 +1,6 @@
-# Local Build and Deployment Guide for Answer24 Frontend
+# Local Build and Deployment Guide for Schepenkring.nlFrontend
 
-This guide explains how to build the Answer24 frontend application locally and deploy it to your server.
+This guide explains how to build the Schepenkring.nlfrontend application locally and deploy it to your server.
 
 ## Prerequisites
 

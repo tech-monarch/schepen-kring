@@ -18,8 +18,6 @@ export const notificationService = {
     // Mock API call - simulate network delay
     await new Promise((resolve) => setTimeout(resolve, 500));
 
-
-
     // Simulate browser notification for demo
     if (notificationService.isPermitted()) {
       notificationService.sendBrowserNotification(payload.title, {
@@ -38,8 +36,8 @@ export const notificationService = {
   sendBrowserNotification: (title: string, options?: NotificationOptions) => {
     if ("Notification" in window && Notification.permission === "granted") {
       return new Notification(title, {
-        icon: "/answerLogobgRemover-removebg-preview.png",
-        badge: "/answerLogobgRemover-removebg-preview.png",
+        icon: "/schepenkring-logo.png",
+        badge: "/schepenkring-logo.png",
         ...options,
       });
     } else {
@@ -70,7 +68,6 @@ export const notificationService = {
     // Mock API call - simulate network delay
     await new Promise((resolve) => setTimeout(resolve, 300));
 
-
     return {
       success: true,
       interests,
@@ -83,7 +80,6 @@ export const notificationService = {
   unsubscribeFromInterests: async (interests: string[]) => {
     // Mock API call - simulate network delay
     await new Promise((resolve) => setTimeout(resolve, 300));
-
 
     return {
       success: true,

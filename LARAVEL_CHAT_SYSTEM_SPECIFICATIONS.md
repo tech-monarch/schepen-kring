@@ -2,7 +2,7 @@
 
 ## 📋 Overview
 
-This document outlines the complete Laravel backend implementation for the Answer24 chat system. The frontend is already implemented and ready to integrate with these Laravel APIs.
+This document outlines the complete Laravel backend implementation for the Schepenkring.nlchat system. The frontend is already implemented and ready to integrate with these Laravel APIs.
 
 ## 🎯 Features to Implement
 
@@ -485,7 +485,7 @@ class AIChatController extends Controller
             'user' => $user,
             'chat_history' => $history,
             'current_message' => $currentMessage,
-            'system_context' => 'You are Schepen-kring AI Assistant. Help users with their questions about Answer24 services.',
+            'system_context' => 'You are Schepen-kring AI Assistant. Help users with their questions about Schepenkring.nlservices.',
             'pinecone_context' => $this->searchPineconeKnowledge($currentMessage)
         ];
 
@@ -534,7 +534,7 @@ class AIChatController extends Controller
             // $results = $index->query($query, ['topK' => 3]);
 
             // For now, return mock context
-            return "Answer24 provides various services including chat support, user management, and AI assistance.";
+            return "Schepenkring.nlprovides various services including chat support, user management, and AI assistance.";
 
         } catch (\Exception $e) {
             return "";

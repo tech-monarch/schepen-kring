@@ -13,7 +13,7 @@ import {
   ArrowUpRight,
 } from "lucide-react";
 import { Link } from "@/i18n/navigation";
-import ANSWER24LOGO from "@/public/answerLogobgRemover-removebg-preview.png";
+import ANSWER24LOGO from "@/public/schepenkring-logo.png";
 
 const Footer = () => {
   const t = useTranslations("common");
@@ -36,44 +36,48 @@ const Footer = () => {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="bg-[#0a0a0a] border-t border-white/5 pt-24 pb-12 overflow-hidden">
+    // Reduced padding from pt-32/pb-16 to pt-20/pb-10
+    <footer className="bg-[#001e3c] pt-20 pb-10 overflow-hidden relative">
       <div className="max-w-[1400px] mx-auto px-6">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 mb-24">
+        {/* Reduced margin-bottom from mb-28 to mb-16 */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 mb-16">
           {/* Brand Column */}
-          <div className="lg:col-span-4 space-y-10">
+          <div className="lg:col-span-4 space-y-8">
             <Link
               href="/"
-              className="inline-block transition-transform hover:scale-105"
+              className="inline-block transition-opacity hover:opacity-80"
             >
-              {/* <Image 
-                src={ANSWER24LOGO} 
-                alt="Answer24 Logo" 
-                width={160} 
+              <Image
+                src={ANSWER24LOGO}
+                alt="Logo"
+                width={180}
                 height={50}
-                className="brightness-0 invert h-auto w-auto"
-              /> */}
+                className="h-auto w-auto brightness-0 invert"
+              />
             </Link>
-            <p className="text-slate-500 text-sm leading-relaxed max-w-sm font-light tracking-wide italic">
+
+            <p className="text-blue-100/60 text-lg leading-relaxed max-w-sm font-light italic border-l-4 border-blue-500/30 pl-6">
               "{t("footer.tagline")}"
             </p>
-            <div className="flex gap-5">
+
+            <div className="flex gap-6">
               {[Facebook, Twitter, Instagram, Linkedin].map((Icon, idx) => (
                 <a
                   key={idx}
                   href="#"
-                  className="w-10 h-10 border border-white/10 flex items-center justify-center text-slate-400 hover:text-[#c5a572] hover:border-[#c5a572] transition-all"
+                  className="text-blue-200 hover:text-white transition-all transform hover:-translate-y-1"
                 >
-                  <Icon className="h-4 w-4" />
+                  <Icon className="h-5 w-5" strokeWidth={1.5} />
                 </a>
               ))}
             </div>
           </div>
 
-          {/* Nav Links - Using a CSS Grid for better alignment */}
-          <div className="lg:col-span-8 grid grid-cols-2 md:grid-cols-3 gap-12 border-l border-white/5 pl-0 lg:pl-16">
+          {/* Navigation Grid */}
+          <div className="lg:col-span-8 grid grid-cols-2 md:grid-cols-3 gap-12">
             {/* Quick Links */}
             <div>
-              <h3 className="text-[#c5a572] text-[10px] font-bold tracking-[0.4em] uppercase mb-8">
+              <h3 className="text-blue-400 text-[10px] font-black tracking-[0.4em] uppercase mb-6">
                 {t("footer.quick_links")}
               </h3>
               <ul className="space-y-4">
@@ -81,10 +85,10 @@ const Footer = () => {
                   <li key={item}>
                     <Link
                       href={`/${item}`}
-                      className="text-slate-400 hover:text-white transition-colors text-xs font-medium tracking-widest flex items-center group"
+                      className="text-white/80 hover:text-blue-400 transition-colors text-base font-medium flex items-center group"
                     >
                       {t(`footer.${item}`)}
-                      <ArrowUpRight className="ml-2 w-3 h-3 opacity-0 -translate-y-1 transition-all group-hover:opacity-100 group-hover:translate-y-0" />
+                      <ArrowUpRight className="ml-1 w-4 h-4 opacity-0 transition-all group-hover:opacity-100" />
                     </Link>
                   </li>
                 ))}
@@ -93,7 +97,7 @@ const Footer = () => {
 
             {/* Legal */}
             <div>
-              <h3 className="text-[#c5a572] text-[10px] font-bold tracking-[0.4em] uppercase mb-8">
+              <h3 className="text-blue-400 text-[10px] font-black tracking-[0.4em] uppercase mb-6">
                 {t("footer.legal")}
               </h3>
               <ul className="space-y-4">
@@ -102,40 +106,42 @@ const Footer = () => {
                     <li key={page.id}>
                       <Link
                         href={`/legal/${page.slug}`}
-                        className="text-slate-400 hover:text-white transition-colors text-xs font-medium tracking-widest"
+                        className="text-white/80 hover:text-blue-400 transition-colors text-base font-medium"
                       >
                         {page.title}
                       </Link>
                     </li>
                   ))
                 ) : (
-                  <li className="text-slate-600 text-[10px] uppercase tracking-tighter">
+                  <li className="text-white/40 text-sm">
                     {t("footer.no_pages")}
                   </li>
                 )}
               </ul>
             </div>
 
-            {/* Location */}
+            {/* Contact Info */}
             <div className="col-span-2 md:col-span-1">
-              <h3 className="text-[#c5a572] text-[10px] font-bold tracking-[0.4em] uppercase mb-8">
+              <h3 className="text-blue-400 text-[10px] font-black tracking-[0.4em] uppercase mb-6">
                 {t("footer.contact")}
               </h3>
               <address className="not-italic space-y-6">
-                <p className="text-slate-400 text-xs font-light leading-relaxed tracking-wider">
+                <p className="text-blue-100/80 text-base font-light">
                   Valkenierstraat 133, <br />
-                  <span className="text-white">5553CP Valkenswaard</span>
+                  <span className="text-white font-semibold">
+                    5553CP Valkenswaard
+                  </span>
                 </p>
                 <div className="space-y-2">
                   <a
-                    href="mailto:info@answer24.com"
-                    className="block text-slate-400 hover:text-[#c5a572] transition-colors text-xs tracking-widest"
+                    href="mailto:info@Schepen-kring.nl"
+                    className="block text-blue-400 hover:text-white transition-colors text-xs font-black tracking-widest uppercase"
                   >
-                    info@Schepen-kring.nl
+                    INFO@SCHEPEN-KRING.NL
                   </a>
                   <a
                     href="tel:+3140-2100325"
-                    className="block text-white font-serif italic text-lg hover:text-[#c5a572] transition-colors"
+                    className="block text-white font-serif italic text-3xl hover:text-blue-400 transition-all"
                   >
                     +31 40 2100 325
                   </a>
@@ -145,30 +151,25 @@ const Footer = () => {
           </div>
         </div>
 
-        {/* Bottom Bar */}
-        <div className="pt-12 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
-          <p className="text-slate-600 text-[10px] font-bold uppercase tracking-[0.2em]">
-            &copy; {currentYear} Schepen-kring.nl.{" "}
-            <span className="text-slate-800 ml-2">
-              Built for the Maritime Elite
-            </span>
-          </p>
+        {/* Bottom Bar - Reduced padding from pt-16 to pt-10 */}
+        <div className="pt-10 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-6">
+          <div className="text-white/30 text-[10px] font-bold uppercase tracking-[0.3em]">
+            &copy; {currentYear} Schepen-kring.nl{" "}
+            <span className="mx-4 text-white/5">|</span>{" "}
+            <span className="text-blue-400/40 font-black">Elite Maritime</span>
+          </div>
 
-          <div className="flex gap-8">
-            <span className="text-slate-700 text-[10px] uppercase tracking-widest font-bold">
-              Secure Infrastructure
-            </span>
-            <span className="text-slate-700 text-[10px] uppercase tracking-widest font-bold">
-              Global 24/7
-            </span>
+          <div className="flex gap-8 text-[10px] font-black tracking-widest text-white/20 uppercase">
+            <span>Fleet Sync v4.2</span>
+            <span>Data Sovereignty</span>
           </div>
         </div>
       </div>
 
-      {/* Background Large Text Decoration */}
-      <div className="absolute bottom-0 right-0 translate-y-1/3 translate-x-1/4 pointer-events-none select-none">
-        <span className="text-[250px] font-serif font-black text-white/[0.01] leading-none">
-          A24
+      {/* Decorative Large Background Mark - Adjusted for reduced height */}
+      <div className="absolute bottom-[-20%] right-0 pointer-events-none select-none opacity-[0.02]">
+        <span className="text-[350px] font-serif font-black text-white">
+          SK
         </span>
       </div>
     </footer>

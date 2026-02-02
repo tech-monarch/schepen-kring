@@ -1,173 +1,229 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { 
-  ShieldAlert, User, ChevronRight, CheckCircle2, 
-  Trash2, Zap, LayoutGrid, List, BarChart2, Clock
+  BarChart3, Anchor, CheckSquare, Users, Lock, ShieldAlert, 
+  User, Trash2, Clock, Search, AlertCircle, Wifi, WifiOff
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { Link } from "@/i18n/navigation";
+import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
+import { useEffect, useState, useMemo } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { Toaster, toast } from "react-hot-toast";
+import axios from "axios";
 
 interface Task {
-  id: string;
+  id: string | number;
   title: string;
-  status: "Todo" | "In Progress" | "Review" | "Completed";
+  status: "To Do" | "In Progress" | "Done";
   type: "assigned" | "personal";
-  priority: string;
+  priority: "High" | "Medium" | "Low";
 }
 
-export default function ReadableTaskManifest() {
+export default function TaskManifestPage() {
+  const pathname = usePathname();
+  const t = useTranslations("Dashboard");
+  const [userRole, setUserRole] = useState<string | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [inputValue, setInputValue] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [isOnline, setIsOnline] = useState(true);
 
+  const API_BASE = "http://127.0.0.1:8000/api";
+
+  // --- SYNC LOGIC ---
   useEffect(() => {
-    // Initial Data Load
-    const assigned: Task[] = [
-      { id: "ADM-99", title: "EMERGENCY: PORT ENGINE COOLING SYNC", status: "In Progress", type: "assigned", priority: "Urgent" },
-      { id: "ADM-101", title: "Quarterly Hull Inspection: M/Y Sovereign", status: "Todo", type: "assigned", priority: "High" },
-    ];
-    const saved = localStorage.getItem("personal_tasks");
-    setTasks([...assigned, ...(saved ? JSON.parse(saved) : [])]);
+    const storedUser = localStorage.getItem("user_data");
+    if (storedUser) setUserRole(JSON.parse(storedUser).userType);
+
+    // Track Connection Status
+    window.addEventListener("online", () => { setIsOnline(true); processSyncQueue(); });
+    window.addEventListener("offline", () => setIsOnline(false));
+
+    const loadInitialData = async () => {
+      setLoading(true);
+      // 1. Load from Cache immediately for speed
+      const cached = localStorage.getItem("task_cache");
+      if (cached) setTasks(JSON.parse(cached));
+
+      try {
+        const token = localStorage.getItem("auth_token");
+        const res = await axios.get(`${API_BASE}/tasks`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const fetchedTasks = res.data.map((t: any) => ({ ...t, type: "assigned" }));
+        
+        // Merge with personal tasks
+        const personal = JSON.parse(localStorage.getItem("personal_tasks") || "[]");
+        const finalTasks = [...fetchedTasks, ...personal];
+        
+        setTasks(finalTasks);
+        localStorage.setItem("task_cache", JSON.stringify(finalTasks));
+      } catch (err) {
+        toast.error("Using offline manifest");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadInitialData();
   }, []);
 
-  // --- DATA ANALYSIS CALCULATIONS ---
-  const analysis = useMemo(() => {
-    const total = tasks.length;
-    const completed = tasks.filter(t => t.status === "Completed").length;
-    const pending = total - completed;
-    const admin = tasks.filter(t => t.type === "assigned").length;
-    const efficiency = total > 0 ? Math.round((completed / total) * 100) : 0;
-    
-    return { total, completed, pending, admin, efficiency };
-  }, [tasks]);
+  // --- BACKGROUND SYNC PROCESSOR ---
+  const processSyncQueue = async () => {
+    const queue = JSON.parse(localStorage.getItem("sync_queue") || "[]");
+    if (queue.length === 0) return;
 
-  const advanceStatus = (id: string) => {
-    const sequence: Task["status"][] = ["Todo", "In Progress", "Review", "Completed"];
-    setTasks(prev => prev.map(t => {
-      if (t.id === id) {
-        const nextIdx = (sequence.indexOf(t.status) + 1) % sequence.length;
-        return { ...t, status: sequence[nextIdx] };
-      }
-      return t;
-    }));
+    toast.loading("Syncing offline changes...", { id: "sync" });
+    const token = localStorage.getItem("auth_token");
+
+    for (const action of queue) {
+      try {
+        await axios.patch(`${API_BASE}/tasks/${action.id}/status`, 
+          { status: action.status },
+          { headers: { Authorization: `Bearer ${token}` }}
+        );
+      } catch (e) { console.error("Sync failed for task", action.id); }
+    }
+
+    localStorage.setItem("sync_queue", "[]");
+    toast.success("All changes synced with fleet", { id: "sync" });
   };
 
-  const addPersonal = () => {
-    if (!inputValue.trim()) return;
-    const newTask: Task = {
-      id: `USR-${Date.now()}`,
-      title: inputValue,
-      status: "Todo",
-      type: "personal",
-      priority: "Normal"
-    };
-    const updated = [...tasks, newTask];
-    setTasks(updated);
-    localStorage.setItem("personal_tasks", JSON.stringify(updated.filter(t => t.type === "personal")));
-    setInputValue("");
+  // --- SORTING: Undone & High Priority Top ---
+  const sortedTasks = useMemo(() => {
+    return [...tasks].sort((a, b) => {
+      if (a.status === "Done" && b.status !== "Done") return 1;
+      if (a.status !== "Done" && b.status === "Done") return -1;
+      const pMap = { "High": 3, "Medium": 2, "Low": 1 };
+      return (pMap[b.priority] || 0) - (pMap[a.priority] || 0);
+    });
+  }, [tasks]);
+
+  const advanceStatus = async (id: string | number, currentStatus: string, type: string) => {
+    const sequence: Task["status"][] = ["To Do", "In Progress", "Done"];
+    const nextStatus = sequence[(sequence.indexOf(currentStatus as any) + 1) % sequence.length];
+
+    // 1. Immediate UI Update
+    const updatedTasks = tasks.map(t => t.id === id ? { ...t, status: nextStatus } : t);
+    setTasks(updatedTasks);
+    localStorage.setItem("task_cache", JSON.stringify(updatedTasks));
+
+    if (type === "assigned") {
+      if (navigator.onLine) {
+        try {
+          const token = localStorage.getItem("auth_token");
+          await axios.patch(`${API_BASE}/tasks/${id}/status`, { status: nextStatus }, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+        } catch (err) {
+          addToQueue(id, nextStatus);
+        }
+      } else {
+        addToQueue(id, nextStatus);
+        toast("Saved locally. Will sync when online.", { icon: "💾" });
+      }
+    } else {
+      localStorage.setItem("personal_tasks", JSON.stringify(updatedTasks.filter(t => t.type === "personal")));
+    }
+  };
+
+  const addToQueue = (id: any, status: string) => {
+    const queue = JSON.parse(localStorage.getItem("sync_queue") || "[]");
+    queue.push({ id, status, timestamp: Date.now() });
+    localStorage.setItem("sync_queue", JSON.stringify(queue));
+  };
+
+  const getSidebarItems = () => {
+    if (userRole === "Admin") return [
+      { title: t("overview"), href: "/dashboard/admin", icon: BarChart3 },
+      { title: t("fleet_management"), href: "/dashboard/admin/yachts", icon: Anchor },
+      { title: t("task_board"), href: "/dashboard/admin/tasks", icon: CheckSquare },
+      { title: t("sections.quickActions"), href: "/dashboard/admin/users", icon: Users },
+    ];
+    return [
+      { title: t("overview"), href: "/dashboard", icon: BarChart3 },
+      { title: t("fleet_management"), href: "/dashboard/yachts", icon: Anchor },
+      { title: t("task_board"), href: "/dashboard/tasks", icon: CheckSquare },
+    ];
   };
 
   return (
-    <div className="min-h-screen bg-black text-white p-4 md:p-10 font-sans selection:bg-[#c5a572] selection:text-black">
-      
-      {/* 1. DATA ANALYSIS HEADER (BIG & READABLE) */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
-        <div className="bg-[#111] border-l-4 border-[#c5a572] p-5">
-          <p className="text-gray-500 text-[10px] uppercase font-bold tracking-widest mb-1">Efficiency</p>
-          <p className="text-3xl font-bold">{analysis.efficiency}%</p>
-        </div>
-        <div className="bg-[#111] border-l-4 border-blue-500 p-5">
-          <p className="text-gray-500 text-[10px] uppercase font-bold tracking-widest mb-1">Active Missions</p>
-          <p className="text-3xl font-bold">{analysis.pending}</p>
-        </div>
-        <div className="bg-[#111] border-l-4 border-white/20 p-5">
-          <p className="text-gray-500 text-[10px] uppercase font-bold tracking-widest mb-1">Admin Directives</p>
-          <p className="text-3xl font-bold">{analysis.admin}</p>
-        </div>
-        <div className="bg-[#c5a572] p-5 text-black">
-          <p className="text-black/60 text-[10px] uppercase font-bold tracking-widest mb-1">Completed</p>
-          <p className="text-3xl font-bold">{analysis.completed}</p>
-        </div>
-      </div>
+    <div className="min-h-screen bg-white text-[#003566]">
+      <DashboardHeader /> 
+      <div className="flex pt-20">
+        <aside className="w-64 fixed left-0 top-20 bottom-0 border-r border-slate-200 bg-white hidden lg:block z-40">
+          <nav className="p-4 space-y-2 mt-4">
+            <div className="px-4 mb-6 flex items-center justify-between">
+              <p className="text-[9px] font-black uppercase tracking-[0.4em] text-slate-300">Staff Terminal</p>
+              {isOnline ? <Wifi size={10} className="text-emerald-500" /> : <WifiOff size={10} className="text-red-500" />}
+            </div>
+            {getSidebarItems().map((item) => (
+              <Link key={item.href} href={item.href} className={cn(
+                "flex items-center gap-4 px-4 py-3 text-[10px] font-bold uppercase tracking-[0.2em] transition-all",
+                pathname === item.href ? "bg-[#003566] text-white shadow-lg" : "text-slate-400 hover:bg-slate-50"
+              )}>
+                <item.icon size={16} /> {item.title}
+              </Link>
+            ))}
+          </nav>
+        </aside>
 
-      {/* 2. TASK INPUT */}
-      <div className="flex gap-2 mb-10">
-        <input 
-          value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
-          placeholder="Type a personal task and press enter..."
-          onKeyDown={(e) => e.key === "Enter" && addPersonal()}
-          className="flex-1 bg-[#111] border border-white/10 px-6 py-4 text-sm focus:border-[#c5a572] outline-none transition-all placeholder:text-gray-700"
-        />
-        <button onClick={addPersonal} className="bg-white text-black px-8 font-bold text-xs uppercase hover:bg-[#c5a572] transition-all">
-          Add
-        </button>
-      </div>
-
-      {/* 3. TASK LIST */}
-      <div className="space-y-3">
-        <div className="flex justify-between items-center px-4 py-2 text-[10px] uppercase font-black text-gray-600 tracking-[0.2em]">
-          <span>Task Manifest</span>
-          <span>Click Status to Advance</span>
-        </div>
-
-        <AnimatePresence mode="popLayout">
-          {tasks.map((task) => (
-            <motion.div 
-              layout
-              key={task.id}
-              className={cn(
-                "group flex flex-col md:flex-row items-center justify-between p-5 gap-4 transition-all border",
-                task.type === "assigned" ? "bg-[#161410] border-[#c5a572]/30" : "bg-[#0d0d0d] border-white/5",
-                task.status === "Completed" && "opacity-40 grayscale"
-              )}
-            >
-              <div className="flex items-center gap-5 flex-1 w-full">
-                {/* BIG TYPE INDICATOR */}
-                <div className={cn(
-                  "px-3 py-2 text-[10px] font-black uppercase flex flex-col items-center justify-center min-w-[70px]",
-                  task.type === "assigned" ? "bg-[#c5a572] text-black" : "bg-white/10 text-white"
-                )}>
-                  {task.type === "assigned" ? <ShieldAlert size={14}/> : <User size={14}/>}
-                  <span className="mt-1">{task.type}</span>
-                </div>
-
-                <div className="space-y-1">
-                  <h3 className="text-lg font-bold tracking-tight text-white leading-tight">
-                    {task.title}
-                  </h3>
-                  <p className="text-[10px] font-mono text-gray-500 uppercase">ID: {task.id}</p>
-                </div>
+        <main className="flex-1 lg:ml-64 p-8 bg-white min-h-[calc(100vh-80px)]">
+          <div className="max-w-[1600px] mx-auto space-y-6">
+            <Toaster position="top-right" />
+            
+            <div className="flex justify-between items-end border-b border-slate-100 pb-8">
+              <div>
+                <h1 className="text-3xl font-serif italic">Operational Manifest</h1>
+                <p className="text-[9px] font-black uppercase tracking-[0.3em] text-blue-600 mt-2">Vessel Maintenance & Directives</p>
               </div>
+            </div>
 
-              {/* EASY SWITCHER BUTTON */}
-              <div className="flex items-center gap-6 w-full md:w-auto justify-between md:justify-end border-t md:border-t-0 border-white/5 pt-4 md:pt-0">
-                <button 
-                  onClick={() => advanceStatus(task.id)}
-                  className={cn(
-                    "px-4 py-2 text-[10px] font-black uppercase tracking-widest border transition-all flex items-center gap-3",
-                    task.status === "Todo" && "border-white/20 text-white hover:bg-white hover:text-black",
-                    task.status === "In Progress" && "border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white",
-                    task.status === "Review" && "border-[#c5a572] text-[#c5a572] hover:bg-[#c5a572] hover:text-black",
-                    task.status === "Completed" && "border-emerald-500 text-emerald-500 hover:bg-emerald-500 hover:text-black"
-                  )}
-                >
-                  <Clock size={12} className={task.status === "In Progress" ? "animate-spin" : ""} />
-                  {task.status}
-                </button>
+            <div className="space-y-4">
+              <AnimatePresence mode="popLayout">
+                {sortedTasks.map((task) => (
+                  <motion.div layout key={task.id} className={cn(
+                    "flex flex-col md:flex-row items-center justify-between p-6 gap-6 transition-all border bg-white shadow-sm",
+                    task.status !== "Done" && task.priority === "High" ? "border-l-4 border-l-red-500" : "border-slate-200 border-l-4 border-l-[#003566]",
+                    task.status === "Done" && "opacity-40 grayscale bg-slate-50"
+                  )}>
+                    <div className="flex items-center gap-6 flex-1 w-full">
+                      <div className={cn(
+                        "w-12 h-12 flex items-center justify-center border",
+                        task.status !== "Done" && task.priority === "High" ? "bg-red-50 border-red-100 text-red-500" : "bg-slate-50 border-slate-100 text-slate-300"
+                      )}>
+                        {task.status !== "Done" && task.priority === "High" ? <AlertCircle size={20}/> : <ShieldAlert size={18}/>}
+                      </div>
+                      
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3">
+                          <h3 className="text-sm font-black uppercase tracking-wider text-[#003566]">{task.title}</h3>
+                          {task.status !== "Done" && task.priority === "High" && <span className="px-2 py-0.5 bg-red-600 text-white text-[7px] font-black uppercase">Urgent</span>}
+                        </div>
+                        <p className="text-[9px] font-bold text-slate-300 uppercase tracking-widest mt-1">Ref: {task.id} • {task.priority} Priority</p>
+                      </div>
+                    </div>
 
-                {task.type === "personal" && (
-                  <button 
-                    onClick={() => setTasks(tasks.filter(t => t.id !== task.id))}
-                    className="text-gray-700 hover:text-red-500 transition-colors p-2"
-                  >
-                    <Trash2 size={18} />
-                  </button>
-                )}
-              </div>
-            </motion.div>
-          ))}
-        </AnimatePresence>
+                    <button 
+                      onClick={() => advanceStatus(task.id, task.status, task.type)}
+                      className={cn(
+                        "px-8 py-3 text-[10px] font-black uppercase tracking-widest border transition-all min-w-[160px]",
+                        task.status === "To Do" && "border-slate-200 text-slate-400 hover:bg-[#003566] hover:text-white",
+                        task.status === "In Progress" && "border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white",
+                        task.status === "Done" && "border-emerald-500 text-emerald-500"
+                      )}
+                    >
+                      {task.status}
+                    </button>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </div>
+          </div>
+        </main>
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
 /**
- * Answer24 Embeddable Chat Widget
+ * Schepenkring.nlEmbeddable Chat Widget
  * Version: 3.0.0 - Enhanced with Welcome Screen & Modern Features
  *
  * Usage:
@@ -28,12 +28,15 @@
 
   if (!publicKey) {
     console.error(
-      "[Answer24 Widget] Error: data-public-key attribute is required",
+      "[Schepenkring.nlWidget] Error: data-public-key attribute is required",
     );
     return;
   }
 
-  console.log("[Answer24 Widget] Initializing with public key:", publicKey);
+  console.log(
+    "[Schepenkring.nlWidget] Initializing with public key:",
+    publicKey,
+  );
 
   // Widget state
   let widgetSettings = null;
@@ -49,7 +52,7 @@
   // Welcome options
   const welcomeOptions = [
     { label: "What is answer24?", icon: "❓" },
-    { label: "Discover answer24 Premium", icon: "💎" },
+    { label: "Discover Schepenkring.nlPremium", icon: "💎" },
     { label: "How can I log into my account?", icon: "🔑" },
     { label: "Contact support", icon: "💬" },
   ];
@@ -59,7 +62,7 @@
   if (!effectivePublicKey || effectivePublicKey === "demo-key-123") {
     effectivePublicKey = "PUB_demo_testkey";
     console.warn(
-      "[Answer24 Widget] Using fallback demo public key: PUB_demo_testkey",
+      "[Schepenkring.nlWidget] Using fallback demo public key: PUB_demo_testkey",
     );
   }
 
@@ -151,7 +154,7 @@
         if (apiJson && typeof apiJson === "object") {
           widgetSettings = mergeWithDefaults(apiJson);
           console.log(
-            "[Answer24 Widget] Loaded settings from API",
+            "[Schepenkring.nlWidget] Loaded settings from API",
             widgetSettings,
           );
           try {
@@ -179,7 +182,7 @@
               }
             } catch (removeError) {
               console.warn(
-                "[Answer24 Widget] Error removing existing container:",
+                "[Schepenkring.nlWidget] Error removing existing container:",
                 removeError,
               );
             }
@@ -198,7 +201,7 @@
       }
     } catch (apiErr) {
       console.warn(
-        "[Answer24 Widget] Failed to fetch settings from API",
+        "[Schepenkring.nlWidget] Failed to fetch settings from API",
         apiErr,
       );
     }
@@ -207,7 +210,9 @@
       const localSettings = localStorage.getItem("widget-settings");
       if (localSettings) {
         widgetSettings = JSON.parse(localSettings);
-        console.log("[Answer24 Widget] Loaded settings from localStorage");
+        console.log(
+          "[Schepenkring.nlWidget] Loaded settings from localStorage",
+        );
         return;
       }
     } catch (e) {}
@@ -878,7 +883,7 @@
                 <img src="/Image-2.png" alt="Avatar 2" class="answer24-avatar" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\\'http://www.w3.org/2000/svg\\' viewBox=\\'0 0 100 100\\'%3E%3Ccircle cx=\\'50\\' cy=\\'50\\' r=\\'50\\' fill=\\'%232563eb\\'/%3E%3Ctext x=\\'50\\' y=\\'65\\' font-size=\\'50\\' text-anchor=\\'middle\\' fill=\\'white\\'%3E👥%3C/text%3E%3C/svg%3E'" />
                 <img src="/Image-3.png" alt="Avatar 3" class="answer24-avatar" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\\'http://www.w3.org/2000/svg\\' viewBox=\\'0 0 100 100\\'%3E%3Ccircle cx=\\'50\\' cy=\\'50\\' r=\\'50\\' fill=\\'%232563eb\\'/%3E%3Ctext x=\\'50\\' y=\\'65\\' font-size=\\'50\\' text-anchor=\\'middle\\' fill=\\'white\\'%3E💬%3C/text%3E%3C/svg%3E'" />
               </div>
-              <span class="answer24-header-title">answer24 Chat</span>
+              <span class="answer24-header-title">Schepenkring.nlChat</span>
               <div class="answer24-header-actions">
                 <button class="answer24-mute-button" id="answer24-mute-button" aria-label="Toggle mute">
                   <svg id="answer24-mute-icon-on" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: none;">
@@ -993,7 +998,7 @@
   //       }, 1000);
   //     });
   //   } catch (error) {
-  //     console.error('[Answer24 Widget] Error sending message:', error);
+  //     console.error('[Schepenkring.nlWidget] Error sending message:', error);
   //     return {
   //       content: 'Sorry, something went wrong. Please try again.'
   //     };
@@ -1046,7 +1051,7 @@
           data.content || data.response || "Response received successfully.",
       };
     } catch (error) {
-      console.error("[Answer24 Widget] Error sending message:", error);
+      console.error("[Schepenkring.nlWidget] Error sending message:", error);
       return {
         content: "Sorry, something went wrong. Please try again.",
       };
@@ -1126,7 +1131,7 @@
       <span></span>
       <span></span>
       <span></span>
-      <span class="answer24-typing-text">answer24 is typing…</span>
+      <span class="answer24-typing-text">Schepenkring.nlis typing…</span>
     `;
     messagesContainer.appendChild(typingDiv);
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
@@ -1371,11 +1376,11 @@
       hideTyping();
       const responses = {
         "What is answer24?":
-          "answer24 is your intelligent assistant platform designed to provide instant support and answers to your questions 24/7. We combine AI technology with human expertise to deliver accurate, helpful responses.",
-        "Discover answer24 Premium":
-          "answer24 Premium offers advanced features including priority support, extended conversation history, file analysis capabilities, and access to specialized knowledge domains. Would you like to learn more about upgrading?",
+          "Schepenkring.nlis your intelligent assistant platform designed to provide instant support and answers to your questions 24/7. We combine AI technology with human expertise to deliver accurate, helpful responses.",
+        "Discover Schepenkring.nlPremium":
+          "Schepenkring.nlPremium offers advanced features including priority support, extended conversation history, file analysis capabilities, and access to specialized knowledge domains. Would you like to learn more about upgrading?",
         "How can I log into my account?":
-          "To log into your answer24 account, visit our website and click 'Sign In' in the top right corner. You can use your email and password, or sign in with Google or Microsoft. Need help resetting your password?",
+          "To log into your Schepenkring.nlaccount, visit our website and click 'Sign In' in the top right corner. You can use your email and password, or sign in with Google or Microsoft. Need help resetting your password?",
         "Contact support":
           "I'm here to help! You can chat with me directly, or if you need human support, you can email us at support@answer24.nl or call our helpline. What specific issue can I assist you with?",
       };
@@ -1402,12 +1407,12 @@
       if (widgetRoot) document.body.appendChild(widgetRoot);
 
       if (!widgetRoot) {
-        console.error("[Answer24 Widget] Failed to inject widget");
+        console.error("[Schepenkring.nlWidget] Failed to inject widget");
         return;
       }
     } catch (err) {
       console.error(
-        "[Answer24 Widget] Exception during widget DOM injection",
+        "[Schepenkring.nlWidget] Exception during widget DOM injection",
         err,
       );
       return;
@@ -1507,7 +1512,7 @@
       try {
         const handleSettingsUpdate = async () => {
           console.log(
-            "[Answer24 Widget] Settings updated event received, reloading...",
+            "[Schepenkring.nlWidget] Settings updated event received, reloading...",
           );
           await loadSettings(true); // Force reload with cache buster
 
@@ -1530,7 +1535,7 @@
               }
             } catch (removeError) {
               console.warn(
-                "[Answer24 Widget] Error removing container:",
+                "[Schepenkring.nlWidget] Error removing container:",
                 removeError,
               );
               // If removal fails, try to remove any existing container
@@ -1564,11 +1569,11 @@
         const handleVisibilityChange = () => {
           if (!document.hidden) {
             console.log(
-              "[Answer24 Widget] Page visible, checking for settings updates...",
+              "[Schepenkring.nlWidget] Page visible, checking for settings updates...",
             );
             loadSettings(true).catch((err) => {
               console.warn(
-                "[Answer24 Widget] Error reloading settings on visibility change:",
+                "[Schepenkring.nlWidget] Error reloading settings on visibility change:",
                 err,
               );
             });
@@ -1580,11 +1585,14 @@
         // Mark as attached
         window.__answer24_eventListenersAttached = true;
       } catch (e) {
-        console.error("[Answer24 Widget] Error setting up event listeners:", e);
+        console.error(
+          "[Schepenkring.nlWidget] Error setting up event listeners:",
+          e,
+        );
       }
     }
 
-    console.log("[Answer24 Widget] Initialized successfully");
+    console.log("[Schepenkring.nlWidget] Initialized successfully");
   }
 
   // Wait for DOM to be ready

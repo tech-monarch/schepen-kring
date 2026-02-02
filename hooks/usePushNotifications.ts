@@ -152,7 +152,7 @@ export function usePushNotifications(userId?: string) {
   // Function to send a test notification
   const sendTestNotification = () => {
     if ("Notification" in window && Notification.permission === "granted") {
-      new Notification("Answer24 Notification", {
+      new Notification("Schepenkring.nlNotification", {
         body: "This is a test notification from Answer24",
         icon: "/favicon.ico",
       });

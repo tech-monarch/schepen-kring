@@ -28,7 +28,11 @@ import {
   Shield,
   CalendarDays,
   Percent,
-  RefreshCw, Gift, Sparkles, Bot, Heart
+  RefreshCw,
+  Gift,
+  Sparkles,
+  Bot,
+  Heart,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import LanguageSwitcher from "@/components/common/LanguageSwitcher";
@@ -43,7 +47,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useTranslations } from "next-intl";
-import ANSWER24LOGO from "@/public/Answer24Logo.png";
+import ANSWER24LOGO from "@/public/schepenkring-logo.png";
 import Image from "next/image";
 import { tokenUtils } from "@/utils/auth";
 import { User } from "@/types/user";
@@ -401,7 +405,7 @@ export function DashboardHeader() {
           <Link href="/dashboard" className="flex items-center space-x-2 group">
             <Image
               src={ANSWER24LOGO}
-              alt="Answer24 Logo"
+              alt="Schepenkring.nlLogo"
               width={150}
               height={150}
               className="transition-transform duration-300 group-hover:scale-105"
@@ -486,33 +490,31 @@ export function DashboardHeader() {
               </span>
             </Button>
           )}
-<button 
-  onClick={() => router.push('/dashboard/favourites')}
-  className="group relative flex items-center gap-2.5 px-4 py-2 bg-pink-50/60 hover:bg-pink-100/50 border border-pink-100 hover:border-pink-200 rounded-full transition-all duration-500 shadow-sm hover:shadow-[0_8px_20px_-6px_rgba(244,114,182,0.3)]"
->
-  {/* The Icon Wrapper */}
-  <div className="relative flex items-center justify-center">
-    <Heart 
-      className="w-3.5 h-3.5 text-pink-400 group-hover:text-pink-600 group-hover:fill-pink-600 transition-all duration-300 transform group-hover:scale-110" 
-    />
-    
-    {/* Refined Notification Dot - Pink on Pink style */}
-    <span className="absolute -top-1 -right-1 w-1.5 h-1.5 bg-pink-600 rounded-full border border-white shadow-sm"></span>
-  </div>
-  
-  {/* The Text - Compact and Clean */}
-  <div className="flex flex-col items-start leading-none">
-    <span className="text-[9px] font-black uppercase tracking-[0.12em] text-pink-700 group-hover:text-pink-800 transition-colors">
-      Favorieten
-    </span>
-    <span className="text-[7px] font-bold uppercase text-pink-400/80 tracking-tight mt-0.5">
-      Mijn Lijst
-    </span>
-  </div>
+          <button
+            onClick={() => router.push("/dashboard/favourites")}
+            className="group relative flex items-center gap-2.5 px-4 py-2 bg-pink-50/60 hover:bg-pink-100/50 border border-pink-100 hover:border-pink-200 rounded-full transition-all duration-500 shadow-sm hover:shadow-[0_8px_20px_-6px_rgba(244,114,182,0.3)]"
+          >
+            {/* The Icon Wrapper */}
+            <div className="relative flex items-center justify-center">
+              <Heart className="w-3.5 h-3.5 text-pink-400 group-hover:text-pink-600 group-hover:fill-pink-600 transition-all duration-300 transform group-hover:scale-110" />
 
-  {/* Subtle Internal Glow */}
-  <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 rounded-full transition-opacity" />
-</button>
+              {/* Refined Notification Dot - Pink on Pink style */}
+              <span className="absolute -top-1 -right-1 w-1.5 h-1.5 bg-pink-600 rounded-full border border-white shadow-sm"></span>
+            </div>
+
+            {/* The Text - Compact and Clean */}
+            <div className="flex flex-col items-start leading-none">
+              <span className="text-[9px] font-black uppercase tracking-[0.12em] text-pink-700 group-hover:text-pink-800 transition-colors">
+                Favorieten
+              </span>
+              <span className="text-[7px] font-bold uppercase text-pink-400/80 tracking-tight mt-0.5">
+                Mijn Lijst
+              </span>
+            </div>
+
+            {/* Subtle Internal Glow */}
+            <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 rounded-full transition-opacity" />
+          </button>
           <div className="hidden md:flex items-center space-x-4">
             {/* Reverted Location Switcher */}
             <div className="relative">
@@ -570,8 +572,6 @@ export function DashboardHeader() {
             </div>
 
             <LanguageSwitcher />
-
-
 
             <NotificationBell />
 
@@ -643,31 +643,35 @@ export function DashboardHeader() {
                 </DropdownMenuItem> */}
                 <DropdownMenuSeparator className="bg-slate-50" />
 
-  {/* --- NEW STUNNING INVITE SECTION --- */}
-  <div className="px-2 py-2">
-    <button 
-      onClick={() => setShowReferralModal(true)} // You'll need to define this state in your Navbar
-      className="w-full relative overflow-hidden group flex items-center gap-3 p-3 bg-gradient-to-br from-indigo-600 to-purple-700 hover:from-indigo-700 hover:to-purple-800 rounded-2xl transition-all shadow-lg shadow-indigo-100"
-    >
-      <div className="relative z-10 bg-white/20 p-2 rounded-xl">
-        <Gift className="w-4 h-4 text-white animate-bounce" />
-      </div>
-      <div className="relative z-10 text-left">
-        <p className="text-[10px] font-black text-indigo-100 uppercase tracking-widest leading-none mb-1">Invite & Earn</p>
-        <p className="text-xs font-bold text-white leading-none">Get €10.00 Free</p>
-      </div>
-      
-      {/* Decorative Sparkle */}
-      <Sparkles className="absolute -right-1 -top-1 w-8 h-8 text-white/10 rotate-12 group-hover:rotate-45 transition-transform" />
-    </button>
-    <ReferralModal 
-      open={showReferralModal} 
-      onOpenChange={setShowReferralModal} 
-    />
-  </div>
-  {/* ----------------------------------- */}
+                {/* --- NEW STUNNING INVITE SECTION --- */}
+                <div className="px-2 py-2">
+                  <button
+                    onClick={() => setShowReferralModal(true)} // You'll need to define this state in your Navbar
+                    className="w-full relative overflow-hidden group flex items-center gap-3 p-3 bg-gradient-to-br from-indigo-600 to-purple-700 hover:from-indigo-700 hover:to-purple-800 rounded-2xl transition-all shadow-lg shadow-indigo-100"
+                  >
+                    <div className="relative z-10 bg-white/20 p-2 rounded-xl">
+                      <Gift className="w-4 h-4 text-white animate-bounce" />
+                    </div>
+                    <div className="relative z-10 text-left">
+                      <p className="text-[10px] font-black text-indigo-100 uppercase tracking-widest leading-none mb-1">
+                        Invite & Earn
+                      </p>
+                      <p className="text-xs font-bold text-white leading-none">
+                        Get €10.00 Free
+                      </p>
+                    </div>
 
-  <DropdownMenuSeparator className="bg-slate-50" />
+                    {/* Decorative Sparkle */}
+                    <Sparkles className="absolute -right-1 -top-1 w-8 h-8 text-white/10 rotate-12 group-hover:rotate-45 transition-transform" />
+                  </button>
+                  <ReferralModal
+                    open={showReferralModal}
+                    onOpenChange={setShowReferralModal}
+                  />
+                </div>
+                {/* ----------------------------------- */}
+
+                <DropdownMenuSeparator className="bg-slate-50" />
 
                 {user?.role?.name === "admin" && user?.id && (
                   <>

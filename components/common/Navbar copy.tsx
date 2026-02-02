@@ -16,7 +16,7 @@ import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
-import ANSWER24LOGO from "@/public/answerLogobgRemover-removebg-preview.png";
+import ANSWER24LOGO from "@/public/schepenkring-logo.png";
 import Image from "next/image";
 
 export function Navbar() {
@@ -99,7 +99,7 @@ export function Navbar() {
           <Link href="/" className="flex items-center">
             <Image
               src={ANSWER24LOGO}
-              alt="Answer24 Logo"
+              alt="Schepenkring.nlLogo"
               width={150}
               height={50}
             />

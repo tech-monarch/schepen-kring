@@ -10,9 +10,7 @@ export async function generateStaticParams() {
 
 const FaqPage = () => {
   return (
-    <main className="min-h-screen bg-background  m-20">
       <Faq />
-    </main>
   );
 };
 

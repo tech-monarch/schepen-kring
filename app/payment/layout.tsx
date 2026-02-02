@@ -8,7 +8,7 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: "Answer24 - Payment",
+  title: "Schepenkring.nl- Payment",
   description: "Payment processing",
 };
 
@@ -19,10 +19,7 @@ export default function PaymentLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${poppins.variable} antialiased`}>
-        {children}
-      </body>
+      <body className={`${poppins.variable} antialiased`}>{children}</body>
     </html>
   );
 }
-

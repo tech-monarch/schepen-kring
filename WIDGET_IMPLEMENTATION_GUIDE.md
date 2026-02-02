@@ -1,8 +1,8 @@
-# 🚀 Answer24 Advanced Widget System - Implementation Guide
+# 🚀 Schepenkring.nlAdvanced Widget System - Implementation Guide
 
 ## 📋 **Overview**
 
-This document outlines the complete implementation of the Answer24 Advanced Widget System according to your specification. The system includes public key authentication, domain validation, HMAC signatures, advanced theming, and comprehensive admin management.
+This document outlines the complete implementation of the Schepenkring.nlAdvanced Widget System according to your specification. The system includes public key authentication, domain validation, HMAC signatures, advanced theming, and comprehensive admin management.
 
 ## 🏗️ **Implementation Status**
 
@@ -22,6 +22,7 @@ This document outlines the complete implementation of the Answer24 Advanced Widg
 ### **PLACEHOLDERS TO REPLACE**
 
 #### 1. **Environment Variables**
+
 ```bash
 # Add these to your .env file
 # Optional: Add widget-specific signing secret
@@ -31,6 +32,7 @@ AI_API_KEY=your-openai-api-key-here
 ```
 
 #### 2. **Database Schema**
+
 Create these tables in your Laravel backend:
 
 ```sql
@@ -81,6 +83,7 @@ CREATE TABLE widget_analytics (
 ```
 
 #### 3. **Laravel Models**
+
 Create these models in your Laravel backend:
 
 ```php
@@ -148,6 +151,7 @@ class WidgetKeyRotation extends Model
 ```
 
 #### 4. **Laravel Controllers**
+
 Create these controllers in your Laravel backend:
 
 ```php
@@ -167,13 +171,13 @@ class WidgetConfigController extends Controller
     public function getConfig(Request $request): JsonResponse
     {
         $publicKey = $request->query('key');
-        
+
         if (!$publicKey) {
             return response()->json(['error' => 'Public key is required'], 400);
         }
 
         $settings = WidgetSettings::where('public_key', $publicKey)->first();
-        
+
         if (!$settings) {
             return response()->json(['error' => 'Invalid public key'], 404);
         }
@@ -221,11 +225,11 @@ class WidgetConfigController extends Controller
         $origin = $request->header('origin');
         $host = $request->header('host');
         $referer = $request->header('referer');
-        
+
         $requestDomain = $origin ?: $host ?: ($referer ? parse_url($referer, PHP_URL_HOST) : null);
-        
+
         if (!$requestDomain) return false;
-        
+
         foreach ($allowedDomains as $domain) {
             if (str_starts_with($domain, '*.')) {
                 $baseDomain = substr($domain, 2);
@@ -236,7 +240,7 @@ class WidgetConfigController extends Controller
                 return true;
             }
         }
-        
+
         return false;
     }
 
@@ -244,11 +248,11 @@ class WidgetConfigController extends Controller
     {
         $key = "widget_rate_limit:{$publicKey}:{$ip}";
         $current = Cache::get($key, 0);
-        
+
         if ($current >= 60) { // 60 requests per minute
             return false;
         }
-        
+
         Cache::put($key, $current + 1, 60);
         return true;
     }
@@ -262,6 +266,7 @@ class WidgetConfigController extends Controller
 ```
 
 #### 5. **Laravel Routes**
+
 Add these routes to your Laravel backend:
 
 ```php
@@ -269,7 +274,7 @@ Add these routes to your Laravel backend:
 Route::prefix('v1/widget')->group(function () {
     // Public routes (no auth required)
     Route::get('/config', [WidgetConfigController::class, 'getConfig']);
-    
+
     // Protected routes (require authentication)
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('/settings', [WidgetSettingsController::class, 'index']);
@@ -285,6 +290,7 @@ Route::prefix('v1/widget')->group(function () {
 ## 🔐 **Security Implementation**
 
 ### **HMAC Signature Verification**
+
 The widget script verifies responses using HMAC-SHA256 signatures. Implement this in your backend:
 
 ```php
@@ -297,6 +303,7 @@ private function generateSignature(string $body, string $publicKey): string
 ```
 
 ### **Domain Validation**
+
 Implement domain validation in your backend:
 
 ```php
@@ -305,11 +312,11 @@ private function validateDomain(Request $request, array $allowedDomains): bool
     $origin = $request->header('origin');
     $host = $request->header('host');
     $referer = $request->header('referer');
-    
+
     $requestDomain = $origin ?: $host ?: ($referer ? parse_url($referer, PHP_URL_HOST) : null);
-    
+
     if (!$requestDomain) return false;
-    
+
     foreach ($allowedDomains as $domain) {
         if (str_starts_with($domain, '*.')) {
             $baseDomain = substr($domain, 2);
@@ -320,12 +327,13 @@ private function validateDomain(Request $request, array $allowedDomains): bool
             return true;
         }
     }
-    
+
     return false;
 }
 ```
 
 ### **Rate Limiting**
+
 Implement rate limiting using Redis:
 
 ```php
@@ -333,11 +341,11 @@ private function checkRateLimit(string $publicKey, string $ip): bool
 {
     $key = "widget_rate_limit:{$publicKey}:{$ip}";
     $current = Cache::get($key, 0);
-    
+
     if ($current >= 60) { // 60 requests per minute
         return false;
     }
-    
+
     Cache::put($key, $current + 1, 60);
     return true;
 }
@@ -348,6 +356,7 @@ private function checkRateLimit(string $publicKey, string $ip): bool
 ## 🎨 **Frontend Integration**
 
 ### **1. Update Navigation**
+
 Add widget management to your admin navigation:
 
 ```typescript
@@ -361,6 +370,7 @@ Add widget management to your admin navigation:
 ```
 
 ### **2. CDN Configuration**
+
 Set up your CDN to serve the widget script:
 
 ```bash
@@ -370,6 +380,7 @@ const CDN_BASE_URL = 'https://cdn.answer24.nl'; // Your actual CDN URL
 ```
 
 ### **3. Environment Variables**
+
 Add these to your Next.js environment:
 
 ```bash
@@ -383,12 +394,15 @@ NEXT_PUBLIC_API_BASE_URL=https://answer24_backend.test/api/v1
 ## 📊 **Analytics & Monitoring**
 
 ### **GA4 Integration**
+
 The widget automatically tracks these events:
+
 - `answer24_widget_open`
 - `answer24_widget_message_sent`
 - `answer24_widget_close`
 
 ### **Custom Analytics**
+
 Implement custom analytics in your backend:
 
 ```php
@@ -419,6 +433,7 @@ public function trackEvent(Request $request): JsonResponse
 ## 🚀 **Deployment Checklist**
 
 ### **Backend (Laravel)**
+
 - [ ] Create database tables
 - [ ] Implement models and controllers
 - [ ] Add routes
@@ -429,6 +444,7 @@ public function trackEvent(Request $request): JsonResponse
 - [ ] Add analytics tracking
 
 ### **Frontend (Next.js)**
+
 - [ ] Upload widget script to CDN
 - [ ] Update API endpoints
 - [ ] Add admin dashboard route
@@ -436,6 +452,7 @@ public function trackEvent(Request $request): JsonResponse
 - [ ] Configure environment variables
 
 ### **CDN & Infrastructure**
+
 - [ ] Set up CDN for widget assets
 - [ ] Configure CORS headers
 - [ ] Set up SSL certificates
@@ -447,6 +464,7 @@ public function trackEvent(Request $request): JsonResponse
 ## 🧪 **Testing**
 
 ### **Widget Testing**
+
 ```html
 <!-- Test embed code -->
 <script
@@ -461,6 +479,7 @@ public function trackEvent(Request $request): JsonResponse
 ```
 
 ### **API Testing**
+
 ```bash
 # Test config endpoint
 curl -X GET "https://answer24_backend.test/api/v1/widget/config?key=PUB_abc123" \

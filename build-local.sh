@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# Build script for Answer24 Frontend
+# Build script for Schepenkring.nlFrontend
 # This script builds the application locally for production deployment
 
 set -e  # Exit on any error
 
-echo "🚀 Starting Answer24 Frontend Build Process..."
+echo "🚀 Starting Schepenkring.nlFrontend Build Process..."
 
 # Clean previous builds
 echo "🧹 Cleaning previous builds..."

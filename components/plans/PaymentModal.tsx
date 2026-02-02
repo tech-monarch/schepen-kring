@@ -75,7 +75,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
       console.log("📤 Sending payment request:", requestPayload);
 
-      // Call Answer24 API to create Mollie payment
+      // Call Schepenkring.nlAPI to create Mollie payment
       const response = await fetch(
         getApiUrl(API_CONFIG.ENDPOINTS.WALLET.DEPOSIT),
         {

@@ -1,4 +1,4 @@
-# 💰 Answer24 Widget - 10% Cashback System Documentation
+# 💰 Schepenkring.nlWidget - 10% Cashback System Documentation
 
 **Version:** 2.0.0  
 **Last Updated:** January 2025  
@@ -23,7 +23,7 @@
 
 ### What is the 10% Cashback System?
 
-The Answer24 Widget automatically tracks user purchases made through partner webshops and credits 10% of the purchase value back to the user's wallet as A-Points (cashback).
+The Schepenkring.nlWidget automatically tracks user purchases made through partner webshops and credits 10% of the purchase value back to the user's wallet as A-Points (cashback).
 
 ### Key Features
 
@@ -801,7 +801,7 @@ add_action('woocommerce_order_status_completed', 'track_answer24_purchase');
 function track_answer24_purchase($order_id) {
     $order = wc_get_order($order_id);
 
-    // Get user ID (from Answer24 session/cookie)
+    // Get user ID (from Schepenkring.nlsession/cookie)
     $answer24_user_id = get_user_meta(
         $order->get_customer_id(),
         'answer24_user_id',
@@ -839,7 +839,7 @@ function track_answer24_purchase($order_id) {
             // Add order note
             $cashback = $result['data']['cashback_amount'];
             $order->add_order_note(
-                "Answer24 cashback credited: €{$cashback}"
+                "Schepenkring.nlcashback credited: €{$cashback}"
             );
         }
     }
@@ -1007,7 +1007,7 @@ When reporting issues, include:
 
 ## Conclusion
 
-The Answer24 10% Cashback System provides:
+The Schepenkring.nl10% Cashback System provides:
 
 ✅ **For Users:**
 

@@ -71,7 +71,7 @@ Create a file called `test-widget.html`:
   </head>
   <body>
     <h1>Widget Testing Page</h1>
-    <p>This page tests the Answer24 widget integration.</p>
+    <p>This page tests the Schepenkring.nlwidget integration.</p>
 
     <!-- Widget Embed Code -->
     <script

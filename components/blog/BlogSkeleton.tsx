@@ -2,63 +2,58 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 const BlogSkeleton = () => {
   return (
-    <div className="container mx-auto px-6 py-24 bg-[#0a0a0a]">
-      {/* Editorial Header Skeleton */}
-      <div className="mb-20 space-y-4">
-        <Skeleton className="h-3 w-32 bg-white/5 rounded-none" />
-        <Skeleton className="h-16 w-3/4 bg-white/5 rounded-none" />
-        <Skeleton className="h-4 w-1/2 bg-white/5 rounded-none" />
-      </div>
+    <div className="min-h-screen bg-white">
+      {/* 1. Editorial Header Skeleton */}
+      <section className="pt-48 pb-24 px-6 md:px-12 max-w-[1400px] mx-auto border-b border-slate-100">
+        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-12">
+          <div className="space-y-6 w-full max-w-2xl">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-[1px] bg-slate-200" />
+              <Skeleton className="h-3 w-32 bg-slate-100 rounded-none" />
+            </div>
+            <Skeleton className="h-24 w-3/4 bg-slate-200 rounded-none" />
+            <Skeleton className="h-6 w-1/2 bg-slate-100 rounded-none" />
+          </div>
+          <Skeleton className="h-14 w-full lg:w-96 bg-slate-50 border border-slate-100 rounded-none" />
+        </div>
+      </section>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 mb-20">
-        {/* Featured Insight Skeleton */}
-        <div className="md:col-span-2 lg:row-span-1">
-          <div className="h-full flex flex-col bg-transparent border border-white/5 rounded-none overflow-hidden">
-            <Skeleton className="relative aspect-[21/9] w-full bg-white/5 rounded-none" />
-            <div className="p-8 flex-1 flex flex-col">
-              <Skeleton className="h-3 w-24 mb-6 bg-[#c5a572]/20 rounded-none" />
-              <Skeleton className="h-10 w-full mb-4 bg-white/10 rounded-none" />
-              <Skeleton className="h-4 w-full mb-2 bg-white/5 rounded-none" />
-              <Skeleton className="h-4 w-2/3 mb-6 bg-white/5 rounded-none" />
-              <div className="mt-auto flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Skeleton className="h-10 w-10 bg-white/5 rounded-none" />
-                  <Skeleton className="h-3 w-24 bg-white/5 rounded-none" />
-                </div>
-                <Skeleton className="h-10 w-32 bg-[#c5a572]/10 rounded-none" />
+      <div className="max-w-[1400px] mx-auto px-6 md:px-12 py-24">
+        {/* 2. Featured Entry Skeleton (Thick Border) */}
+        <div className="mb-32">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-0 border-[3px] border-slate-100">
+            <Skeleton className="lg:col-span-7 aspect-16/10 lg:aspect-auto w-full bg-slate-100 rounded-none" />
+            <div className="lg:col-span-5 p-12 md:p-20 space-y-8 bg-white">
+              <Skeleton className="h-3 w-32 bg-blue-50 rounded-none" />
+              <div className="space-y-4">
+                <Skeleton className="h-12 w-full bg-slate-200 rounded-none" />
+                <Skeleton className="h-12 w-3/4 bg-slate-200 rounded-none" />
               </div>
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-full bg-slate-100 rounded-none" />
+                <Skeleton className="h-4 w-full bg-slate-100 rounded-none" />
+                <Skeleton className="h-4 w-2/3 bg-slate-100 rounded-none" />
+              </div>
+              <Skeleton className="h-4 w-32 bg-slate-200 rounded-none pt-4" />
             </div>
           </div>
         </div>
 
-        {/* Secondary Insights Skeletons */}
-        {Array.from({ length: 2 }).map((_, i) => (
-          <div key={i} className="flex flex-col border border-white/5 bg-transparent rounded-none">
-            <Skeleton className="relative aspect-video w-full bg-white/5 rounded-none" />
-            <div className="p-6 flex-1">
-              <Skeleton className="h-3 w-20 mb-4 bg-[#c5a572]/20 rounded-none" />
-              <Skeleton className="h-6 w-full mb-3 bg-white/10 rounded-none" />
-              <Skeleton className="h-4 w-full mb-1 bg-white/5 rounded-none" />
-              <Skeleton className="h-4 w-3/4 bg-white/5 rounded-none" />
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Archive Grid Skeletons */}
-      <div className="mt-32 pt-16 border-t border-white/10">
-        <div className="flex justify-between items-end mb-12">
-          <Skeleton className="h-8 w-64 bg-white/10 rounded-none" />
-          <Skeleton className="h-4 w-24 bg-white/5 rounded-none" />
-        </div>
+        {/* 3. Secondary Feed Grid Skeletons (Thick Borders) */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-12">
           {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="space-y-6">
-              <Skeleton className="relative aspect-[16/10] w-full bg-white/5 border border-white/5 rounded-none" />
-              <div className="px-2 space-y-3">
-                <Skeleton className="h-6 w-full bg-white/10 rounded-none" />
-                <Skeleton className="h-4 w-5/6 bg-white/5 rounded-none" />
-                <Skeleton className="h-3 w-1/3 bg-white/5 rounded-none pt-4" />
+            <div key={i} className="flex flex-col border-[3px] border-slate-100 bg-white">
+              <Skeleton className="relative aspect-video w-full bg-slate-100 rounded-none border-b-[3px] border-slate-100" />
+              <div className="p-8 space-y-6">
+                <Skeleton className="h-8 w-full bg-slate-200 rounded-none" />
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-full bg-slate-100 rounded-none" />
+                  <Skeleton className="h-4 w-3/4 bg-slate-100 rounded-none" />
+                </div>
+                <div className="pt-6 border-t border-slate-100 flex justify-between">
+                  <Skeleton className="h-3 w-20 bg-slate-100 rounded-none" />
+                  <Skeleton className="h-4 w-4 bg-slate-200 rounded-none" />
+                </div>
               </div>
             </div>
           ))}

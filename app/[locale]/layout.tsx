@@ -29,8 +29,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Answer24 | Elite Maritime Intelligence",
-  description: "Advanced AI-powered management and optimization for the maritime industry.",
+  title: "Schepenkring.nl| Elite Maritime Intelligence",
+  description:
+    "Advanced AI-powered management and optimization for the maritime industry.",
   manifest: "/manifest.json",
 };
 
@@ -46,7 +47,7 @@ export default async function RootLayout({
   params: Promise<{ locale: string }>;
 }>) {
   const { locale } = await params;
-  
+
   if (!hasLocale(routing.locales, locale)) {
     notFound();
   }
@@ -54,7 +55,7 @@ export default async function RootLayout({
   return (
     <html lang={locale} className="scroll-smooth">
       <Head />
-      <body 
+      <body
         className={`
           ${inter.variable} 
           ${playfair.variable} 
@@ -71,16 +72,16 @@ export default async function RootLayout({
             <ReferralTracker />
             {children}
             {/* Custom styled Toaster for the theme */}
-            <Toaster 
-              theme="dark" 
+            <Toaster
+              theme="dark"
               position="top-right"
               toastOptions={{
                 style: {
-                  background: '#141414',
-                  border: '1px solid rgba(197, 165, 114, 0.2)',
-                  color: '#fff',
-                  borderRadius: '0px'
-                }
+                  background: "#141414",
+                  border: "1px solid rgba(197, 165, 114, 0.2)",
+                  color: "#fff",
+                  borderRadius: "0px",
+                },
               }}
             />
           </ClientLayout>

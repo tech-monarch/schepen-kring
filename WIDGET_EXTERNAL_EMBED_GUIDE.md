@@ -1,4 +1,4 @@
-# 🤖 Answer24 Widget - External Website Embed Guide
+# 🤖 Schepenkring.nlWidget - External Website Embed Guide
 
 ## Quick Start
 
@@ -25,7 +25,7 @@ That's it! The widget will automatically load with all your custom settings.
 
 ## 🎨 How Settings Work
 
-All widget customization is done through your **Answer24 Dashboard**:
+All widget customization is done through your **Schepenkring.nlDashboard**:
 
 ### Appearance Settings (Live Preview!)
 
@@ -53,7 +53,7 @@ All widget customization is done through your **Answer24 Dashboard**:
 
 ## 📝 Complete Integration Example
 
-Here's a complete HTML page with the Answer24 widget:
+Here's a complete HTML page with the Schepenkring.nlwidget:
 
 ```html
 <!DOCTYPE html>
@@ -77,7 +77,7 @@ Here's a complete HTML page with the Answer24 widget:
       <p>&copy; 2025 My Webshop</p>
     </footer>
 
-    <!-- Answer24 Widget - Add before closing </body> tag -->
+    <!-- Schepenkring.nlWidget - Add before closing </body> tag -->
     <script
       src="http://localhost:3000/widget/answer24-widget.js"
       data-public-key="YOUR_PUBLIC_KEY"
@@ -356,7 +356,7 @@ Before going live, test these scenarios:
 
 ## 🎉 Success!
 
-Your Answer24 widget is now embedded and ready to engage with your customers!
+Your Schepenkring.nlwidget is now embedded and ready to engage with your customers!
 
 **Remember:**
 

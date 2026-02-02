@@ -42,7 +42,9 @@ interface InvoiceCardProps {
 
 export default function InvoiceCard({ transactionId }: InvoiceCardProps) {
   const router = useRouter();
-  const [paymentDetails, setPaymentDetails] = useState<PaymentDetails | null>(null);
+  const [paymentDetails, setPaymentDetails] = useState<PaymentDetails | null>(
+    null,
+  );
   const [loading, setLoading] = useState<boolean>(true);
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>("");
   const [clientInfo, setClientInfo] = useState<ClientInfo | null>(null);
@@ -100,7 +102,7 @@ export default function InvoiceCard({ transactionId }: InvoiceCardProps) {
     name: "John Doe",
     email: "john.doe@example.com",
     phone: "+31 6 12345678",
-    address: "123 Main Street, 1234 AB Amsterdam, Netherlands"
+    address: "123 Main Street, 1234 AB Amsterdam, Netherlands",
   };
 
   // Generate QR code for wallet payment
@@ -110,13 +112,13 @@ export default function InvoiceCard({ transactionId }: InvoiceCardProps) {
         width: 120,
         margin: 2,
         color: {
-          dark: '#000000',
-          light: '#FFFFFF'
-        }
+          dark: "#000000",
+          light: "#FFFFFF",
+        },
       });
       setQrCodeDataUrl(qrDataUrl);
     } catch (error) {
-      console.error('QR code generation error:', error);
+      console.error("QR code generation error:", error);
       setQrCodeDataUrl("");
     }
   };
@@ -125,13 +127,13 @@ export default function InvoiceCard({ transactionId }: InvoiceCardProps) {
     // Find the specific transaction by ID and convert to PaymentDetails format
     const loadTransactionData = async () => {
       setLoading(true);
-      
+
       // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
       // Find the transaction by ID
-      const transaction = dummyTransactions.find(t => t.id === transactionId);
-      
+      const transaction = dummyTransactions.find((t) => t.id === transactionId);
+
       if (transaction) {
         // Convert Transaction to PaymentDetails format
         const paymentDetails: PaymentDetails = {
@@ -142,17 +144,17 @@ export default function InvoiceCard({ transactionId }: InvoiceCardProps) {
           paid_at: transaction.status === "paid" ? transaction.paid_at : "",
           created_at: transaction.paid_at,
           checkout_url: "/wallet",
-          status: transaction.status
+          status: transaction.status,
         };
-        
+
         setPaymentDetails(paymentDetails);
         setClientInfo(dummyClientInfo);
-        
+
         // Generate QR code for wallet payment
         const walletUrl = `${window.location.origin}/wallet`;
         generateQRCode(walletUrl);
       }
-      
+
       setLoading(false);
     };
 
@@ -169,7 +171,7 @@ export default function InvoiceCard({ transactionId }: InvoiceCardProps) {
   };
 
   const handlePayWithWallet = () => {
-    router.push('/wallet');
+    router.push("/wallet");
   };
 
   const handleDownloadPDF = () => {
@@ -192,7 +194,6 @@ export default function InvoiceCard({ transactionId }: InvoiceCardProps) {
       <div className="max-w-3xl mx-auto bg-white p-6 rounded-2xl shadow-xl my-10 text-center">
         <div className="text-red-500 mb-4">Invoice not found</div>
         <p className="text-gray-600 mb-4">Transaction ID: {transactionId}</p>
-       
       </div>
     );
   }
@@ -210,7 +211,7 @@ export default function InvoiceCard({ transactionId }: InvoiceCardProps) {
   // The amount stored is the total amount paid (including VAT)
   const totalAmount = parseFloat(amount || "0");
   const taxRate = 0.21;
-  
+
   // Calculate subtotal and VAT from the total amount
   const subtotal = totalAmount / (1 + taxRate);
   const taxAmount = totalAmount - subtotal;
@@ -222,9 +223,7 @@ export default function InvoiceCard({ transactionId }: InvoiceCardProps) {
     <div className="max-w-3xl mx-auto bg-white p-6 rounded-2xl shadow-xl my-10 relative">
       {/* Header with Navigation */}
       <div className="flex justify-between items-center mb-6 gap-4">
-        <div className="flex items-center gap-4">
-          
-        </div>
+        <div className="flex items-center gap-4"></div>
         {/* <div className="flex items-center gap-4">
           <div className="text-3xl sm:text-4xl font-bold text-blue-600">INVOICE</div>
           <button
@@ -248,7 +247,7 @@ export default function InvoiceCard({ transactionId }: InvoiceCardProps) {
       <div className="flex flex-col sm:flex-row justify-between border-b pb-4 gap-6">
         <div>
           <div className="text-xl font-bold text-blue-600">Answer24</div>
-          <div className="text-sm text-gray-700 mt-2">Answer24 B.V.</div>
+          <div className="text-sm text-gray-700 mt-2">Schepenkring.nlB.V.</div>
           <div className="text-sm text-gray-700">Keizersgracht 123</div>
           <div className="text-sm text-gray-700 mt-2">1015 CJ Amsterdam</div>
           <div className="text-sm text-gray-700 mt-2">Netherlands</div>
@@ -256,22 +255,41 @@ export default function InvoiceCard({ transactionId }: InvoiceCardProps) {
           <div className="text-sm text-gray-700 mt-2">VAT: NL123456789B01</div>
         </div>
         <div className="text-sm text-gray-700 sm:text-right">
-          <div className="mt-2">Invoice Number: <strong>{mollie_payment_id || "N/A"}</strong></div>
-          <div className="mt-2">Date: <strong>{formatDate(created_at)}</strong></div>
-          <div className="mt-2">Due Date: <strong>{formatDate(paid_at) || "Upon receipt"}</strong></div>
-          <div className="mt-2">Status: <strong className={`${status === 'paid' ? 'text-green-600' : status === 'pending' ? 'text-yellow-600' : 'text-gray-600'}`}>{status || "Pending"}</strong></div>
+          <div className="mt-2">
+            Invoice Number: <strong>{mollie_payment_id || "N/A"}</strong>
+          </div>
+          <div className="mt-2">
+            Date: <strong>{formatDate(created_at)}</strong>
+          </div>
+          <div className="mt-2">
+            Due Date: <strong>{formatDate(paid_at) || "Upon receipt"}</strong>
+          </div>
+          <div className="mt-2">
+            Status:{" "}
+            <strong
+              className={`${status === "paid" ? "text-green-600" : status === "pending" ? "text-yellow-600" : "text-gray-600"}`}
+            >
+              {status || "Pending"}
+            </strong>
+          </div>
         </div>
       </div>
 
       {/* Client Information */}
       <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-        <div className="text-lg font-semibold text-gray-900 mb-2">Invoice For:</div>
+        <div className="text-lg font-semibold text-gray-900 mb-2">
+          Invoice For:
+        </div>
         {clientInfo ? (
           <>
             <div className="text-sm text-gray-700">{clientInfo.name}</div>
             <div className="text-sm text-gray-700">{clientInfo.email}</div>
-            {clientInfo.phone && <div className="text-sm text-gray-700">{clientInfo.phone}</div>}
-            {clientInfo.address && <div className="text-sm text-gray-700">{clientInfo.address}</div>}
+            {clientInfo.phone && (
+              <div className="text-sm text-gray-700">{clientInfo.phone}</div>
+            )}
+            {clientInfo.address && (
+              <div className="text-sm text-gray-700">{clientInfo.address}</div>
+            )}
           </>
         ) : (
           <div className="text-sm text-gray-700">Client data not available</div>
@@ -293,8 +311,12 @@ export default function InvoiceCard({ transactionId }: InvoiceCardProps) {
             <tr className="border-b">
               <td className="p-3">{plan || "Product/Service"}</td>
               <td className="p-3">1</td>
-              <td className="p-3">€{subtotal.toFixed(2)} {currency}</td>
-              <td className="p-3">€{taxAmount.toFixed(2)} {currency}</td>
+              <td className="p-3">
+                €{subtotal.toFixed(2)} {currency}
+              </td>
+              <td className="p-3">
+                €{taxAmount.toFixed(2)} {currency}
+              </td>
             </tr>
           </tbody>
         </table>
@@ -302,8 +324,18 @@ export default function InvoiceCard({ transactionId }: InvoiceCardProps) {
 
       {/* Totals */}
       <div className="mt-6 text-right space-y-1 text-sm sm:text-base">
-        <div>Subtotal: <strong>€{subtotal.toFixed(2)} {currency}</strong></div>
-        <div>VAT (21%): <strong>€{taxAmount.toFixed(2)} {currency}</strong></div>
+        <div>
+          Subtotal:{" "}
+          <strong>
+            €{subtotal.toFixed(2)} {currency}
+          </strong>
+        </div>
+        <div>
+          VAT (21%):{" "}
+          <strong>
+            €{taxAmount.toFixed(2)} {currency}
+          </strong>
+        </div>
         <div className="text-lg font-bold bg-blue-600 text-white p-2 inline-block rounded mt-2">
           Total (incl. VAT): €{totalAmount.toFixed(2)} {currency}
         </div>

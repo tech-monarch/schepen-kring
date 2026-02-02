@@ -1,5 +1,5 @@
 /**
- * Answer24 Advanced Embeddable Widget v2.0.0
+ * Schepenkring.nlAdvanced Embeddable Widget v2.0.0
  * Multi-tenant widget with public key authentication, domain validation, and advanced features
  */
 
@@ -40,7 +40,7 @@
       window.Answer24?.publicKey;
 
     if (!publicKey) {
-      console.error("Answer24 Widget: Public key is required");
+      console.error("Schepenkring.nlWidget: Public key is required");
       return;
     }
 
@@ -50,7 +50,7 @@
       try {
         pageContext = JSON.parse(pageContextStr);
       } catch (e) {
-        console.warn("Answer24 Widget: Invalid page context JSON");
+        console.warn("Schepenkring.nlWidget: Invalid page context JSON");
       }
     }
 
@@ -62,7 +62,7 @@
         dispatchEvent("ready");
       })
       .catch((error) => {
-        console.error("Answer24 Widget: Failed to initialize", error);
+        console.error("Schepenkring.nlWidget: Failed to initialize", error);
       });
   }
 
@@ -79,7 +79,7 @@
             Accept: "application/json",
             "X-Answer24-Version": WIDGET_VERSION,
           },
-        }
+        },
       );
 
       if (!response.ok) {
@@ -280,8 +280,8 @@
       <button 
         id="answer24-send-btn" 
         style="background: ${settings.primary}; color: ${
-      settings.foreground
-    }; border: none; border-radius: 20px; padding: 12px 16px; cursor: pointer;"
+          settings.foreground
+        }; border: none; border-radius: 20px; padding: 12px 16px; cursor: pointer;"
       >
         Send
       </button>
@@ -305,7 +305,7 @@
     // Add welcome message
     addMessage(
       "bot",
-      settings.strings?.welcome || "Hi! How can I help you today?"
+      settings.strings?.welcome || "Hi! How can I help you today?",
     );
 
     // Auto-open if configured
@@ -386,7 +386,7 @@
     ["mousedown", "mousemove", "keypress", "scroll", "touchstart"].forEach(
       (event) => {
         document.addEventListener(event, resetTimer, true);
-      }
+      },
     );
 
     resetTimer();
@@ -526,7 +526,7 @@
       // Add bot response
       addMessage(
         "bot",
-        data.message || "Sorry, I could not process your message."
+        data.message || "Sorry, I could not process your message.",
       );
 
       // Track GA4 event if configured
@@ -555,7 +555,7 @@
   function trackGA4Event(eventName, parameters = {}) {
     if (typeof gtag !== "undefined") {
       gtag("event", eventName, {
-        event_category: "Answer24 Widget",
+        event_category: "Schepenkring.nlWidget",
         ...parameters,
       });
     }
@@ -756,7 +756,7 @@
   }
 
   // Expose global API
-  window.Answer24 = window.Answer24 || {};
+  window.Schepenkring.nl = window.Schepenkring.nl || {};
   window.Answer24.init = (overrides = {}) => {
     // Merge overrides with current settings
     Object.assign(settings, overrides);

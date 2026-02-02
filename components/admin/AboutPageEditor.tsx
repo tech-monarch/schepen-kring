@@ -161,7 +161,7 @@ const RichTextEditor = ({
             >
               <AlignLeft className="h-4 w-4" />
             </Button>
-            <Button  
+            <Button
               type="button"
               variant="ghost"
               size="sm"
@@ -297,7 +297,7 @@ export function AboutPageEditor({
       values: {
         ...prev.values,
         values: prev.values.values.map((item, i) =>
-          i === index ? { ...item, [field]: value } : item
+          i === index ? { ...item, [field]: value } : item,
         ),
       },
     }));
@@ -329,7 +329,7 @@ export function AboutPageEditor({
   const insertTemplate = (section: string) => {
     const templates = {
       story: `<h3>Our Journey</h3>
-<p>Founded in <strong>2020</strong>, Answer24 began with a simple mission: to provide reliable, accessible answers to questions that matter most to people and businesses.</p>
+<p>Founded in <strong>2020</strong>, Schepenkring.nlbegan with a simple mission: to provide reliable, accessible answers to questions that matter most to people and businesses.</p>
 
 <p>What started as a small team of dedicated professionals has grown into a comprehensive platform serving thousands of users worldwide. Our commitment to <em>quality</em>, <em>accuracy</em>, and <em>accessibility</em> remains at the heart of everything we do.</p>
 
@@ -337,7 +337,7 @@ export function AboutPageEditor({
 <p>"We believe that everyone deserves access to reliable information, regardless of time or location."</p>
 </blockquote>
 
-<p>Today, Answer24 continues to innovate and expand, always with our users' needs at the forefront of our development.</p>`,
+<p>Today, Schepenkring.nlcontinues to innovate and expand, always with our users' needs at the forefront of our development.</p>`,
 
       mission: `Our mission is to <strong>democratize access to reliable information</strong> by providing 24/7 expert consultation and research services. We strive to bridge the gap between complex questions and clear, actionable answers.`,
 
@@ -661,7 +661,7 @@ export function AboutPageEditor({
                                 handleValueChange(
                                   index,
                                   "title",
-                                  e.target.value
+                                  e.target.value,
                                 )
                               }
                               placeholder="Excellence"

@@ -10,10 +10,10 @@ export default function DashboardLayout({
   return (
     <AuthGuard requireAuth={true}>
       {/* <InactivityLockProvider> */}
-        <div className="min-h-screen bg-gray-50">
+        {/* <div className="min-h-screen bg-gray-50"> */}
           <DashboardHeader />
           <main className="">{children}</main>
-        </div>
+        {/* </div> */}
       {/* </InactivityLockProvider> */}
     </AuthGuard>
   );

@@ -1,4 +1,4 @@
-# Answer24 Chat Widget - User Documentation
+# Schepenkring.nlChat Widget - User Documentation
 
 **Version:** 2.0.0  
 **Last Updated:** January 2025  
@@ -23,9 +23,9 @@
 
 ## Introduction
 
-### What is Answer24 Chat Widget?
+### What is Schepenkring.nlChat Widget?
 
-Answer24 Chat Widget is an AI-powered customer support solution that can be embedded on any website. It provides instant, intelligent responses to customer inquiries 24/7, improving customer satisfaction while reducing support workload.
+Schepenkring.nlChat Widget is an AI-powered customer support solution that can be embedded on any website. It provides instant, intelligent responses to customer inquiries 24/7, improving customer satisfaction while reducing support workload.
 
 ### Key Benefits
 
@@ -51,14 +51,14 @@ Answer24 Chat Widget is an AI-powered customer support solution that can be embe
 
 ### Prerequisites
 
-- Active Answer24 account
-- Access to Answer24 Dashboard
+- Active Schepenkring.nlaccount
+- Access to Schepenkring.nlDashboard
 - Access to your website's HTML (ability to add code)
 - Modern web browser (Chrome, Firefox, Safari, or Edge)
 
 ### Quick Start (5 Minutes)
 
-1. Log into Answer24 Dashboard
+1. Log into Schepenkring.nlDashboard
 2. Navigate to Widget Management
 3. Copy the embed code
 4. Paste into your website
@@ -72,7 +72,7 @@ Answer24 Chat Widget is an AI-powered customer support solution that can be embe
 
 1. Open your web browser
 2. Navigate to: `http://localhost:3000/nl/dashboard/admin/widget`
-3. Log in with your Answer24 credentials
+3. Log in with your Schepenkring.nlcredentials
 4. You'll see the Widget Management dashboard
 
 ### Step 2: Get Your Embed Code
@@ -117,7 +117,7 @@ You'll see code that looks like this:
     <h1>Welcome to My Store</h1>
     <p>Shop our amazing products...</p>
 
-    <!-- Answer24 Widget - Add here, before </body> -->
+    <!-- Schepenkring.nlWidget - Add here, before </body> -->
     <script
       src="http://localhost:3000/widget/answer24-widget.js"
       data-public-key="PUB_abc123"
@@ -164,7 +164,7 @@ You'll see code that looks like this:
 
 ## Widget Customization
 
-All customization is done through the Answer24 Dashboard - no coding required!
+All customization is done through the Schepenkring.nlDashboard - no coding required!
 
 ### Accessing Customization Settings
 
@@ -886,7 +886,7 @@ A: Simply remove the embed code from your website's HTML.
 
 #### Live Chat
 
-Available in your Answer24 Dashboard
+Available in your Schepenkring.nlDashboard
 
 **Hours:**
 
@@ -1021,7 +1021,7 @@ http://localhost:3000/widget/demo.html
 
 **End of Documentation**
 
-_This document is regularly updated. For the latest version, visit your Answer24 Dashboard._
+_This document is regularly updated. For the latest version, visit your Schepenkring.nlDashboard._
 
 **Document Version:** 2.0  
 **Last Updated:** January 2025  

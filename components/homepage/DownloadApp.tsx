@@ -4,29 +4,25 @@ import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { Smartphone, Download, X, ShieldCheck, Cpu } from "lucide-react";
+import { Smartphone, Download, X, ShieldCheck, AppWindow, ArrowRight } from "lucide-react";
+
+// Assuming yacht.webp is in the same folder
+import yachtImage from "./yacht.jpg";
 
 const SectionDownloadApp = () => {
   const [showModal, setShowModal] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [shouldRender, setShouldRender] = useState(false);
-  const [isInstalled, setIsInstalled] = useState(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-
-    const standalone =
-      window.matchMedia("(display-mode: standalone)").matches ||
-      (navigator as any).standalone === true;
-
-    setIsInstalled(standalone);
+    const standalone = window.matchMedia("(display-mode: standalone)").matches || (navigator as any).standalone === true;
     setShouldRender(!standalone);
 
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e);
     };
-
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
     return () => window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
   }, []);
@@ -50,132 +46,130 @@ const SectionDownloadApp = () => {
         {showModal && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
             <motion.div 
-              initial={{ opacity: 0 }} 
-              animate={{ opacity: 1 }} 
-              exit={{ opacity: 0 }}
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               onClick={() => setShowModal(false)}
-              className="absolute inset-0 bg-black/90 backdrop-blur-sm" 
+              className="absolute inset-0 bg-[#003566]/40 backdrop-blur-md" 
             />
             <motion.div 
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="relative w-full max-w-md bg-[#0f0f0f] border border-white/10 p-10 text-center"
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-md bg-white border border-slate-200 p-12 text-center shadow-2xl rounded-sm"
             >
-              <button 
-                onClick={() => setShowModal(false)}
-                className="absolute top-4 right-4 text-slate-500 hover:text-white"
-              >
-                <X size={20} />
+              <button onClick={() => setShowModal(false)} className="absolute top-6 right-6 text-slate-400 hover:text-[#003566]">
+                <X size={24} />
               </button>
-
-              <div className="w-16 h-16 bg-[#c5a572]/10 border border-[#c5a572]/20 rounded-full flex items-center justify-center mx-auto mb-8">
-                <Cpu className="text-[#c5a572]" size={28} />
+              <div className="w-16 h-16 bg-slate-50 border border-slate-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <AppWindow className="text-[#003566]" size={28} />
               </div>
-
-              <h2 className="text-2xl font-serif italic text-white mb-4">
-                {t("modal_title")}
-              </h2>
-              <p className="text-slate-400 text-sm font-light leading-relaxed mb-10">
-                {t("modal_subtitle")}
-              </p>
-
-              <div className="space-y-4">
-                <button
-                  onClick={handleInstallClick}
-                  disabled={!deferredPrompt}
-                  className="w-full py-4 bg-[#c5a572] text-black font-bold text-xs tracking-[0.2em] uppercase transition-all hover:bg-white disabled:opacity-30"
-                >
+              <h2 className="text-2xl font-serif text-[#003566] mb-3">{t("modal_title")}</h2>
+              <p className="text-slate-500 text-sm font-light mb-8">{t("modal_subtitle")}</p>
+              <div className="space-y-3">
+                <button onClick={handleInstallClick} disabled={!deferredPrompt} className="w-full py-4 bg-[#003566] text-white font-bold text-[10px] tracking-widest uppercase hover:bg-blue-700 disabled:opacity-20 transition-all">
                   {t("install_button")}
                 </button>
-                <button
-                  onClick={() => setShowModal(false)}
-                  className="w-full py-4 bg-transparent border border-white/10 text-white font-bold text-xs tracking-[0.2em] uppercase hover:bg-white/5"
-                >
+                <button onClick={() => setShowModal(false)} className="w-full py-4 border border-slate-200 text-[#003566] font-bold text-[10px] tracking-widest uppercase hover:bg-slate-50 transition-all">
                   {t("later_button")}
                 </button>
               </div>
-              
-              {!deferredPrompt && (
-                <p className="mt-6 text-[10px] text-slate-500 uppercase tracking-widest leading-loose">
-                  {t("manual_add")}
-                </p>
-              )}
             </motion.div>
           </div>
         )}
       </AnimatePresence>
 
-      <section className="relative py-32 bg-[#0a0a0a] overflow-hidden border-t border-white/5">
-        {/* Decorative Background Image with Overlay */}
-        <div className="absolute inset-0 z-0">
-          <Image
-            src="/dowloadAppBG.png"
-            alt="Dashboard Preview"
-            fill
-            className="object-cover object-right opacity-20 grayscale"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0a] via-[#0a0a0a]/80 to-transparent" />
-        </div>
-
-        <div className="container mx-auto px-6 relative z-10">
-          <div className="max-w-3xl">
+      <section className="relative py-32 lg:py-48 bg-white overflow-hidden">
+        <div className="max-w-[1400px] mx-auto px-6">
+          <div className="grid lg:grid-cols-2 gap-16 lg:gap-24 items-center">
+            
+            {/* LEFT SIDE: CONTENT */}
             <motion.div
-              initial={{ opacity: 0, x: -20 }}
+              initial={{ opacity: 0, x: -40 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
+              transition={{ duration: 0.8 }}
             >
-              <div className="flex items-center gap-4 mb-8">
-                <div className="w-12 h-[1px] bg-[#c5a572]" />
-                <span className="text-[#c5a572] text-[10px] font-bold tracking-[0.4em] uppercase">
-                  {t("section_title")}
-                </span>
+              <div className="inline-flex items-center gap-4 mb-8">
+                <span className="h-[1px] w-12 bg-blue-600" />
+                <span className="text-blue-600 text-[11px] font-black tracking-[0.4em] uppercase">{t("section_title")}</span>
               </div>
-              
-              <h2 className="text-5xl lg:text-7xl font-serif text-white italic mb-8 leading-tight">
+
+              <h2 className="text-6xl lg:text-[90px] font-serif text-[#003566] leading-[0.9] tracking-tighter mb-10">
                 The Fleet <br />
-                <span className="not-italic text-slate-600">In Your Pocket</span>
+                <span className="italic font-light text-slate-300">In Your Pocket</span>
               </h2>
-              
-              <p className="text-xl text-slate-400 font-light leading-relaxed mb-12 max-w-xl">
+
+              <p className="text-lg text-slate-500 font-light leading-relaxed mb-12 max-w-md">
                 {t("section_subtitle")}
               </p>
 
-              <div className="flex flex-col sm:flex-row gap-6">
+              <div className="flex flex-col sm:flex-row gap-4 mb-12">
                 <button
                   onClick={() => setShowModal(true)}
-                  className="flex items-center justify-center gap-4 px-8 py-5 bg-white text-black group transition-all hover:bg-[#c5a572]"
+                  className="flex items-center justify-between gap-8 px-8 py-5 bg-[#003566] text-white hover:bg-blue-700 transition-all shadow-xl shadow-blue-900/10 group"
                 >
-                  <Smartphone size={20} />
                   <div className="text-left">
-                    <p className="text-[10px] font-bold uppercase tracking-widest opacity-60 leading-none">Access for</p>
-                    <p className="text-sm font-bold uppercase tracking-wider">iOS Devices</p>
+                    <p className="text-[8px] uppercase tracking-widest opacity-60 mb-1">Download for</p>
+                    <p className="text-xs font-bold uppercase">iOS App Store</p>
                   </div>
+                  <Smartphone size={20} className="group-hover:rotate-12 transition-transform" />
                 </button>
 
                 <button
                   onClick={() => setShowModal(true)}
-                  className="flex items-center justify-center gap-4 px-8 py-5 border border-white/10 text-white group transition-all hover:bg-white/5"
+                  className="flex items-center justify-between gap-8 px-8 py-5 border border-slate-200 text-[#003566] hover:border-blue-600 transition-all group"
                 >
-                  <Download size={20} className="text-[#c5a572]" />
                   <div className="text-left">
-                    <p className="text-[10px] font-bold uppercase tracking-widest opacity-60 leading-none">Access for</p>
-                    <p className="text-sm font-bold uppercase tracking-wider">Android</p>
+                    <p className="text-[8px] uppercase tracking-widest opacity-60 mb-1">Download for</p>
+                    <p className="text-xs font-bold uppercase">Android Play</p>
                   </div>
+                  <Download size={20} className="group-hover:translate-y-1 transition-transform" />
                 </button>
               </div>
 
-              {/* Security Badge */}
-              <div className="mt-12 flex items-center gap-3 text-slate-500">
-                <ShieldCheck size={16} className="text-[#c5a572]" />
-                <span className="text-[10px] font-bold tracking-[0.2em] uppercase">End-to-End Encrypted Fleet Management</span>
+              <div className="flex items-center gap-3 text-slate-400">
+                <ShieldCheck size={18} className="text-blue-600" />
+                <span className="text-[10px] font-bold tracking-widest uppercase">Secure Cloud Infrastructure</span>
               </div>
             </motion.div>
+
+            {/* RIGHT SIDE: IMAGE WITH AESTHETIC FRAME */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 1 }}
+              className="relative"
+            >
+              {/* Decorative background element */}
+              <div className="absolute -top-10 -right-10 w-64 h-64 bg-slate-50 rounded-full -z-10" />
+              
+              <div className="relative aspect-[4/5] w-full overflow-hidden shadow-2xl rounded-sm border-[12px] border-white">
+                <Image
+                  src={yachtImage}
+                  alt="Luxury Yacht"
+                  fill
+                  placeholder="blur"
+                  className="object-cover transition-transform duration-1000 hover:scale-105"
+                />
+              </div>
+
+              {/* Floating Stat Card */}
+              <motion.div 
+                initial={{ y: 20, opacity: 0 }}
+                whileInView={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.5 }}
+                className="absolute -bottom-8 -left-8 bg-white p-6 shadow-xl border border-slate-100 hidden md:block"
+              >
+                <p className="text-[10px] font-black tracking-widest text-blue-600 uppercase mb-2">Live Status</p>
+                <div className="flex items-center gap-3">
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                  <p className="text-sm font-serif italic text-[#003566]">Fleet sync active</p>
+                </div>
+              </motion.div>
+            </motion.div>
+
           </div>
         </div>
-
-        {/* Floating Abstract Element */}
-        <div className="absolute right-[-10%] bottom-[-10%] w-[500px] h-[500px] bg-[#c5a572]/5 rounded-full blur-[120px] pointer-events-none" />
       </section>
     </>
   );

@@ -1,9 +1,10 @@
-# 🤖 Answer24 Embeddable Chat Widget
+# 🤖 Schepenkring.nlEmbeddable Chat Widget
 
 ## 📋 **Quick Start for Partners**
 
 ### **Step 1: Get Your Company ID**
-1. Contact Answer24 support to get your unique `company_id`
+
+1. Contact Schepenkring.nlsupport to get your unique `company_id`
 2. You'll receive your company ID (e.g., `123`, `456`, etc.)
 
 ### **Step 2: Add Widget to Your Website**
@@ -11,12 +12,19 @@
 Add this single line to your website's HTML (before closing `</body>` tag):
 
 ```html
-<script src="https://answer24_backend.test/widget/v1/answer24.js" data-public-key="PUB_abc123"></script>
+<script
+  src="https://answer24_backend.test/widget/v1/answer24.js"
+  data-public-key="PUB_abc123"
+></script>
 ```
 
 **Example:**
+
 ```html
-<script src="https://answer24_backend.test/widget/v1/answer24.js" data-public-key="PUB_abc123"></script>
+<script
+  src="https://answer24_backend.test/widget/v1/answer24.js"
+  data-public-key="PUB_abc123"
+></script>
 ```
 
 ### **Step 3: Customize (Optional)**
@@ -26,11 +34,14 @@ You can also set the public key via JavaScript:
 ```html
 <script>
   window.Answer24Config = {
-    API_BASE_URL: 'https://answer24_backend.test/api/v1',
-    CDN_BASE_URL: 'https://answer24_backend.test'
+    API_BASE_URL: "https://answer24_backend.test/api/v1",
+    CDN_BASE_URL: "https://answer24_backend.test",
   };
 </script>
-<script src="https://answer24_backend.test/widget/v1/answer24.js" data-public-key="PUB_abc123"></script>
+<script
+  src="https://answer24_backend.test/widget/v1/answer24.js"
+  data-public-key="PUB_abc123"
+></script>
 ```
 
 ## 🎨 **Widget Features**
@@ -69,7 +80,7 @@ Answer24Widget.open();
 Answer24Widget.close();
 
 // Send a message programmatically
-Answer24Widget.sendMessage('Hello, I need help with my order');
+Answer24Widget.sendMessage("Hello, I need help with my order");
 ```
 
 ### **Custom Styling (CSS Override)**
@@ -94,6 +105,7 @@ Answer24Widget.sendMessage('Hello, I need help with my order');
 ### **API Endpoints Used:**
 
 1. **Widget Settings API**
+
    ```
    GET /api/widget-settings/{company_id}
    POST /api/widget-settings/{company_id}
@@ -145,6 +157,7 @@ public/
 ## 📊 **Analytics Dashboard**
 
 Partners can view:
+
 - Total conversations
 - Response times
 - Customer satisfaction
@@ -154,11 +167,13 @@ Partners can view:
 ## 🆘 **Support**
 
 ### **For Partners:**
+
 - Email: support@answer24.com
 - Documentation: https://docs.answer24.com/widget
 - Live Chat: Available in your dashboard
 
 ### **For Developers:**
+
 - API Docs: https://api.answer24.com/docs
 - GitHub: https://github.com/answer24/widget
 - Issues: https://github.com/answer24/widget/issues

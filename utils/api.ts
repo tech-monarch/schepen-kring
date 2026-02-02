@@ -1,16 +1,35 @@
 import axios from "axios";
 
+// This helper determines the backend URL based on where the browser is looking
+const getBaseUrl = () => {
+  // 1. Priority: Manual override in .env
+  if (process.env.NEXT_PUBLIC_API_URL) return process.env.NEXT_PUBLIC_API_URL;
+
+  // 2. Auto-detect if in browser
+  if (typeof window !== "undefined") {
+    const { hostname } = window.location;
+    // If you are on localhost, assume Laravel is also on localhost:8000
+    if (hostname === "localhost" || hostname === "127.0.0.1") {
+      return "http://127.0.0.1:8000/api";
+    }
+    // For production or local network testing (e.g. 192.168.1.50)
+    return `http://${hostname}:8000/api`;
+  }
+
+  // 3. Fallback for Server Side Rendering
+  return "http://127.0.0.1:8000/api";
+};
+
 export const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
-  headers: {
-    "Content-Type": "application/json",
-  },
+  baseURL: getBaseUrl(),
 });
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("auth_token");
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("auth_token");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
   }
   return config;
 });

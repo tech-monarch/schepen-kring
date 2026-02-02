@@ -89,7 +89,7 @@ export const NotificationBanner: React.FC = () => {
         setTimeout(() => {
           new Notification("Answer24", {
             body: "You'll now receive important updates!",
-            icon: "/answerLogobgRemover-removebg-preview.png",
+            icon: "/schepenkring-logo.png",
           });
         }, 1000);
       } else if (permission === "denied") {

@@ -1,12 +1,12 @@
 "use client";
 
-import React from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Bell, Send } from 'lucide-react';
-import { usePushNotifications } from '@/hooks/usePushNotifications';
-import { tokenUtils } from '@/utils/auth';
-import { toast } from 'react-hot-toast';
+import React from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Bell, Send } from "lucide-react";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
+import { tokenUtils } from "@/utils/auth";
+import { toast } from "react-hot-toast";
 
 const NotificationTest: React.FC = () => {
   const user = tokenUtils.getUser();
@@ -14,35 +14,37 @@ const NotificationTest: React.FC = () => {
 
   const handleTestNotification = () => {
     sendTestNotification();
-    toast.success('Test notification sent!');
+    toast.success("Test notification sent!");
   };
 
   const handleBrowserNotification = () => {
-    if ('Notification' in window) {
-      if (Notification.permission === 'granted') {
-        new Notification('Answer24 Test', {
-          body: 'This is a test browser notification from Answer24!',
-          icon: '/answerLogobgRemover-removebg-preview.png',
-          badge: '/answerLogobgRemover-removebg-preview.png',
+    if ("Notification" in window) {
+      if (Notification.permission === "granted") {
+        new Notification("Schepenkring.nlTest", {
+          body: "This is a test browser notification from Answer24!",
+          icon: "/schepenkring-logo.png",
+          badge: "/schepenkring-logo.png",
         });
-        toast.success('Browser notification sent!');
-      } else if (Notification.permission !== 'denied') {
+        toast.success("Browser notification sent!");
+      } else if (Notification.permission !== "denied") {
         Notification.requestPermission().then((permission) => {
-          if (permission === 'granted') {
-            new Notification('Answer24 Test', {
-              body: 'This is a test browser notification from Answer24!',
-              icon: '/answerLogobgRemover-removebg-preview.png',
+          if (permission === "granted") {
+            new Notification("Schepenkring.nlTest", {
+              body: "This is a test browser notification from Answer24!",
+              icon: "/schepenkring-logo.png",
             });
-            toast.success('Browser notification sent!');
+            toast.success("Browser notification sent!");
           } else {
-            toast.error('Notification permission denied');
+            toast.error("Notification permission denied");
           }
         });
       } else {
-        toast.error('Notifications are blocked. Please enable them in your browser settings.');
+        toast.error(
+          "Notifications are blocked. Please enable them in your browser settings.",
+        );
       }
     } else {
-      toast.error('This browser does not support notifications');
+      toast.error("This browser does not support notifications");
     }
   };
 
@@ -58,9 +60,9 @@ const NotificationTest: React.FC = () => {
         <div className="text-sm text-gray-600">
           Test the notification system to ensure everything is working properly.
         </div>
-        
+
         <div className="space-y-2">
-          <Button 
+          <Button
             onClick={handleTestNotification}
             className="w-full flex items-center gap-2"
             variant="outline"
@@ -68,8 +70,8 @@ const NotificationTest: React.FC = () => {
             <Send className="w-4 h-4" />
             Test Push Notification
           </Button>
-          
-          <Button 
+
+          <Button
             onClick={handleBrowserNotification}
             className="w-full flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
           >
@@ -77,7 +79,7 @@ const NotificationTest: React.FC = () => {
             Test Browser Notification
           </Button>
         </div>
-        
+
         <div className="text-xs text-gray-500">
           Make sure to allow notifications when prompted by your browser.
         </div>

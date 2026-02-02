@@ -1,5 +1,5 @@
 /**
- * Answer24 Advanced Embeddable Widget v2.0.0
+ * Schepenkring.nlAdvanced Embeddable Widget v2.0.0
  * Multi-tenant widget with public key authentication, domain validation, and advanced features
  */
 
@@ -40,7 +40,7 @@
       window.Answer24?.publicKey;
 
     if (!publicKey) {
-      console.error("Answer24 Widget: Public key is required");
+      console.error("Schepenkring.nlWidget: Public key is required");
       return;
     }
 
@@ -50,7 +50,7 @@
       try {
         pageContext = JSON.parse(pageContextStr);
       } catch (e) {
-        console.warn("Answer24 Widget: Invalid page context JSON");
+        console.warn("Schepenkring.nlWidget: Invalid page context JSON");
       }
     }
 
@@ -62,7 +62,7 @@
         dispatchEvent("ready");
       })
       .catch((error) => {
-        console.error("Answer24 Widget: Failed to initialize", error);
+        console.error("Schepenkring.nlWidget: Failed to initialize", error);
       });
   }
 
@@ -555,7 +555,7 @@
   function trackGA4Event(eventName, parameters = {}) {
     if (typeof gtag !== "undefined") {
       gtag("event", eventName, {
-        event_category: "Answer24 Widget",
+        event_category: "Schepenkring.nlWidget",
         ...parameters,
       });
     }
@@ -890,7 +890,7 @@
   }
 
   // Expose global API
-  window.Answer24 = window.Answer24 || {};
+  window.Schepenkring.nl = window.Schepenkring.nl || {};
   window.Answer24.init = (overrides = {}) => {
     // Merge overrides with current settings
     Object.assign(settings, overrides);

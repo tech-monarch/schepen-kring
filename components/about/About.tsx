@@ -126,7 +126,7 @@ export function AboutPage() {
                 src={ABOUTIMAGE}
                 width={500}
                 height={500}
-                alt="Answer24 about image"
+                alt="Schepenkring.nlabout image"
               />
             </motion.div>
           </div>

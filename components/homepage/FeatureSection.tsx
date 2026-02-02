@@ -34,34 +34,32 @@ const FeatureCard = ({
       whileInView={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.8, delay: index * 0.1 }}
       viewport={{ once: true }}
-      className="group relative min-w-[320px] md:min-w-[400px] flex-shrink-0"
+      className="group relative min-w-[320px] md:min-w-[420px] flex-shrink-0"
     >
-      {/* The "Swiss" Frame */}
-      <div className="h-[450px] border border-white/5 bg-[#0f0f0f] p-10 flex flex-col justify-between transition-all duration-500 group-hover:border-[#c5a572]/30 relative overflow-hidden">
+      <div className="h-[500px] border border-slate-100 bg-white p-12 flex flex-col justify-between transition-all duration-700 group-hover:shadow-[0_40px_80px_-20px_rgba(0,53,102,0.12)] group-hover:-translate-y-2 relative overflow-hidden">
         
-        {/* Subtle Background Icon on Hover */}
-        <Icon className="absolute -right-8 -bottom-8 w-48 h-48 text-white/[0.02] group-hover:text-[#c5a572]/[0.05] transition-all duration-700 rotate-12" />
+        <Icon className="absolute -right-12 -bottom-12 w-64 h-64 text-slate-50 group-hover:text-blue-50/50 transition-all duration-1000 rotate-12" />
 
-        <div>
-          <div className="w-12 h-12 mb-10 flex items-center justify-center border border-white/10 group-hover:border-[#c5a572] transition-colors duration-500">
-            <Icon className="w-5 h-5 text-slate-400 group-hover:text-[#c5a572] transition-colors" />
+        <div className="relative z-10">
+          <div className="w-14 h-14 mb-12 flex items-center justify-center bg-slate-50 group-hover:bg-[#003566] transition-colors duration-500 rounded-sm">
+            <Icon className="w-6 h-6 text-[#003566] group-hover:text-white transition-colors" />
           </div>
           
-          <span className="text-[10px] text-[#c5a572] font-bold tracking-[0.3em] uppercase mb-4 block">
-            Phase 0{index + 1}
+          <span className="text-[10px] text-blue-500 font-sans font-bold tracking-[0.4em] uppercase mb-6 block">
+            Excellence 0{index + 1}
           </span>
           
-          <h3 className="text-3xl font-serif text-white mb-6 italic leading-tight group-hover:text-[#c5a572] transition-colors">
+          <h3 className="text-4xl font-serif text-[#003566] mb-8 italic leading-tight">
             {title}
           </h3>
           
-          <p className="text-slate-500 text-sm leading-relaxed max-w-[280px] font-light tracking-wide group-hover:text-slate-300 transition-colors">
+          <p className="text-slate-500 text-[15px] leading-relaxed max-w-[300px] font-light tracking-wide group-hover:text-slate-700 transition-colors">
             {description}
           </p>
         </div>
 
-        <div className="flex items-center gap-2 text-[10px] font-bold tracking-[0.2em] uppercase text-white/40 group-hover:text-white transition-colors">
-          Discovery <ArrowUpRight size={14} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+        <div className="relative z-10 flex items-center gap-3 text-[10px] font-sans font-bold tracking-[0.3em] uppercase text-slate-400 group-hover:text-[#003566] transition-colors">
+          View Detail <ArrowUpRight size={14} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
         </div>
       </div>
     </motion.div>
@@ -94,54 +92,72 @@ export function FeaturesSection() {
   ];
 
   return (
-    <section id="features" className="py-32 bg-[#0a0a0a] relative overflow-hidden">
-      {/* Background Section Title Vertical */}
-      <div className="absolute left-4 top-1/2 -translate-y-1/2 hidden xl:block">
-        <span className="text-[120px] font-serif font-black text-white/[0.02] select-none uppercase rotate-90 origin-left">
-          Excellence
-        </span>
-      </div>
+    <section id="features" className="relative py-40 bg-[#F1F5F9] overflow-hidden">
+      
+      {/* Background Texture Overlay */}
+      <div className="absolute inset-0 z-0 opacity-[0.03] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]" />
 
-      <div className="max-w-[1400px] mx-auto px-6 relative">
-        <div className="flex flex-col lg:flex-row lg:items-end justify-between mb-24 gap-8">
+      <div className="max-w-[1500px] mx-auto px-8 relative z-10">
+        
+        <div className="grid lg:grid-cols-12 gap-16 items-center mb-32">
+          
           <motion.div
-            initial={{ opacity: 0, x: -20 }}
+            initial={{ opacity: 0, x: -40 }}
             whileInView={{ opacity: 1, x: 0 }}
-            className="max-w-2xl"
+            viewport={{ once: true }}
+            className="lg:col-span-7"
           >
-            <div className="flex items-center gap-4 mb-6">
-              <div className="w-8 h-[1px] bg-[#c5a572]" />
-              <span className="text-[#c5a572] text-[10px] font-bold tracking-[0.4em] uppercase">
+            <div className="flex items-center gap-6 mb-8">
+              <div className="w-12 h-[1px] bg-blue-600" />
+              <span className="text-blue-600 text-[10px] font-sans font-bold tracking-[0.5em] uppercase">
                 {t("section_title")}
               </span>
             </div>
-            <h2 className="text-5xl lg:text-7xl font-serif text-white italic leading-tight">
+            <h2 className="text-6xl lg:text-[100px] font-serif text-[#003566] leading-[0.85] tracking-tighter mb-12">
               {t("heading.line1")}<br />
-              <span className="not-italic text-slate-600">{t("heading.line2")}</span>
+              <span className="italic font-light text-slate-300">{t("heading.line2")}</span>
             </h2>
+
+            <div className="flex gap-5">
+              <button 
+                onClick={() => scrollToIndex(Math.max(0, currentIndex - 1))}
+                className="w-14 h-14 border border-slate-200 flex items-center justify-center hover:bg-[#003566] hover:text-white transition-all rounded-full bg-white shadow-sm"
+              >
+                <ChevronLeft size={20} strokeWidth={1.5} />
+              </button>
+              <button 
+                onClick={() => scrollToIndex(Math.min(features.length - 1, currentIndex + 1))}
+                className="w-14 h-14 border border-slate-200 flex items-center justify-center hover:bg-[#003566] hover:text-white transition-all rounded-full bg-white shadow-sm"
+              >
+                <ChevronRight size={20} strokeWidth={1.5} />
+              </button>
+            </div>
           </motion.div>
 
-          {/* Minimalist Controls */}
-          <div className="flex gap-4">
-            <button 
-              onClick={() => scrollToIndex(Math.max(0, currentIndex - 1))}
-              className="w-14 h-14 border border-white/10 flex items-center justify-center hover:bg-white hover:text-black transition-all"
-            >
-              <ChevronLeft size={20} />
-            </button>
-            <button 
-              onClick={() => scrollToIndex(Math.min(features.length - 1, currentIndex + 1))}
-              className="w-14 h-14 border border-white/10 flex items-center justify-center hover:bg-white hover:text-black transition-all"
-            >
-              <ChevronRight size={20} />
-            </button>
-          </div>
+          {/* New Yacht Image */}
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.98 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            className="hidden lg:block lg:col-span-5 relative h-[550px]"
+          >
+            <div className="absolute inset-0 z-10 border-[12px] border-white shadow-2xl rounded-sm overflow-hidden bg-slate-200">
+              <img 
+                src="https://th.bing.com/th/id/R.9ab8b08a7fccb3f09d6bc26199c969c9?rik=wIaHhYwwzjkaYw&pid=ImgRaw&r=0" 
+                alt="Luxury Yacht"
+                className="w-full h-full object-cover transition-transform duration-700 hover:scale-105"
+                loading="lazy"
+              />
+            </div>
+            {/* Decorative Shadow Frame */}
+            <div className="absolute -bottom-6 -right-6 w-full h-full border border-slate-300/50 -z-10 rounded-sm" />
+          </motion.div>
         </div>
 
-        {/* Horizontal Gallery */}
+        {/* Gallery Slider */}
         <div className="relative">
           <div
-            className="flex overflow-x-auto gap-8 pb-12 no-scrollbar snap-x snap-mandatory"
+            className="flex overflow-x-auto gap-10 pb-20 no-scrollbar snap-x snap-mandatory"
             style={{ scrollbarWidth: "none" }}
           >
             {features.map((feature, index) => (
@@ -160,12 +176,11 @@ export function FeaturesSection() {
             ))}
           </div>
 
-          {/* Sleek Progress Line */}
-          <div className="w-full h-[1px] bg-white/5 relative mt-10">
+          <div className="max-w-xs mx-auto h-[1.5px] bg-slate-200 relative overflow-hidden">
             <motion.div 
-              className="absolute top-0 left-0 h-full bg-[#c5a572]"
+              className="absolute top-0 left-0 h-full bg-[#003566]"
               animate={{ width: `${((currentIndex + 1) / features.length) * 100}%` }}
-              transition={{ duration: 0.5 }}
+              transition={{ duration: 0.8 }}
             />
           </div>
         </div>

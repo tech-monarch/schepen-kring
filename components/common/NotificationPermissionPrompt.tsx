@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Bell, X, Check } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { toast } from 'react-hot-toast';
+import React, { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Bell, X, Check } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "react-hot-toast";
 
 interface NotificationPermissionPromptProps {
   onPermissionGranted?: () => void;
@@ -14,65 +14,72 @@ interface NotificationPermissionPromptProps {
   delay?: number;
 }
 
-export const NotificationPermissionPrompt: React.FC<NotificationPermissionPromptProps> = ({
+export const NotificationPermissionPrompt: React.FC<
+  NotificationPermissionPromptProps
+> = ({
   onPermissionGranted,
   onPermissionDenied,
   autoShow = true,
-  delay = 3000
+  delay = 3000,
 }) => {
   const [showPrompt, setShowPrompt] = useState(false);
-  const [permission, setPermission] = useState<NotificationPermission>('default');
+  const [permission, setPermission] =
+    useState<NotificationPermission>("default");
   const [isRequesting, setIsRequesting] = useState(false);
 
   useEffect(() => {
     // Check current notification permission
-    if ('Notification' in window) {
+    if ("Notification" in window) {
       setPermission(Notification.permission);
-      
+
       // Show prompt automatically if permission is default and autoShow is enabled
-      if (autoShow && Notification.permission === 'default') {
+      if (autoShow && Notification.permission === "default") {
         const timer = setTimeout(() => {
           setShowPrompt(true);
         }, delay);
-        
+
         return () => clearTimeout(timer);
       }
     }
   }, [autoShow, delay]);
 
   const requestPermission = async () => {
-    if (!('Notification' in window)) {
-      toast.error('This browser does not support notifications');
+    if (!("Notification" in window)) {
+      toast.error("This browser does not support notifications");
       return;
     }
 
     setIsRequesting(true);
-    
+
     try {
       const permission = await Notification.requestPermission();
       setPermission(permission);
-      
-      if (permission === 'granted') {
-        toast.success('Notifications enabled! You\'ll now receive important updates.');
+
+      if (permission === "granted") {
+        toast.success(
+          "Notifications enabled! You'll now receive important updates.",
+        );
         onPermissionGranted?.();
-        
+
         // Show a test notification
         setTimeout(() => {
-          new Notification('Answer24 Notifications Enabled', {
-            body: 'You\'ll now receive important updates and alerts.',
-            icon: '/answerLogobgRemover-removebg-preview.png',
-            badge: '/answerLogobgRemover-removebg-preview.png',
+          new Notification("Schepenkring.nlNotifications Enabled", {
+            body: "You'll now receive important updates and alerts.",
+            icon: "/schepenkring-logo.png",
+            badge: "/schepenkring-logo.png",
           });
         }, 1000);
       } else {
-        toast.error('Notifications disabled. You can enable them later in your browser settings.');
+        toast.error(
+          "Notifications disabled. You can enable them later in your browser settings.",
+        );
         onPermissionDenied?.();
       }
-      
+
       setShowPrompt(false);
     } catch (error) {
-      console.error('Error requesting notification permission:', error);
-      toast.error('Failed to request notification permission');
+      console.error("Error requesting notification permission:", error);
+      toast.error("Failed to request notification permission");
     } finally {
       setIsRequesting(false);
     }
@@ -81,21 +88,21 @@ export const NotificationPermissionPrompt: React.FC<NotificationPermissionPrompt
   const dismissPrompt = () => {
     setShowPrompt(false);
     // Remember user dismissed the prompt (store in localStorage)
-    localStorage.setItem('notification-prompt-dismissed', 'true');
+    localStorage.setItem("notification-prompt-dismissed", "true");
   };
 
   // Don't show if notifications are not supported
-  if (!('Notification' in window)) {
+  if (!("Notification" in window)) {
     return null;
   }
 
   // Don't show if permission is already granted or denied
-  if (permission !== 'default') {
+  if (permission !== "default") {
     return null;
   }
 
   // Don't show if user previously dismissed
-  if (localStorage.getItem('notification-prompt-dismissed') === 'true') {
+  if (localStorage.getItem("notification-prompt-dismissed") === "true") {
     return null;
   }
 
@@ -111,7 +118,7 @@ export const NotificationPermissionPrompt: React.FC<NotificationPermissionPrompt
             className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
             onClick={dismissPrompt}
           />
-          
+
           {/* Prompt Card */}
           <motion.div
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
@@ -129,13 +136,14 @@ export const NotificationPermissionPrompt: React.FC<NotificationPermissionPrompt
                   Stay Updated with Answer24
                 </CardTitle>
               </CardHeader>
-              
+
               <CardContent className="text-center space-y-4">
                 <p className="text-gray-600 leading-relaxed">
-                  Get instant notifications about important updates, messages, and account activities. 
-                  We'll only send you relevant information.
+                  Get instant notifications about important updates, messages,
+                  and account activities. We'll only send you relevant
+                  information.
                 </p>
-                
+
                 <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
                   <Check className="w-4 h-4 text-green-600" />
                   <span>Important account updates</span>
@@ -148,7 +156,7 @@ export const NotificationPermissionPrompt: React.FC<NotificationPermissionPrompt
                   <Check className="w-4 h-4 text-green-600" />
                   <span>Service status updates</span>
                 </div>
-                
+
                 <div className="flex gap-3 pt-4">
                   <Button
                     variant="outline"
@@ -176,12 +184,13 @@ export const NotificationPermissionPrompt: React.FC<NotificationPermissionPrompt
                     )}
                   </Button>
                 </div>
-                
+
                 <p className="text-xs text-gray-400 mt-4">
-                  You can change this setting anytime in your browser preferences.
+                  You can change this setting anytime in your browser
+                  preferences.
                 </p>
               </CardContent>
-              
+
               {/* Close button */}
               <Button
                 variant="ghost"
