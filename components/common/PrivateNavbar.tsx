@@ -119,7 +119,7 @@ export function PrivateNavbar() {
           ) : (
             <Link href="/login">
               <button className="px-10 py-3.5 border border-[#003566] text-[#003566] text-[9px] font-sans font-bold uppercase tracking-[0.3em] hover:bg-[#003566] hover:text-white transition-all duration-500">
-                Client Login
+                Employee Login
               </button>
             </Link>
           )}
