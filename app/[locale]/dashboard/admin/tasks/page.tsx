@@ -161,7 +161,7 @@ export default function AdminTaskBoardPage() {
   };
 
   return (
-    <div className="space-y-10 p-6 max-w-7xl mx-auto">
+    <div className="space-y-10 p-6 max-w-7xl mx-auto -mt-20">
       {/* HEADER */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
         <div>

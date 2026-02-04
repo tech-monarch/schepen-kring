@@ -177,7 +177,7 @@ export default function RoleManagementPage() {
   }, [users, searchQuery]);
 
   return (
-    <div className="space-y-10 p-6 max-w-7xl mx-auto min-h-screen">
+    <div className="space-y-10 p-6 max-w-7xl mx-auto min-h-screen -mt-20">
       <Toaster position="top-right" reverseOrder={false} />
 
       {/* HEADER SECTION */}

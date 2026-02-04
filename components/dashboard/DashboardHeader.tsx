@@ -21,14 +21,20 @@ import {
   DropdownMenuTrigger,
   DropdownMenuLabel,
   DropdownMenuSeparator 
-} from "@/components/ui/dropdown-menu"; 
+} from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Toaster } from "react-hot-toast";
 import Image from "next/image";
 import ANSWER24LOGO from "@/public/schepenkring-logo.png";
+// Import your default profile picture
+import DEFAULT_PFP from "@/components/dashboard/pfp.webp";
+
+// Storage URL constant
+const STORAGE_URL = "https://kring.answer24.nl/storage/";
 
 export function DashboardHeader() {
   const [isScrolled, setIsScrolled] = useState(false);
-  const [user, setUser] = useState<{ name: string; email: string; userType: string } | null>(null);
+  const [user, setUser] = useState<{ name: string; email: string; userType: string; profile_image?: string } | null>(null);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   
   const currentPath = usePathname(); 
@@ -38,7 +44,6 @@ export function DashboardHeader() {
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handleScroll);
 
-    // Fetch user data stored during sign-in
     const storedUser = localStorage.getItem("user_data");
     if (storedUser) {
       setUser(JSON.parse(storedUser));
@@ -67,6 +72,8 @@ export function DashboardHeader() {
           : "bg-white border-b border-slate-100"
       )}
     >
+      <Toaster position="top-right" reverseOrder={false} />
+
       {/* Brand Logo Section */}
       <div className="flex items-center gap-12">
         <Link href="/dashboard" className="flex items-center group">
@@ -111,10 +118,27 @@ export function DashboardHeader() {
 
       {/* User Actions */}
       <div className="flex items-center gap-8">
-        {/* <button className="relative text-slate-400 hover:text-[#003566] transition-colors">
-          <Bell size={20} strokeWidth={1.5} />
-          <span className="absolute top-0 right-0 w-2 h-2 bg-blue-500 rounded-full border-2 border-white"></span>
-        </button> */}
+        {/* Notifications Dropdown */}
+        <DropdownMenu>
+          <DropdownMenuTrigger className="relative text-slate-400 hover:text-[#003566] transition-colors outline-none">
+            <Bell size={20} strokeWidth={1.5} />
+            <span className="absolute top-0 right-0 w-2 h-2 bg-blue-500 rounded-full border-2 border-white"></span>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-80 bg-white border border-slate-200 rounded-none shadow-xl p-0 overflow-hidden">
+            <div className="p-4 border-b border-slate-100 bg-slate-50/50">
+              <h3 className="text-[10px] font-black uppercase tracking-widest text-[#003566]">Communications & Alerts</h3>
+            </div>
+            <div className="max-h-[300px] overflow-y-auto">
+              <div className="p-8 text-center">
+                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">No new directives</p>
+              </div>
+            </div>
+            <DropdownMenuSeparator className="m-0 bg-slate-100" />
+            <button className="w-full py-3 text-[9px] font-black uppercase tracking-[0.2em] text-blue-600 hover:bg-blue-50 transition-colors">
+              View All Notifications
+            </button>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
         <DropdownMenu onOpenChange={(open) => !open && setShowLogoutConfirm(false)}>
           <DropdownMenuTrigger className="flex items-center gap-4 outline-none group">
@@ -126,11 +150,18 @@ export function DashboardHeader() {
                 {user?.userType || "Authenticated"}
               </p> 
             </div>
+            
+            {/* UPDATED AVATAR LOGIC */}
             <Avatar className="h-10 w-10 border-2 border-slate-100 group-hover:border-[#003566] transition-all duration-300">
+              <AvatarImage 
+                src={user?.profile_image ? `${STORAGE_URL}${user.profile_image}` : DEFAULT_PFP.src} 
+                className="object-cover"
+              />
               <AvatarFallback className="bg-slate-100 text-[#003566] text-xs font-bold">
                 {user?.name?.substring(0, 2).toUpperCase() || "U"}
               </AvatarFallback> 
             </Avatar>
+            
             <ChevronDown size={14} className="text-slate-400 group-hover:text-[#003566] transition-all" /> 
           </DropdownMenuTrigger>
           
@@ -150,15 +181,18 @@ export function DashboardHeader() {
 
                   <DropdownMenuSeparator className="bg-slate-100" />
                   
-                  {/* <DropdownMenuItem className="hover:bg-slate-50 cursor-pointer gap-3 text-[10px] font-bold uppercase tracking-widest py-3 px-3">
+                  <DropdownMenuItem 
+                    onSelect={() => router.push("/dashboard/account")}
+                    className="hover:bg-slate-50 cursor-pointer gap-3 text-[10px] font-bold uppercase tracking-widest py-3 px-3"
+                  >
                     <Settings size={14} /> Account Settings 
-                  </DropdownMenuItem> */}
+                  </DropdownMenuItem>
                   
-                  {/* <DropdownMenuSeparator className="bg-slate-100" /> */}
+                  <DropdownMenuSeparator className="bg-slate-100" />
                   
                   <DropdownMenuItem 
                     onSelect={(e) => {
-                      e.preventDefault(); 
+                      e.preventDefault();
                       setShowLogoutConfirm(true);
                     }}
                     className="text-red-500 hover:bg-red-50 cursor-pointer gap-3 text-[10px] font-bold uppercase tracking-widest py-3 px-3"

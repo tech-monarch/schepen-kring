@@ -2,306 +2,270 @@
 
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import {
-  BarChart3,
-  Anchor,
-  CheckSquare,
-  Users,
-  Lock,
-  ClipboardList,
-  Ship,
-  Settings,
-  CheckCircle2,
-  Clock,
-  ChevronRight,
-  LayoutDashboard,
-  AlertCircle,
-  Bell,
+  BarChart3, Anchor, CheckSquare, Users, ShieldAlert, User, Trash2, 
+  AlertCircle, Wifi, WifiOff, Plus, Clock, AlertTriangle, Info, TrendingUp,
+  ChevronLeft, ChevronRight
 } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
-import { useEffect, useState } from "react";
-import axios from "axios";
+import { useEffect, useState, useMemo } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Toaster } from "react-hot-toast";
+import { Toaster, toast } from "react-hot-toast";
+import axios from "axios";
 
-export default function EmployeeDashboardPage() {
+interface Task {
+  id: string | number;
+  title: string;
+  status: "To Do" | "In Progress" | "Done";
+  type: "assigned" | "personal";
+  priority: "Urgent" | "High" | "Medium" | "Low";
+  timestamp: number;
+  completedAt?: number;
+}
+
+export default function TaskManifestPage() {
   const pathname = usePathname();
   const t = useTranslations("Dashboard");
   const [userRole, setUserRole] = useState<string | null>(null);
-  const [userName, setUserName] = useState("Personnel");
-  const [tasks, setTasks] = useState<any[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isOnline, setIsOnline] = useState(true);
+  const [now, setNow] = useState(Date.now());
+  
+  // Sidebar State
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   const API_BASE = "https://kring.answer24.nl/api";
+  const THREE_DAYS_MS = 3 * 24 * 60 * 60 * 1000;
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 60000);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user_data");
-    if (storedUser) {
-      const parsed = JSON.parse(storedUser);
-      setUserRole(parsed.userType); // 'Admin', 'Employee', or 'Customer' [cite: 75]
-      setUserName(parsed.name);
-    }
+    if (storedUser) setUserRole(JSON.parse(storedUser).userType);
 
-    const fetchTasks = async () => {
+    window.addEventListener("online", () => {
+      setIsOnline(true);
+      processSyncQueue();
+    });
+    window.addEventListener("offline", () => setIsOnline(false));
+
+    const loadInitialData = async () => {
+      setLoading(true);
+      const cached = localStorage.getItem("task_cache");
+      let currentTasks: Task[] = cached ? JSON.parse(cached) : [];
+
       try {
         const token = localStorage.getItem("auth_token");
-        const res = await axios.get(`${API_BASE}/my-tasks`, {
+        const res = await axios.get(`${API_BASE}/tasks`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        setTasks(res.data);
+        const fetchedTasks = res.data.map((t: any) => ({
+          ...t,
+          type: "assigned",
+          timestamp: t.timestamp || Date.now(),
+        }));
+
+        const personal = JSON.parse(localStorage.getItem("personal_tasks") || "[]");
+        currentTasks = [...fetchedTasks, ...personal];
+
+        const filteredTasks = currentTasks.filter(task => {
+          if (task.status === "Done" && task.completedAt) {
+            return Date.now() - task.completedAt < THREE_DAYS_MS;
+          }
+          return true;
+        });
+
+        setTasks(filteredTasks);
+        saveToLocalStorage(filteredTasks);
       } catch (err) {
-        console.error("Task sync failed");
+        toast.error("Using offline manifest");
+        setTasks(currentTasks);
       } finally {
         setLoading(false);
       }
     };
-    fetchTasks();
+
+    loadInitialData();
   }, []);
 
-  // [cite_start]// Define sidebar items based on role [cite: 76]
-  const getSidebarItems = () => {
-    if (userRole === "Admin") {
-      return [
-        { title: t("overview"), href: "/dashboard/admin", icon: BarChart3 },
-        {
-          title: t("fleet_management"),
-          href: "/dashboard/admin/yachts",
-          icon: Anchor,
-        },
-        {
-          title: t("task_board"),
-          href: "/dashboard/admin/tasks",
-          icon: CheckSquare,
-        },
-        {
-          title: t("sections.quickActions"),
-          href: "/dashboard/admin/users",
-          icon: Users,
-        },
-      ];
-    }
+  const analytics = useMemo(() => {
+    const total = tasks.length;
+    const completed = tasks.filter(t => t.status === "Done").length;
+    const urgent = tasks.filter(t => t.priority === "Urgent" && t.status !== "Done").length;
+    const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
+    return { total, completed, urgent, percent };
+  }, [tasks]);
 
-    if (userRole === "Employee") {
-      return [
-        { title: t("overview"), href: "/dashboard", icon: BarChart3 },
-        {
-          title: t("fleet_management"),
-          href: "/dashboard/yachts",
-          icon: Anchor,
-        },
-        { title: t("task_board"), href: "/dashboard/tasks", icon: CheckSquare },
-      ];
-    }
-
-    return []; //[cite_start]// Customers get an empty list (locked sidebar) [cite: 78]
+  const saveToLocalStorage = (allTasks: Task[]) => {
+    localStorage.setItem("task_cache", JSON.stringify(allTasks));
+    localStorage.setItem("personal_tasks", JSON.stringify(allTasks.filter((t) => t.type === "personal")));
   };
 
-  const sidebarItems = getSidebarItems();
+  const processSyncQueue = async () => {
+    const queue = JSON.parse(localStorage.getItem("sync_queue") || "[]");
+    if (queue.length === 0) return;
+    const token = localStorage.getItem("auth_token");
+    for (const action of queue) {
+      try {
+        await axios.patch(`${API_BASE}/tasks/${action.id}/status`, { status: action.status }, { headers: { Authorization: `Bearer ${token}` } });
+      } catch (e) { console.error(e); }
+    }
+    localStorage.setItem("sync_queue", "[]");
+  };
+
+  const sortedTasks = useMemo(() => {
+    return [...tasks].sort((a, b) => {
+      if (a.status === "Done" && b.status !== "Done") return 1;
+      if (a.status !== "Done" && b.status === "Done") return -1;
+      const pMap = { Urgent: 4, High: 3, Medium: 2, Low: 1 };
+      return (pMap[b.priority] || 0) - (pMap[a.priority] || 0) || b.timestamp - a.timestamp;
+    });
+  }, [tasks]);
+
+  const advanceStatus = async (id: string | number, currentStatus: string, type: string) => {
+    const sequence: Task["status"][] = ["To Do", "In Progress", "Done"];
+    const nextStatus = sequence[(sequence.indexOf(currentStatus as any) + 1) % sequence.length];
+    
+    const updatedTasks = tasks.map((t) =>
+      t.id === id ? { ...t, status: nextStatus, completedAt: nextStatus === "Done" ? Date.now() : undefined } : t
+    );
+    
+    setTasks(updatedTasks);
+    saveToLocalStorage(updatedTasks);
+
+    if (type === "assigned") {
+      if (navigator.onLine) {
+        try {
+          const token = localStorage.getItem("auth_token");
+          await axios.patch(`${API_BASE}/tasks/${id}/status`, { status: nextStatus }, { headers: { Authorization: `Bearer ${token}` } });
+        } catch (err) { addToQueue(id, nextStatus); }
+      } else {
+        addToQueue(id, nextStatus);
+      }
+    }
+  };
+
+  const addToQueue = (id: any, status: string) => {
+    const queue = JSON.parse(localStorage.getItem("sync_queue") || "[]");
+    queue.push({ id, status, timestamp: Date.now() });
+    localStorage.setItem("sync_queue", JSON.stringify(queue));
+  };
+
+  const getPriorityStyles = (priority: Task["priority"], status: string) => {
+    if (status === "Done") return "border-l-4 border-l-emerald-500 bg-slate-50 opacity-60";
+    switch (priority) {
+      case "Urgent": return "border-l-4 border-l-red-600 bg-red-50/30";
+      case "High": return "border-l-4 border-l-orange-500 bg-orange-50/30";
+      case "Medium": return "border-l-4 border-l-blue-500 bg-blue-50/30";
+      case "Low": return "border-l-4 border-l-slate-400 bg-slate-50/30";
+      default: return "border-l-4 border-l-[#003566]";
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-[#FDFDFD] text-[#003566]">
+    <div className="min-h-screen bg-white text-[#003566]">
       <DashboardHeader />
-
       <div className="flex pt-20">
-        <aside className="w-64 fixed left-0 top-20 bottom-0 border-r border-slate-200 bg-white hidden lg:block overflow-y-auto z-40 shadow-sm">
-          <nav className="p-4 space-y-2 mt-4">
-            <p className="px-4 text-[9px] font-black uppercase tracking-[0.4em] text-slate-300 mb-6">
-              {userRole === "Admin"
-                ? t("admin_label")
-                : userRole === "Employee"
-                  ? "Staff Terminal"
-                  : "Guest Access"}
-            </p>
-
-            {/* If Customer, show Locked state [cite: 81] */}
-            {userRole === "Customer" ? (
-              <div className="px-4 py-10 flex flex-col items-center text-center">
-                <Lock size={20} className="text-slate-200 mb-4" />
-                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-300 leading-relaxed">
-                  Terminal Locked <br /> for Client Identity
-                </p>
+        {/* COLLAPSIBLE SIDEBAR */}
+        <motion.aside 
+          initial={false}
+          animate={{ width: isSidebarCollapsed ? 80 : 256 }}
+          className="fixed left-0 top-20 bottom-0 border-r border-slate-200 bg-white hidden lg:block z-40 overflow-hidden"
+        >
+          <div className="flex flex-col h-full relative">
+            <button 
+              onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+              className="absolute right-3 top-4 bg-[#003566] border border-slate-200 rounded-full p-1 text-white hover:bg-[#003566]/90 transition-colors z-[999] shadow-sm"
+            >
+              {isSidebarCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+            </button>
+            <nav className="p-4 space-y-2 mt-4">
+              <div className={cn("px-4 mb-6 flex items-center justify-between transition-opacity", isSidebarCollapsed && "opacity-0")}>
+                <p className="text-[9px] font-black uppercase tracking-[0.4em] text-slate-300">Staff Terminal</p>
+                {isOnline ? <Wifi size={10} className="text-emerald-500" /> : <WifiOff size={10} className="text-red-500" />}
               </div>
-            ) : (
-              sidebarItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={cn(
-                    "flex items-center gap-4 px-4 py-3 text-[10px] font-bold uppercase tracking-[0.2em] transition-all",
-                    pathname === item.href
-                      ? "bg-[#003566] text-white shadow-lg shadow-blue-900/10"
-                      : "text-slate-400 hover:text-[#003566] hover:bg-slate-50",
-                  )}
-                >
-                  <item.icon
-                    size={16}
-                    className={cn(
-                      pathname === item.href ? "text-white" : "text-slate-300",
-                    )}
-                  />
-                  {item.title}
+              {[
+                { title: t("overview"), href: "/dashboard", icon: BarChart3 },
+                { title: t("fleet_management"), href: "/dashboard/yachts", icon: Anchor },
+                { title: t("task_board"), href: "/dashboard/tasks", icon: CheckSquare },
+              ].map((item) => (
+                <Link key={item.href} href={item.href} className={cn("flex items-center gap-4 px-4 py-3 text-[10px] font-bold uppercase tracking-[0.2em] transition-all relative group", pathname === item.href ? "bg-[#003566] text-white shadow-md" : "text-slate-400 hover:bg-slate-50", isSidebarCollapsed && "justify-center px-0")}>
+                  <item.icon size={16} className="shrink-0" />
+                  {!isSidebarCollapsed && <span>{item.title}</span>}
                 </Link>
-              ))
-            )}
-          </nav>
-        </aside>
+              ))}
+            </nav>
+          </div>
+        </motion.aside>
 
-        <main className="flex-1 lg:ml-64 p-8 bg-[#FAFAFA] min-h-[calc(100vh-80px)]">
-          <div className="max-w-[1600px] mx-auto">
+        {/* MAIN CONTENT - Removed -mt-20 and fixed Margin */}
+        <motion.main 
+          animate={{ marginLeft: isSidebarCollapsed ? 80 : 256 }}
+          className="flex-1 p-8 bg-white min-h-[calc(100vh-80px)]"
+        >
+          <div className="max-w-[1600px] mx-auto space-y-12">
             <Toaster position="top-right" />
-
-            {/* Inner Dashboard Content */}
-            <div className="space-y-10">
-              <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-slate-100 pb-10">
-                <div>
-                  <h1 className="text-4xl font-serif italic text-[#003566]">
-                    Welcome, {userName}
-                  </h1>
-                  <p className="text-[10px] uppercase tracking-[0.4em] text-blue-600 font-black mt-2">
-                    Staff Terminal & Operational Overview
-                  </p>
-                </div>
-
-                <div className="flex gap-4">
-                  <div className="bg-white border border-slate-200 px-8 py-4 shadow-sm">
-                    <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-2">
-                      <Bell size={10} className="text-blue-600" /> Active Tasks
-                    </p>
-                    <p className="text-2xl font-serif italic text-[#003566]">
-                      {tasks.length}
-                    </p>
-                  </div>
-                </div>
+            
+            {/* Header */}
+            <div className="flex justify-between items-end border-b border-slate-100 pb-8 mt-4">
+              <div>
+                <h1 className="text-5xl font-serif italic text-[#003566]">Operational Manifest</h1>
+                <p className="text-[10px] font-black uppercase tracking-[0.4em] text-blue-600 mt-2">Vessel Maintenance & Directives</p>
               </div>
+            </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-                <div className="lg:col-span-2 space-y-6">
-                  <h2 className="text-xs font-black uppercase tracking-[0.3em] text-[#003566] flex items-center gap-2">
-                    <ClipboardList size={16} className="text-blue-600" />{" "}
-                    Assigned Manifest
-                  </h2>
-
-                  <div className="space-y-4">
-                    {loading ? (
-                      <div className="h-40 flex items-center justify-center border border-dashed border-slate-200 bg-white">
-                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-300">
-                          Syncing manifest...
-                        </p>
-                      </div>
-                    ) : tasks.length === 0 ? (
-                      <div className="bg-white border border-slate-100 p-16 text-center shadow-sm">
-                        <CheckCircle2
-                          size={32}
-                          className="mx-auto text-emerald-300 mb-4"
-                        />
-                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                          All Clear: No Pending Operations
-                        </p>
-                      </div>
-                    ) : (
-                      tasks.map((task: any) => (
-                        <div
-                          key={task.id}
-                          className="bg-white border border-slate-200 p-6 flex items-center justify-between group hover:border-blue-300 transition-all shadow-sm"
-                        >
-                          <div className="flex items-center gap-6">
-                            <div
-                              className={cn(
-                                "w-12 h-12 border flex items-center justify-center transition-colors",
-                                task.status === "In Progress"
-                                  ? "bg-blue-50 border-blue-100 text-blue-600"
-                                  : "bg-white border-slate-100 text-slate-300",
-                              )}
-                            >
-                              {task.status === "In Progress" ? (
-                                <Clock size={20} />
-                              ) : (
-                                <Anchor size={20} />
-                              )}
-                            </div>
-                            <div>
-                              <h4 className="text-[11px] font-black uppercase tracking-[0.1em] text-slate-700">
-                                {task.title}
-                              </h4>
-                              <p className="text-[9px] text-slate-400 font-medium italic mt-1">
-                                Due: {task.deadline}
-                              </p>
-                            </div>
-                          </div>
-                          <Link href="/dashboard/tasks">
-                            <Button
-                              variant="ghost"
-                              className="text-slate-300 group-hover:text-blue-600"
-                            >
-                              <ChevronRight size={18} />
-                            </Button>
-                          </Link>
-                        </div>
-                      ))
-                    )}
+            {/* Analytics Section */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              {[
+                { label: "Active Tasks", val: analytics.total - analytics.completed, icon: <CheckSquare size={16}/> },
+                { label: "Critical Priority", val: analytics.urgent, icon: <AlertCircle size={16} className="text-red-500"/> },
+                { label: "Completed Assets", val: analytics.completed, icon: <TrendingUp size={16} className="text-emerald-500"/> },
+                { label: "User Efficiency", val: `${analytics.percent}%`, icon: <BarChart3 size={16} className="text-blue-500"/> },
+              ].map((stat, i) => (
+                <div key={i} className="bg-slate-50/50 border border-slate-100 p-6">
+                  <div className="flex justify-between items-start mb-4">
+                    <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">{stat.label}</p>
+                    {stat.icon}
                   </div>
+                  <p className="text-3xl font-serif italic text-[#003566]">{stat.val}</p>
                 </div>
+              ))}
+            </div>
 
-                <div className="space-y-8">
-                  <h2 className="text-xs font-black uppercase tracking-[0.3em] text-[#003566] flex items-center gap-2">
-                    <LayoutDashboard size={16} className="text-blue-600" />{" "}
-                    Quick Access
-                  </h2>
-                  <div className="grid grid-cols-1 gap-5">
-                    <Link href="/dashboard/yachts">
-                      <div className="bg-[#003566] p-10 text-white group cursor-pointer relative overflow-hidden transition-all hover:shadow-xl">
-                        <Ship className="absolute -right-6 -bottom-6 w-32 h-32 text-white/5 group-hover:scale-110 transition-transform duration-700" />
-                        <p className="text-[9px] font-black uppercase tracking-[0.4em] mb-4 text-blue-300">
-                          Inventory
-                        </p>
-                        <h3 className="text-2xl font-serif italic mb-8 text-left">
-                          The Yacht List
-                        </h3>
-                        <div className="flex items-center text-[8px] font-black uppercase tracking-[0.2em] border-t border-white/10 pt-5">
-                          Fleet Access{" "}
-                          <ChevronRight size={12} className="ml-1" />
-                        </div>
+            {/* Task List */}
+            <div className="space-y-4">
+              <AnimatePresence mode="popLayout">
+                {sortedTasks.map((task) => (
+                  <motion.div layout key={task.id} className={cn("flex flex-col md:flex-row items-center justify-between p-6 gap-6 border shadow-sm", getPriorityStyles(task.priority, task.status))}>
+                    <div className="flex items-center gap-6 flex-1 w-full">
+                      <div className="w-12 h-12 flex items-center justify-center border bg-white">
+                        {task.status === "Done" ? <CheckSquare size={18} className="text-emerald-500" /> : <ShieldAlert size={18} />}
                       </div>
-                    </Link>
-
-                    <Link href="/dashboard/tasks">
-                      <div className="bg-white border border-slate-200 p-8 group cursor-pointer hover:border-[#003566] transition-all shadow-sm">
-                        <Settings
-                          className="text-slate-300 group-hover:text-[#003566] mb-6 transition-colors"
-                          size={24}
-                        />
-                        <p className="text-[9px] font-black uppercase tracking-[0.4em] text-slate-400 mb-1">
-                          Operations
-                        </p>
-                        <h3 className="text-xl font-serif italic text-[#003566]">
-                          Fleet Task Board
-                        </h3>
-                        <p className="text-[10px] text-slate-400 mt-3 uppercase font-medium">
-                          Update vessel logistics status.
-                        </p>
-                      </div>
-                    </Link>
-
-                    <div className="p-6 bg-slate-50 border border-slate-100">
-                      <div className="flex gap-4">
-                        <AlertCircle
-                          size={14}
-                          className="text-blue-600 shrink-0 mt-0.5"
-                        />
-                        <p className="text-[8px] text-slate-400 leading-relaxed uppercase font-medium tracking-wider">
-                          Staff Identity Verified. Activity is monitored for
-                          security and fleet safety.
+                      <div className="flex-1">
+                        <h3 className="text-sm font-black uppercase tracking-wider text-[#003566]">{task.title}</h3>
+                        <p className="text-[9px] font-bold text-slate-300 uppercase tracking-widest mt-1">
+                          Ref: {task.id} • {task.priority} Priority {task.status === "Done" && "• Auto-clears after 3 days"}
                         </p>
                       </div>
                     </div>
-                  </div>
-                </div>
-              </div>
+                    <button onClick={() => advanceStatus(task.id, task.status, task.type)} className={cn("px-8 py-3 text-[10px] font-black uppercase tracking-widest border transition-all min-w-[160px]", 
+                      task.status === "To Do" ? "border-slate-200 text-slate-400 hover:bg-[#003566] hover:text-white" : 
+                      task.status === "In Progress" ? "border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white" : "border-emerald-500 text-emerald-500")}>
+                      {task.status}
+                    </button>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
             </div>
           </div>
-        </main>
+        </motion.main>
       </div>
     </div>
   );
