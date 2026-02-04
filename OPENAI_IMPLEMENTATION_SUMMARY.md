@@ -54,7 +54,7 @@
 **Test Command**:
 
 ```bash
-curl -X POST http://localhost:3001/api/chat \
+curl -X POST https://localhost:3001/api/chat \
   -H "Content-Type: application/json" \
   -d '{"message": "Hello, test message", "history": []}'
 ```
@@ -78,7 +78,7 @@ NEXT_PUBLIC_CHATBOT_RESPONSE_DELAY=1000
 NEXT_PUBLIC_CHATBOT_WELCOME_MESSAGE=Hi there! I'm answer24, your AI assistant. How can I help you today?
 
 # API Configuration
-NEXT_PUBLIC_API_BASE_URL=http://localhost:8000/api/v1
+NEXT_PUBLIC_API_BASE_URL=https://localhost:8000/api/v1
 ```
 
 ### 5. **Chat Components Integration** ✅
@@ -311,7 +311,7 @@ NEXT_PUBLIC_API_BASE_URL=http://localhost:8000/api/v1
 ### **API Test**
 
 ```bash
-curl -X POST http://localhost:3001/api/chat \
+curl -X POST https://localhost:3001/api/chat \
   -H "Content-Type: application/json" \
   -d '{"message": "Hello, test message", "history": []}'
 ```

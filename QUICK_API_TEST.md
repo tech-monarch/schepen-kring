@@ -18,6 +18,7 @@ curl -X POST "https://answer24_backend.test/api/v1/wallet/add-money" \
 ```
 
 ### What to Look For:
+
 - `< HTTP/1.1 200` = ✅ Endpoint exists and works
 - `< HTTP/1.1 404` = ❌ Endpoint NOT implemented
 - `< HTTP/1.1 401` = ⚠️ Auth issue
@@ -40,7 +41,7 @@ curl -X GET "https://answer24_backend.test/api/v1/wallet/balance" \
 ## Test: Frontend Track Purchase (If frontend is running)
 
 ```bash
-curl -X POST "http://localhost:3000/api/v1/widget/track-purchase" \
+curl -X POST "https://localhost:3000/api/v1/widget/track-purchase" \
   -H "Content-Type: application/json" \
   -d '{
     "user_id": "190",
@@ -57,17 +58,19 @@ curl -X POST "http://localhost:3000/api/v1/widget/track-purchase" \
 ## 📊 Expected Responses
 
 ### Success Response (200):
+
 ```json
 {
   "success": true,
   "data": {
-    "balance": 10.00,
+    "balance": 10.0,
     "transaction_id": "tx_123456"
   }
 }
 ```
 
 ### Error Response (404):
+
 ```json
 {
   "message": "Not Found"
@@ -75,6 +78,7 @@ curl -X POST "http://localhost:3000/api/v1/widget/track-purchase" \
 ```
 
 ### Error Response (401):
+
 ```json
 {
   "message": "Unauthenticated"
@@ -94,10 +98,9 @@ curl -X POST "http://localhost:3000/api/v1/widget/track-purchase" \
 
 ## ⚠️ Common Issues
 
-| Status | Problem | Solution |
-|--------|---------|----------|
-| 404 | Endpoint doesn't exist | Create `/wallet/add-money` route in Laravel |
-| 401 | Token invalid | Use correct Bearer token |
-| 500 | Server error | Check backend logs with `tail -f storage/logs/laravel.log` |
-| 200 but wallet shows €0 | Endpoint exists but not updating DB | Check controller logic |
-
+| Status                  | Problem                             | Solution                                                   |
+| ----------------------- | ----------------------------------- | ---------------------------------------------------------- |
+| 404                     | Endpoint doesn't exist              | Create `/wallet/add-money` route in Laravel                |
+| 401                     | Token invalid                       | Use correct Bearer token                                   |
+| 500                     | Server error                        | Check backend logs with `tail -f storage/logs/laravel.log` |
+| 200 but wallet shows €0 | Endpoint exists but not updating DB | Check controller logic                                     |

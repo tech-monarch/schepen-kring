@@ -100,7 +100,7 @@ console.log("🔑 Login response received:", {
 
 ### **✅ Login Test:**
 
-1. Visit: `http://localhost:3000/en/login`
+1. Visit: `https://localhost:3000/en/login`
 2. Enter credentials
 3. **Check console** - Should see token debugging info
 4. **Expected:** "✅ Token stored successfully"
@@ -108,7 +108,7 @@ console.log("🔑 Login response received:", {
 
 ### **✅ Registration Test:**
 
-1. Visit: `http://localhost:3000/en/signup`
+1. Visit: `https://localhost:3000/en/signup`
 2. Fill registration form
 3. **Check console** - Should see token debugging info
 4. **Expected:** "✅ Token stored successfully"

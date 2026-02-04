@@ -71,7 +71,7 @@ Schepenkring.nlChat Widget is an AI-powered customer support solution that can b
 ### Step 1: Access Widget Management
 
 1. Open your web browser
-2. Navigate to: `http://localhost:3000/nl/dashboard/admin/widget`
+2. Navigate to: `https://localhost:3000/nl/dashboard/admin/widget`
 3. Log in with your Schepenkring.nlcredentials
 4. You'll see the Widget Management dashboard
 
@@ -84,7 +84,7 @@ You'll see code that looks like this:
 ```html
 <!-- Add this before closing </body> tag on your website -->
 <script
-  src="http://localhost:3000/widget/answer24-widget.js"
+  src="https://localhost:3000/widget/answer24-widget.js"
   data-public-key="PUB_abc123"
 ></script>
 ```
@@ -119,7 +119,7 @@ You'll see code that looks like this:
 
     <!-- Schepenkring.nlWidget - Add here, before </body> -->
     <script
-      src="http://localhost:3000/widget/answer24-widget.js"
+      src="https://localhost:3000/widget/answer24-widget.js"
       data-public-key="PUB_abc123"
     ></script>
   </body>
@@ -168,7 +168,7 @@ All customization is done through the Schepenkring.nlDashboard - no coding requi
 
 ### Accessing Customization Settings
 
-**URL:** `http://localhost:3000/nl/dashboard/admin/widget`
+**URL:** `https://localhost:3000/nl/dashboard/admin/widget`
 
 The dashboard has several tabs:
 
@@ -561,7 +561,7 @@ localhost (for testing)
 
 #### Test Demo Page
 
-**URL:** `http://localhost:3000/widget/demo.html`
+**URL:** `https://localhost:3000/widget/demo.html`
 
 **What it shows:**
 
@@ -984,7 +984,7 @@ We review all suggestions and implement popular requests.
 
 ```html
 <script
-  src="http://localhost:3000/widget/answer24-widget.js"
+  src="https://localhost:3000/widget/answer24-widget.js"
   data-public-key="YOUR_KEY"
 ></script>
 ```
@@ -994,7 +994,7 @@ Place before `</body>` tag
 ### Dashboard URL
 
 ```
-http://localhost:3000/nl/dashboard/admin/widget
+https://localhost:3000/nl/dashboard/admin/widget
 ```
 
 ### JavaScript API
@@ -1014,7 +1014,7 @@ support@answer24.nl
 ### Demo Page
 
 ```
-http://localhost:3000/widget/demo.html
+https://localhost:3000/widget/demo.html
 ```
 
 ---

@@ -8,11 +8,13 @@
 ## 🎨 **Color Changes**
 
 ### **Before (ChatGPT Colors)**:
+
 - Sidebar: Dark gray (#111827)
 - Gradients: Blue to Purple
 - User Avatar: Green to Blue gradient
 
 ### **After (Website Design Colors)**:
+
 - Sidebar: White with borders
 - Primary: Blue (#2563EB - blue-600)
 - Background: Light gray (#F9FAFB - gray-50)
@@ -23,6 +25,7 @@
 ## 🎨 **Current Color Palette**
 
 ### **Sidebar**:
+
 - **Background**: White (#FFFFFF)
 - **Border**: Light gray (#E5E7EB - gray-200)
 - **Text**: Dark gray (#111827 - gray-900)
@@ -31,11 +34,13 @@
 - **Active Border**: Blue (#BFDBFE - blue-200)
 
 ### **Main Area**:
+
 - **Background**: Light gray (#F9FAFB - gray-50)
 - **Header**: White (#FFFFFF)
 - **Border**: Light gray (#E5E7EB - gray-200)
 
 ### **Messages**:
+
 - **User Messages**: Blue (#2563EB - blue-600)
 - **AI Messages**: White with border
 - **Text**: Dark gray (#111827 - gray-900)
@@ -43,6 +48,7 @@
 - **AI Avatar**: Blue (#2563EB - blue-600)
 
 ### **Buttons & Actions**:
+
 - **Primary Button**: Blue (#2563EB - blue-600)
 - **Hover**: Darker blue (#1D4ED8 - blue-700)
 - **Text**: White (#FFFFFF)
@@ -53,6 +59,7 @@
 ## ✨ **Design Principles**
 
 ### **Clean & Professional**:
+
 - ✅ White sidebar (not dark)
 - ✅ Light gray background
 - ✅ Blue as primary color
@@ -60,6 +67,7 @@
 - ✅ Professional appearance
 
 ### **Consistent with Website**:
+
 - ✅ Matches dashboard colors
 - ✅ Uses existing color palette
 - ✅ Professional appearance
@@ -70,6 +78,7 @@
 ## 🎯 **UI Components**
 
 ### **Sidebar**:
+
 ```css
 Background: white
 Border: gray-200
@@ -79,6 +88,7 @@ Active: blue-50 with blue-200 border
 ```
 
 ### **New Chat Button**:
+
 ```css
 Background: blue-600
 Hover: blue-700
@@ -86,6 +96,7 @@ Text: white
 ```
 
 ### **Chat Items**:
+
 ```css
 Default: white
 Hover: gray-100
@@ -94,6 +105,7 @@ Text: gray-900
 ```
 
 ### **Messages**:
+
 ```css
 User: blue-600 background, white text
 AI: white background, gray-900 text, gray-200 border
@@ -102,6 +114,7 @@ AI Avatar: blue-600
 ```
 
 ### **Input Area**:
+
 ```css
 Background: white
 Border: gray-200
@@ -112,20 +125,21 @@ Button: blue-600
 
 ## 📊 **Color Comparison**
 
-| Element | ChatGPT Style | Website Style |
-|---------|--------------|---------------|
-| Sidebar | Dark gray | White |
-| Background | Light gray | Light gray |
-| Primary | Blue/Purple gradient | Blue solid |
-| User Avatar | Green/Blue gradient | Gray |
-| AI Avatar | Blue/Purple gradient | Blue solid |
-| Buttons | Various | Blue |
+| Element     | ChatGPT Style        | Website Style |
+| ----------- | -------------------- | ------------- |
+| Sidebar     | Dark gray            | White         |
+| Background  | Light gray           | Light gray    |
+| Primary     | Blue/Purple gradient | Blue solid    |
+| User Avatar | Green/Blue gradient  | Gray          |
+| AI Avatar   | Blue/Purple gradient | Blue solid    |
+| Buttons     | Various              | Blue          |
 
 ---
 
 ## 🎨 **Tailwind Classes Used**
 
 ### **Colors**:
+
 - `bg-white` - White background
 - `bg-gray-50` - Light gray background
 - `bg-gray-100` - Hover gray
@@ -154,9 +168,10 @@ Button: blue-600
 
 ## 🚀 **Test It Now**
 
-**URL**: http://localhost:3000/en/dashboard/chat
+**URL**: https://localhost:3000/en/dashboard/chat
 
 **What to Check**:
+
 - ✅ White sidebar (not dark)
 - ✅ Blue buttons and accents
 - ✅ Light gray background

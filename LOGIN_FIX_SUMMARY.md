@@ -111,14 +111,14 @@ if (response && response.uuid) {
 
 ### **✅ Login Test:**
 
-1. Visit: `http://localhost:3000/en/login`
+1. Visit: `https://localhost:3000/en/login`
 2. Enter credentials
 3. **Expected:** Login succeeds without JsonResponse error
 4. **Expected:** User redirected to dashboard
 
 ### **✅ Registration Test:**
 
-1. Visit: `http://localhost:3000/en/signup`
+1. Visit: `https://localhost:3000/en/signup`
 2. Fill registration form
 3. **Expected:** Registration succeeds without JsonResponse error
 4. **Expected:** User logged in automatically

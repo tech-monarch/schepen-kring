@@ -134,7 +134,7 @@ User makes €100 purchase → Earns €10 cashback → Can spend in wallet
 #### Step 1: Open Test Page
 
 ```
-http://localhost:3000/widget/test-purchase-tracking.html
+https://localhost:3000/widget/test-purchase-tracking.html
 ```
 
 #### Step 2: Check Login Status
@@ -147,7 +147,7 @@ Look at the badge at the top of the page:
 **If not logged in:**
 
 ```
-1. Open: http://localhost:3000/nl/login
+1. Open: https://localhost:3000/nl/login
 2. Login with credentials
 3. Return to test page
 4. Refresh page
@@ -205,7 +205,7 @@ Total Cashback: €10.00
 #### Step 5: Check Wallet
 
 ```
-http://localhost:3000/nl/dashboard/wallet
+https://localhost:3000/nl/dashboard/wallet
 ```
 
 Verify:
@@ -259,7 +259,7 @@ Add this code to your checkout success page:
 
           // Send to tracking API
           const response = await fetch(
-            "http://localhost:3000/api/v1/widget/track-purchase",
+            "https://localhost:3000/api/v1/widget/track-purchase",
             {
               method: "POST",
               headers: {
@@ -348,7 +348,7 @@ $orderData = [
 ];
 
 $response = file_get_contents(
-    'http://localhost:3000/api/v1/widget/track-purchase',
+    'https://localhost:3000/api/v1/widget/track-purchase',
     false,
     stream_context_create([
         'http' => [
@@ -377,7 +377,7 @@ const axios = require("axios");
 async function trackPurchase(orderData) {
   try {
     const response = await axios.post(
-      "http://localhost:3000/api/v1/widget/track-purchase",
+      "https://localhost:3000/api/v1/widget/track-purchase",
       {
         user_id: orderData.userId,
         order_value: orderData.total,
@@ -539,7 +539,7 @@ All amounts are rounded to 2 decimal places.
 1. Ensure user is logged in to Answer24
 2. Check `localStorage.getItem('user_data')` exists
 3. Verify auth token is valid
-4. Login at: `http://localhost:3000/nl/login`
+4. Login at: `https://localhost:3000/nl/login`
 
 **Debug:**
 
@@ -608,7 +608,7 @@ tail -f storage/logs/laravel.log | grep wallet
 2. **Test backend API directly:**
 
 ```bash
-curl -X POST http://localhost:8000/api/v1/wallet/credit \
+curl -X POST https://localhost:8000/api/v1/wallet/credit \
   -H "Content-Type: application/json" \
   -d '{
     "user_id": "190",
@@ -650,7 +650,7 @@ npm run dev
 **Symptom:**
 
 ```
-Access to fetch at 'http://localhost:3000/...' from origin '...' has been blocked by CORS
+Access to fetch at 'https://localhost:3000/...' from origin '...' has been blocked by CORS
 ```
 
 **Solution:**
@@ -773,7 +773,7 @@ $trackingData = [
     'product_name' => $order['product']
 ];
 
-$ch = curl_init('http://localhost:3000/api/v1/widget/track-purchase');
+$ch = curl_init('https://localhost:3000/api/v1/widget/track-purchase');
 curl_setopt($ch, CURLOPT_POST, 1);
 curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($trackingData));
 curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
@@ -826,7 +826,7 @@ function track_answer24_purchase($order_id) {
     ];
 
     $response = wp_remote_post(
-        'http://localhost:3000/api/v1/widget/track-purchase',
+        'https://localhost:3000/api/v1/widget/track-purchase',
         [
             'headers' => ['Content-Type' => 'application/json'],
             'body' => json_encode($data)
@@ -928,7 +928,7 @@ export default function CheckoutSuccess() {
 ### Test Page
 
 ```
-http://localhost:3000/widget/test-purchase-tracking.html
+https://localhost:3000/widget/test-purchase-tracking.html
 ```
 
 ### API Endpoints
@@ -1030,7 +1030,7 @@ The Schepenkring.nl10% Cashback System provides:
 **Start testing now:**
 
 ```
-http://localhost:3000/widget/test-purchase-tracking.html
+https://localhost:3000/widget/test-purchase-tracking.html
 ```
 
 ---

@@ -3,6 +3,7 @@
 ## 📋 **Database Schema (Laravel Migrations)**
 
 ### **1. User Companies Table**
+
 ```php
 // Migration: create_user_companies_table.php
 Schema::create('user_companies', function (Blueprint $table) {
@@ -21,6 +22,7 @@ Schema::create('user_companies', function (Blueprint $table) {
 ```
 
 ### **2. Widget Settings Table**
+
 ```php
 // Migration: create_widget_settings_table.php
 Schema::create('widget_settings', function (Blueprint $table) {
@@ -42,12 +44,13 @@ Schema::create('widget_settings', function (Blueprint $table) {
     $table->decimal('ai_temperature', 2, 1)->default(0.7);
     $table->integer('max_tokens')->default(500);
     $table->timestamps();
-    
+
     $table->foreign('company_id')->references('company_id')->on('user_companies');
 });
 ```
 
 ### **3. Chat Conversations Table**
+
 ```php
 // Migration: create_chat_conversations_table.php
 Schema::create('chat_conversations', function (Blueprint $table) {
@@ -59,13 +62,14 @@ Schema::create('chat_conversations', function (Blueprint $table) {
     $table->json('metadata')->nullable(); // Additional data
     $table->timestamp('last_activity_at');
     $table->timestamps();
-    
+
     $table->index(['company_id', 'user_id']);
     $table->index(['company_id', 'session_id']);
 });
 ```
 
 ### **4. Pinecone Vectors Table**
+
 ```php
 // Migration: create_pinecone_vectors_table.php
 Schema::create('pinecone_vectors', function (Blueprint $table) {
@@ -76,7 +80,7 @@ Schema::create('pinecone_vectors', function (Blueprint $table) {
     $table->json('metadata')->nullable(); // Additional metadata
     $table->string('source')->nullable(); // Source of the content
     $table->timestamps();
-    
+
     $table->index('company_id');
     $table->unique(['company_id', 'vector_id']);
 });
@@ -85,6 +89,7 @@ Schema::create('pinecone_vectors', function (Blueprint $table) {
 ## 🔧 **Laravel Controllers**
 
 ### **1. Widget Settings Controller**
+
 ```php
 // app/Http/Controllers/WidgetSettingsController.php
 <?php
@@ -100,7 +105,7 @@ class WidgetSettingsController extends Controller
     public function getSettings($companyId)
     {
         $settings = WidgetSettings::where('company_id', $companyId)->first();
-        
+
         if (!$settings) {
             // Create default settings
             $settings = WidgetSettings::create([
@@ -109,10 +114,10 @@ class WidgetSettingsController extends Controller
                 'welcome_message' => 'Hi! How can I help you today?',
             ]);
         }
-        
+
         return response()->json(['settings' => $settings]);
     }
-    
+
     public function updateSettings(Request $request, $companyId)
     {
         $request->validate([
@@ -122,12 +127,12 @@ class WidgetSettingsController extends Controller
             'ai_personality' => 'string|max:500',
             // Add other validation rules
         ]);
-        
+
         $settings = WidgetSettings::updateOrCreate(
             ['company_id' => $companyId],
             $request->all()
         );
-        
+
         return response()->json([
             'settings' => $settings,
             'message' => 'Settings updated successfully'
@@ -137,6 +142,7 @@ class WidgetSettingsController extends Controller
 ```
 
 ### **2. Partner Chat Controller**
+
 ```php
 // app/Http/Controllers/PartnerChatController.php
 <?php
@@ -153,13 +159,13 @@ class PartnerChatController extends Controller
 {
     protected $pineconeService;
     protected $aiService;
-    
+
     public function __construct(PineconeService $pineconeService, AIService $aiService)
     {
         $this->pineconeService = $pineconeService;
         $this->aiService = $aiService;
     }
-    
+
     public function sendMessage(Request $request, $companyId)
     {
         $request->validate([
@@ -167,19 +173,19 @@ class PartnerChatController extends Controller
             'user_id' => 'string|nullable',
             'history' => 'array|nullable'
         ]);
-        
+
         // Get company settings
         $settings = WidgetSettings::where('company_id', $companyId)->first();
         if (!$settings) {
             return response()->json(['error' => 'Company not found'], 404);
         }
-        
+
         // Search Pinecone for relevant context
         $context = $this->pineconeService->searchContext(
-            $companyId, 
+            $companyId,
             $request->message
         );
-        
+
         // Generate AI response
         $aiResponse = $this->aiService->generateResponse([
             'message' => $request->message,
@@ -187,21 +193,21 @@ class PartnerChatController extends Controller
             'company_settings' => $settings,
             'history' => $request->history ?? []
         ]);
-        
+
         // Save conversation
         $this->saveConversation($companyId, $request->user_id, $request->message, $aiResponse);
-        
+
         return response()->json([
             'message' => $aiResponse,
             'company_id' => $companyId,
             'context_used' => !empty($context)
         ]);
     }
-    
+
     private function saveConversation($companyId, $userId, $userMessage, $aiResponse)
     {
         $sessionId = $userId ?? 'anonymous_' . uniqid();
-        
+
         ChatConversation::updateOrCreate(
             [
                 'company_id' => $companyId,
@@ -224,6 +230,7 @@ class PartnerChatController extends Controller
 ## 🔌 **Services**
 
 ### **1. Pinecone Service**
+
 ```php
 // app/Services/PineconeService.php
 <?php
@@ -237,14 +244,14 @@ class PineconeService
     protected $apiKey;
     protected $environment;
     protected $baseUrl;
-    
+
     public function __construct()
     {
         $this->apiKey = config('services.pinecone.api_key');
         $this->environment = config('services.pinecone.environment');
         $this->baseUrl = "https://{$this->environment}.pinecone.io";
     }
-    
+
     public function searchContext($companyId, $query, $topK = 5)
     {
         try {
@@ -259,25 +266,25 @@ class PineconeService
                     'company_id' => $companyId
                 ]
             ]);
-            
+
             if ($response->successful()) {
                 $matches = $response->json()['matches'] ?? [];
                 return collect($matches)->pluck('metadata.content')->join('. ');
             }
-            
+
             return '';
         } catch (\Exception $e) {
             \Log::error('Pinecone search error: ' . $e->getMessage());
             return '';
         }
     }
-    
+
     public function addVector($companyId, $content, $metadata = [])
     {
         try {
             $vectorId = uniqid();
             $embedding = $this->embedText($content);
-            
+
             $response = Http::withHeaders([
                 'Api-Key' => $this->apiKey,
                 'Content-Type' => 'application/json'
@@ -293,14 +300,14 @@ class PineconeService
                     ]
                 ]
             ]);
-            
+
             return $response->successful();
         } catch (\Exception $e) {
             \Log::error('Pinecone upsert error: ' . $e->getMessage());
             return false;
         }
     }
-    
+
     private function embedQuery($query)
     {
         // Use OpenAI embeddings or your preferred embedding service
@@ -311,10 +318,10 @@ class PineconeService
             'input' => $query,
             'model' => 'text-embedding-ada-002'
         ]);
-        
+
         return $response->json()['data'][0]['embedding'] ?? [];
     }
-    
+
     private function embedText($text)
     {
         return $this->embedQuery($text);
@@ -323,6 +330,7 @@ class PineconeService
 ```
 
 ### **2. AI Service**
+
 ```php
 // app/Services/AIService.php
 <?php
@@ -339,10 +347,10 @@ class AIService
         $context = $data['context'] ?? '';
         $message = $data['message'];
         $history = $data['history'] ?? [];
-        
+
         $systemPrompt = $this->buildSystemPrompt($settings, $context);
         $messages = $this->buildMessages($systemPrompt, $history, $message);
-        
+
         $response = Http::withHeaders([
             'Authorization' => 'Bearer ' . config('services.openai.api_key'),
             'Content-Type' => 'application/json'
@@ -352,20 +360,20 @@ class AIService
             'max_tokens' => $settings->max_tokens ?? 500,
             'temperature' => $settings->ai_temperature ?? 0.7
         ]);
-        
+
         if ($response->successful()) {
             return $response->json()['choices'][0]['message']['content'];
         }
-        
+
         return 'I apologize, but I\'m having trouble processing your request right now.';
     }
-    
+
     private function buildSystemPrompt($settings, $context)
     {
         return "You are a {$settings->ai_personality} for {$settings->company_name}.
-        
+
         Company Context: {$context}
-        
+
         Guidelines:
         - Be helpful and professional
         - Use the company's tone and personality
@@ -373,11 +381,11 @@ class AIService
         - If you don't know something, suggest contacting support
         - Keep responses concise and relevant";
     }
-    
+
     private function buildMessages($systemPrompt, $history, $currentMessage)
     {
         $messages = [['role' => 'system', 'content' => $systemPrompt]];
-        
+
         // Add history
         foreach ($history as $msg) {
             $messages[] = [
@@ -385,10 +393,10 @@ class AIService
                 'content' => $msg['text']
             ];
         }
-        
+
         // Add current message
         $messages[] = ['role' => 'user', 'content' => $currentMessage];
-        
+
         return $messages;
     }
 }
@@ -397,6 +405,7 @@ class AIService
 ## 🛣️ **API Routes**
 
 ### **Add to routes/api.php**
+
 ```php
 // Widget Settings API
 Route::get('/widget-settings/{companyId}', [WidgetSettingsController::class, 'getSettings']);
@@ -416,6 +425,7 @@ Route::middleware('auth:sanctum')->group(function () {
 ## ⚙️ **Configuration**
 
 ### **Add to config/services.php**
+
 ```php
 'pinecone' => [
     'api_key' => env('PINECONE_API_KEY'),
@@ -429,6 +439,7 @@ Route::middleware('auth:sanctum')->group(function () {
 ```
 
 ### **Add to .env**
+
 ```bash
 PINECONE_API_KEY=your_pinecone_api_key
 PINECONE_ENVIRONMENT=us-west1-gcp
@@ -439,23 +450,26 @@ OPENAI_API_KEY=your_openai_api_key
 ## 🚀 **Deployment Steps**
 
 1. **Run Migrations**
+
    ```bash
    php artisan migrate
    ```
 
 2. **Create Seeders** (optional)
+
    ```bash
    php artisan make:seeder CompanySeeder
    php artisan db:seed --class=CompanySeeder
    ```
 
 3. **Test API Endpoints**
+
    ```bash
    # Test widget settings
-   curl -X GET http://your-domain.com/api/widget-settings/123
-   
+   curl -X GET https://your-domain.com/api/widget-settings/123
+
    # Test chat
-   curl -X POST http://your-domain.com/api/partner-chat/123 \
+   curl -X POST https://your-domain.com/api/partner-chat/123 \
      -H "Content-Type: application/json" \
      -d '{"message": "Hello, I need help"}'
    ```
@@ -467,6 +481,7 @@ OPENAI_API_KEY=your_openai_api_key
 ## 📊 **Admin Panel (Optional)**
 
 Create an admin panel to:
+
 - Manage companies
 - Upload training data to Pinecone
 - Monitor conversations

@@ -7,7 +7,7 @@
 #### **1. Widget Configuration API**
 
 ```bash
-curl "http://localhost:3000/api/v1/widget/config?key=PUB_abc123"
+curl "https://localhost:3000/api/v1/widget/config?key=PUB_abc123"
 ```
 
 **✅ Result:** Returns complete widget configuration
@@ -27,7 +27,7 @@ curl "http://localhost:3000/api/v1/widget/config?key=PUB_abc123"
 #### **2. Widget Settings API**
 
 ```bash
-curl -X POST "http://localhost:3000/api/v1/widget/settings" \
+curl -X POST "https://localhost:3000/api/v1/widget/settings" \
   -H "Content-Type: application/json" \
   -d '{"theme": {"primary": "#ff0000"}}'
 ```
@@ -37,7 +37,7 @@ curl -X POST "http://localhost:3000/api/v1/widget/settings" \
 #### **3. Widget Chat API**
 
 ```bash
-curl -X POST "http://localhost:3000/api/v1/widget/chat" \
+curl -X POST "https://localhost:3000/api/v1/widget/chat" \
   -H "Authorization: Bearer PUB_abc123" \
   -H "Content-Type: application/json" \
   -d '{"message": "Hello", "companyId": "cmp_123"}'
@@ -48,7 +48,7 @@ curl -X POST "http://localhost:3000/api/v1/widget/chat" \
 #### **4. Widget Script Delivery**
 
 ```bash
-curl "http://localhost:3000/widget/v1/answer24.js"
+curl "https://localhost:3000/widget/v1/answer24.js"
 ```
 
 **✅ Result:** Returns complete widget JavaScript code
@@ -95,7 +95,7 @@ curl "http://localhost:3000/widget/v1/answer24.js"
 ### **Step 1: Admin Dashboard**
 
 ```
-URL: http://localhost:3000/en/dashboard/admin/widget
+URL: https://localhost:3000/en/dashboard/admin/widget
 ```
 
 **✅ Status:** Default settings created automatically
@@ -105,7 +105,7 @@ URL: http://localhost:3000/en/dashboard/admin/widget
 
 ```bash
 # Test widget config
-curl "http://localhost:3000/api/v1/widget/config?key=PUB_abc123"
+curl "https://localhost:3000/api/v1/widget/config?key=PUB_abc123"
 ```
 
 **✅ Status:** Returns complete configuration
@@ -115,7 +115,7 @@ curl "http://localhost:3000/api/v1/widget/config?key=PUB_abc123"
 
 ```bash
 # Test widget script
-curl "http://localhost:3000/widget/v1/answer24.js"
+curl "https://localhost:3000/widget/v1/answer24.js"
 ```
 
 **✅ Status:** Returns complete widget JavaScript
@@ -126,7 +126,7 @@ curl "http://localhost:3000/widget/v1/answer24.js"
 ```html
 <!-- Test embed code -->
 <script
-  src="http://localhost:3000/widget/v1/answer24.js"
+  src="https://localhost:3000/widget/v1/answer24.js"
   async
   data-public-key="PUB_abc123"
   data-locale="en-US"

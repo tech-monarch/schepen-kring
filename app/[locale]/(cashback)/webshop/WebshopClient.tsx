@@ -820,8 +820,7 @@ export default function WebshopPage() {
       className="min-h-screen bg-[#F8FAFC]"
     >
       <DashboardHeader />
-      <ChatWidget />
-
+      {/* <ChatWidget /> */}
       {/* --- PROFESSIONAL BLUE HEADER --- */}
       <div className="bg-blue-600 pt-20 pb-12 px-6">
         <div className="max-w-7xl mx-auto text-center">
@@ -852,7 +851,6 @@ export default function WebshopPage() {
           </motion.div>
         </div>
       </div>
-
       <div className="max-w-7xl mx-auto px-6 -mt-10 relative z-20 pb-32">
         {/* CATEGORY NAVIGATION */}
         <div className="flex flex-col md:flex-row items-center justify-center gap-6 mb-12">
@@ -925,7 +923,6 @@ export default function WebshopPage() {
           ))}
         </div>
       </div>
-
       {/* --- WEBSHOP DETAIL POPUP --- */}
       <AnimatePresence>
         {selectedItem && (

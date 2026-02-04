@@ -55,13 +55,13 @@ echo "===================="
 echo ""
 
 echo -e "${BLUE}3️⃣  Testing Frontend Track Purchase Endpoint${NC}"
-echo "URL: http://localhost:3000/api/v1/widget/track-purchase"
+echo "URL: https://localhost:3000/api/v1/widget/track-purchase"
 echo "Method: POST"
 echo "Payload: Purchase tracking data"
 echo ""
 echo -e "${YELLOW}Running...${NC}"
 curl -v -X POST \
-  "http://localhost:3000/api/v1/widget/track-purchase" \
+  "https://localhost:3000/api/v1/widget/track-purchase" \
   -H "Accept: application/json" \
   -H "Content-Type: application/json" \
   -d '{

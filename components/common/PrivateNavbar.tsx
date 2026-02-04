@@ -34,8 +34,17 @@ export function PrivateNavbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [currentPath]);
 
+  // --- LOGIC: HIDE NAVBAR ON HOMEPAGE IF LOGGED IN ---
+  // If we are on the homepage ('/' or local variants like '/en') and logged in, don't show the navbar.
+  // Note: currentPath in Next-intl often includes the locale (e.g., "/en"). 
+  // We check if it ends with / or is empty after locale.
+  const isHomePage = currentPath === "/" || currentPath.endsWith("/");
+  if (isLoggedIn && isHomePage) {
+    return null;
+  }
+
   const navItems = [
-    { name: t("home"), href: "/" },
+    // { name: t("home"), href: "/" },
     { name: t("yacht"), href: "/yachts" },
     { name: t("blog"), href: "/blog" },
     { name: t("faq"), href: "/faq" },
@@ -47,11 +56,10 @@ export function PrivateNavbar() {
       className={cn(
         "fixed top-0 left-0 right-0 z-50 transition-all duration-700 px-8",
         isScrolled
-          ? "h-20 bg-white/95 backdrop-blur-md border-b border-slate-100 shadow-sm"
-          : "h-28 bg-white/50 backdrop-blur-[2px] border-b border-[#003566]/5", // Subtle glass on light backgrounds
+          ? "h-20 bg-white border-b border-slate-100 shadow-sm"
+          : "h-28 bg-white border-b border-[#003566]/5", 
       )}
     >
-      {/* Impersonation Warning Bar */}
       <AnimatePresence>
         {isImpersonating && (
           <motion.div
@@ -74,19 +82,17 @@ export function PrivateNavbar() {
         isImpersonating && "mt-10"
       )}>
         
-        {/* LOGO - ALWAYS DARK/VISIBLE ON WHITE BG */}
         <Link href="/" className="relative z-10 transition-transform hover:scale-[1.02]">
           <Image
             src={ANSWER24LOGO}
             alt="Logo"
             width={160}
             height={45}
-            className="object-contain brightness-100" // Keep original colors since BG is white
+            className="object-contain brightness-100"
             priority
           />
         </Link>
 
-        {/* Desktop Nav - Dark text for white BG */}
         <nav className="hidden lg:flex items-center gap-12">
           {navItems.map((item) => (
             <Link
@@ -94,7 +100,7 @@ export function PrivateNavbar() {
               href={item.href}
               className={cn(
                 "text-[10px] font-sans font-black uppercase tracking-[0.4em] transition-all relative group",
-                "text-[#003566]/60 hover:text-[#003566]" // Darker palette for visibility
+                "text-[#003566]/60 hover:text-[#003566]"
               )}
             >
               {item.name}
@@ -103,13 +109,12 @@ export function PrivateNavbar() {
           ))}
         </nav>
 
-        {/* Action Suite */}
         <div className="hidden lg:flex items-center gap-8">
           <div className="font-sans text-[10px] font-black tracking-widest text-[#003566]">
             <LanguageSwitcher />
           </div>
 
-          {isLoggedIn ? (
+          {/* {isLoggedIn ? (
             <Link href="/dashboard">
               <button className="flex items-center gap-3 px-10 py-3.5 bg-[#003566] text-white text-[9px] font-sans font-bold uppercase tracking-[0.3em] hover:bg-[#001d3d] transition-all">
                 Portal
@@ -122,10 +127,9 @@ export function PrivateNavbar() {
                 Employee Login
               </button>
             </Link>
-          )}
+          )} */}
         </div>
 
-        {/* Mobile Toggle */}
         <button
           className="lg:hidden w-12 h-12 flex items-center justify-center text-[#003566]"
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -134,7 +138,6 @@ export function PrivateNavbar() {
         </button>
       </div>
 
-      {/* Mobile Menu */}
       <AnimatePresence>
         {isMobileMenuOpen && (
           <motion.div
@@ -164,14 +167,14 @@ export function PrivateNavbar() {
               ))}
             </div>
             
-            <div className="mt-auto flex flex-col gap-6">
+            {/* <div className="mt-auto flex flex-col gap-6">
                <div className="py-8 border-t border-slate-100"><LanguageSwitcher /></div>
                <Link href={isLoggedIn ? "/dashboard" : "/login"} onClick={() => setIsMobileMenuOpen(false)}>
                 <Button className="w-full bg-[#003566] text-white font-sans font-bold h-16 rounded-none uppercase tracking-[0.3em]">
                   {isLoggedIn ? "Access Dashboard" : "Client Portal Login"}
                 </Button>
               </Link>
-            </div>
+            </div> */}
           </motion.div>
         )}
       </AnimatePresence>

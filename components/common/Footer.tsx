@@ -127,9 +127,10 @@ const Footer = () => {
               </h3>
               <address className="not-italic space-y-6">
                 <p className="text-blue-100/80 text-base font-light">
-                  Valkenierstraat 133, <br />
+                  Parkhaven 3, <br />
                   <span className="text-white font-semibold">
-                    5553CP Valkenswaard
+                    
+8242 PE Lelystad
                   </span>
                 </p>
                 <div className="space-y-2">
@@ -137,13 +138,13 @@ const Footer = () => {
                     href="mailto:info@Schepen-kring.nl"
                     className="block text-blue-400 hover:text-white transition-colors text-xs font-black tracking-widest uppercase"
                   >
-                    INFO@SCHEPEN-KRING.NL
+                    lelystad@schepenkring.nl
                   </a>
                   <a
-                    href="tel:+3140-2100325"
+                    href="tel:+310320711340"
                     className="block text-white font-serif italic text-3xl hover:text-blue-400 transition-all"
                   >
-                    +31 40 2100 325
+                    +31 (0)320 711340
                   </a>
                 </div>
               </address>

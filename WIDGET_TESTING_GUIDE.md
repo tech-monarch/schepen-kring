@@ -4,7 +4,7 @@
 
 ### **1. Admin Dashboard (Widget Management)**
 
-**URL:** `http://localhost:3000/en/dashboard/admin/widget`
+**URL:** `https://localhost:3000/en/dashboard/admin/widget`
 
 **Steps:**
 
@@ -22,14 +22,14 @@
 
 ```bash
 # Test widget config endpoint
-curl "http://localhost:3000/api/v1/widget/config?key=PUB_abc123"
+curl "https://localhost:3000/api/v1/widget/config?key=PUB_abc123"
 ```
 
 #### **B. Widget Settings API**
 
 ```bash
 # Test settings endpoint (requires authentication)
-curl -X POST "http://localhost:3000/api/v1/widget/settings" \
+curl -X POST "https://localhost:3000/api/v1/widget/settings" \
   -H "Authorization: Bearer YOUR_JWT_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"theme": {"primary": "#ff0000"}}'
@@ -39,7 +39,7 @@ curl -X POST "http://localhost:3000/api/v1/widget/settings" \
 
 ```bash
 # Test chat endpoint
-curl -X POST "http://localhost:3000/api/v1/widget/chat" \
+curl -X POST "https://localhost:3000/api/v1/widget/chat" \
   -H "Content-Type: application/json" \
   -d '{"message": "Hello", "companyId": "123", "publicKey": "PUB_abc123"}'
 ```
@@ -48,7 +48,7 @@ curl -X POST "http://localhost:3000/api/v1/widget/chat" \
 
 ```bash
 # Test key rotation (requires authentication)
-curl -X POST "http://localhost:3000/api/v1/widget/rotate-key" \
+curl -X POST "https://localhost:3000/api/v1/widget/rotate-key" \
   -H "Authorization: Bearer YOUR_JWT_TOKEN" \
   -H "Content-Type: application/json"
 ```
@@ -75,7 +75,7 @@ Create a file called `test-widget.html`:
 
     <!-- Widget Embed Code -->
     <script
-      src="http://localhost:3000/widget/v1/answer24.js"
+      src="https://localhost:3000/widget/v1/answer24.js"
       async
       data-public-key="PUB_abc123"
       data-locale="en-US"
@@ -101,7 +101,7 @@ Create a file called `test-widget.html`:
 #### **Step 1: Access Admin Dashboard**
 
 ```
-URL: http://localhost:3000/en/dashboard/admin/widget
+URL: https://localhost:3000/en/dashboard/admin/widget
 ```
 
 #### **Step 2: Configure Widget Settings**
@@ -115,10 +115,10 @@ URL: http://localhost:3000/en/dashboard/admin/widget
 
 ```bash
 # Test config endpoint
-curl "http://localhost:3000/api/v1/widget/config?key=YOUR_PUBLIC_KEY"
+curl "https://localhost:3000/api/v1/widget/config?key=YOUR_PUBLIC_KEY"
 
 # Test with invalid key (should return error)
-curl "http://localhost:3000/api/v1/widget/config?key=invalid"
+curl "https://localhost:3000/api/v1/widget/config?key=invalid"
 ```
 
 #### **Step 4: Test Widget Embed**

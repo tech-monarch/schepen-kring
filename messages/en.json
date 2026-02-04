@@ -137,11 +137,11 @@
     "contactInfo": {
       "title": "Brokerage Office",
       "emailLabel": "Email",
-      "emailValue": "concierge@nauticsell.com",
+      "emailValue": "lelystad@schepenkring.nl",
       "phoneLabel": "Phone",
-      "phoneValue": "+31 20 123 4567",
-      "locationLabel": "Marina",
-      "locationValue": "Amsterdam Port, Netherlands"
+      "phoneValue": "+31 320 711 340",
+      "locationLabel": "Parkhaven 3",
+      "locationValue": "8242 PE Lelystad, Netherlands"
     },
     "quickResponse": {
       "title": "Priority Response",

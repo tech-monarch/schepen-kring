@@ -14,7 +14,9 @@ Store widget configuration settings in the local filesystem instead of a databas
 ## 📁 **Implementation**
 
 ### **Storage Location**
+
 Settings are stored per company in:
+
 ```
 public/widget/settings/{companyId}.json
 ```
@@ -22,18 +24,23 @@ public/widget/settings/{companyId}.json
 ### **How It Works**
 
 #### **1. Widget Management (Admin)**
+
 When an admin saves widget settings:
+
 - Settings saved to: `public/widget/settings/{companyId}.json`
 - Company ID extracted from JWT token
 - Each company gets its own settings file
 
 #### **2. Widget Config API**
+
 When embedded widget requests config:
+
 - Searches all JSON files in `public/widget/settings/`
 - Matches public key to find correct settings
 - Returns widget configuration
 
 #### **3. Example Settings File**
+
 ```json
 {
   "id": "550e8400-e29b-41d4-a716-446655440000",
@@ -94,22 +101,28 @@ When embedded widget requests config:
 ### **Files Modified**
 
 #### **1. `app/api/v1/widget/settings/route.ts`**
+
 **Added:**
+
 - File system storage functions
 - `loadSettings(companyId)` - Load settings from JSON file
 - `saveSettings(companyId, settings)` - Save settings to JSON file
 - Directory auto-creation on startup
 
 **Changed:**
+
 - POST: Now saves to file system instead of memory
 - GET: Now loads from file system instead of memory
 
 #### **2. `app/api/v1/widget/config/route.ts`**
+
 **Added:**
+
 - File system search function
 - `loadSettingsByPublicKey(publicKey)` - Search all files for matching public key
 
 **Changed:**
+
 - GET: Now searches file system for matching public key
 - Fallback to demo settings if not found
 
@@ -118,6 +131,7 @@ When embedded widget requests config:
 ## 🚀 **How to Use**
 
 ### **1. Configure Widget Settings**
+
 ```
 1. Log into dashboard
 2. Go to Widget Management
@@ -127,6 +141,7 @@ When embedded widget requests config:
 ```
 
 ### **2. Widget Auto-Loads Settings**
+
 ```
 1. Widget embedded on external site
 2. Widget requests: /api/v1/widget/config?key=PUB_XXXXX
@@ -140,21 +155,25 @@ When embedded widget requests config:
 ## ✅ **Benefits**
 
 ### **No Database Required**
+
 - Settings stored as JSON files
 - Easy to backup (just copy folder)
 - Easy to migrate between servers
 
 ### **Fast & Simple**
+
 - Direct file I/O
 - No database queries
 - No connection pooling issues
 
 ### **Developer Friendly**
+
 - Can edit settings files directly
 - Version control friendly (optional)
 - Easy to debug
 
 ### **Per-Company Isolation**
+
 - Each company gets its own file
 - No cross-contamination
 - Clear organization
@@ -183,6 +202,7 @@ When embedded widget requests config:
 ### **When to Use Database Instead**
 
 Switch to database if:
+
 - You have > 100 companies
 - You need multi-server deployment
 - You need backup/recovery features
@@ -194,11 +214,13 @@ Switch to database if:
 ## 🔐 **Security Recommendations**
 
 Add to `.gitignore`:
+
 ```
 public/widget/settings/*.json
 ```
 
 Keep directory permissions secure:
+
 ```bash
 chmod 755 public/widget/settings
 ```
@@ -210,6 +232,7 @@ chmod 755 public/widget/settings
 ### **Test Widget Configuration Flow**
 
 1. **Configure Settings**
+
    ```bash
    # Log into admin dashboard
    # Change primary color to #ff0000
@@ -217,21 +240,23 @@ chmod 755 public/widget/settings
    ```
 
 2. **Verify File Created**
+
    ```bash
    ls -la public/widget/settings/
    # Should see: cmp_XXXXX.json
    ```
 
 3. **Test Widget Loads Settings**
+
    ```bash
    # Open widget demo
-   http://localhost:3000/widget/demo.html
+   https://localhost:3000/widget/demo.html
    # Widget should use red color from settings
    ```
 
 4. **Test Public Key Lookup**
    ```bash
-   curl "http://localhost:3000/api/v1/widget/config?key=PUB_XXXXX"
+   curl "https://localhost:3000/api/v1/widget/config?key=PUB_XXXXX"
    # Should return JSON with saved settings
    ```
 
@@ -256,15 +281,17 @@ public/
 ## 🔄 **Migration Path**
 
 ### **Current State**
+
 ✅ File-based storage implemented  
 ✅ Settings persist per company  
-✅ Widget auto-loads from files  
+✅ Widget auto-loads from files
 
 ### **Future Enhancements**
 
 If you outgrow filesystem storage:
 
 1. **Option A: SQL Database**
+
    ```sql
    CREATE TABLE widget_settings (
      id UUID PRIMARY KEY,
@@ -277,6 +304,7 @@ If you outgrow filesystem storage:
    ```
 
 2. **Option B: Redis**
+
    ```javascript
    await redis.set(`widget:${companyId}`, JSON.stringify(settings));
    const settings = await redis.get(`widget:${companyId}`);
@@ -293,13 +321,13 @@ If you outgrow filesystem storage:
 
 ### **Expected Performance**
 
-| Operation | File System | Database |
-|-----------|-------------|----------|
-| Load settings | ~1ms | ~5-20ms |
-| Save settings | ~2ms | ~10-30ms |
-| Search by public key | ~10ms (100 files) | ~5ms |
-| Concurrent reads | Good | Excellent |
-| Concurrent writes | Poor | Excellent |
+| Operation            | File System       | Database  |
+| -------------------- | ----------------- | --------- |
+| Load settings        | ~1ms              | ~5-20ms   |
+| Save settings        | ~2ms              | ~10-30ms  |
+| Search by public key | ~10ms (100 files) | ~5ms      |
+| Concurrent reads     | Good              | Excellent |
+| Concurrent writes    | Poor              | Excellent |
 
 **Verdict:** File system is fine for < 100 companies
 
@@ -308,6 +336,7 @@ If you outgrow filesystem storage:
 ## ✅ **Summary**
 
 Widget settings are now stored in filesystem at:
+
 - `public/widget/settings/{companyId}.json`
 - Settings persist across server restarts
 - Widget automatically loads correct settings
@@ -321,4 +350,3 @@ Widget settings are now stored in filesystem at:
 **Version:** 1.0.0  
 **Date:** November 1, 2025  
 **Status:** Production Ready ✅
-

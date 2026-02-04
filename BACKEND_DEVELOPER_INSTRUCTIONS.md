@@ -5,6 +5,7 @@
 **Goal:** Create a backend API that supports embeddable chat widgets for multiple partners (webshop owners).
 
 **Each partner gets:**
+
 - Their own customizable chat widget
 - Their own AI chatbot trained on their specific data
 - Ability to update widget settings directly from the widget (no admin dashboard needed)
@@ -14,6 +15,7 @@
 ## 🗄️ **Database Tables to Create**
 
 ### **1. User Companies Table**
+
 ```sql
 CREATE TABLE user_companies (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
@@ -32,6 +34,7 @@ CREATE TABLE user_companies (
 ```
 
 ### **2. Widget Settings Table**
+
 ```sql
 CREATE TABLE widget_settings (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
@@ -58,6 +61,7 @@ CREATE TABLE widget_settings (
 ```
 
 ### **3. Chat Conversations Table**
+
 ```sql
 CREATE TABLE chat_conversations (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
@@ -75,6 +79,7 @@ CREATE TABLE chat_conversations (
 ```
 
 ### **4. Pinecone Vectors Table**
+
 ```sql
 CREATE TABLE pinecone_vectors (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
@@ -97,11 +102,13 @@ CREATE TABLE pinecone_vectors (
 ### **Widget Settings API**
 
 **GET** `/api/widget-settings/{companyId}`
+
 - **Purpose:** Get widget settings for a specific company
 - **Response:** JSON with all widget settings
 - **Example:** `GET /api/widget-settings/123`
 
 **POST** `/api/widget-settings/{companyId}`
+
 - **Purpose:** Update widget settings for a specific company
 - **Body:** JSON with settings to update
 - **Example:** `POST /api/widget-settings/123` with `{"primary_color": "#ff0000", "welcome_message": "Hello!"}`
@@ -109,6 +116,7 @@ CREATE TABLE pinecone_vectors (
 ### **Partner Chat API**
 
 **POST** `/api/partner-chat/{companyId}`
+
 - **Purpose:** Handle AI chat conversations for a specific company
 - **Body:** `{"message": "Hello", "user_id": "user123", "history": []}`
 - **Response:** `{"message": "AI response", "company_id": "123"}`
@@ -118,11 +126,13 @@ CREATE TABLE pinecone_vectors (
 ## 🤖 **AI Integration Required**
 
 ### **1. Pinecone Integration**
+
 - **Purpose:** Store and search company-specific knowledge
 - **Setup:** Get Pinecone API key and create index
 - **Function:** Search for relevant context when user sends message
 
 ### **2. OpenAI Integration**
+
 - **Purpose:** Generate AI responses
 - **Setup:** Get OpenAI API key
 - **Function:** Create responses using company context and settings
@@ -132,18 +142,22 @@ CREATE TABLE pinecone_vectors (
 ## 📝 **Step-by-Step Implementation**
 
 ### **Step 1: Database Setup**
+
 1. Create the 4 tables above
 2. Add some test data for company_id '123'
 
 ### **Step 2: Create Controllers**
+
 1. **WidgetSettingsController** - Handle widget settings
 2. **PartnerChatController** - Handle AI chat
 
 ### **Step 3: Create Services**
+
 1. **PineconeService** - Search company knowledge
 2. **AIService** - Generate AI responses
 
 ### **Step 4: Add API Routes**
+
 ```php
 // Add to routes/api.php
 Route::get('/widget-settings/{companyId}', [WidgetSettingsController::class, 'getSettings']);
@@ -152,7 +166,9 @@ Route::post('/partner-chat/{companyId}', [PartnerChatController::class, 'sendMes
 ```
 
 ### **Step 5: Environment Configuration**
+
 Add to `.env`:
+
 ```bash
 PINECONE_API_KEY=your_pinecone_api_key
 PINECONE_ENVIRONMENT=us-west1-gcp
@@ -164,13 +180,15 @@ OPENAI_API_KEY=your_openai_api_key
 ## 🧪 **Testing**
 
 ### **Test Widget Settings:**
+
 ```bash
-curl -X GET http://your-domain.com/api/widget-settings/123
+curl -X GET https://your-domain.com/api/widget-settings/123
 ```
 
 ### **Test Chat:**
+
 ```bash
-curl -X POST http://your-domain.com/api/partner-chat/123 \
+curl -X POST https://your-domain.com/api/partner-chat/123 \
   -H "Content-Type: application/json" \
   -d '{"message": "Hello, I need help with my order"}'
 ```
@@ -203,6 +221,7 @@ curl -X POST http://your-domain.com/api/partner-chat/123 \
 **This needs to be completed today.** The frontend widget is ready and waiting for these APIs.
 
 **Deliverables:**
+
 - [ ] Database tables created
 - [ ] API endpoints working
 - [ ] Pinecone integration working

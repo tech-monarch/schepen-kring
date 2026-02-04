@@ -3,6 +3,7 @@
 ## The Issue: Wallet Shows €0 After Purchase
 
 This means:
+
 - Frontend is NOT showing the error ❌
 - Frontend IS making the API call (probably) ✓
 - Backend is NOT crediting the wallet ❌
@@ -10,6 +11,7 @@ This means:
 ## Where The Problem Is
 
 The cashback flow:
+
 ```
 Frontend "Buy Now" clicked
     ↓
@@ -28,7 +30,7 @@ Wallet balance should increase
 
 ## 🧪 Test 1: Frontend Is Working?
 
-**Step 1:** Open http://localhost:3000/nl/webshop/1
+**Step 1:** Open https://localhost:3000/nl/webshop/1
 
 **Step 2:** Open Developer Tools (F12)
 
@@ -73,11 +75,13 @@ Wallet balance should increase
 - Status: `200` (or check if error)
 
 **If Status is 200:**
+
 - Click the request
 - Click "Response" tab
 - You should see: `{"success": true, "data": {...}}`
 
 **If Status is NOT 200:**
+
 - Take a screenshot
 - Send me the error response
 
@@ -99,6 +103,7 @@ php artisan route:list | grep wallet
 ```
 
 Should show something like:
+
 ```
 POST  /api/v1/wallet/add-money   Endpoint\Controller@addMoney
 ```
@@ -126,12 +131,12 @@ Route::post('/wallet/add-money', [WalletController::class, 'addMoney']);
 public function addMoney(Request $request) {
     $amount = $request->input('amount');
     $userId = $request->input('user_id');
-    
+
     // Update wallet in database
     $user = User::find($userId);
     $user->wallet_balance += $amount;
     $user->save();
-    
+
     return response()->json([
         'success' => true,
         'data' => ['balance' => $user->wallet_balance]
@@ -202,4 +207,3 @@ public function addMoney(Request $request) {
 5. **Current Balance:** What does wallet show? (€0?)
 
 This will help me pinpoint exactly where the issue is!
-

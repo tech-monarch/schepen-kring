@@ -56,7 +56,7 @@ export default function EmployeeSignIn() {
         // 4. Inject token into current session headers
         api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 
-        setSuccess("Identity Verified. Synchronizing Terminal...");
+        setSuccess("Identity Verified. Synchronizing Terminal..."); 
 
         setTimeout(() => {
           router.push("/dashboard");

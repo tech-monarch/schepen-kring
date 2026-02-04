@@ -119,13 +119,13 @@ export default function ClientLayout({
       >
         {children}
       </main>
-
+{/* 
       {!isDashboardChatPage &&
         !widgetLoading &&
         isLoggedIn &&
         widgetSettings && (
           <ChatWidget {...({ settings: widgetSettings } as any)} />
-        )}
+        )} */}
 
       {isDashboardPage || isUserTypePage ? null : <Footer />}
 

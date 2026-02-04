@@ -6,28 +6,34 @@ import {
   Anchor, 
   CheckSquare, 
   Users,
-  Lock
+  Lock,
+  ChevronLeft,
+  ChevronRight,
+  Code2,
+  ShieldCheck,
+  Settings
 } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const t = useTranslations("Dashboard");
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user_data");
     if (storedUser) {
       const parsed = JSON.parse(storedUser);
-      setUserRole(parsed.userType); // 'Admin', 'Employee', or 'Customer'
+      setUserRole(parsed.userType);
     }
   }, []);
 
-  // Define sidebar items based on role
   const getSidebarItems = () => {
     if (userRole === "Admin") {
       return [
@@ -37,17 +43,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         { title: t("sections.quickActions"), href: "/dashboard/admin/users", icon: Users },
       ];
     } 
-    
     if (userRole === "Employee") {
       return [
         { title: t("overview"), href: "/dashboard", icon: BarChart3 },
         { title: t("fleet_management"), href: "/dashboard/yachts", icon: Anchor },
         { title: t("task_board"), href: "/dashboard/tasks", icon: CheckSquare },
-        // Employees do not get the 'Users' management tab
       ];
     }
-
-    return []; // Customers get an empty list (locked sidebar)
+    return [];
   };
 
   const sidebarItems = getSidebarItems();
@@ -57,47 +60,114 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <DashboardHeader /> 
       
       <div className="flex pt-20">
-        <aside className="w-64 fixed left-0 top-20 bottom-0 border-r border-slate-200 bg-white hidden lg:block overflow-y-auto z-40 shadow-sm">
-          <nav className="p-4 space-y-2 mt-4">
-            <p className="px-4 text-[9px] font-black uppercase tracking-[0.4em] text-slate-300 mb-6">
-              {userRole === "Admin" ? t("admin_label") : userRole === "Employee" ? "Staff Terminal" : "Guest Access"}
-            </p>
-            
-            {/* If Customer, show Locked state */}
+        {/* Sidebar Container */}
+        <motion.aside 
+          initial={false}
+          animate={{ width: isCollapsed ? 80 : 260 }}
+          className="fixed left-0 top-20 bottom-0 border-r border-slate-200 bg-white hidden lg:flex flex-col z-40 shadow-sm transition-all duration-300"
+        >
+          {/* Toggle Button - Corrected Positioning */}
+          <button
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            className="absolute -right-3 top-6 w-6 h-6 bg-[#003566] text-white rounded-full flex items-center justify-center shadow-lg hover:bg-blue-600 transition-colors z-[51]"
+          >
+            {isCollapsed ? <ChevronRight size={12} /> : <ChevronLeft size={12} />}
+          </button>
+
+          {/* Label / Role Header */}
+          <div className="px-6 py-6 h-16 flex items-center overflow-hidden">
+             <AnimatePresence mode="wait">
+                {!isCollapsed ? (
+                  <motion.p 
+                    key="label"
+                    initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                    className="text-[9px] font-black uppercase tracking-[0.4em] text-slate-300 whitespace-nowrap"
+                  >
+                    {userRole === "Admin" ? t("admin_label") : "Staff Terminal"}
+                  </motion.p>
+                ) : (
+                  <motion.div key="icon" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="mx-auto">
+                    <ShieldCheck size={18} className="text-slate-200" />
+                  </motion.div>
+                )}
+             </AnimatePresence>
+          </div>
+
+          {/* Navigation Items */}
+          <nav className="flex-1 px-3 space-y-1 overflow-y-auto no-scrollbar">
             {userRole === "Customer" ? (
-              <div className="px-4 py-10 flex flex-col items-center text-center">
+              <div className="py-10 flex flex-col items-center text-center px-4">
                 <Lock size={20} className="text-slate-200 mb-4" />
-                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-300 leading-relaxed">
-                  Terminal Locked <br/> for Client Identity
-                </p>
+                {!isCollapsed && <p className="text-[10px] font-bold uppercase text-slate-300">Terminal Locked</p>}
               </div>
             ) : (
-              sidebarItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={cn(
-                    "flex items-center gap-4 px-4 py-3 text-[10px] font-bold uppercase tracking-[0.2em] transition-all",
-                    pathname === item.href 
-                      ? "bg-[#003566] text-white shadow-lg shadow-blue-900/10" 
-                      : "text-slate-400 hover:text-[#003566] hover:bg-slate-50"
-                  )}
-                >
-                  <item.icon size={16} className={cn(
-                    pathname === item.href ? "text-white" : "text-slate-300"
-                  )} />
-                  {item.title}
-                </Link>
-              ))
+              sidebarItems.map((item) => {
+                const isActive = pathname === item.href;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={cn(
+                      "flex items-center h-11 px-3 rounded-md transition-all group relative",
+                      isActive 
+                        ? "bg-[#003566] text-white shadow-md" 
+                        : "text-slate-500 hover:bg-slate-50 hover:text-[#003566]"
+                    )}
+                  >
+                    <item.icon size={18} className={cn("shrink-0", isActive ? "text-white" : "text-slate-400")} />
+                    {!isCollapsed && (
+                      <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="ml-4 text-[10px] font-bold uppercase tracking-[0.15em] whitespace-nowrap">
+                        {item.title}
+                      </motion.span>
+                    )}
+                    {isCollapsed && (
+                      <div className="absolute left-14 bg-[#003566] text-white text-[9px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap shadow-xl">
+                        {item.title}
+                      </div>
+                    )}
+                  </Link>
+                );
+              })
             )}
           </nav>
-        </aside>
 
-        <main className="flex-1 lg:ml-64 p-8 bg-[#FAFAFA] min-h-[calc(100vh-80px)]">
+          {/* Bottom Action Area (The "Properly Put" Button) */}
+          <div className="p-3 border-t border-slate-100 bg-slate-50/50 space-y-1">
+            <button className="w-full flex items-center h-11 px-3 text-blue-600 hover:bg-blue-50 transition-colors group relative rounded-md">
+              <Code2 size={18} className="shrink-0" />
+              {!isCollapsed && (
+                <span className="ml-4 text-[10px] font-black uppercase tracking-widest whitespace-nowrap">
+                  Partner Embed
+                </span>
+              )}
+              {isCollapsed && (
+                <div className="absolute left-14 bg-blue-600 text-white text-[9px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap shadow-xl">
+                  Embed Tool
+                </div>
+              )}
+            </button>
+
+            <button className="w-full flex items-center h-11 px-3 text-slate-400 hover:text-[#003566] transition-colors group relative rounded-md">
+              <Settings size={18} className="shrink-0" />
+              {!isCollapsed && (
+                <span className="ml-4 text-[10px] font-bold uppercase tracking-widest whitespace-nowrap">
+                  Settings
+                </span>
+              )}
+            </button>
+          </div>
+        </motion.aside>
+
+        {/* Main Content Area - Margin syncs with sidebar width */}
+        <motion.main 
+          initial={false}
+          animate={{ marginLeft: isCollapsed ? 80 : 260 }}
+          className="flex-1 p-8 bg-[#FAFAFA] min-h-[calc(100vh-80px)] transition-all duration-300"
+        >
           <div className="max-w-[1600px] mx-auto">
             {children}
           </div>
-        </main>
+        </motion.main>
       </div>
     </div>
   );

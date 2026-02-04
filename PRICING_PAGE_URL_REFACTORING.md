@@ -148,7 +148,7 @@ NEXT_PUBLIC_API_BASE_URL=https://kring.answer24.nl/api/v1
 Or for local development:
 
 ```bash
-NEXT_PUBLIC_API_BASE_URL=http://localhost:8000/api/v1
+NEXT_PUBLIC_API_BASE_URL=https://localhost:8000/api/v1
 ```
 
 ## Complete API Flow
@@ -177,4 +177,4 @@ Creates payment on backend
 
 ✨ **All hardcoded URLs on the pricing page have been successfully removed and replaced with centralized API configuration!**
 
-The pricing page (`http://localhost:3000/en/pricing`) now correctly uses `NEXT_PUBLIC_API_BASE_URL` from your environment variables for all API calls.
+The pricing page (`https://localhost:3000/en/pricing`) now correctly uses `NEXT_PUBLIC_API_BASE_URL` from your environment variables for all API calls.

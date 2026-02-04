@@ -551,8 +551,7 @@ export default function WebshopPage() {
       className="min-h-screen bg-[#F8FAFC]"
     >
       <DashboardHeader />
-      <ChatWidget />
-
+      {/* <ChatWidget /> */}
       {/* --- HERO SECTION (Social Deal Search Style) --- */}
       <div className="bg-blue-600 pt-20 pb-16 px-6">
         <div className="max-w-7xl mx-auto text-center">
@@ -576,7 +575,6 @@ export default function WebshopPage() {
           </motion.div>
         </div>
       </div>
-
       <div className="max-w-7xl mx-auto px-6 -mt-8 relative z-20 pb-32">
         {/* CATEGORY & TAB NAV */}
         <div className="flex flex-col gap-6 mb-12">
@@ -671,7 +669,6 @@ export default function WebshopPage() {
           </div>
         )}
       </div>
-
       {/* --- SOCIAL DEAL STYLE POPUP --- */}
       <AnimatePresence>
         {selectedItem && (

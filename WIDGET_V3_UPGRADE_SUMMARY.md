@@ -253,7 +253,7 @@ Upgraded the Schepenkring.nlembeddable widget from basic chat functionality to a
 
 ### **Demo Page**
 
-Test at: `http://localhost:3000/widget/demo.html`
+Test at: `https://localhost:3000/widget/demo.html`
 
 ---
 

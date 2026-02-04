@@ -34,7 +34,7 @@ export default function EmployeeDashboardPage() {
   const [tasks, setTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const API_BASE = "http://kring.answer24.nl/api";
+  const API_BASE = "https://kring.answer24.nl/api";
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user_data");

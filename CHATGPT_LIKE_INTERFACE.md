@@ -188,7 +188,7 @@
 ### **URL**:
 
 ```
-http://localhost:3000/en/dashboard/chat
+https://localhost:3000/en/dashboard/chat
 ```
 
 ### **Features to Try**:
@@ -251,7 +251,7 @@ http://localhost:3000/en/dashboard/chat
 
 ### **Try It Now**:
 
-1. Go to http://localhost:3000/en/dashboard/chat
+1. Go to https://localhost:3000/en/dashboard/chat
 2. Create a new chat
 3. Send some messages
 4. Create another chat

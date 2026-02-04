@@ -13,6 +13,7 @@ The cashback system has 3 key API endpoints to test:
 ## Test 1: Check Backend Wallet Balance
 
 ### Command:
+
 ```bash
 curl -X GET \
   "https://answer24_backend.test/api/v1/wallet/balance" \
@@ -23,16 +24,18 @@ curl -X GET \
 ```
 
 ### Expected Response (Success):
+
 ```json
 {
   "success": true,
   "data": {
-    "balance": 0.00
+    "balance": 0.0
   }
 }
 ```
 
 ### Possible Errors:
+
 - **401 Unauthorized:** Token is invalid
 - **404 Not Found:** Endpoint doesn't exist
 - **500 Server Error:** Backend issue
@@ -42,6 +45,7 @@ curl -X GET \
 ## Test 2: Check if Backend `/wallet/add-money` Endpoint Exists
 
 ### Command:
+
 ```bash
 curl -X POST \
   "https://answer24_backend.test/api/v1/wallet/add-money" \
@@ -53,16 +57,18 @@ curl -X POST \
 ```
 
 ### Expected Response (Success):
+
 ```json
 {
   "success": true,
   "data": {
-    "balance": 10.00
+    "balance": 10.0
   }
 }
 ```
 
 ### Possible Errors:
+
 - **404 Not Found:** ⚠️ This means the endpoint is NOT implemented!
 - **400 Bad Request:** Missing required fields
 - **401 Unauthorized:** Token issue
@@ -70,23 +76,24 @@ curl -X POST \
 
 ### What the Response Status Means:
 
-| Status | Meaning | Action |
-|--------|---------|--------|
-| 200 ✅ | OK, working | Continue to next test |
-| 201 ✅ | Created, working | Continue to next test |
-| 400 ⚠️ | Bad request | Check payload format |
-| 401 ❌ | Unauthorized | Check token/auth |
-| 404 ❌ | Not found | **Endpoint needs to be created!** |
-| 500 ❌ | Server error | Check backend logs |
+| Status | Meaning          | Action                            |
+| ------ | ---------------- | --------------------------------- |
+| 200 ✅ | OK, working      | Continue to next test             |
+| 201 ✅ | Created, working | Continue to next test             |
+| 400 ⚠️ | Bad request      | Check payload format              |
+| 401 ❌ | Unauthorized     | Check token/auth                  |
+| 404 ❌ | Not found        | **Endpoint needs to be created!** |
+| 500 ❌ | Server error     | Check backend logs                |
 
 ---
 
 ## Test 3: Check Frontend Track Purchase Endpoint
 
 ### Command:
+
 ```bash
 curl -X POST \
-  "http://localhost:3000/api/v1/widget/track-purchase" \
+  "https://localhost:3000/api/v1/widget/track-purchase" \
   -H "Accept: application/json" \
   -H "Content-Type: application/json" \
   -d '{
@@ -102,6 +109,7 @@ curl -X POST \
 ```
 
 ### Expected Response (Success):
+
 ```json
 {
   "success": true,
@@ -113,6 +121,7 @@ curl -X POST \
 ```
 
 ### Possible Errors:
+
 - **400 Bad Request:** Missing fields
 - **500 Server Error:** Backend not responding
 - **"Invalid signature":** Signature validation failed (but should be bypassed in dev)
@@ -122,6 +131,7 @@ curl -X POST \
 ## 🎯 Testing Strategy
 
 ### Step 1: Test Backend Endpoints FIRST
+
 Before testing the frontend, make sure the backend endpoints work:
 
 ```bash
@@ -139,6 +149,7 @@ curl -X POST "https://answer24_backend.test/api/v1/wallet/add-money" \
 **If you get 404:** The endpoint doesn't exist and needs to be created in Laravel.
 
 ### Step 2: Check Backend Logs
+
 ```bash
 # In your Laravel backend directory
 tail -f storage/logs/laravel.log
@@ -147,10 +158,11 @@ tail -f storage/logs/laravel.log
 Then run the curl commands above and watch for errors.
 
 ### Step 3: Test Frontend Route
+
 Once backend works, test the frontend integration:
 
 ```bash
-curl -X POST "http://localhost:3000/api/v1/widget/track-purchase" \
+curl -X POST "https://localhost:3000/api/v1/widget/track-purchase" \
   -H "Content-Type: application/json" \
   -d '{
     "user_id": "190",
@@ -178,22 +190,27 @@ curl -X POST "http://localhost:3000/api/v1/widget/track-purchase" \
 ## 📊 What Each Response Tells Us
 
 ### Backend `/wallet/add-money` returns 404
+
 **Problem:** Endpoint doesn't exist in Laravel
 **Solution:** Create the endpoint in routes/api.php and the controller
 
 ### Backend `/wallet/add-money` returns 401
+
 **Problem:** Authentication token is invalid
 **Solution:** Use valid Bearer token
 
 ### Backend `/wallet/add-money` returns 200 but balance doesn't update
+
 **Problem:** Endpoint exists but doesn't actually update database
 **Solution:** Check the controller logic
 
 ### Frontend `/api/v1/widget/track-purchase` returns 500
+
 **Problem:** Frontend can't reach or communicate with backend
 **Solution:** Check CORS, check backend URL, check backend running
 
 ### Frontend `/api/v1/widget/track-purchase` returns 200 but wallet doesn't update
+
 **Problem:** Frontend succeeds but backend endpoint fails
 **Solution:** Check backend logs for `/wallet/add-money` errors
 
@@ -207,4 +224,3 @@ bash TEST_API_MANUALLY.sh
 ```
 
 Then send me the output!
-

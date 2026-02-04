@@ -797,7 +797,7 @@ Use these curl commands to test the API:
 # Get chats
 curl -H "Authorization: Bearer YOUR_TOKEN" \
      -H "Accept: application/json" \
-     http://your-domain.com/api/chats
+     https://your-domain.com/api/chats
 
 # Create chat
 curl -X POST \
@@ -805,7 +805,7 @@ curl -X POST \
      -H "Content-Type: application/json" \
      -H "Accept: application/json" \
      -d '{"participants": [1, 2], "type": "helpdesk"}' \
-     http://your-domain.com/api/chats
+     https://your-domain.com/api/chats
 
 # Send message with file
 curl -X POST \
@@ -814,7 +814,7 @@ curl -X POST \
      -F "content=Hello with file!" \
      -F "type=file" \
      -F "attachments[]=@/path/to/file.jpg" \
-     http://your-domain.com/api/chats/1/messages
+     https://your-domain.com/api/chats/1/messages
 ```
 
 ## 📝 Notes for Developer

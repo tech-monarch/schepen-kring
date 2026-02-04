@@ -7,16 +7,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export async function generateStaticParams() {
   return [
-    { locale: 'en', slug: 'client1' },
-    { locale: 'en', slug: 'client2' },
-    { locale: 'en', slug: 'client3' },
-    { locale: 'en', slug: 'client4' },
-    { locale: 'en', slug: 'client5' },
-    { locale: 'nl', slug: 'client1' },
-    { locale: 'nl', slug: 'client2' },
-    { locale: 'nl', slug: 'client3' },
-    { locale: 'nl', slug: 'client4' },
-    { locale: 'nl', slug: 'client5' },
+    { locale: "en", slug: "client1" },
+    { locale: "en", slug: "client2" },
+    { locale: "en", slug: "client3" },
+    { locale: "en", slug: "client4" },
+    { locale: "en", slug: "client5" },
+    { locale: "nl", slug: "client1" },
+    { locale: "nl", slug: "client2" },
+    { locale: "nl", slug: "client3" },
+    { locale: "nl", slug: "client4" },
+    { locale: "nl", slug: "client5" },
   ];
 }
 
@@ -40,26 +40,26 @@ async function getClientData(slug: string): Promise<ClientHomepageData | null> {
       paragraphs: [
         "We provide excellent services to our clients.",
         "Our team is dedicated to delivering quality results.",
-        "Contact us today to learn more about our offerings."
-      ]
+        "Contact us today to learn more about our offerings.",
+      ],
     },
     pages: [
       {
         slug: "services",
         title: "Our Services",
-        aiText: "Learn about our comprehensive service offerings."
+        aiText: "Learn about our comprehensive service offerings.",
       },
       {
         slug: "about",
         title: "About Us",
-        aiText: "Discover more about our company and mission."
-      }
+        aiText: "Discover more about our company and mission.",
+      },
     ],
     contactInfo: {
       email: `contact@${slug}.com`,
       phone: "+31 123 456 789",
-      address: "Amsterdam, Netherlands"
-    }
+      address: "Amsterdam, Netherlands",
+    },
   };
 
   return mockData;
@@ -148,7 +148,7 @@ export default async function ClientHomepage({ params }: ClientHomepageProps) {
             rel="noopener noreferrer"
           >
             <svg
-              xmlns="http://www.w3.org/2000/svg"
+              xmlns="https://www.w3.org/2000/svg"
               width="24"
               height="24"
               viewBox="0 0 24 24"
@@ -176,7 +176,7 @@ export default async function ClientHomepage({ params }: ClientHomepageProps) {
             {clientData.aiGeneratedContent.paragraphs.map(
               (paragraph, index) => (
                 <p key={index}>{paragraph}</p>
-              )
+              ),
             )}
           </div>
         </div>

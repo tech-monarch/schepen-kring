@@ -1,6 +1,7 @@
 # 🎯 Cashback Issue Summary & Solution
 
 ## The Problem
+
 ✅ Wallet shows €0 after purchase
 ❌ Cashback not being credited
 
@@ -13,6 +14,7 @@ The cashback system has been fully implemented on the **frontend**, but the issu
 **Backend endpoint `/api/v1/wallet/add-money` is NOT IMPLEMENTED**
 
 When user clicks "Buy Now":
+
 1. ✅ Frontend calculates 10% cashback correctly
 2. ✅ Frontend sends POST to `/api/v1/widget/track-purchase`
 3. ✅ Frontend route processes and tries to call backend
@@ -79,11 +81,13 @@ grep -n "function addMoney\|def addMoney" app/Http/Controllers/WalletController.
 Create it in your Laravel backend:
 
 **File: `routes/api.php`**
+
 ```php
 Route::post('/wallet/add-money', [WalletController::class, 'addMoney']);
 ```
 
 **File: `app/Http/Controllers/WalletController.php`**
+
 ```php
 public function addMoney(Request $request)
 {
@@ -97,11 +101,11 @@ public function addMoney(Request $request)
     try {
         // Get authenticated user
         $user = User::findOrFail($validated['user_id']);
-        
+
         // Add to wallet balance
         $user->wallet_balance += $validated['amount'];
         $user->save();
-        
+
         // Create transaction record (optional but recommended)
         if (class_exists('\App\Models\Transaction')) {
             Transaction::create([
@@ -113,7 +117,7 @@ public function addMoney(Request $request)
                 'balance_after' => $user->wallet_balance,
             ]);
         }
-        
+
         return response()->json([
             'success' => true,
             'data' => [
@@ -133,6 +137,7 @@ public function addMoney(Request $request)
 ### If Controller Exists But Doesn't Update Database
 
 Check that it:
+
 1. ✅ Authenticates the request (checks Bearer token)
 2. ✅ Finds the user by `user_id`
 3. ✅ Updates `wallet_balance` column
@@ -168,6 +173,7 @@ The frontend is already fully implemented:
 After you've created/fixed the backend endpoint:
 
 ### Step 1: Test Backend Directly
+
 ```bash
 curl -X POST "https://answer24_backend.test/api/v1/wallet/add-money" \
   -H "Authorization: Bearer test-token" \
@@ -176,25 +182,28 @@ curl -X POST "https://answer24_backend.test/api/v1/wallet/add-money" \
 ```
 
 Should return:
+
 ```json
 {
   "success": true,
   "data": {
-    "balance": 5.00,
+    "balance": 5.0,
     "transaction_id": "..."
   }
 }
 ```
 
 ### Step 2: Test via Frontend
-1. Go to http://localhost:3000/nl/webshop/1
+
+1. Go to https://localhost:3000/nl/webshop/1
 2. Open Developer Tools (F12)
 3. Go to Console tab
 4. Click "Buy Now"
 5. Watch for success messages with ✅
 
 ### Step 3: Verify Wallet
-1. Go to http://localhost:3000/nl/dashboard/wallet
+
+1. Go to https://localhost:3000/nl/dashboard/wallet
 2. Should show €10 (or 10% of purchase price)
 3. ✅ Done!
 
@@ -215,9 +224,11 @@ If it still doesn't work after creating the endpoint:
    - Check response body
 
 3. **Check backend logs**
+
    ```bash
    tail -f storage/logs/laravel.log
    ```
+
    - Look for wallet credit attempts
    - Look for any errors
 
@@ -234,11 +245,13 @@ If it still doesn't work after creating the endpoint:
 If you're stuck, tell me:
 
 1. **HTTP status from backend endpoint test**
+
    ```bash
    curl ... -v 2>&1 | grep "< HTTP"
    ```
 
 2. **Console output from frontend**
+
    ```
    F12 → Console → Click "Buy Now" → Copy all messages
    ```
@@ -249,4 +262,3 @@ If you're stuck, tell me:
    ```
 
 With this info, I can pinpoint exactly what's wrong and provide the exact fix!
-

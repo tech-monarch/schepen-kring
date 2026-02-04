@@ -12,7 +12,7 @@ Make sure your `.env.local` file has the correct API base URL:
 
 ```env
 # Chat System API Configuration
-NEXT_PUBLIC_API_BASE_URL=http://kring.answer24.nl/api/v1
+NEXT_PUBLIC_API_BASE_URL=https://kring.answer24.nl/api/v1
 
 # Or for production:
 # NEXT_PUBLIC_API_BASE_URL=https://your-domain.com/api/v1
@@ -45,7 +45,7 @@ Ensure your Laravel backend has:
 3. **Navigate to the chat page:**
 
    ```
-   http://localhost:3000/nl/dashboard/chat
+   https://localhost:3000/nl/dashboard/chat
    ```
 
 4. **Run the integration tests:**

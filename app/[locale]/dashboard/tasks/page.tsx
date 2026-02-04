@@ -42,7 +42,7 @@ export default function TaskManifestPage() {
   const [loading, setLoading] = useState(true);
   const [isOnline, setIsOnline] = useState(true);
 
-  const API_BASE = "http://kring.answer24.nl/api";
+  const API_BASE = "https://kring.answer24.nl/api";
 
   // --- SYNC LOGIC ---
   useEffect(() => {

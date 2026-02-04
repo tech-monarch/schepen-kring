@@ -24,6 +24,7 @@ curl -X POST "https://answer24_backend.test/api/v1/wallet/add-money" \
 ```
 
 **Look for the HTTP status line:**
+
 - `< HTTP/1.1 200` ✅ Success - endpoint exists
 - `< HTTP/1.1 404` ❌ Not found - endpoint doesn't exist
 - `< HTTP/1.1 401` ⚠️ Unauthorized - auth issue
@@ -46,7 +47,7 @@ curl -X GET "https://answer24_backend.test/api/v1/wallet/balance" \
 ### Test 3: Check Frontend Track Purchase Endpoint (on localhost)
 
 ```bash
-curl -X POST "http://localhost:3000/api/v1/widget/track-purchase" \
+curl -X POST "https://localhost:3000/api/v1/widget/track-purchase" \
   -H "Content-Type: application/json" \
   -d '{
     "user_id": "190",
@@ -63,15 +64,15 @@ curl -X POST "http://localhost:3000/api/v1/widget/track-purchase" \
 ## 📊 Complete Flow Using Your URLs
 
 ```
-1. User clicks "Buy Now" on http://localhost:3000/nl/webshop/1
+1. User clicks "Buy Now" on https://localhost:3000/nl/webshop/1
    ↓
-2. Frontend POST to: http://localhost:3000/api/v1/widget/track-purchase
+2. Frontend POST to: https://localhost:3000/api/v1/widget/track-purchase
    ↓
 3. Frontend Route then calls: https://answer24_backend.test/api/v1/wallet/add-money
    ↓
 4. If successful, wallet is credited
    ↓
-5. User checks: http://localhost:3000/nl/dashboard/wallet
+5. User checks: https://localhost:3000/nl/dashboard/wallet
    ↓
 6. Wallet page fetches: https://answer24_backend.test/api/v1/wallet/balance
 ```
@@ -80,11 +81,11 @@ curl -X POST "http://localhost:3000/api/v1/widget/track-purchase" \
 
 ## 🚀 Quick Reference
 
-| Endpoint | URL |
-|----------|-----|
+| Endpoint            | URL                                                     |
+| ------------------- | ------------------------------------------------------- |
 | Add Money to Wallet | `https://answer24_backend.test/api/v1/wallet/add-money` |
-| Get Wallet Balance | `https://answer24_backend.test/api/v1/wallet/balance` |
-| Track Purchase | `http://localhost:3000/api/v1/widget/track-purchase` |
+| Get Wallet Balance  | `https://answer24_backend.test/api/v1/wallet/balance`   |
+| Track Purchase      | `https://localhost:3000/api/v1/widget/track-purchase`   |
 
 ---
 
@@ -102,8 +103,8 @@ curl -X POST "https://answer24_backend.test/api/v1/wallet/add-money" \
 ```
 
 Then tell me:
+
 1. **HTTP Status** (the line like `< HTTP/1.1 200`)
 2. **Response Body** (the JSON at the end)
 
 This will immediately tell us if the backend endpoint exists! 🎯
-

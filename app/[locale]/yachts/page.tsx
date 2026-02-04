@@ -11,7 +11,7 @@ import { api } from "@/lib/api";
 import YachtPlaceholder from "@/components/homepage/yacht.jpg";
 
 // The storage URL for your Laravel backend
-const STORAGE_URL = "http://kring.answer24.nl/storage/";
+const STORAGE_URL = "https://kring.answer24.nl/storage/";
 
 export default function PublicFleetGallery() {
   const [vessels, setVessels] = useState([]);

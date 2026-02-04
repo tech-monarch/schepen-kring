@@ -137,11 +137,11 @@
     "contactInfo": {
       "title": "Contactgegevens",
       "emailLabel": "E-mail",
-      "emailValue": "concierge@nauticsell.nl",
+      "emailValue": "lelystad@schepenkring.nl",
       "phoneLabel": "Telefoon",
-      "phoneValue": "+31 20 123 4567",
-      "locationLabel": "Haven",
-      "locationValue": "Amsterdam Marina, Nederland"
+      "phoneValue": "+31 320 711 340",
+      "locationLabel": "Parkhaven 3",
+      "locationValue": "8242 PE Lelystad, Nederland"
     },
     "quickResponse": {
       "title": "Snel antwoord",

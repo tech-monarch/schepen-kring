@@ -448,7 +448,7 @@
 
     <!-- Schepenkring.nlWidget -->
     <script
-      src="http://localhost:3000/widget/answer24-widget.js"
+      src="https://localhost:3000/widget/answer24-widget.js"
       data-public-key="test-key-123"
     ></script>
 
@@ -487,7 +487,7 @@
         const user = await checkUserStatus();
 
         if (!user) {
-          alert("Please log in first! Go to http://localhost:3000/nl/login");
+          alert("Please log in first! Go to https://localhost:3000/nl/login");
           addLog("error", "Purchase failed - user not logged in");
           return;
         }
@@ -503,7 +503,7 @@
         try {
           // Track purchase via API
           const response = await fetch(
-            "http://localhost:3000/api/v1/widget/track-purchase",
+            "https://localhost:3000/api/v1/widget/track-purchase",
             {
               method: "POST",
               headers: {

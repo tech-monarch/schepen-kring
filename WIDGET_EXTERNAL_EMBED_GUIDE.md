@@ -5,7 +5,7 @@
 ### 1. Get Your Embed Code
 
 1. Go to **Dashboard → Admin → Widget Management**
-   - URL: `http://localhost:3000/nl/dashboard/admin/widget`
+   - URL: `https://localhost:3000/nl/dashboard/admin/widget`
 2. Click the **"Copy Embed Code"** button
 3. Paste the code into your website's HTML before the closing `</body>` tag
 
@@ -14,7 +14,7 @@
 ```html
 <!-- Add this before closing </body> tag on your website -->
 <script
-  src="http://localhost:3000/widget/answer24-widget.js"
+  src="https://localhost:3000/widget/answer24-widget.js"
   data-public-key="YOUR_PUBLIC_KEY"
 ></script>
 ```
@@ -79,7 +79,7 @@ Here's a complete HTML page with the Schepenkring.nlwidget:
 
     <!-- Schepenkring.nlWidget - Add before closing </body> tag -->
     <script
-      src="http://localhost:3000/widget/answer24-widget.js"
+      src="https://localhost:3000/widget/answer24-widget.js"
       data-public-key="YOUR_PUBLIC_KEY"
     ></script>
   </body>
@@ -115,7 +115,7 @@ Answer24Widget.sendMessage("Hello, I need help!");
 
 ### Option 1: View Demo Page
 
-1. Open: `http://localhost:3000/widget/demo.html`
+1. Open: `https://localhost:3000/widget/demo.html`
 2. See the widget in action on a sample page
 3. Test all features and interactions
 
@@ -132,7 +132,7 @@ Answer24Widget.sendMessage("Hello, I need help!");
 
 ### Change Colors (Live Preview!)
 
-1. Go to: `http://localhost:3000/nl/dashboard/admin/widget`
+1. Go to: `https://localhost:3000/nl/dashboard/admin/widget`
 2. Click the **"Appearance"** tab
 3. **Move the color picker** - watch the widget update in real-time! 🎨
 4. Changes apply instantly - no save needed for preview
@@ -345,7 +345,7 @@ Before going live, test these scenarios:
 
 - **Email**: support@answer24.nl
 - **Documentation**: Check WIDGET_EMBED_GUIDE.md
-- **Dashboard**: `http://localhost:3000/nl/dashboard/admin/widget`
+- **Dashboard**: `https://localhost:3000/nl/dashboard/admin/widget`
 
 ### Report Issues
 

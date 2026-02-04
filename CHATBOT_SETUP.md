@@ -92,14 +92,14 @@ NEXT_PUBLIC_AI_MODEL=command
 ### 1. Test API Endpoint
 
 ```bash
-curl -X POST http://localhost:3000/api/chat \
+curl -X POST https://localhost:3000/api/chat \
   -H "Content-Type: application/json" \
   -d '{"message": "Hello, this is a test"}'
 ```
 
 ### 2. Test in Browser
 
-1. Go to `http://localhost:3000`
+1. Go to `https://localhost:3000`
 2. Look for the chat widget (chat bubble icon)
 3. Click to open and send a test message
 

@@ -5,11 +5,11 @@
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                    FRONTEND (Next.js)                           │
-│                   http://localhost:3000                         │
+│                   https://localhost:3000                         │
 └─────────────────────────────────────────────────────────────────┘
 
 1. User opens webshop product page
-   http://localhost:3000/nl/webshop/1
+   https://localhost:3000/nl/webshop/1
 
                        ⬇️
 
@@ -25,8 +25,8 @@
                        ⬇️
 
 4. Frontend sends POST to track-purchase
-   🌐 http://localhost:3000/api/v1/widget/track-purchase
-   
+   🌐 https://localhost:3000/api/v1/widget/track-purchase
+
    Request Body:
    {
      "user_id": "190",
@@ -43,7 +43,7 @@
 
 5. Frontend Route Processes Request
    File: app/api/v1/widget/track-purchase/route.ts
-   
+
    ✅ Validates required fields
    ✅ Skips signature validation (dev mode)
    ✅ Calculates 10% cashback
@@ -53,11 +53,11 @@
 
 6. Frontend Calls Backend Wallet Endpoint
    🌐 POST https://answer24_backend.test/api/v1/wallet/add-money
-   
+
    Headers:
    - Authorization: Bearer {serverToken}
    - Content-Type: application/json
-   
+
    Body:
    {
      "amount": 10.00,
@@ -74,9 +74,9 @@
 
 7. Backend Wallet Endpoint Processes
    Route: POST /api/v1/wallet/add-money
-   
+
    ⚠️ THIS ENDPOINT MUST EXIST!
-   
+
    Expected Actions:
    ✅ Authenticate request with Bearer token
    ✅ Find user by user_id (190)
@@ -106,13 +106,13 @@
                        ⬇️
 
 10. User Navigates to Wallet Page
-    http://localhost:3000/nl/dashboard/wallet
+    https://localhost:3000/nl/dashboard/wallet
 
                        ⬇️
 
 11. Wallet Page Fetches Balance
     GET https://answer24_backend.test/api/v1/wallet/balance
-    
+
     Expected Response:
     {
       "success": true,
@@ -131,20 +131,24 @@
 ## 🔍 Where The Problem Is (Wallet Still Shows €0)
 
 ### Scenario A: No Console Errors at All
+
 - ❌ Backend endpoint `/api/v1/wallet/add-money` doesn't exist (returns 404)
 - ❌ Backend returns success but doesn't actually update database
 - ✅ Fix: Check if route exists in `routes/api.php`
 
 ### Scenario B: Console Shows "Invalid signature"
+
 - ❌ Signature validation is failing in development mode
 - ✅ Fix: Already fixed in code, but verify `isDevelopment` check works
 
 ### Scenario C: Console Shows "Backend not reachable"
+
 - ❌ Backend server not running or wrong URL
 - ❌ CORS issue between frontend and backend
 - ✅ Fix: Ensure backend running, check CORS headers
 
 ### Scenario D: Frontend returns 200 but wallet is €0
+
 - ❌ Response from backend shows 200 but balance doesn't change
 - ❌ Endpoint exists but controller doesn't update database
 - ✅ Fix: Check the controller logic in Laravel
@@ -155,21 +159,21 @@
 
 ### Frontend Files
 
-| File | Function |
-|------|----------|
-| `app/[locale]/(cashback)/webshop/[id]/WebshopDetailClient.tsx` | Displays product, handles "Buy Now" click |
-| `app/api/v1/widget/track-purchase/route.ts` | Receives purchase event, calls backend wallet endpoint |
-| `app/[locale]/dashboard/wallet/WalletPageClient.tsx` | Displays wallet balance by calling `/wallet/balance` |
-| `lib/api-config.ts` | API configuration and endpoints |
+| File                                                           | Function                                               |
+| -------------------------------------------------------------- | ------------------------------------------------------ |
+| `app/[locale]/(cashback)/webshop/[id]/WebshopDetailClient.tsx` | Displays product, handles "Buy Now" click              |
+| `app/api/v1/widget/track-purchase/route.ts`                    | Receives purchase event, calls backend wallet endpoint |
+| `app/[locale]/dashboard/wallet/WalletPageClient.tsx`           | Displays wallet balance by calling `/wallet/balance`   |
+| `lib/api-config.ts`                                            | API configuration and endpoints                        |
 
 ### Backend Files (Laravel)
 
-| File | Function |
-|------|----------|
-| `routes/api.php` | Must have: `POST /api/v1/wallet/add-money` route |
-| `WalletController.php` | Must implement: `addMoney()` method |
-| `User` Model | Must have: `wallet_balance` column |
-| `Transaction` Model | Track all wallet transactions |
+| File                   | Function                                         |
+| ---------------------- | ------------------------------------------------ |
+| `routes/api.php`       | Must have: `POST /api/v1/wallet/add-money` route |
+| `WalletController.php` | Must implement: `addMoney()` method              |
+| `User` Model           | Must have: `wallet_balance` column               |
+| `Transaction` Model    | Track all wallet transactions                    |
 
 ---
 
@@ -191,6 +195,7 @@
 **The backend endpoint `/api/v1/wallet/add-money` is probably NOT IMPLEMENTED**
 
 If you run:
+
 ```bash
 curl -X POST "https://answer24_backend.test/api/v1/wallet/add-money" \
   -H "Authorization: Bearer test" \
@@ -199,6 +204,7 @@ curl -X POST "https://answer24_backend.test/api/v1/wallet/add-money" \
 ```
 
 And you get:
+
 ```
 < HTTP/1.1 404 Not Found
 ```
@@ -210,6 +216,7 @@ Then the endpoint needs to be created in Laravel.
 ## 🚀 How to Test
 
 ### Step 1: Test Backend Endpoint Exists
+
 ```bash
 curl -X POST "https://answer24_backend.test/api/v1/wallet/add-money" \
   -H "Authorization: Bearer test-token" \
@@ -218,16 +225,18 @@ curl -X POST "https://answer24_backend.test/api/v1/wallet/add-money" \
 ```
 
 ### Step 2: Check HTTP Status
+
 - 200/201 = ✅ Endpoint exists
 - 404 = ❌ Endpoint doesn't exist
 - 401 = ⚠️ Auth issue
 - 500 = ⚠️ Server error
 
 ### Step 3: Check Backend Logs
+
 ```bash
 tail -f storage/logs/laravel.log
 ```
 
 ### Step 4: Verify Database Update
-Check if `users` table `wallet_balance` column was updated.
 
+Check if `users` table `wallet_balance` column was updated.

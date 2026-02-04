@@ -10,10 +10,10 @@ const HomePage = () => {
   return (
     <div className="min-h-screen overflow-x-hidden">
       <HeroSection />
-      <FeaturesSection />
-      <BoatsSection />
-      <AudienceSection />
-      <SectionDownloadApp />
+      {/* <FeaturesSection /> */}
+      {/* <BoatsSection /> */}
+      {/* <AudienceSection /> */}
+      {/* <SectionDownloadApp /> */}
     </div>
   );
 };

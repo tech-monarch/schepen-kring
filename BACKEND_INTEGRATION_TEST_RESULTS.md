@@ -7,13 +7,13 @@
 
 ## 🎯 **Test Summary**
 
-| Component | Status | Details |
-|-----------|--------|---------|
-| Backend Server | ✅ Running | Port 8000 |
-| Frontend Server | ✅ Running | Port 3000, 3001 |
-| Widget Settings API | ✅ Working | Company ID: 123 |
-| Partner Chat API | ✅ Working | AI responses functional |
-| Frontend Chat API | ✅ Working | OpenAI integration active |
+| Component           | Status     | Details                   |
+| ------------------- | ---------- | ------------------------- |
+| Backend Server      | ✅ Running | Port 8000                 |
+| Frontend Server     | ✅ Running | Port 3000, 3001           |
+| Widget Settings API | ✅ Working | Company ID: 123           |
+| Partner Chat API    | ✅ Working | AI responses functional   |
+| Frontend Chat API   | ✅ Working | OpenAI integration active |
 
 ---
 
@@ -24,11 +24,13 @@
 **Endpoint**: `GET /api/v1/widget-settings/123`
 
 **Request**:
+
 ```bash
-curl http://localhost:8000/api/v1/widget-settings/123
+curl https://localhost:8000/api/v1/widget-settings/123
 ```
 
 **Response**:
+
 ```json
 {
   "status": "success",
@@ -59,6 +61,7 @@ curl http://localhost:8000/api/v1/widget-settings/123
 **Status**: ✅ **PASS**
 
 **Features Tested**:
+
 - ✅ Company widget settings retrieval
 - ✅ Custom colors and branding
 - ✅ AI personality configuration
@@ -72,13 +75,15 @@ curl http://localhost:8000/api/v1/widget-settings/123
 **Endpoint**: `POST /api/v1/partner-chat/123`
 
 **Request**:
+
 ```bash
-curl -X POST http://localhost:8000/api/v1/partner-chat/123 \
+curl -X POST https://localhost:8000/api/v1/partner-chat/123 \
   -H "Content-Type: application/json" \
   -d '{"message": "Hello, I need help with my order", "user_id": "test_user_123"}'
 ```
 
 **Response**:
+
 ```json
 {
   "status": "success",
@@ -93,6 +98,7 @@ curl -X POST http://localhost:8000/api/v1/partner-chat/123 \
 **Status**: ✅ **PASS**
 
 **Features Tested**:
+
 - ✅ AI chat response generation
 - ✅ Company-specific AI personality
 - ✅ User session management
@@ -106,13 +112,15 @@ curl -X POST http://localhost:8000/api/v1/partner-chat/123 \
 **Endpoint**: `POST /api/chat`
 
 **Request**:
+
 ```bash
-curl -X POST http://localhost:3000/api/chat \
+curl -X POST https://localhost:3000/api/chat \
   -H "Content-Type: application/json" \
   -d '{"message": "Hello, this is a test message", "history": []}'
 ```
 
 **Response**:
+
 ```json
 {
   "message": "I understand you're looking for assistance. Let me help you with that!",
@@ -124,6 +132,7 @@ curl -X POST http://localhost:3000/api/chat \
 **Status**: ✅ **PASS**
 
 **Features Tested**:
+
 - ✅ OpenAI integration working
 - ✅ Chat API responding correctly
 - ✅ Service configuration active
@@ -134,6 +143,7 @@ curl -X POST http://localhost:3000/api/chat \
 ## 📊 **Backend Routes Available**
 
 ### **Chat & Widget Routes**:
+
 ```
 POST   /api/v1/partner-chat/{companyId}     - Partner chat API
 GET    /api/v1/widget-settings/{companyId}  - Get widget settings
@@ -144,6 +154,7 @@ PUT    /api/v1/company-widgets/{widget}     - Update company widget
 ```
 
 ### **Other Available Routes**:
+
 ```
 POST   /api/v1/meta/send-message           - Meta API message sending
 GET    /api/v1/avatars                     - Avatar management
@@ -161,18 +172,19 @@ GET    /api/v1/google-ads/*                - Google Ads integration
 
 ### **Frontend ↔ Backend Connection** ✅
 
-| Component | Frontend | Backend | Status |
-|-----------|----------|---------|--------|
-| Widget Settings | ✅ | ✅ | Connected |
-| Partner Chat | ✅ | ✅ | Connected |
-| OpenAI Integration | ✅ | ✅ | Working |
-| Multi-Tenant | ✅ | ✅ | Isolated |
+| Component          | Frontend | Backend | Status    |
+| ------------------ | -------- | ------- | --------- |
+| Widget Settings    | ✅       | ✅      | Connected |
+| Partner Chat       | ✅       | ✅      | Connected |
+| OpenAI Integration | ✅       | ✅      | Working   |
+| Multi-Tenant       | ✅       | ✅      | Isolated  |
 
 ---
 
 ## 🎯 **What's Working**
 
 ### **Backend Features** ✅
+
 - ✅ Widget settings API
 - ✅ Partner chat API with AI
 - ✅ Multi-tenant company isolation
@@ -181,6 +193,7 @@ GET    /api/v1/google-ads/*                - Google Ads integration
 - ✅ Company-specific AI personality
 
 ### **Frontend Features** ✅
+
 - ✅ OpenAI integration
 - ✅ Chat API endpoint
 - ✅ Widget components
@@ -193,20 +206,23 @@ GET    /api/v1/google-ads/*                - Google Ads integration
 ## 🧪 **Test Commands**
 
 ### **Test Widget Settings**:
+
 ```bash
-curl http://localhost:8000/api/v1/widget-settings/123
+curl https://localhost:8000/api/v1/widget-settings/123
 ```
 
 ### **Test Partner Chat**:
+
 ```bash
-curl -X POST http://localhost:8000/api/v1/partner-chat/123 \
+curl -X POST https://localhost:8000/api/v1/partner-chat/123 \
   -H "Content-Type: application/json" \
   -d '{"message": "Hello, I need help", "user_id": "test_user"}'
 ```
 
 ### **Test Frontend Chat**:
+
 ```bash
-curl -X POST http://localhost:3000/api/chat \
+curl -X POST https://localhost:3000/api/chat \
   -H "Content-Type: application/json" \
   -d '{"message": "Hello, test message", "history": []}'
 ```
@@ -216,13 +232,15 @@ curl -X POST http://localhost:3000/api/chat \
 ## 🚀 **Next Steps**
 
 ### **Ready for Testing**:
-1. ✅ Open http://localhost:3000 in browser
+
+1. ✅ Open https://localhost:3000 in browser
 2. ✅ Navigate to dashboard chat
 3. ✅ Test chat widget functionality
 4. ✅ Test partner widget embedding
 5. ✅ Test multi-tenant isolation
 
 ### **Recommended Tests**:
+
 - [ ] Test chat widget on public pages
 - [ ] Test dashboard chat functionality
 - [ ] Test FAQ chat modal
@@ -237,15 +255,17 @@ curl -X POST http://localhost:3000/api/chat \
 ## 📝 **Notes**
 
 ### **Backend Configuration**:
-- **Base URL**: http://localhost:8000
+
+- **Base URL**: https://localhost:8000
 - **API Version**: v1
 - **Test Company ID**: 123
 - **Session Management**: Working
 - **AI Integration**: Active
 
 ### **Frontend Configuration**:
-- **Development Server**: http://localhost:3000
-- **API Base URL**: http://localhost:8000/api/v1
+
+- **Development Server**: https://localhost:3000
+- **API Base URL**: https://localhost:8000/api/v1
 - **OpenAI Model**: gpt-4o-mini
 - **Chat Enabled**: Yes
 

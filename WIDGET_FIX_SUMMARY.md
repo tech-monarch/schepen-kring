@@ -31,12 +31,21 @@ Instead of introducing a new widget system, we properly configured the **existin
 
 ```typescript
 const pathname = usePathname();
-const isDashboardPage = pathname.startsWith("/dashboard") || pathname.startsWith("/webshop");
-const isUserTypePage = pathname.startsWith("/admin") || (pathname.startsWith("/partner") && !pathname.startsWith("/signup ")) || pathname.startsWith("/client");
+const isDashboardPage =
+  pathname.startsWith("/dashboard") || pathname.startsWith("/webshop");
+const isUserTypePage =
+  pathname.startsWith("/admin") ||
+  (pathname.startsWith("/partner") && !pathname.startsWith("/signup ")) ||
+  pathname.startsWith("/client");
 const isDashboardChatPage = pathname === "/dashboard/chat";
 
 // ... in return statement
-{!isDashboardChatPage && <ChatWidget />}
+{
+  !isDashboardChatPage &&
+    {
+      /* <ChatWidget /> */
+    };
+}
 ```
 
 ### 2. **Cleaned WebshopClient.tsx**

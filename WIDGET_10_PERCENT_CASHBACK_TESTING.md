@@ -5,13 +5,13 @@
 ### Step 1: Open Test Page
 
 ```
-http://localhost:3000/widget/test-purchase-tracking.html
+https://localhost:3000/widget/test-purchase-tracking.html
 ```
 
 ### Step 2: Make Sure You're Logged In
 
 - Check the badge at the top - should show your User ID
-- If not logged in, go to: `http://localhost:3000/nl/login`
+- If not logged in, go to: `https://localhost:3000/nl/login`
 - Login, then come back to the test page
 
 ### Step 3: Make a Test Purchase
@@ -22,7 +22,7 @@ http://localhost:3000/widget/test-purchase-tracking.html
 
 ### Step 4: Verify Wallet Credit
 
-- Go to: `http://localhost:3000/nl/dashboard/wallet`
+- Go to: `https://localhost:3000/nl/dashboard/wallet`
 - Check your A-Points balance
 - Should see the 10% cashback added
 
@@ -176,7 +176,7 @@ Press `F12` and look for:
 
 **Solution:**
 
-1. Go to `http://localhost:3000/nl/login`
+1. Go to `https://localhost:3000/nl/login`
 2. Login with your credentials
 3. Return to test page
 4. Badge should now show your User ID
@@ -250,7 +250,7 @@ async function trackPurchase(orderData) {
   const user = JSON.parse(localStorage.getItem("user_data"));
 
   const response = await fetch(
-    "http://localhost:3000/api/v1/widget/track-purchase",
+    "https://localhost:3000/api/v1/widget/track-purchase",
     {
       method: "POST",
       headers: {
@@ -337,7 +337,7 @@ window.addEventListener("load", () => {
 - Total Cashback earned
 
 **In Dashboard:**
-Go to `http://localhost:3000/nl/dashboard/wallet` to see:
+Go to `https://localhost:3000/nl/dashboard/wallet` to see:
 
 - Wallet balance
 - Transaction history
@@ -447,7 +447,7 @@ Include:
 // Test purchase tracking
 async function testPurchase() {
   const response = await fetch(
-    "http://localhost:3000/api/v1/widget/track-purchase",
+    "https://localhost:3000/api/v1/widget/track-purchase",
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -499,4 +499,4 @@ testPurchase();
 
 **Your 10% cashback system is ready to test!** 🚀
 
-Open `http://localhost:3000/widget/test-purchase-tracking.html` and start testing!
+Open `https://localhost:3000/widget/test-purchase-tracking.html` and start testing!

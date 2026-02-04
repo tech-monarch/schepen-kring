@@ -120,7 +120,7 @@ const transformUserData = (user: any) => ({
 
 ### **✅ Login Test:**
 
-1. Visit: `http://localhost:3000/en/login`
+1. Visit: `https://localhost:3000/en/login`
 2. Enter credentials
 3. **Expected:** Login succeeds with proper user data
 4. **Expected:** Token stored correctly
@@ -128,7 +128,7 @@ const transformUserData = (user: any) => ({
 
 ### **✅ Registration Test:**
 
-1. Visit: `http://localhost:3000/en/signup`
+1. Visit: `https://localhost:3000/en/signup`
 2. Fill registration form
 3. **Expected:** Registration succeeds
 4. **Expected:** User auto-logged in

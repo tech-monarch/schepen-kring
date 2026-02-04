@@ -1,8 +1,8 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { Search, Plus, X, Bot, Loader2, Minus } from "lucide-react";
+import { Search, Plus, X, Bot, Loader2, Minus, Sparkles } from "lucide-react";
 import { getFAQs } from "@/app/[locale]/actions/faq";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { api } from "@/lib/api"; // Using your central API utility
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTranslations } from "next-intl";
@@ -15,9 +15,11 @@ export default function Faq() {
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({});
 
+  // AI States
   const [aiAnswer, setAiAnswer] = useState<string | null>(null);
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [showAiPanel, setShowAiPanel] = useState(false);
+  const [sessionId] = useState(`faq-session-${Math.random().toString(36).substr(2, 9)}`);
 
   useEffect(() => {
     const fetchFAQs = async () => {
@@ -38,16 +40,29 @@ export default function Faq() {
     fetchFAQs();
   }, [t]);
 
+  // NEW: Updated to use your /ai/chat endpoint
   const handleAiSearch = async () => {
     if (!searchQuery.trim()) return;
+    
     setIsAiLoading(true);
     setShowAiPanel(true);
+    setAiAnswer(null);
+
     try {
-      const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY || "");
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-      const result = await model.generateContent(searchQuery);
-      setAiAnswer(result.response.text());
-    } catch (e) { setAiAnswer("Could not generate answer."); } finally { setIsAiLoading(false); }
+      // Calling your new Laravel Controller endpoint
+      const response = await api.post("/ai/chat", {
+        message: searchQuery,
+        session_id: sessionId,
+        history: JSON.stringify([]) // You can pass chat history here if needed
+      });
+
+      // Getting the 'reply' field from your GeminiController
+      setAiAnswer(response.data.reply);
+    } catch (e) { 
+      setAiAnswer("Our maritime intelligence system is currently undergoing maintenance. Please try again in a moment."); 
+    } finally { 
+      setIsAiLoading(false); 
+    }
   };
 
   if (isLoading) return <div className="h-screen flex items-center justify-center bg-white"><Loader2 className="animate-spin text-[#003566]" /></div>;
@@ -55,7 +70,7 @@ export default function Faq() {
   return (
     <div className="bg-white min-h-screen text-[#003566]">
       
-      {/* --- SIMPLE LIVE HERO --- */}
+      {/* --- HERO --- */}
       <section className="relative h-[50vh] flex items-center justify-center overflow-hidden bg-[#001D3D]">
         <Image 
           src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=2073" 
@@ -69,35 +84,48 @@ export default function Faq() {
 
       <main className="max-w-4xl mx-auto px-6 pb-40">
         
-        {/* --- CLEAN SEARCH --- */}
+        {/* --- SEARCH / AI INPUT --- */}
         <div className="relative -mt-8 z-20 mb-24">
           <div className="bg-white shadow-2xl border border-slate-100 flex items-center p-2">
             <Search className="ml-6 text-slate-300" />
             <input 
               className="w-full h-16 px-6 text-xl font-serif outline-none"
-              placeholder="Search or ask anything..."
+              placeholder="Search or ask anything about our fleet..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleAiSearch()}
             />
             <button 
               onClick={handleAiSearch}
-              className="bg-[#003566] text-white px-8 h-16 font-bold uppercase text-[10px] tracking-widest hover:bg-blue-600 transition-colors"
+              disabled={isAiLoading}
+              className="bg-[#003566] text-white px-8 h-16 font-bold uppercase text-[10px] tracking-widest hover:bg-blue-600 transition-colors flex items-center gap-2 disabled:bg-slate-400"
             >
-              Ask AI
+              {isAiLoading ? <Loader2 className="animate-spin" /> : <><Sparkles size={14}/> Ask AI</>}
             </button>
           </div>
         </div>
 
-        {/* --- AI ANSWER (SIMPLE BOX) --- */}
+        {/* --- AI ANSWER PANEL --- */}
         <AnimatePresence>
           {showAiPanel && (
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mb-20 p-10 bg-slate-50 border-l-4 border-blue-600 relative">
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }} 
+              animate={{ opacity: 1, y: 0 }} 
+              className="mb-20 p-10 bg-slate-50 border-l-4 border-[#003566] relative shadow-inner"
+            >
               <button onClick={() => setShowAiPanel(false)} className="absolute top-4 right-4 text-slate-300 hover:text-red-500"><X size={20} /></button>
-              <div className="flex items-center gap-2 mb-6 text-blue-600 uppercase text-[10px] font-black tracking-widest">
-                <Bot size={16} /> AI Intelligence
+              <div className="flex items-center gap-2 mb-6 text-[#003566] uppercase text-[10px] font-black tracking-widest">
+                <Bot size={16} /> Kring Schepen Intelligence
               </div>
-              {isAiLoading ? <Loader2 className="animate-spin" /> : <p className="text-2xl font-serif leading-relaxed italic">"{aiAnswer}"</p>}
+              {isAiLoading ? (
+                <div className="flex items-center gap-3 text-slate-400 font-serif italic">
+                    <Loader2 className="animate-spin" size={18} /> Reviewing vessel logs...
+                </div>
+              ) : (
+                <p className="text-2xl font-serif leading-relaxed italic text-[#003566]">
+                    "{aiAnswer}"
+                </p>
+              )}
             </motion.div>
           )}
         </AnimatePresence>

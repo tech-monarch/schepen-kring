@@ -879,9 +879,9 @@
                 </svg>
               </button>
               <div class="answer24-avatars">
-                <img src="/Image-1.png" alt="Avatar 1" class="answer24-avatar" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\\'http://www.w3.org/2000/svg\\' viewBox=\\'0 0 100 100\\'%3E%3Ccircle cx=\\'50\\' cy=\\'50\\' r=\\'50\\' fill=\\'%232563eb\\'/%3E%3Ctext x=\\'50\\' y=\\'65\\' font-size=\\'50\\' text-anchor=\\'middle\\' fill=\\'white\\'%3E👤%3C/text%3E%3C/svg%3E'" />
-                <img src="/Image-2.png" alt="Avatar 2" class="answer24-avatar" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\\'http://www.w3.org/2000/svg\\' viewBox=\\'0 0 100 100\\'%3E%3Ccircle cx=\\'50\\' cy=\\'50\\' r=\\'50\\' fill=\\'%232563eb\\'/%3E%3Ctext x=\\'50\\' y=\\'65\\' font-size=\\'50\\' text-anchor=\\'middle\\' fill=\\'white\\'%3E👥%3C/text%3E%3C/svg%3E'" />
-                <img src="/Image-3.png" alt="Avatar 3" class="answer24-avatar" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\\'http://www.w3.org/2000/svg\\' viewBox=\\'0 0 100 100\\'%3E%3Ccircle cx=\\'50\\' cy=\\'50\\' r=\\'50\\' fill=\\'%232563eb\\'/%3E%3Ctext x=\\'50\\' y=\\'65\\' font-size=\\'50\\' text-anchor=\\'middle\\' fill=\\'white\\'%3E💬%3C/text%3E%3C/svg%3E'" />
+                <img src="/Image-1.png" alt="Avatar 1" class="answer24-avatar" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\\'https://www.w3.org/2000/svg\\' viewBox=\\'0 0 100 100\\'%3E%3Ccircle cx=\\'50\\' cy=\\'50\\' r=\\'50\\' fill=\\'%232563eb\\'/%3E%3Ctext x=\\'50\\' y=\\'65\\' font-size=\\'50\\' text-anchor=\\'middle\\' fill=\\'white\\'%3E👤%3C/text%3E%3C/svg%3E'" />
+                <img src="/Image-2.png" alt="Avatar 2" class="answer24-avatar" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\\'https://www.w3.org/2000/svg\\' viewBox=\\'0 0 100 100\\'%3E%3Ccircle cx=\\'50\\' cy=\\'50\\' r=\\'50\\' fill=\\'%232563eb\\'/%3E%3Ctext x=\\'50\\' y=\\'65\\' font-size=\\'50\\' text-anchor=\\'middle\\' fill=\\'white\\'%3E👥%3C/text%3E%3C/svg%3E'" />
+                <img src="/Image-3.png" alt="Avatar 3" class="answer24-avatar" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\\'https://www.w3.org/2000/svg\\' viewBox=\\'0 0 100 100\\'%3E%3Ccircle cx=\\'50\\' cy=\\'50\\' r=\\'50\\' fill=\\'%232563eb\\'/%3E%3Ctext x=\\'50\\' y=\\'65\\' font-size=\\'50\\' text-anchor=\\'middle\\' fill=\\'white\\'%3E💬%3C/text%3E%3C/svg%3E'" />
               </div>
               <span class="answer24-header-title">Schepenkring.nlChat</span>
               <div class="answer24-header-actions">

@@ -469,8 +469,7 @@ export default function WebshopPage() {
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
       <DashboardHeader />
-      <ChatWidget />
-
+      {/*  <ChatWidget /> */}
       {/* --- PROFESSIONAL BLUE HEADER --- */}
       {/* Hero Section */}
       <div className="bg-blue-600 pt-20 pb-12 px-6">
@@ -512,7 +511,6 @@ export default function WebshopPage() {
           </motion.div>
         </div>
       </div>
-
       <div className="max-w-7xl mx-auto px-6 -mt-10 relative z-20 pb-32">
         {/* CATEGORY & TAB NAVIGATION */}
         {/* FEATURE 4: Only visible if NOT on #webshop */}
@@ -736,7 +734,6 @@ export default function WebshopPage() {
           </div>
         )}
       </div>
-
       {/* --- ORIGINAL FULL-PAGE POPUP (LOGIC PRESERVED) --- */}
       <AnimatePresence>
         {selectedItem && (
@@ -1097,7 +1094,6 @@ export default function WebshopPage() {
           </motion.div>
         )}
       </AnimatePresence>
-
       <Footer />
     </div>
   );

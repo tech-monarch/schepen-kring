@@ -43,7 +43,7 @@ The backend endpoint is now working correctly:
 
 ```bash
 curl --request GET \
-  --url http://kring.answer24.nl/api/v1/plans \
+  --url https://kring.answer24.nl/api/v1/plans \
   --header 'Accept: application/json'
 ```
 
@@ -74,19 +74,19 @@ curl --request GET \
 Your `.env.local` is correctly configured:
 
 ```bash
-NEXT_PUBLIC_API_BASE_URL=http://localhost:8000/api/v1
+NEXT_PUBLIC_API_BASE_URL=https://localhost:8000/api/v1
 ```
 
 ## Expected Behavior Now
 
-1. Visit `http://localhost:3000/en/pricing`
-2. The page will fetch pricing data from `http://localhost:8000/api/v1/plans`
+1. Visit `https://localhost:3000/en/pricing`
+2. The page will fetch pricing data from `https://localhost:8000/api/v1/plans`
 3. Real pricing data from your backend will be displayed
 4. No fallback warning message will appear
 5. Console will show:
    ```
-   🔍 Fetching pricing from: http://localhost:8000/api/v1/plans
-   📍 Base URL: http://localhost:8000/api/v1
+   🔍 Fetching pricing from: https://localhost:8000/api/v1/plans
+   📍 Base URL: https://localhost:8000/api/v1
    📍 Endpoint: /plans
    📥 Response status: 200
    ✅ Pricing data: { success: true, data: [...] }
@@ -109,7 +109,7 @@ NEXT_PUBLIC_API_BASE_URL=http://localhost:8000/api/v1
 
 ## Next Steps
 
-1. **Refresh your browser** on `http://localhost:3000/en/pricing`
+1. **Refresh your browser** on `https://localhost:3000/en/pricing`
 2. The warning should now be gone
 3. You should see live pricing data from your backend
 

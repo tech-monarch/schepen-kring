@@ -44,17 +44,20 @@ I've created comprehensive testing guides to help you diagnose why the cashback 
 ## 🎯 What To Do RIGHT NOW
 
 ### Option 1: Fastest (5 minutes)
+
 1. Read: `TESTING_GUIDE_QUICK_START.md`
 2. Run the curl command it shows
 3. Tell me the HTTP status code and response
 
 ### Option 2: More Detailed (15 minutes)
+
 1. Read: `CASHBACK_ISSUE_SUMMARY.md`
 2. Follow steps to check backend endpoint
 3. Run diagnostic commands
 4. Tell me what you find
 
 ### Option 3: Full Deep Dive (30 minutes)
+
 1. Read: `CASHBACK_FLOW_DIAGRAM.md` - understand the complete flow
 2. Use: `DEBUG_CASHBACK_STEP_BY_STEP.md` - check each step
 3. Test: `API_TEST_GUIDE.md` - validate each endpoint
@@ -75,6 +78,7 @@ HTTP 500? → Check backend logs
 ## 📊 All Testing Commands
 
 ### Test 1: Backend Wallet Endpoint
+
 ```bash
 curl -X POST "https://answer24_backend.test/api/v1/wallet/add-money" \
   -H "Accept: application/json" \
@@ -85,6 +89,7 @@ curl -X POST "https://answer24_backend.test/api/v1/wallet/add-money" \
 ```
 
 ### Test 2: Backend Balance Check
+
 ```bash
 curl -X GET "https://answer24_backend.test/api/v1/wallet/balance" \
   -H "Authorization: Bearer test-token" \
@@ -92,8 +97,9 @@ curl -X GET "https://answer24_backend.test/api/v1/wallet/balance" \
 ```
 
 ### Test 3: Frontend Track Purchase
+
 ```bash
-curl -X POST "http://localhost:3000/api/v1/widget/track-purchase" \
+curl -X POST "https://localhost:3000/api/v1/widget/track-purchase" \
   -H "Content-Type: application/json" \
   -d '{"user_id": "190", "order_value": 50.00, "order_id": "TEST", "shop_name": "Test", "public_key": "webshop-key"}'
 ```
@@ -106,7 +112,8 @@ curl -X POST "http://localhost:3000/api/v1/widget/track-purchase" \
 
 **How to Confirm:** Run the curl command in "TESTING_GUIDE_QUICK_START.md"
 
-**How to Fix:** 
+**How to Fix:**
+
 - If 404: Create the endpoint in Laravel (code provided)
 - If 200 but wallet is €0: Check backend logs and database
 - If 401: Check authentication/token
@@ -122,4 +129,3 @@ curl -X POST "http://localhost:3000/api/v1/widget/track-purchase" \
 5. I'll provide the exact fix
 
 Let's go! 🚀
-
