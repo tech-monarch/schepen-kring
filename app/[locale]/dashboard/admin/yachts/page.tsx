@@ -25,16 +25,24 @@ import {
   Ship,
   Compass,
   Box,
-  CheckSquare
+  CheckSquare, Sparkles, 
+  CheckCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
+import { toast, Toaster } from "react-hot-toast";
 
 // Configuration
 const STORAGE_URL = "https://kring.answer24.nl/storage/";
 const PLACEHOLDER_IMAGE = "https://images.unsplash.com/photo-1569263979104-865ab7cd8d13?auto=format&fit=crop&w=600&q=80"; // Fallback yacht image
-
+// Add this type near your GalleryState type
+type AiStagedImage = {
+  file: File;
+  preview: string;
+  category: string;
+  originalName: string;
+};
 type GalleryState = { [key: string]: any[] };
 
 export default function FleetManagementPage() {
@@ -47,6 +55,9 @@ export default function FleetManagementPage() {
   const [selectedYacht, setSelectedYacht] = useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<any>(null);
+
+  const [aiStaging, setAiStaging] = useState<AiStagedImage[]>([]);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   // Media State
   const [mainPreview, setMainPreview] = useState<string | null>(null);
@@ -202,9 +213,82 @@ export default function FleetManagementPage() {
       console.error("Delete failed", err);
     }
   };
+  
+  const handleDelete = async (yacht: any) => {
+  // The "Confirm First" step
+  const confirmed = window.confirm(
+    `CRITICAL ACTION: Are you sure you want to permanently remove "${yacht.name}" from the registry? This will delete all associated images.`
+  );
+
+  if (!confirmed) return;
+
+  try {
+    setIsSubmitting(true);
+    await api.delete(`/yachts/${yacht.id}`);
+    
+    // Refresh the list after deletion
+    fetchFleet(); 
+    alert("Vessel successfully removed from manifest.");
+  } catch (err) {
+    console.error("Deletion failed:", err);
+    alert("Error: Could not remove vessel. Check console for details.");
+  } finally {
+    setIsSubmitting(false);
+  }
+};
+
+
+const handleAiCategorizer = async (files: FileList | null) => {
+  if (!files || files.length === 0) return;
+  
+  setIsAnalyzing(true);
+  const formData = new FormData();
+  const fileArray = Array.from(files);
+  fileArray.forEach(file => formData.append('images[]', file));
+
+  try {
+    toast.loading("Gemini is analyzing assets...", { id: 'ai-loading' });
+    const res = await api.post('/yachts/ai-classify', formData);
+    
+    // Map response data back to our File objects
+    const analyzedData: AiStagedImage[] = res.data.map((item: any, index: number) => ({
+      file: fileArray[index],
+      preview: item.preview,
+      category: item.category,
+      originalName: item.originalName
+    }));
+
+    setAiStaging(prev => [...prev, ...analyzedData]);
+    toast.success("AI Classification complete", { id: 'ai-loading' });
+  } catch (err) {
+    toast.error("AI Analysis failed");
+  } finally {
+    setIsAnalyzing(false);
+  }
+};
+
+const approveAiImage = (index: number) => {
+  const item = aiStaging[index];
+  setGalleryState(prev => ({
+    ...prev,
+    [item.category]: [...prev[item.category], item.file]
+  }));
+  setAiStaging(prev => prev.filter((_, i) => i !== index));
+};
+
+const approveAllAi = () => {
+  const updatedGallery = { ...galleryState };
+  aiStaging.forEach(item => {
+    updatedGallery[item.category] = [...updatedGallery[item.category], item.file];
+  });
+  setGalleryState(updatedGallery);
+  setAiStaging([]);
+  toast.success("All assets approved");
+};
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] p-6 lg:p-12 text-[#003566] \ -mt-20">
+      <Toaster position="top-right" />
       {/* HEADER */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-6">
         <div>
@@ -268,6 +352,13 @@ export default function FleetManagementPage() {
                       className="bg-white text-[#003566] p-4 rounded-none font-black uppercase text-[10px] tracking-widest hover:bg-blue-600 hover:text-white transition-all shadow-xl flex items-center gap-2"
                     >
                       <Edit3 size={14} /> Edit Manifest
+                    </button>
+                    {/* NEW Delete Button */}
+                    <button
+                      onClick={() => handleDelete(yacht)}
+                      className="bg-red-600 text-white p-4 rounded-none font-black uppercase text-[10px] tracking-widest hover:bg-red-800 transition-all shadow-xl flex items-center gap-2"
+                    >
+                      <Trash size={14} /> Delete
                     </button>
                   </div>
                 </div>
@@ -574,6 +665,65 @@ export default function FleetManagementPage() {
                     </div>
                 </div>
               </div>
+
+              {/* 03. AI CARGO DROP */}
+<div className="space-y-8 bg-slate-900 p-12 border-l-8 border-blue-500 shadow-2xl mt-12">
+  <div className="flex justify-between items-start">
+    <div>
+      <h3 className="text-[12px] font-black uppercase text-blue-400 tracking-[0.4em] flex items-center gap-3 italic">
+        <Sparkles size={20} className="fill-blue-400" /> Gemini AI Categorizer
+      </h3>
+      <p className="text-[9px] text-slate-500 font-bold uppercase mt-2 tracking-widest italic">Automated asset classification via Neural Engine</p>
+    </div>
+    
+    <label className="cursor-pointer bg-blue-600 text-white px-10 py-4 text-[10px] font-black uppercase tracking-widest hover:bg-blue-500 transition-all flex items-center gap-2 shadow-xl">
+      {isAnalyzing ? <Loader2 className="animate-spin" /> : <Upload size={14} />}
+      {isAnalyzing ? "Processing..." : "Initiate AI Cargo Drop"}
+      <input type="file" multiple className="hidden" accept="image/*" onChange={(e) => handleAiCategorizer(e.target.files)} disabled={isAnalyzing} />
+    </label>
+  </div>
+
+  {/* Staging Area Grid */}
+  {aiStaging.length > 0 && (
+    <div className="space-y-8">
+      <div className="flex justify-between items-center border-b border-slate-800 pb-4">
+        <p className="text-[9px] font-black text-blue-300 uppercase tracking-widest">{aiStaging.length} Assets in Staging</p>
+        <button type="button" onClick={approveAllAi} className="text-[9px] font-black text-emerald-400 hover:text-emerald-300 uppercase flex items-center gap-2">
+          <CheckCircle size={14} /> Approve Entire Batch
+        </button>
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+        {aiStaging.map((item, idx) => (
+          <div key={idx} className="relative group bg-slate-800 border border-slate-700 overflow-hidden shadow-lg">
+            <img src={item.preview} className="h-40 w-full object-cover opacity-80" />
+            <div className="absolute top-2 left-2">
+              <span className="bg-blue-600 text-white text-[8px] font-black px-3 py-1 uppercase tracking-tighter">
+                AI: {item.category}
+              </span>
+            </div>
+            <div className="flex gap-1 p-2 bg-slate-900 border-t border-slate-700">
+              <button 
+                type="button" 
+                onClick={() => approveAiImage(idx)}
+                className="flex-1 bg-emerald-600/20 text-emerald-400 border border-emerald-600/30 text-[8px] font-black py-2 uppercase hover:bg-emerald-600 hover:text-white transition-all"
+              >
+                Approve
+              </button>
+              <button 
+                type="button" 
+                onClick={() => setAiStaging(prev => prev.filter((_, i) => i !== idx))}
+                className="bg-red-600/20 text-red-400 border border-red-600/30 px-3 py-2 hover:bg-red-600 hover:text-white"
+              >
+                <Trash size={12} />
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )}
+</div>
 
               {/* --- SECTION 4: GALLERY --- */}
               {Object.keys(galleryState).map((category) => (

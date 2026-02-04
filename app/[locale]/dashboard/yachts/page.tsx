@@ -22,13 +22,13 @@ import {
   Zap,
   Bed,
   Ship,
-  Box,
   CheckSquare,
   BarChart3,
   Wifi,
   WifiOff,
   ChevronLeft,
-  ChevronRight, Code
+  ChevronRight,
+  Code
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
@@ -38,6 +38,7 @@ import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { motion } from "framer-motion";
+import { toast, Toaster } from "react-hot-toast"; // Added for feedback
 
 const STORAGE_URL = "https://kring.answer24.nl/storage/";
 const PLACEHOLDER_IMAGE = "https://images.unsplash.com/photo-1569263979104-865ab7cd8d13?auto=format&fit=crop&w=600&q=80";
@@ -47,15 +48,20 @@ type GalleryState = { [key: string]: any[] };
 export default function EmployeeFleetPage() {
   const pathname = usePathname();
   const t = useTranslations("Dashboard");
+  
+  // Data State
   const [fleet, setFleet] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [isOnline, setIsOnline] = useState(true);
   
+  // Bidding State (NEW)
+  const [bids, setBids] = useState<any[]>([]);
+
   // Sidebar State
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
-  // Terminal State
+  // Terminal (Sheet) State
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [selectedYacht, setSelectedYacht] = useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -78,6 +84,7 @@ export default function EmployeeFleetPage() {
       setFleet(res.data);
     } catch (err) {
       console.error(err);
+      toast.error("Failed to sync fleet data");
     } finally {
       setLoading(false);
     }
@@ -85,8 +92,13 @@ export default function EmployeeFleetPage() {
 
   useEffect(() => {
     fetchFleet();
-    window.addEventListener("online", () => setIsOnline(true));
-    window.addEventListener("offline", () => setIsOnline(false));
+    const updateStatus = () => setIsOnline(navigator.onLine);
+    window.addEventListener("online", updateStatus);
+    window.addEventListener("offline", updateStatus);
+    return () => {
+      window.removeEventListener("online", updateStatus);
+      window.removeEventListener("offline", updateStatus);
+    };
   }, []);
 
   const handleImageError = (e: SyntheticEvent<HTMLImageElement, Event>) => {
@@ -94,10 +106,12 @@ export default function EmployeeFleetPage() {
     e.currentTarget.classList.add("opacity-50", "grayscale");
   };
 
-  const openTerminal = (yacht: any = null) => {
+  // UPDATED: Now fetches bids when opening the terminal
+  const openTerminal = async (yacht: any = null) => {
     setSelectedYacht(yacht);
     setErrors(null);
     setMainFile(null);
+    setBids([]); // Reset bids
 
     const initialGallery: GalleryState = {
       Exterior: [],
@@ -106,17 +120,54 @@ export default function EmployeeFleetPage() {
       Bridge: [],
     };
 
-    if (yacht?.images) {
-      yacht.images.forEach((img: any) => {
-        const category = img.category || "Exterior";
-        if (initialGallery[category]) initialGallery[category].push(img);
-        else initialGallery["Exterior"].push(img);
-      });
+    if (yacht) {
+      // 1. Populate Gallery
+      if (yacht.images) {
+        yacht.images.forEach((img: any) => {
+          const category = img.category || "Exterior";
+          if (initialGallery[category]) initialGallery[category].push(img);
+          else initialGallery["Exterior"].push(img);
+        });
+      }
+
+      // 2. Fetch Bid History if applicable
+      if (yacht.status === 'For Bid' || yacht.status === 'Sold') {
+         try {
+             const res = await api.get(`/bids/${yacht.id}/history`);
+             setBids(res.data);
+         } catch (error) {
+             console.error("Failed to load bids", error);
+         }
+      }
     }
 
     setGalleryState(initialGallery);
     setMainPreview(yacht?.main_image ? `${STORAGE_URL}${yacht.main_image}` : null);
     setIsSheetOpen(true);
+  };
+
+  // NEW: Handle Accept/Decline actions
+  const handleBidAction = async (bidId: number, action: 'accept' | 'decline') => {
+    if (!confirm(`Are you sure you want to ${action} this bid?`)) return;
+    
+    try {
+        await api.post(`/bids/${bidId}/${action}`);
+        toast.success(`Bid ${action}ed successfully`);
+        
+        // Refresh data
+        fetchFleet();
+        if (selectedYacht) {
+             const res = await api.get(`/bids/${selectedYacht.id}/history`);
+             setBids(res.data);
+        }
+        
+        if (action === 'accept') {
+            setIsSheetOpen(false); // Close terminal on sale
+        }
+    } catch (err) {
+        console.error(err);
+        toast.error("Action failed. Check permissions.");
+    }
   };
 
   const handleGalleryAdd = (category: string, files: FileList | null) => {
@@ -135,6 +186,7 @@ export default function EmployeeFleetPage() {
         ...prev,
         [category]: prev[category].filter((_, i) => i !== index),
       }));
+      toast.success("Image removed");
     } catch (err) { console.error(err); }
   };
 
@@ -155,12 +207,15 @@ export default function EmployeeFleetPage() {
 
     try {
       let yachtId = selectedYacht?.id;
+
       if (selectedYacht) {
         formData.append("_method", "PUT");
         await api.post(`/yachts/${selectedYacht.id}`, formData);
+        toast.success("Vessel updated successfully");
       } else {
         const res = await api.post("/yachts", formData);
         yachtId = res.data.id;
+        toast.success("Vessel registered successfully");
       }
 
       for (const cat of Object.keys(galleryState)) {
@@ -177,6 +232,7 @@ export default function EmployeeFleetPage() {
       fetchFleet();
     } catch (err: any) {
       if (err.response?.status === 422) setErrors(err.response.data.errors);
+      toast.error("Failed to save vessel data");
     } finally {
       setIsSubmitting(false);
     }
@@ -185,6 +241,8 @@ export default function EmployeeFleetPage() {
   return (
     <div className="min-h-screen bg-white text-[#003566]">
       <DashboardHeader />
+      <Toaster position="top-right" />
+      
       <div className="flex pt-20">
         {/* COLLAPSIBLE SIDEBAR */}
         <motion.aside 
@@ -195,11 +253,11 @@ export default function EmployeeFleetPage() {
           <div className="flex flex-col h-full relative">
             <button 
               onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-              className="absolute right-3 top-4 bg-[#003566] border border-slate-200 rounded-full p-1 text-slate-400 hover:text-[white] transition-colors z-999 shadow-sm"
+              className="absolute right-3 top-4 bg-[#003566] border border-slate-200 rounded-full p-1 text-slate-400 hover:text-white transition-colors z-50 shadow-sm"
             >
               {isSidebarCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
             </button>
-            <nav className="p-4 space-y-2 mt-4">
+            <nav className="p-4 space-y-2 mt-4 flex-1">
               <div className={cn("px-4 mb-6 flex items-center justify-between transition-opacity", isSidebarCollapsed && "opacity-0")}>
                 <p className="text-[9px] font-black uppercase tracking-[0.4em] text-slate-300">Staff Terminal</p>
                 {isOnline ? <Wifi size={10} className="text-emerald-500" /> : <WifiOff size={10} className="text-red-500" />}
@@ -214,21 +272,23 @@ export default function EmployeeFleetPage() {
                   {!isSidebarCollapsed && <span>{item.title}</span>}
                 </Link>
               ))}
-
-
-  {/* Bottom Action Button */}
-  <div className="p-4 border-t border-slate-100 bg-slate-50/50">
-    <a href="/dashboard/widgets" className="w-full">
-      <Button 
-        variant="outline" 
-        className="w-full justify-start gap-3 border-2 border-[#003566] text-[#003566] hover:bg-[#003566] hover:text-white rounded-none font-black uppercase text-[10px] tracking-widest transition-all group"
-      >
-        <Code size={16} className="group-hover:rotate-12 transition-transform" />
-        Widget Manager
-      </Button>
-    </a>
-  </div>
             </nav>
+
+            {/* Bottom Action Button */}
+            <div className="p-4 border-t border-slate-100 bg-slate-50/50">
+              <Link href="/dashboard/widgets" className="w-full">
+                <Button 
+                    variant="outline" 
+                    className={cn(
+                        "w-full justify-start gap-3 border-2 border-[#003566] text-[#003566] hover:bg-[#003566] hover:text-white rounded-none font-black uppercase text-[10px] tracking-widest transition-all group",
+                        isSidebarCollapsed && "justify-center px-0 gap-0 border-none"
+                    )}
+                >
+                    <Code size={16} className="shrink-0 group-hover:rotate-12 transition-transform" />
+                    {!isSidebarCollapsed && <span>Widget Manager</span>}
+                </Button>
+              </Link>
+            </div>
           </div>
         </motion.aside>
 
@@ -238,7 +298,7 @@ export default function EmployeeFleetPage() {
           className="flex-1 p-8 lg:p-12 bg-white min-h-[calc(100vh-80px)] z-30 -mt-20"
         >
           <div className="max-w-[1600px] mx-auto space-y-12">
-            {/* Header Section - Fixed button color and visibility */}
+            {/* Header Section */}
             <div className="flex justify-between items-end border-b border-slate-100 pb-10">
               <div>
                 <h1 className="text-5xl font-serif italic text-[#003566]">Registry Command</h1>
@@ -275,21 +335,48 @@ export default function EmployeeFleetPage() {
                 fleet.filter(y => y.name.toLowerCase().includes(searchQuery.toLowerCase())).map((yacht) => (
                   <div key={yacht.id} className="bg-white border border-slate-200 group overflow-hidden flex flex-col hover:shadow-2xl transition-all duration-500">
                     <div className="h-80 bg-slate-100 overflow-hidden relative">
-                      <img src={yacht.main_image ? `${STORAGE_URL}${yacht.main_image}` : PLACEHOLDER_IMAGE} onError={handleImageError} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                      <img 
+                        src={yacht.main_image ? `${STORAGE_URL}${yacht.main_image}` : PLACEHOLDER_IMAGE} 
+                        onError={handleImageError} 
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
+                        alt={yacht.name}
+                      />
                       <div className="absolute inset-0 bg-[#003566]/40 opacity-0 group-hover:opacity-100 flex items-center justify-center backdrop-blur-[2px] transition-opacity">
                         <button onClick={() => openTerminal(yacht)} className="bg-white text-[#003566] px-6 py-4 rounded-none font-black uppercase text-[10px] tracking-widest shadow-2xl flex items-center gap-3 hover:bg-[#003566] hover:text-white transition-all">
                           <Edit3 size={14} /> Update Registry
                         </button>
                       </div>
                     </div>
+                   
                     <div className="p-10 space-y-6">
                       <div className="flex justify-between items-start">
                         <h3 className="text-2xl font-serif italic text-[#003566]">{yacht.name}</h3>
-                        <span className="text-[9px] font-black px-4 py-1.5 rounded-full uppercase tracking-widest border border-blue-100 text-blue-600 bg-blue-50/30">{yacht.status}</span>
+                        <span className={cn(
+                            "text-[9px] font-black px-4 py-1.5 rounded-full uppercase tracking-widest border",
+                            yacht.status === 'Sold' ? "bg-red-50 border-red-100 text-red-600" :
+                            yacht.status === 'For Bid' ? "bg-emerald-50 border-emerald-100 text-emerald-600" :
+                            "bg-blue-50/30 border-blue-100 text-blue-600"
+                        )}>
+                            {yacht.status}
+                        </span>
                       </div>
-                      <p className="text-2xl font-bold text-[#003566] tracking-tighter">
-                        {new Intl.NumberFormat('en-EU', { style: 'currency', currency: 'EUR' }).format(yacht.price)}
-                      </p>
+                      
+                      {/* Price Display - Shows Current Bid if applicable */}
+                      <div>
+                          {yacht.status === 'For Bid' && yacht.current_bid ? (
+                              <div className="flex flex-col">
+                                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Current Bid</span>
+                                  <p className="text-2xl font-bold text-emerald-600 tracking-tighter">
+                                    {new Intl.NumberFormat('en-EU', { style: 'currency', currency: 'EUR' }).format(yacht.current_bid)}
+                                  </p>
+                              </div>
+                          ) : (
+                              <p className="text-2xl font-bold text-[#003566] tracking-tighter">
+                                {new Intl.NumberFormat('en-EU', { style: 'currency', currency: 'EUR' }).format(yacht.price)}
+                              </p>
+                          )}
+                      </div>
+
                       <div className="grid grid-cols-3 gap-6 pt-6 border-t border-slate-100 text-[10px] font-black uppercase text-slate-400">
                         <div className="flex flex-col gap-1"><span className="text-[8px] text-slate-300">Length</span><div className="flex items-center gap-1 text-[#003566]"><Maximize2 size={12} /> {yacht.length}m</div></div>
                         <div className="flex flex-col gap-1"><span className="text-[8px] text-slate-300">Year</span><div className="flex items-center gap-1 text-[#003566]"><Calendar size={12} /> {yacht.year}</div></div>
@@ -309,7 +396,7 @@ export default function EmployeeFleetPage() {
         <SheetContent className="sm:max-w-[1000px] w-full bg-[#F8FAFC] p-0 border-l-[16px] border-[#003566] overflow-y-auto">
           <form onSubmit={handleSubmit} className="flex flex-col min-h-full pb-20">
             <div className="bg-[#003566] p-10 lg:p-12 text-white sticky top-0 z-50 flex justify-between items-center shadow-2xl">
-              <div>
+               <div>
                 <SheetTitle className="text-4xl font-serif italic text-white">Registry Manifest Entry</SheetTitle>
                 <p className="text-blue-400 text-[10px] font-black uppercase tracking-[0.5em] mt-3">Authentication: Operational Staff</p>
               </div>
@@ -360,6 +447,67 @@ export default function EmployeeFleetPage() {
                 </div>
               </div>
 
+              {/* NEW: BIDDING MANIFEST SECTION */}
+              {selectedYacht && (selectedYacht.status === "For Bid" || selectedYacht.status === "Sold") && (
+                <div className="space-y-10 bg-blue-50/20 p-12 border border-blue-100">
+                    <div className="flex justify-between items-center border-b border-blue-200 pb-6">
+                    <h3 className="text-[14px] font-black text-[#003566] uppercase tracking-[0.4em] flex items-center gap-4">
+                        <Coins size={24} className="text-blue-600" /> Bidding Manifest
+                    </h3>
+                    <div className="text-right">
+                        <p className="text-[8px] font-black uppercase text-blue-400">High Bid Value</p>
+                        <p className="text-2xl font-bold text-[#003566]">
+                        {selectedYacht.current_bid ? 
+                           new Intl.NumberFormat('en-EU', { style: 'currency', currency: 'EUR' }).format(selectedYacht.current_bid) : 
+                           '--'}
+                        </p>
+                    </div>
+                    </div>
+
+                    <div className="space-y-4 max-h-[400px] overflow-y-auto">
+                    {bids.length === 0 ? (
+                        <p className="text-[10px] font-black uppercase text-slate-400 text-center py-10 bg-white border border-slate-100 border-dashed">No active offers registered</p>
+                    ) : (
+                        bids.map((bid) => (
+                        <div key={bid.id} className="bg-white p-6 border border-slate-200 flex flex-col md:flex-row justify-between items-center shadow-sm gap-4">
+                            <div>
+                                <div className="flex items-center gap-2">
+                                    <p className="text-[10px] font-black text-blue-600 uppercase">{bid.user?.name || 'Client'}</p>
+                                    <span className={cn("text-[8px] px-2 py-0.5 rounded font-bold uppercase", 
+                                        bid.status === 'won' ? 'bg-emerald-100 text-emerald-700' : 
+                                        bid.status === 'cancelled' ? 'bg-red-50 text-red-400' :
+                                        'bg-slate-100 text-slate-500'
+                                    )}>{bid.status}</span>
+                                </div>
+                                <p className="text-xl font-bold text-[#003566]">€{bid.amount.toLocaleString()}</p>
+                                <p className="text-[8px] font-bold text-slate-300 uppercase mt-1">{new Date(bid.created_at).toLocaleDateString()}</p>
+                            </div>
+                            
+                            {bid.status === 'active' && selectedYacht.status !== 'Sold' && (
+                            <div className="flex gap-4 w-full md:w-auto">
+                                <Button 
+                                type="button"
+                                onClick={() => handleBidAction(bid.id, 'decline')}
+                                className="bg-white flex-1 md:flex-none text-red-600 border-2 border-red-100 hover:bg-red-50 text-[9px] font-black uppercase rounded-none px-6"
+                                >
+                                Decline
+                                </Button>
+                                <Button 
+                                type="button"
+                                onClick={() => handleBidAction(bid.id, 'accept')}
+                                className="bg-[#003566] flex-1 md:flex-none text-white hover:bg-blue-800 text-[9px] font-black uppercase rounded-none px-8"
+                                >
+                                Accept Offer
+                                </Button>
+                            </div>
+                            )}
+                        </div>
+                        ))
+                    )}
+                    </div>
+                </div>
+              )}
+
               {/* Technical Dossier */}
               <div className="space-y-16">
                 <h3 className="text-[14px] font-black text-[#003566] uppercase tracking-[0.4em] flex items-center gap-4 border-b-4 border-[#003566] pb-6"><Waves size={24} className="text-blue-600" /> Technical Dossier</h3>
@@ -374,6 +522,7 @@ export default function EmployeeFleetPage() {
                       <div className="space-y-2"><Label>Draft</Label><Input name="draft" defaultValue={selectedYacht?.draft} /></div>
                     </div>
                   </div>
+          
                   <div className="space-y-8">
                     <SectionHeader icon={<Zap size={18} />} title="Engine & Performance" />
                     <div className="bg-slate-50 p-8 grid grid-cols-2 gap-8 border border-slate-100">
