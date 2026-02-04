@@ -111,10 +111,10 @@ export function DashboardHeader() {
 
       {/* User Actions */}
       <div className="flex items-center gap-8">
-        <button className="relative text-slate-400 hover:text-[#003566] transition-colors">
+        {/* <button className="relative text-slate-400 hover:text-[#003566] transition-colors">
           <Bell size={20} strokeWidth={1.5} />
           <span className="absolute top-0 right-0 w-2 h-2 bg-blue-500 rounded-full border-2 border-white"></span>
-        </button>
+        </button> */}
 
         <DropdownMenu onOpenChange={(open) => !open && setShowLogoutConfirm(false)}>
           <DropdownMenuTrigger className="flex items-center gap-4 outline-none group">
@@ -150,11 +150,11 @@ export function DashboardHeader() {
 
                   <DropdownMenuSeparator className="bg-slate-100" />
                   
-                  <DropdownMenuItem className="hover:bg-slate-50 cursor-pointer gap-3 text-[10px] font-bold uppercase tracking-widest py-3 px-3">
+                  {/* <DropdownMenuItem className="hover:bg-slate-50 cursor-pointer gap-3 text-[10px] font-bold uppercase tracking-widest py-3 px-3">
                     <Settings size={14} /> Account Settings 
-                  </DropdownMenuItem>
+                  </DropdownMenuItem> */}
                   
-                  <DropdownMenuSeparator className="bg-slate-100" />
+                  {/* <DropdownMenuSeparator className="bg-slate-100" /> */}
                   
                   <DropdownMenuItem 
                     onSelect={(e) => {
