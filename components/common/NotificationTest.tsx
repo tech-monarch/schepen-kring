@@ -4,7 +4,7 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Bell, Send } from "lucide-react";
-// import { usePushNotifications } from "@/hooks/usePushNotifications";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { tokenUtils } from "@/utils/auth";
 import { toast } from "react-hot-toast";
 
