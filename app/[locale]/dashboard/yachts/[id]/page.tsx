@@ -254,7 +254,7 @@ export default function YachtEditorPage() {
                     {isNewMode ? "New Vessel Registration" : `Manifest: ${selectedYacht?.name || "Loading..."}`}
                 </h1>
                 <p className="text-blue-400 text-[10px] font-black uppercase tracking-[0.4em] mt-1">
-                    Registry Auth: Admin
+                    Registry Auth: Employee
                 </p>
             </div>
          </div>
