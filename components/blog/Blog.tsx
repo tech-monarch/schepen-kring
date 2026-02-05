@@ -47,40 +47,39 @@ const BlogComponent = () => {
 
   return (
     <div className="min-h-screen bg-white text-[#003566]">
-      {/* --- Editorial Hero Section --- */}
-      <section className="relative pt-48 pb-24 px-6 md:px-12 max-w-[1400px] mx-auto border-b border-slate-100">
-        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-12">
-          <div className="max-w-3xl">
-            <motion.div 
-              initial={{ opacity: 0, x: -20 }} 
-              animate={{ opacity: 1, x: 0 }} 
-              className="flex items-center gap-4 mb-8"
-            >
-              <span className="w-12 h-[1px] bg-blue-600" />
-              <p className="text-[11px] font-black uppercase tracking-[0.5em] text-blue-600">
-                {t("new_updates_label")}
-              </p>
-            </motion.div>
+{/* --- Editorial Hero Section --- */}
+<section className="relative pt-28 pb-12 md:pt-40 md:pb-20 px-6 md:px-12 max-w-[1400px] mx-auto border-b border-slate-100">
+  <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8 md:gap-12">
+    <div className="max-w-3xl">
+      <motion.div 
+        initial={{ opacity: 0, x: -20 }} 
+        animate={{ opacity: 1, x: 0 }} 
+        className="flex items-center gap-3 md:gap-4 mb-4 md:mb-6"
+      >
+        <span className="w-8 md:w-12 h-[1px] bg-blue-600" />
+        <p className="text-[9px] md:text-[11px] font-black uppercase tracking-[0.4em] text-blue-600">
+          {t("new_updates_label")}
+        </p>
+      </motion.div>
 
-            <h1 className="text-7xl md:text-9xl font-serif tracking-tighter leading-[0.8] mb-8">
-              The <span className="italic font-light text-slate-300">Journal</span>
-            </h1>
-            
-            <p className="text-slate-500 text-xl font-light max-w-xl tracking-tight leading-relaxed">
-              {t("subtitle")}
-            </p>
-          </div>
+      <h1 className="text-5xl md:text-8xl font-serif tracking-tighter leading-[0.9] mb-4 md:mb-6 text-[#003566]">
+        The <span className="italic font-light text-slate-300">Journal</span>
+      </h1>
+      
+      <p className="text-slate-500 text-base md:text-xl font-light max-w-xl tracking-tight leading-relaxed">
+        {t("subtitle")}
+      </p>
+    </div>
 
-          <div className="relative w-full lg:w-96 group">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
-            <Input
-              placeholder={t("search_placeholder")}
-              className="w-full h-14 pl-12 bg-slate-50 border-slate-200 rounded-none text-[#003566] placeholder:text-slate-400 focus-visible:ring-1 focus-visible:ring-blue-600 transition-all uppercase text-[10px] font-bold tracking-widest"
-            />
-          </div>
-        </div>
-      </section>
-
+    <div className="relative w-full lg:w-96 group mt-4 lg:mt-0">
+      <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
+      <Input
+        placeholder={t("search_placeholder")}
+        className="w-full h-12 md:h-14 pl-12 bg-slate-50 border-slate-200 rounded-none text-[#003566] placeholder:text-slate-400 focus-visible:ring-1 focus-visible:ring-blue-600 transition-all uppercase text-[9px] md:text-[10px] font-bold tracking-widest"
+      />
+    </div>
+  </div>
+</section>
       <div className="max-w-[1400px] mx-auto px-6 md:px-12 py-24">
         {/* --- Featured Entry: Thick Bordered Card --- */}
         {blogs.length > 0 && (

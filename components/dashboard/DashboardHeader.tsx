@@ -56,7 +56,9 @@ export function DashboardHeader() {
     localStorage.removeItem("auth_token");
     localStorage.removeItem("user_data");
     localStorage.removeItem("admin_token");
-    router.push("/login");
+    localStorage.removeItem("fleet_tasks");
+    localStorage.removeItem("task_cache");
+    router.push("/");
   };
 
   const managementItems = [
