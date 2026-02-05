@@ -70,40 +70,46 @@ export default function Faq() {
   return (
     <div className="bg-white min-h-screen text-[#003566]">
       
-      {/* --- HERO --- */}
-      <section className="relative h-[50vh] flex items-center justify-center overflow-hidden bg-[#001D3D]">
-        <Image 
-          src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=2073" 
-          alt="Ocean" fill className="object-cover opacity-40"
-        />
-        <div className="relative z-10 text-center px-6">
-          <h1 className="text-5xl md:text-7xl font-serif text-white tracking-tight mb-4">How can we help?</h1>
-          <p className="text-blue-100/60 text-lg font-light uppercase tracking-[0.3em]">Support & Intelligence</p>
-        </div>
-      </section>
+{/* --- HERO --- */}
+<section className="relative min-h-[40vh] md:h-[45vh] flex items-center justify-center overflow-hidden bg-[#001D3D] pt-16">
+  <Image 
+    src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=2073" 
+    alt="Ocean" fill className="object-cover opacity-40"
+  />
+  <div className="relative z-10 text-center px-6">
+    <h1 className="text-4xl md:text-6xl font-serif text-white tracking-tight mb-3">
+      How can we help?
+    </h1>
+    <p className="text-blue-100/60 text-[10px] md:text-xs font-light uppercase tracking-[0.3em]">
+      Support & Intelligence
+    </p>
+  </div>
+</section>
 
       <main className="max-w-4xl mx-auto px-6 pb-40">
         
-        {/* --- SEARCH / AI INPUT --- */}
-        <div className="relative -mt-8 z-20 mb-24">
-          <div className="bg-white shadow-2xl border border-slate-100 flex items-center p-2">
-            <Search className="ml-6 text-slate-300" />
-            <input 
-              className="w-full h-16 px-6 text-xl font-serif outline-none"
-              placeholder="Search or ask anything about our fleet..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleAiSearch()}
-            />
-            <button 
-              onClick={handleAiSearch}
-              disabled={isAiLoading}
-              className="bg-[#003566] text-white px-8 h-16 font-bold uppercase text-[10px] tracking-widest hover:bg-blue-600 transition-colors flex items-center gap-2 disabled:bg-slate-400"
-            >
-              {isAiLoading ? <Loader2 className="animate-spin" /> : <><Sparkles size={14}/> Ask AI</>}
-            </button>
-          </div>
-        </div>
+{/* --- SEARCH / AI INPUT --- */}
+<div className="relative -mt-10 z-20 mb-16 px-4 md:px-0 max-w-4xl mx-auto w-full">
+  <div className="bg-white shadow-2xl border border-slate-100 flex flex-col md:flex-row items-stretch md:items-center p-1 md:p-2">
+    <div className="flex items-center flex-1">
+      <Search className="ml-4 md:ml-6 text-slate-300 shrink-0" size={20} />
+      <input 
+        className="w-full h-12 md:h-16 px-4 md:px-6 text-base md:text-xl font-serif outline-none"
+        placeholder="Search or ask anything..."
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        onKeyDown={(e) => e.key === "Enter" && handleAiSearch()}
+      />
+    </div>
+    <button 
+      onClick={handleAiSearch}
+      disabled={isAiLoading}
+      className="bg-[#003566] text-white px-6 md:px-8 h-12 md:h-16 font-bold uppercase text-[9px] md:text-[10px] tracking-widest hover:bg-blue-600 transition-colors flex items-center justify-center gap-2 disabled:bg-slate-400"
+    >
+      {isAiLoading ? <Loader2 className="animate-spin" /> : <><Sparkles size={14}/> Ask AI</>}
+    </button>
+  </div>
+</div>
 
         {/* --- AI ANSWER PANEL --- */}
         <AnimatePresence>
