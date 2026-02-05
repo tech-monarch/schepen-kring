@@ -354,12 +354,12 @@ const approveAllAi = () => {
                       <Edit3 size={14} /> Edit Manifest
                     </button>
                     {/* NEW Delete Button */}
-                    {/* <button
+                    <button
                       onClick={() => handleDelete(yacht)}
                       className="bg-red-600 text-white p-4 rounded-none font-black uppercase text-[10px] tracking-widest hover:bg-red-800 transition-all shadow-xl flex items-center gap-2"
                     >
                       <Trash size={14} /> Delete
-                    </button> */}
+                    </button>
                   </div>
                 </div>
                 <div className="p-8 space-y-4 flex-1 flex flex-col justify-between">
