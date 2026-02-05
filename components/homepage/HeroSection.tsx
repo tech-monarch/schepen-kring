@@ -51,34 +51,48 @@ export function HeroSection() {
   }
 
   // Step 2: Actual API call [cite: 510]
-  async function executeAuth() {
+async function executeAuth() {
     setShowTerms(false);
     setIsLoading(true);
     setSuccess("");
+    setError(""); // Reset error state at start of attempt 
 
     try {
+      // Choose the endpoint based on the current mode [cite: 13, 14]
+      // Mode "partner" goes to /register/partner, "register" goes to /register, and "login" to /login
       const endpoint = mode === "login" 
         ? "/login" 
         : (mode === "partner" ? "/register/partner" : "/register");
       
+      // Construct the payload based on the authentication mode [cite: 15]
       const payload = mode === "login" 
         ? { email: formData.email, password: formData.password }
         : { 
             name: formData.name, 
             email: formData.email, 
             password: formData.password,
-            accept_terms: true 
+            accept_terms: true // Required by the controller validation
           };
 
+      // Perform the POST request to the backend [cite: 16]
       const response = await axios.post(`${API_BASE_URL}${endpoint}`, payload); 
+      
+      // The new QuickAuthController returns token, id, and userType directly [cite: 16]
       const { token, id, name, userType, email: userEmail } = response.data;
 
       if (token) {
-        // Essential for bypassing the CORS nonsense in subsequent calls [cite: 514]
+        // Store session data in localStorage for persistence 
         localStorage.setItem("auth_token", token);
-        localStorage.setItem("user_data", JSON.stringify({ id, name, email: userEmail, userType }));
-        setSuccess("Identity Verified. Redirecting...");
+        localStorage.setItem("user_data", JSON.stringify({ 
+          id, 
+          name: name || formData.name, // Fallback if name isn't returned in login
+          email: userEmail || formData.email, 
+          userType 
+        }));
+        
+        setSuccess("Identity Verified. Redirecting..."); 
 
+        // Role-based redirection logic [cite: 18, 19]
         setTimeout(() => {
           if (userType === "Partner") {
             router.push("/account-setup");
@@ -92,9 +106,12 @@ export function HeroSection() {
         }, 800);
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || err.message || "An error occurred.");
+      // Capture detailed error messages to help bypass "silent" 500/CORS errors 
+      const errorMessage = err.response?.data?.message || err.message || "An error occurred.";
+      setError(errorMessage);
+      console.error("Auth System Failure:", errorMessage);
     } finally {
-      setIsLoading(false); 
+      setIsLoading(false);
     }
   }
 
