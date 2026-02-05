@@ -9,6 +9,7 @@ import axios from "axios";
 import { useRouter } from "@/i18n/navigation";
 import { AuthGuard } from "@/components/AuthGuard";
 import ANSWER24LOGO from "@/public/schepenkring-logo.png";
+import BOATSLOGO from "@/public/boatslogo.jpg";
 import {
   Dialog,
   DialogContent,
@@ -120,9 +121,28 @@ async function executeAuth() {
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4">
         <div className="relative flex flex-col lg:flex-row w-full max-w-4xl bg-white rounded-2xl shadow-lg overflow-hidden">
           
-          <div className="relative lg:w-1/2 h-48 lg:h-auto bg-[#003566] flex items-center justify-center p-8">
-            <Image src={ANSWER24LOGO} alt="Logo" width={240} height={68} className="object-contain brightness-0 invert" priority />
-          </div>
+         <div className="relative lg:w-1/2 h-48 lg:h-auto flex items-center justify-center p-8 overflow-hidden">
+  {/* Background Image */}
+  <Image 
+    src={BOATSLOGO} 
+    alt="Background" 
+    fill 
+    className="object-cover" 
+    priority 
+  />
+  
+  {/* Overlay Logo (Centered) */}
+  <div className="relative z-10">
+    <Image 
+      src={ANSWER24LOGO} 
+      alt="Logo" 
+      width={240} 
+      height={68} 
+      className="object-contain" 
+      priority 
+    />
+  </div>
+</div>
 
           <div className="lg:w-1/2 p-6 lg:p-10 flex flex-col justify-center">
             <div className="mb-4">
