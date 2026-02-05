@@ -62,7 +62,7 @@ export default function PublicFleetGallery() {
   return (
     <div className="min-h-screen bg-white text-[#003566] selection:bg-blue-100">
       {/* HEADER SECTION */}
-      <section className="relative w-full h-[85vh] flex flex-col justify-center overflow-hidden">
+      <section className="relative w-full h-[75vh] flex flex-col justify-center overflow-hidden">
         <div className="absolute inset-0 z-0">
           <img
             src="https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?w=1600"

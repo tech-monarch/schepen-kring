@@ -9,230 +9,182 @@ import axios from "axios";
 import { useRouter } from "@/i18n/navigation";
 import { AuthGuard } from "@/components/AuthGuard";
 import ANSWER24LOGO from "@/public/schepenkring-logo.png";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const API_BASE_URL = "https://kring.answer24.nl/api";
 
 export function HeroSection() {
-  const [isLoginMode, setIsLoginMode] = useState(true);
+  const [mode, setMode] = useState<"login" | "register" | "partner">("login");
+  const [showTerms, setShowTerms] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     password: "",
-    acceptTerms: false,
   });
-  
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  
   const t = useTranslations("SignInPage");
   const router = useRouter();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  async function handleAuthSubmit(e: FormEvent<HTMLFormElement>): Promise<void> {
+  // Step 1: Handle Initial Click [cite: 506]
+  async function handleSubmitTrigger(e: FormEvent<HTMLFormElement>): Promise<void> {
     e.preventDefault();
     setError("");
-    setSuccess("");
+    
+    if (mode === "partner") {
+      setShowTerms(true); // Show popup for partners first [cite: 507, 508]
+    } else {
+      executeAuth(); // Standard login/register proceeds immediately [cite: 509]
+    }
+  }
+
+  // Step 2: Actual API call [cite: 510]
+  async function executeAuth() {
+    setShowTerms(false);
     setIsLoading(true);
+    setSuccess("");
 
     try {
-      if (!isLoginMode && !formData.acceptTerms) {
-        throw new Error("You must accept the terms to register.");
-      }
-
-      const endpoint = isLoginMode ? "/login" : "/register";
-      const payload = isLoginMode 
+      const endpoint = mode === "login" 
+        ? "/login" 
+        : (mode === "partner" ? "/register/partner" : "/register");
+      
+      const payload = mode === "login" 
         ? { email: formData.email, password: formData.password }
         : { 
             name: formData.name, 
             email: formData.email, 
             password: formData.password,
-            accept_terms: formData.acceptTerms 
+            accept_terms: true 
           };
 
-      const response = await axios.post(`${API_BASE_URL}${endpoint}`, payload);
-
+      const response = await axios.post(`${API_BASE_URL}${endpoint}`, payload); 
       const { token, id, name, userType, email: userEmail } = response.data;
 
       if (token) {
+        // Essential for bypassing the CORS nonsense in subsequent calls [cite: 514]
         localStorage.setItem("auth_token", token);
-        const userData = { id, name, email: userEmail, userType };
-        localStorage.setItem("user_data", JSON.stringify(userData));
-
-        setSuccess(isLoginMode ? "Identity Verified. Redirecting..." : "Account Created. Redirecting...");
+        localStorage.setItem("user_data", JSON.stringify({ id, name, email: userEmail, userType }));
+        setSuccess("Identity Verified. Redirecting...");
 
         setTimeout(() => {
-          if (userType === "Admin") {
-            router.push("/dashboard/admin");
+          if (userType === "Partner") {
+            router.push("/account-setup");
+          } else if (userType === "Admin") {
+            router.push("/dashboard/admin"); 
           } else if (userType === "Employee") {
-            router.push("/dashboard");
+            router.push("/dashboard"); 
           } else {
-            router.push("/yachts");
+            router.push("/yachts"); 
           }
         }, 800);
-      } else {
-        throw new Error("Authentication failed: Token missing.");
       }
     } catch (err: any) {
-      const errorMessage = err.response?.data?.message || err.message || "An error occurred.";
-      setError(errorMessage);
+      setError(err.response?.data?.message || err.message || "An error occurred.");
     } finally {
-      setIsLoading(false);
+      setIsLoading(false); 
     }
   }
 
   return (
     <AuthGuard requireAuth={false}>
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
-        <div className="relative flex flex-col lg:flex-row w-11/12 md:w-3/4 lg:w-4/5 xl:w-2/3 2xl:w-1/2 bg-white rounded-2xl shadow-lg overflow-hidden my-8">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4">
+        <div className="relative flex flex-col lg:flex-row w-full max-w-4xl bg-white rounded-2xl shadow-lg overflow-hidden">
           
-          {/* Left Panel: Branding */}
-          <div className="relative lg:w-1/2 h-64 lg:h-auto bg-[#003566] flex items-center justify-center p-12">
-            <Image
-              src={ANSWER24LOGO}
-              alt="Logo"
-              width={280}
-              height={80}
-              className="object-contain brightness-0 invert"
-              priority
-            />
+          <div className="relative lg:w-1/2 h-48 lg:h-auto bg-[#003566] flex items-center justify-center p-8">
+            <Image src={ANSWER24LOGO} alt="Logo" width={240} height={68} className="object-contain brightness-0 invert" priority />
           </div>
 
-          {/* Right Panel: Form */}
-          <div className="lg:w-1/2 p-8 lg:p-12 flex flex-col justify-center">
-            <div className="mb-6">
-              <h1 className="text-2xl font-bold text-gray-800 mb-2">
-                {isLoginMode ? t("welcomeBack") : "Create Account"}
+          <div className="lg:w-1/2 p-6 lg:p-10 flex flex-col justify-center">
+            <div className="mb-4">
+              {mode !== "login" && (
+                <div className="flex bg-gray-100 p-1 rounded-lg mb-4">
+                  <button type="button" onClick={() => setMode("register")} className={`flex-1 py-1.5 text-[10px] font-bold rounded-md transition-all ${mode === "register" ? "bg-white shadow text-[#003566]" : "text-gray-400"}`}>USER</button>
+                  <button type="button" onClick={() => setMode("partner")} className={`flex-1 py-1.5 text-[10px] font-bold rounded-md transition-all ${mode === "partner" ? "bg-white shadow text-[#003566]" : "text-gray-400"}`}>PARTNER</button>
+                </div>
+              )}
+              <h1 className="text-xl font-bold text-gray-800 mb-1">
+                {mode === "login" ? t("welcomeBack") : mode === "partner" ? "Partner Access" : "Create Account"}
               </h1>
-              <p className="text-sm text-gray-500">
-                {isLoginMode ? "Please enter your terminal credentials." : "Register to access the fleet management system."}
+              <p className="text-xs text-gray-500">
+                {mode === "login" ? "Please enter your terminal credentials." : "Register to access the fleet management system."}
               </p>
             </div>
 
-            <form className="space-y-5" onSubmit={handleAuthSubmit}>
-              {error && (
-                <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm font-medium">
-                  {error}
-                </div>
-              )}
-              {success && (
-                <div className="bg-green-50 border border-green-200 text-green-600 px-4 py-3 rounded-lg text-sm font-medium">
-                  {success}
-                </div>
+            <form className="space-y-4" onSubmit={handleSubmitTrigger}>
+              {error && <div className="bg-red-50 border border-red-200 text-red-600 px-3 py-2 rounded-lg text-[13px] font-medium">{error}</div>}
+              {success && <div className="bg-green-50 border border-green-200 text-green-600 px-3 py-2 rounded-lg text-[13px] font-medium">{success}</div>}
+
+              {mode !== "login" && (
+                <input name="name" type="text" required placeholder="Full Name" value={formData.name} onChange={handleInputChange}
+                  className="w-full px-0 py-2 text-sm text-gray-700 bg-transparent border-0 border-b-2 border-gray-300 focus:border-[#003566] focus:outline-none transition-colors" />
               )}
 
-              {!isLoginMode && (
-                <input
-                  name="name"
-                  type="text"
-                  required
-                  placeholder="Full Name"
-                  value={formData.name}
-                  onChange={handleInputChange}
-                  className="w-full px-0 py-3 text-gray-700 bg-transparent border-0 border-b-2 border-gray-300 focus:border-[#003566] focus:outline-none transition-colors"
-                />
-              )}
+              <input name="email" type="email" required placeholder={t("enterEmail")} value={formData.email} onChange={handleInputChange}
+                className="w-full px-0 py-2 text-sm text-gray-700 bg-transparent border-0 border-b-2 border-gray-300 focus:border-[#003566] focus:outline-none transition-colors" />
 
-              <input
-                name="email"
-                type="email"
-                required
-                placeholder={t("enterEmail")}
-                value={formData.email}
-                onChange={handleInputChange}
-                className="w-full px-0 py-3 text-gray-700 bg-transparent border-0 border-b-2 border-gray-300 focus:border-[#003566] focus:outline-none transition-colors"
-              />
+              <input name="password" type="password" required placeholder={t("password")} value={formData.password} onChange={handleInputChange}
+                className="w-full px-0 py-2 text-sm text-gray-700 bg-transparent border-0 border-b-2 border-gray-300 focus:border-[#003566] focus:outline-none transition-colors" />
 
-              <input
-                name="password"
-                type="password"
-                required
-                placeholder={t("password")}
-                value={formData.password}
-                onChange={handleInputChange}
-                className="w-full px-0 py-3 text-gray-700 bg-transparent border-0 border-b-2 border-gray-300 focus:border-[#003566] focus:outline-none transition-colors"
-              />
-
-              {isLoginMode ? (
-                <div className="flex items-center justify-between mt-4">
+              {mode === "login" && (
+                <div className="flex items-center justify-between mt-2">
                   <div className="flex items-center space-x-2">
-                    <input
-                      id="rememberMe"
-                      type="checkbox"
-                      checked={rememberMe}
-                      onChange={(e) => setRememberMe(e.target.checked)}
-                      className="w-4 h-4 text-[#003566] border-gray-300 rounded focus:ring-[#003566] cursor-pointer"
-                    />
-                    <label htmlFor="rememberMe" className="text-sm text-gray-600 cursor-pointer">
-                      Remember Terminal
-                    </label>
+                    <input id="rememberMe" type="checkbox" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} className="w-3.5 h-3.5 text-[#003566] border-gray-300 rounded focus:ring-[#003566] cursor-pointer" />
+                    <label htmlFor="rememberMe" className="text-xs text-gray-600 cursor-pointer">Remember Terminal</label>
                   </div>
-                  <Link href="/forgot-password" className="text-sm text-gray-600 hover:text-[#003566]">
-                    {t("forgotPassword")}
-                  </Link>
-                </div>
-              ) : (
-                <div className="flex items-start space-x-2 mt-4">
-                  <input
-                    id="acceptTerms"
-                    name="acceptTerms"
-                    type="checkbox"
-                    required
-                    checked={formData.acceptTerms}
-                    onChange={handleInputChange}
-                    className="w-4 h-4 mt-1 text-[#003566] border-gray-300 rounded focus:ring-[#003566] cursor-pointer"
-                  />
-                  <label htmlFor="acceptTerms" className="text-[11px] leading-tight text-gray-500 cursor-pointer uppercase tracking-tighter">
-                    I agree to the terms and conditions and consent to the system storing my IP address and device details for security purposes.
-                  </label>
+                  <Link href="/forgot-password" className="text-xs text-gray-600 hover:text-[#003566]">{t("forgotPassword")}</Link>
                 </div>
               )}
 
-              <Button
-                type="submit"
-                disabled={isLoading}
-                className="w-full bg-[#003566] hover:bg-[#001d3d] text-white font-semibold py-3 rounded-lg mt-4 transition-all"
-              >
-                {isLoading ? "Processing..." : isLoginMode ? t("login") : "Register Account"}
+              <Button type="submit" disabled={isLoading} className="w-full bg-[#003566] hover:bg-[#001d3d] text-white font-semibold py-2.5 rounded-lg mt-2 transition-all text-sm">
+                {isLoading ? "Processing..." : mode === "login" ? t("login") : "Register Account"}
               </Button>
 
-              <div className="text-center text-sm text-gray-600 mt-6">
-                {isLoginMode ? (
+              <div className="text-center text-xs text-gray-600 mt-4">
+                {mode === "login" ? (
                   <>
                     {t("noAccount")}{" "}
-                    <button 
-                      type="button"
-                      onClick={() => setIsLoginMode(false)}
-                      className="text-[#003566] hover:underline font-bold"
-                    >
+                    <button type="button" onClick={() => setMode("register")} className="text-[#003566] hover:underline font-bold">
                       {t("signupPartner")}
                     </button>
                   </>
                 ) : (
-                  <>
-                    Already have an account?{" "}
-                    <button 
-                      type="button"
-                      onClick={() => setIsLoginMode(true)}
-                      className="text-[#003566] hover:underline font-bold"
-                    >
-                      Sign In here
-                    </button>
-                  </>
+                  <button type="button" onClick={() => setMode("login")} className="text-[#003566] hover:underline font-bold">
+                    Already have an account? Sign In here
+                  </button>
                 )}
               </div>
             </form>
           </div>
         </div>
       </div>
+
+      {/* Terms Modal [cite: 525] */}
+      <Dialog open={showTerms} onOpenChange={setShowTerms}>
+        <DialogContent className="sm:max-w-[400px] bg-white">
+          <DialogHeader>
+            <DialogTitle className="text-[#003566] font-bold">Yacht Brokerage Protocol</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-3 py-2 text-[10px] text-gray-600 uppercase tracking-widest leading-relaxed">
+            <p>1. Partner agrees to maintain high standards of yacht brokerage transparency.</p>
+            <p>2. Security notice: System automatically logs IP address and device fingerprints for terminal security.</p>
+            <p>3. Access is strictly limited until full verification is completed in account setup.</p>
+          </div>
+          <Button onClick={executeAuth} className="bg-[#003566] text-white text-xs uppercase font-bold">I APPROVE & REGISTER</Button>
+        </DialogContent>
+      </Dialog>
     </AuthGuard>
   );
 }
