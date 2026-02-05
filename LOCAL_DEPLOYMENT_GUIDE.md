@@ -116,7 +116,7 @@ server {
 
 Make sure the following environment variables are set for production:
 
-- `NEXT_PUBLIC_API_BASE_URL=https://kring.answer24.nl/api/v1`
+- `NEXT_PUBLIC_API_BASE_URL=https://schepen-kring.nl/api/v1`
 - `NEXT_PUBLIC_AI_API_KEY=your_openai_api_key_here`
 - `NEXT_PUBLIC_CHATBOT_ENABLED=true`
 
@@ -172,7 +172,7 @@ If you encounter any issues:
 
 The frontend is configured to work with the following API endpoints:
 
-- Base URL: `https://kring.answer24.nl/api/v1`
+- Base URL: `https://schepen-kring.nl/api/v1`
 - Authentication: Bearer token based
 - CORS: Configured for your domain
 

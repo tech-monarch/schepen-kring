@@ -38,7 +38,7 @@ API_BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL; // https://answer24_backend.
 // Your existing AI configuration is used
 AI_SERVICE_URL: process.env.NEXT_PUBLIC_AI_SERVICE === "openai"
   ? "https://api.openai.com/v1/chat/completions"
-  : "https://kring.answer24.nl/ai";
+  : "https://schepen-kring.nl/ai";
 AI_API_KEY: process.env.NEXT_PUBLIC_AI_API_KEY;
 ```
 

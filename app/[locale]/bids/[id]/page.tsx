@@ -22,7 +22,7 @@ import { Button } from "@/components/ui/button";
 import { toast, Toaster } from "react-hot-toast";
 
 // Matches your backend storage
-const STORAGE_URL = "https://kring.answer24.nl/storage/";
+const STORAGE_URL = "https://schepen-kring.nl/storage/";
 
 interface Bid {
   id: number;

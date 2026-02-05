@@ -7,7 +7,7 @@ export const API_CONFIG = {
   BASE_URL:
     process.env.NEXT_PUBLIC_API_BASE_URL ||
     process.env.NEXT_PUBLIC_API_URL ||
-    "https://kring.answer24.nl/api/v1",
+    "https://schepen-kring.nl/api/v1",
 
   // Common endpoints
   ENDPOINTS: {

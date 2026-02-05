@@ -6,11 +6,11 @@
 export const WIDGET_CONFIG = {
   // API Configuration - Using your existing API URLs
   API_BASE_URL:
-    process.env.NEXT_PUBLIC_API_BASE_URL || "https://kring.answer24.nl/api/v1",
+    process.env.NEXT_PUBLIC_API_BASE_URL || "https://schepen-kring.nl/api/v1",
   CDN_BASE_URL:
     process.env.NEXT_PUBLIC_CDN_URL ||
     process.env.NEXT_PUBLIC_API_BASE_URL?.replace("/api/v1", "") ||
-    "https://kring.answer24.nl",
+    "https://schepen-kring.nl",
 
   // Security - Using your existing API base for signing
   SIGNING_SECRET:
@@ -20,7 +20,7 @@ export const WIDGET_CONFIG = {
   AI_SERVICE_URL:
     process.env.NEXT_PUBLIC_AI_SERVICE === "openai"
       ? "https://api.openai.com/v1/chat/completions"
-      : "https://kring.answer24.nl/ai",
+      : "https://schepen-kring.nl/ai",
   AI_API_KEY: process.env.NEXT_PUBLIC_AI_API_KEY || "your-openai-api-key-here",
 
   // Database - Using your existing setup
@@ -47,8 +47,8 @@ export const WIDGET_CONFIG = {
 
   // Security - Using your existing API domain
   CORS_ALLOWED_ORIGINS: process.env.CORS_ALLOWED_ORIGINS?.split(",") || [
-    "https://kring.answer24.nl",
-    "https://kring.answer24.nl",
+    "https://schepen-kring.nl",
+    "https://schepen-kring.nl",
     "https://.answer24.nl",
   ],
   RATE_LIMIT_PER_MINUTE: parseInt(process.env.RATE_LIMIT_PER_MINUTE || "60"),

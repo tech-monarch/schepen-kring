@@ -28,9 +28,9 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import DEFAULT_PFP from "@/components/dashboard/pfp.webp";
 
-const API_BASE = "https://kring.answer24.nl/api";
-const STORAGE_URL = "https://kring.answer24.nl/storage/";
-import { Sidebar } from "@/components/dashboard/Sidebar"; 
+const API_BASE = "https://schepen-kring.nl/api";
+const STORAGE_URL = "https://schepen-kring.nl/storage/";
+import { Sidebar } from "@/components/dashboard/Sidebar";
 
 export default function ProfileSettingsPage() {
   const pathname = usePathname();

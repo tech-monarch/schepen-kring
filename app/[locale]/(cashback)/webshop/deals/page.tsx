@@ -42,7 +42,7 @@ interface RequestedDeal {
   people_count?: string | number;
 }
 
-const API_BASE = "https://kring.answer24.nl/api/v1";
+const API_BASE = "https://schepen-kring.nl/api/v1";
 
 const categories = [
   { id: "all", name: "All", icon: ShoppingBag },
@@ -398,7 +398,7 @@ export default function WebshopPage() {
       <body>
         <div class="voucher">
           <div class="header">
-            <img src="${deal.deal_image || "https://kring.answer24.nl/placeholder.png"}" class="merchant-logo" alt="Logo">
+            <img src="${deal.deal_image || "https://schepen-kring.nl/placeholder.png"}" class="merchant-logo" alt="Logo">
             <h1>${deal.deal_name}</h1>
             <p class="deal-summary">Reservation Confirmation & Voucher</p>
           </div>

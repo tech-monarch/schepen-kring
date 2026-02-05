@@ -55,7 +55,7 @@ export default function AdminTaskBoardPage() {
     due_date: "",
   });
 
-  const API_BASE = "https://kring.answer24.nl/api";
+  const API_BASE = "https://schepen-kring.nl/api";
 
   const getHeaders = () => {
     const token = localStorage.getItem("auth_token");

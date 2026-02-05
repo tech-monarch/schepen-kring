@@ -25,8 +25,9 @@ import {
   Ship,
   Compass,
   Box,
-  CheckSquare, Sparkles, 
-  CheckCircle
+  CheckSquare,
+  Sparkles,
+  CheckCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
@@ -34,8 +35,9 @@ import { cn } from "@/lib/utils";
 import { toast, Toaster } from "react-hot-toast";
 
 // Configuration
-const STORAGE_URL = "https://kring.answer24.nl/storage/";
-const PLACEHOLDER_IMAGE = "https://images.unsplash.com/photo-1569263979104-865ab7cd8d13?auto=format&fit=crop&w=600&q=80"; // Fallback yacht image
+const STORAGE_URL = "https://schepen-kring.nl/storage/";
+const PLACEHOLDER_IMAGE =
+  "https://images.unsplash.com/photo-1569263979104-865ab7cd8d13?auto=format&fit=crop&w=600&q=80"; // Fallback yacht image
 // Add this type near your GalleryState type
 type AiStagedImage = {
   file: File;
@@ -112,15 +114,15 @@ export default function FleetManagementPage() {
         if (initialGallery[category]) {
           initialGallery[category].push(img);
         } else {
-            // Fallback for unknown categories
-            initialGallery["Exterior"].push(img);
+          // Fallback for unknown categories
+          initialGallery["Exterior"].push(img);
         }
       });
     }
 
     setGalleryState(initialGallery);
     setMainPreview(
-      yacht?.main_image ? `${STORAGE_URL}${yacht.main_image}` : null
+      yacht?.main_image ? `${STORAGE_URL}${yacht.main_image}` : null,
     );
     setIsSheetOpen(true);
   };
@@ -144,18 +146,26 @@ export default function FleetManagementPage() {
     // Main image logic
     if (mainFile) formData.set("main_image", mainFile);
     else if (!selectedYacht && !mainFile) {
-        // Handle case where no image is uploaded for new yacht (optional validation)
+      // Handle case where no image is uploaded for new yacht (optional validation)
     }
 
     // Handle Checkbox for Trailer (HTML checkboxes don't send 'false' if unchecked)
-    if (!formData.has('trailer_included')) {
-        formData.append('trailer_included', '0');
+    if (!formData.has("trailer_included")) {
+      formData.append("trailer_included", "0");
     } else {
-        formData.set('trailer_included', '1');
+      formData.set("trailer_included", "1");
     }
 
     // Cleanup empty numeric fields to avoid API errors
-    const numericFields = ["cabins", "heads", "price", "year", "engine_hours", "engine_power", "berths"];
+    const numericFields = [
+      "cabins",
+      "heads",
+      "price",
+      "year",
+      "engine_hours",
+      "engine_power",
+      "berths",
+    ];
     numericFields.forEach((field) => {
       const val = formData.get(field);
       if (!val || val === "") formData.set(field, ""); // Send empty string or handle in backend as null
@@ -213,78 +223,82 @@ export default function FleetManagementPage() {
       console.error("Delete failed", err);
     }
   };
-  
+
   const handleDelete = async (yacht: any) => {
-  // The "Confirm First" step
-  const confirmed = window.confirm(
-    `CRITICAL ACTION: Are you sure you want to permanently remove "${yacht.name}" from the registry? This will delete all associated images.`
-  );
+    // The "Confirm First" step
+    const confirmed = window.confirm(
+      `CRITICAL ACTION: Are you sure you want to permanently remove "${yacht.name}" from the registry? This will delete all associated images.`,
+    );
 
-  if (!confirmed) return;
+    if (!confirmed) return;
 
-  try {
-    setIsSubmitting(true);
-    await api.delete(`/yachts/${yacht.id}`);
-    
-    // Refresh the list after deletion
-    fetchFleet(); 
-    alert("Vessel successfully removed from manifest.");
-  } catch (err) {
-    console.error("Deletion failed:", err);
-    alert("Error: Could not remove vessel. Check console for details.");
-  } finally {
-    setIsSubmitting(false);
-  }
-};
+    try {
+      setIsSubmitting(true);
+      await api.delete(`/yachts/${yacht.id}`);
 
+      // Refresh the list after deletion
+      fetchFleet();
+      alert("Vessel successfully removed from manifest.");
+    } catch (err) {
+      console.error("Deletion failed:", err);
+      alert("Error: Could not remove vessel. Check console for details.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
-const handleAiCategorizer = async (files: FileList | null) => {
-  if (!files || files.length === 0) return;
-  
-  setIsAnalyzing(true);
-  const formData = new FormData();
-  const fileArray = Array.from(files);
-  fileArray.forEach(file => formData.append('images[]', file));
+  const handleAiCategorizer = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
 
-  try {
-    toast.loading("Gemini is analyzing assets...", { id: 'ai-loading' });
-    const res = await api.post('/yachts/ai-classify', formData);
-    
-    // Map response data back to our File objects
-    const analyzedData: AiStagedImage[] = res.data.map((item: any, index: number) => ({
-      file: fileArray[index],
-      preview: item.preview,
-      category: item.category,
-      originalName: item.originalName
+    setIsAnalyzing(true);
+    const formData = new FormData();
+    const fileArray = Array.from(files);
+    fileArray.forEach((file) => formData.append("images[]", file));
+
+    try {
+      toast.loading("Gemini is analyzing assets...", { id: "ai-loading" });
+      const res = await api.post("/yachts/ai-classify", formData);
+
+      // Map response data back to our File objects
+      const analyzedData: AiStagedImage[] = res.data.map(
+        (item: any, index: number) => ({
+          file: fileArray[index],
+          preview: item.preview,
+          category: item.category,
+          originalName: item.originalName,
+        }),
+      );
+
+      setAiStaging((prev) => [...prev, ...analyzedData]);
+      toast.success("AI Classification complete", { id: "ai-loading" });
+    } catch (err) {
+      toast.error("AI Analysis failed");
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  const approveAiImage = (index: number) => {
+    const item = aiStaging[index];
+    setGalleryState((prev) => ({
+      ...prev,
+      [item.category]: [...prev[item.category], item.file],
     }));
+    setAiStaging((prev) => prev.filter((_, i) => i !== index));
+  };
 
-    setAiStaging(prev => [...prev, ...analyzedData]);
-    toast.success("AI Classification complete", { id: 'ai-loading' });
-  } catch (err) {
-    toast.error("AI Analysis failed");
-  } finally {
-    setIsAnalyzing(false);
-  }
-};
-
-const approveAiImage = (index: number) => {
-  const item = aiStaging[index];
-  setGalleryState(prev => ({
-    ...prev,
-    [item.category]: [...prev[item.category], item.file]
-  }));
-  setAiStaging(prev => prev.filter((_, i) => i !== index));
-};
-
-const approveAllAi = () => {
-  const updatedGallery = { ...galleryState };
-  aiStaging.forEach(item => {
-    updatedGallery[item.category] = [...updatedGallery[item.category], item.file];
-  });
-  setGalleryState(updatedGallery);
-  setAiStaging([]);
-  toast.success("All assets approved");
-};
+  const approveAllAi = () => {
+    const updatedGallery = { ...galleryState };
+    aiStaging.forEach((item) => {
+      updatedGallery[item.category] = [
+        ...updatedGallery[item.category],
+        item.file,
+      ];
+    });
+    setGalleryState(updatedGallery);
+    setAiStaging([]);
+    toast.success("All assets approved");
+  };
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] p-6 lg:p-12 text-[#003566] \ -mt-20">
@@ -327,7 +341,9 @@ const approveAllAi = () => {
         {loading ? (
           <div className="col-span-full py-20 text-center">
             <Loader2 className="animate-spin mx-auto text-blue-600" size={40} />
-            <p className="mt-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Synchronizing Database...</p>
+            <p className="mt-4 text-[10px] font-black uppercase tracking-widest text-slate-400">
+              Synchronizing Database...
+            </p>
           </div>
         ) : (
           fleet
@@ -341,7 +357,11 @@ const approveAllAi = () => {
               >
                 <div className="h-72 bg-slate-100 overflow-hidden relative">
                   <img
-                    src={yacht.main_image ? `${STORAGE_URL}${yacht.main_image}` : PLACEHOLDER_IMAGE}
+                    src={
+                      yacht.main_image
+                        ? `${STORAGE_URL}${yacht.main_image}`
+                        : PLACEHOLDER_IMAGE
+                    }
                     onError={handleImageError}
                     alt={yacht.name}
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
@@ -365,30 +385,42 @@ const approveAllAi = () => {
                 <div className="p-8 space-y-4 flex-1 flex flex-col justify-between">
                   <div>
                     <div className="flex justify-between items-start mb-2">
-                      <h3 className="text-2xl font-serif italic truncate pr-4">{yacht.name}</h3>
-                      <span className={cn(
+                      <h3 className="text-2xl font-serif italic truncate pr-4">
+                        {yacht.name}
+                      </h3>
+                      <span
+                        className={cn(
                           "text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-widest border",
-                          yacht.status === 'For Sale' ? "bg-emerald-50 text-emerald-600 border-emerald-100" :
-                          yacht.status === 'For Bid' ? "bg-blue-50 text-blue-600 border-blue-100" :
-                          "bg-slate-100 text-slate-500 border-slate-200"
-                      )}>
+                          yacht.status === "For Sale"
+                            ? "bg-emerald-50 text-emerald-600 border-emerald-100"
+                            : yacht.status === "For Bid"
+                              ? "bg-blue-50 text-blue-600 border-blue-100"
+                              : "bg-slate-100 text-slate-500 border-slate-200",
+                        )}
+                      >
                         {yacht.status}
                       </span>
                     </div>
                     <p className="text-lg font-bold text-blue-900 tracking-tighter">
-                      {new Intl.NumberFormat('en-EU', { style: 'currency', currency: 'EUR' }).format(Number(yacht.price))}
+                      {new Intl.NumberFormat("en-EU", {
+                        style: "currency",
+                        currency: "EUR",
+                      }).format(Number(yacht.price))}
                     </p>
                   </div>
-                  
+
                   <div className="grid grid-cols-3 gap-4 pt-4 border-t border-slate-50 text-[9px] font-black uppercase text-slate-400">
                     <div className="flex items-center gap-1">
-                      <Maximize2 size={12} className="text-blue-600" /> {yacht.length}m
+                      <Maximize2 size={12} className="text-blue-600" />{" "}
+                      {yacht.length}m
                     </div>
                     <div className="flex items-center gap-1">
-                      <Calendar size={12} className="text-blue-600" /> {yacht.year}
+                      <Calendar size={12} className="text-blue-600" />{" "}
+                      {yacht.year}
                     </div>
                     <div className="flex items-center gap-1 truncate">
-                      <MapPin size={12} className="text-blue-600" /> {yacht.location || "N/A"}
+                      <MapPin size={12} className="text-blue-600" />{" "}
+                      {yacht.location || "N/A"}
                     </div>
                   </div>
                 </div>
@@ -439,14 +471,15 @@ const approveAllAi = () => {
 
             {/* FORM CONTENT */}
             <div className="p-8 lg:p-12 space-y-16">
-              
               {/* --- SECTION 1: PROFILE AUTHORITY --- */}
               <div className="space-y-4">
                 <label className="text-[10px] font-black uppercase text-[#003566] tracking-widest flex items-center gap-2 italic">
                   <Camera size={16} /> 01. Profile Authority
                 </label>
                 <div
-                  onClick={() => document.getElementById("main_image_input")?.click()}
+                  onClick={() =>
+                    document.getElementById("main_image_input")?.click()
+                  }
                   className="h-80 lg:h-96 bg-white border-2 border-dashed border-slate-200 relative flex items-center justify-center cursor-pointer overflow-hidden shadow-inner group transition-all hover:border-blue-400"
                 >
                   <input
@@ -471,7 +504,10 @@ const approveAllAi = () => {
                     />
                   ) : (
                     <div className="text-center">
-                      <Upload className="mx-auto text-slate-200 mb-4 group-hover:text-blue-600 transition-colors" size={48} />
+                      <Upload
+                        className="mx-auto text-slate-200 mb-4 group-hover:text-blue-600 transition-colors"
+                        size={48}
+                      />
                       <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest group-hover:text-blue-600 transition-colors">
                         Select Primary Identification Photo
                       </p>
@@ -485,27 +521,53 @@ const approveAllAi = () => {
                 <h3 className="text-[10px] font-black text-slate-300 uppercase tracking-[0.4em] flex items-center gap-2 border-b border-slate-50 pb-4 italic">
                   <Coins size={16} /> Essential Registry Data
                 </h3>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                   <div className="space-y-2">
                     <Label>Vessel Name</Label>
-                    <Input name="name" defaultValue={selectedYacht?.name} placeholder="e.g. M/Y NOBILITY" required />
+                    <Input
+                      name="name"
+                      defaultValue={selectedYacht?.name}
+                      placeholder="e.g. M/Y NOBILITY"
+                      required
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label>Price (€)</Label>
-                    <Input name="price" type="number" defaultValue={selectedYacht?.price} placeholder="1500000" required />
+                    <Input
+                      name="price"
+                      type="number"
+                      defaultValue={selectedYacht?.price}
+                      placeholder="1500000"
+                      required
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label>Year Built</Label>
-                    <Input name="year" type="number" defaultValue={selectedYacht?.year} placeholder="2024" required />
+                    <Input
+                      name="year"
+                      type="number"
+                      defaultValue={selectedYacht?.year}
+                      placeholder="2024"
+                      required
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label>Length (m)</Label>
-                    <Input name="length" defaultValue={selectedYacht?.length} placeholder="45.5" required />
+                    <Input
+                      name="length"
+                      defaultValue={selectedYacht?.length}
+                      placeholder="45.5"
+                      required
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label>Location</Label>
-                    <Input name="location" defaultValue={selectedYacht?.location} placeholder="e.g. Monaco" />
+                    <Input
+                      name="location"
+                      defaultValue={selectedYacht?.location}
+                      placeholder="e.g. Monaco"
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label>Status</Label>
@@ -532,204 +594,330 @@ const approveAllAi = () => {
                 {/* Sub-Section: General & Hull */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
                   <div className="space-y-6">
-                    <SectionHeader icon={<Ship size={14} />} title="Hull & Dimensions" />
+                    <SectionHeader
+                      icon={<Ship size={14} />}
+                      title="Hull & Dimensions"
+                    />
                     <div className="grid grid-cols-2 gap-6">
-                       <div className="space-y-1">
-                          <Label>Hull Shape</Label>
-                          <Input name="hull_shape" defaultValue={selectedYacht?.hull_shape} placeholder="e.g. V-Bottom" />
-                       </div>
-                       <div className="space-y-1">
-                          <Label>Material</Label>
-                          <Input name="construction_material" defaultValue={selectedYacht?.construction_material} placeholder="e.g. GRP / Polyester" />
-                       </div>
-                       <div className="space-y-1">
-                          <Label>Beam (Width)</Label>
-                          <Input name="beam" defaultValue={selectedYacht?.beam} placeholder="e.g. 8.5m" />
-                       </div>
-                       <div className="space-y-1">
-                          <Label>Draft (Depth)</Label>
-                          <Input name="draft" defaultValue={selectedYacht?.draft} placeholder="e.g. 2.1m" />
-                       </div>
-                       <div className="space-y-1">
-                          <Label>Displacement</Label>
-                          <Input name="displacement" defaultValue={selectedYacht?.displacement} placeholder="e.g. 12000 kg" />
-                       </div>
-                       <div className="space-y-1">
-                          <Label>Clearance</Label>
-                          <Input name="clearance" defaultValue={selectedYacht?.clearance} placeholder="e.g. 4.5m" />
-                       </div>
+                      <div className="space-y-1">
+                        <Label>Hull Shape</Label>
+                        <Input
+                          name="hull_shape"
+                          defaultValue={selectedYacht?.hull_shape}
+                          placeholder="e.g. V-Bottom"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label>Material</Label>
+                        <Input
+                          name="construction_material"
+                          defaultValue={selectedYacht?.construction_material}
+                          placeholder="e.g. GRP / Polyester"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label>Beam (Width)</Label>
+                        <Input
+                          name="beam"
+                          defaultValue={selectedYacht?.beam}
+                          placeholder="e.g. 8.5m"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label>Draft (Depth)</Label>
+                        <Input
+                          name="draft"
+                          defaultValue={selectedYacht?.draft}
+                          placeholder="e.g. 2.1m"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label>Displacement</Label>
+                        <Input
+                          name="displacement"
+                          defaultValue={selectedYacht?.displacement}
+                          placeholder="e.g. 12000 kg"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label>Clearance</Label>
+                        <Input
+                          name="clearance"
+                          defaultValue={selectedYacht?.clearance}
+                          placeholder="e.g. 4.5m"
+                        />
+                      </div>
                     </div>
                   </div>
 
                   <div className="space-y-6">
-                    <SectionHeader icon={<Zap size={14} />} title="Engine & Performance" />
+                    <SectionHeader
+                      icon={<Zap size={14} />}
+                      title="Engine & Performance"
+                    />
                     <div className="bg-slate-50 p-6 border border-slate-100 grid grid-cols-2 gap-6">
-                       <div className="space-y-1">
-                          <Label>Engine Brand</Label>
-                          <Input name="engine_brand" defaultValue={selectedYacht?.engine_brand} placeholder="e.g. CAT / MTU" className="bg-white" />
-                       </div>
-                       <div className="space-y-1">
-                          <Label>Model</Label>
-                          <Input name="engine_model" defaultValue={selectedYacht?.engine_model} placeholder="e.g. V12 2000" className="bg-white" />
-                       </div>
-                       <div className="space-y-1">
-                          <Label>Power (HP)</Label>
-                          <Input name="engine_power" defaultValue={selectedYacht?.engine_power} placeholder="e.g. 2x 1500HP" className="bg-white" />
-                       </div>
-                       <div className="space-y-1">
-                          <Label>Engine Hours</Label>
-                          <Input name="engine_hours" defaultValue={selectedYacht?.engine_hours} placeholder="e.g. 450 hrs" className="bg-white" />
-                       </div>
-                       <div className="space-y-1">
-                          <Label>Fuel Type</Label>
-                          <Input name="fuel_type" defaultValue={selectedYacht?.fuel_type} placeholder="Diesel" className="bg-white" />
-                       </div>
-                       <div className="space-y-1">
-                          <Label>Max Speed</Label>
-                          <Input name="max_speed" defaultValue={selectedYacht?.max_speed} placeholder="e.g. 35 kn" className="bg-white" />
-                       </div>
+                      <div className="space-y-1">
+                        <Label>Engine Brand</Label>
+                        <Input
+                          name="engine_brand"
+                          defaultValue={selectedYacht?.engine_brand}
+                          placeholder="e.g. CAT / MTU"
+                          className="bg-white"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label>Model</Label>
+                        <Input
+                          name="engine_model"
+                          defaultValue={selectedYacht?.engine_model}
+                          placeholder="e.g. V12 2000"
+                          className="bg-white"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label>Power (HP)</Label>
+                        <Input
+                          name="engine_power"
+                          defaultValue={selectedYacht?.engine_power}
+                          placeholder="e.g. 2x 1500HP"
+                          className="bg-white"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label>Engine Hours</Label>
+                        <Input
+                          name="engine_hours"
+                          defaultValue={selectedYacht?.engine_hours}
+                          placeholder="e.g. 450 hrs"
+                          className="bg-white"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label>Fuel Type</Label>
+                        <Input
+                          name="fuel_type"
+                          defaultValue={selectedYacht?.fuel_type}
+                          placeholder="Diesel"
+                          className="bg-white"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label>Max Speed</Label>
+                        <Input
+                          name="max_speed"
+                          defaultValue={selectedYacht?.max_speed}
+                          placeholder="e.g. 35 kn"
+                          className="bg-white"
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
 
                 {/* Sub-Section: Accommodation & Systems */}
                 <div className="space-y-6">
-                   <SectionHeader icon={<Bed size={14} />} title="Accommodation & Systems" />
-                   <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                      <div className="space-y-1">
-                         <Label>Cabins</Label>
-                         <Input name="cabins" type="number" defaultValue={selectedYacht?.cabins} placeholder="3" />
-                      </div>
-                      <div className="space-y-1">
-                         <Label>Berths (Beds)</Label>
-                         <Input name="berths" defaultValue={selectedYacht?.berths} placeholder="6 + 2 Crew" />
-                      </div>
-                      <div className="space-y-1">
-                         <Label>Heads (Baths)</Label>
-                         <Input name="heads" type="number" defaultValue={selectedYacht?.heads} placeholder="2" />
-                      </div>
-                      <div className="space-y-1">
-                         <Label>Water Tank</Label>
-                         <Input name="water_tank" defaultValue={selectedYacht?.water_tank} placeholder="e.g. 800L" />
-                      </div>
-                      <div className="space-y-1">
-                         <Label>VAT Status</Label>
-                         <select name="vat_status" defaultValue={selectedYacht?.vat_status} className="w-full border-b border-slate-200 py-2.5 text-xs font-bold text-[#003566] bg-transparent outline-none">
-                            <option value="VAT Included">VAT Included</option>
-                            <option value="VAT Excluded">VAT Excluded</option>
-                            <option value="Margin Scheme">Margin Scheme</option>
-                         </select>
-                      </div>
-                      <div className="space-y-1">
-                         <Label>Steering</Label>
-                         <Input name="steering" defaultValue={selectedYacht?.steering} placeholder="Wheel / Joystick" />
-                      </div>
-                   </div>
+                  <SectionHeader
+                    icon={<Bed size={14} />}
+                    title="Accommodation & Systems"
+                  />
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                    <div className="space-y-1">
+                      <Label>Cabins</Label>
+                      <Input
+                        name="cabins"
+                        type="number"
+                        defaultValue={selectedYacht?.cabins}
+                        placeholder="3"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label>Berths (Beds)</Label>
+                      <Input
+                        name="berths"
+                        defaultValue={selectedYacht?.berths}
+                        placeholder="6 + 2 Crew"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label>Heads (Baths)</Label>
+                      <Input
+                        name="heads"
+                        type="number"
+                        defaultValue={selectedYacht?.heads}
+                        placeholder="2"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label>Water Tank</Label>
+                      <Input
+                        name="water_tank"
+                        defaultValue={selectedYacht?.water_tank}
+                        placeholder="e.g. 800L"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label>VAT Status</Label>
+                      <select
+                        name="vat_status"
+                        defaultValue={selectedYacht?.vat_status}
+                        className="w-full border-b border-slate-200 py-2.5 text-xs font-bold text-[#003566] bg-transparent outline-none"
+                      >
+                        <option value="VAT Included">VAT Included</option>
+                        <option value="VAT Excluded">VAT Excluded</option>
+                        <option value="Margin Scheme">Margin Scheme</option>
+                      </select>
+                    </div>
+                    <div className="space-y-1">
+                      <Label>Steering</Label>
+                      <Input
+                        name="steering"
+                        defaultValue={selectedYacht?.steering}
+                        placeholder="Wheel / Joystick"
+                      />
+                    </div>
+                  </div>
                 </div>
-                
+
                 {/* Sub-Section: Equipment Lists & Features */}
                 <div className="space-y-6">
-                    <SectionHeader icon={<Box size={14} />} title="Equipment & Features" />
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div className="space-y-2">
-                            <Label>Navigation & Electronics</Label>
-                            <textarea 
-                                name="navigation_electronics" 
-                                defaultValue={selectedYacht?.navigation_electronics}
-                                placeholder="List all navigation equipment (GPS, Radar, Plotter, VHF...)"
-                                className="w-full border border-slate-200 p-4 text-xs font-medium text-[#003566] h-32 outline-none focus:border-blue-600 resize-none bg-slate-50/50"
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <Label>Exterior & Deck Equipment</Label>
-                            <textarea 
-                                name="exterior_equipment" 
-                                defaultValue={selectedYacht?.exterior_equipment}
-                                placeholder="Anchor, Teak deck, Swimming ladder, Covers..."
-                                className="w-full border border-slate-200 p-4 text-xs font-medium text-[#003566] h-32 outline-none focus:border-blue-600 resize-none bg-slate-50/50"
-                            />
-                        </div>
+                  <SectionHeader
+                    icon={<Box size={14} />}
+                    title="Equipment & Features"
+                  />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="space-y-2">
+                      <Label>Navigation & Electronics</Label>
+                      <textarea
+                        name="navigation_electronics"
+                        defaultValue={selectedYacht?.navigation_electronics}
+                        placeholder="List all navigation equipment (GPS, Radar, Plotter, VHF...)"
+                        className="w-full border border-slate-200 p-4 text-xs font-medium text-[#003566] h-32 outline-none focus:border-blue-600 resize-none bg-slate-50/50"
+                      />
                     </div>
+                    <div className="space-y-2">
+                      <Label>Exterior & Deck Equipment</Label>
+                      <textarea
+                        name="exterior_equipment"
+                        defaultValue={selectedYacht?.exterior_equipment}
+                        placeholder="Anchor, Teak deck, Swimming ladder, Covers..."
+                        className="w-full border border-slate-200 p-4 text-xs font-medium text-[#003566] h-32 outline-none focus:border-blue-600 resize-none bg-slate-50/50"
+                      />
+                    </div>
+                  </div>
 
-                    <div className="flex items-center gap-4 bg-blue-50/50 p-4 border border-blue-100 rounded-sm">
-                        <input 
-                            type="checkbox" 
-                            name="trailer_included" 
-                            id="trailer_check"
-                            defaultChecked={selectedYacht?.trailer_included}
-                            className="w-4 h-4 accent-[#003566] cursor-pointer"
-                        />
-                        <label htmlFor="trailer_check" className="text-[10px] font-black uppercase tracking-widest text-[#003566] cursor-pointer select-none flex items-center gap-2">
-                             <CheckSquare size={14} /> Trailer Included in Sale
-                        </label>
-                    </div>
+                  <div className="flex items-center gap-4 bg-blue-50/50 p-4 border border-blue-100 rounded-sm">
+                    <input
+                      type="checkbox"
+                      name="trailer_included"
+                      id="trailer_check"
+                      defaultChecked={selectedYacht?.trailer_included}
+                      className="w-4 h-4 accent-[#003566] cursor-pointer"
+                    />
+                    <label
+                      htmlFor="trailer_check"
+                      className="text-[10px] font-black uppercase tracking-widest text-[#003566] cursor-pointer select-none flex items-center gap-2"
+                    >
+                      <CheckSquare size={14} /> Trailer Included in Sale
+                    </label>
+                  </div>
                 </div>
               </div>
 
               {/* 03. AI CARGO DROP */}
-<div className="space-y-8 bg-slate-900 p-12 border-l-8 border-blue-500 shadow-2xl mt-12">
-  <div className="flex justify-between items-start">
-    <div>
-      <h3 className="text-[12px] font-black uppercase text-blue-400 tracking-[0.4em] flex items-center gap-3 italic">
-        <Sparkles size={20} className="fill-blue-400" /> Gemini AI Categorizer
-      </h3>
-      <p className="text-[9px] text-slate-500 font-bold uppercase mt-2 tracking-widest italic">Automated asset classification via Neural Engine</p>
-    </div>
-    
-    <label className="cursor-pointer bg-blue-600 text-white px-10 py-4 text-[10px] font-black uppercase tracking-widest hover:bg-blue-500 transition-all flex items-center gap-2 shadow-xl">
-      {isAnalyzing ? <Loader2 className="animate-spin" /> : <Upload size={14} />}
-      {isAnalyzing ? "Processing..." : "Initiate AI Cargo Drop"}
-      <input type="file" multiple className="hidden" accept="image/*" onChange={(e) => handleAiCategorizer(e.target.files)} disabled={isAnalyzing} />
-    </label>
-  </div>
+              <div className="space-y-8 bg-slate-900 p-12 border-l-8 border-blue-500 shadow-2xl mt-12">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h3 className="text-[12px] font-black uppercase text-blue-400 tracking-[0.4em] flex items-center gap-3 italic">
+                      <Sparkles size={20} className="fill-blue-400" /> Gemini AI
+                      Categorizer
+                    </h3>
+                    <p className="text-[9px] text-slate-500 font-bold uppercase mt-2 tracking-widest italic">
+                      Automated asset classification via Neural Engine
+                    </p>
+                  </div>
 
-  {/* Staging Area Grid */}
-  {aiStaging.length > 0 && (
-    <div className="space-y-8">
-      <div className="flex justify-between items-center border-b border-slate-800 pb-4">
-        <p className="text-[9px] font-black text-blue-300 uppercase tracking-widest">{aiStaging.length} Assets in Staging</p>
-        <button type="button" onClick={approveAllAi} className="text-[9px] font-black text-emerald-400 hover:text-emerald-300 uppercase flex items-center gap-2">
-          <CheckCircle size={14} /> Approve Entire Batch
-        </button>
-      </div>
+                  <label className="cursor-pointer bg-blue-600 text-white px-10 py-4 text-[10px] font-black uppercase tracking-widest hover:bg-blue-500 transition-all flex items-center gap-2 shadow-xl">
+                    {isAnalyzing ? (
+                      <Loader2 className="animate-spin" />
+                    ) : (
+                      <Upload size={14} />
+                    )}
+                    {isAnalyzing ? "Processing..." : "Initiate AI Cargo Drop"}
+                    <input
+                      type="file"
+                      multiple
+                      className="hidden"
+                      accept="image/*"
+                      onChange={(e) => handleAiCategorizer(e.target.files)}
+                      disabled={isAnalyzing}
+                    />
+                  </label>
+                </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-        {aiStaging.map((item, idx) => (
-          <div key={idx} className="relative group bg-slate-800 border border-slate-700 overflow-hidden shadow-lg">
-            <img src={item.preview} className="h-40 w-full object-cover opacity-80" />
-            <div className="absolute top-2 left-2">
-              <span className="bg-blue-600 text-white text-[8px] font-black px-3 py-1 uppercase tracking-tighter">
-                AI: {item.category}
-              </span>
-            </div>
-            <div className="flex gap-1 p-2 bg-slate-900 border-t border-slate-700">
-              <button 
-                type="button" 
-                onClick={() => approveAiImage(idx)}
-                className="flex-1 bg-emerald-600/20 text-emerald-400 border border-emerald-600/30 text-[8px] font-black py-2 uppercase hover:bg-emerald-600 hover:text-white transition-all"
-              >
-                Approve
-              </button>
-              <button 
-                type="button" 
-                onClick={() => setAiStaging(prev => prev.filter((_, i) => i !== idx))}
-                className="bg-red-600/20 text-red-400 border border-red-600/30 px-3 py-2 hover:bg-red-600 hover:text-white"
-              >
-                <Trash size={12} />
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  )}
-</div>
+                {/* Staging Area Grid */}
+                {aiStaging.length > 0 && (
+                  <div className="space-y-8">
+                    <div className="flex justify-between items-center border-b border-slate-800 pb-4">
+                      <p className="text-[9px] font-black text-blue-300 uppercase tracking-widest">
+                        {aiStaging.length} Assets in Staging
+                      </p>
+                      <button
+                        type="button"
+                        onClick={approveAllAi}
+                        className="text-[9px] font-black text-emerald-400 hover:text-emerald-300 uppercase flex items-center gap-2"
+                      >
+                        <CheckCircle size={14} /> Approve Entire Batch
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                      {aiStaging.map((item, idx) => (
+                        <div
+                          key={idx}
+                          className="relative group bg-slate-800 border border-slate-700 overflow-hidden shadow-lg"
+                        >
+                          <img
+                            src={item.preview}
+                            className="h-40 w-full object-cover opacity-80"
+                          />
+                          <div className="absolute top-2 left-2">
+                            <span className="bg-blue-600 text-white text-[8px] font-black px-3 py-1 uppercase tracking-tighter">
+                              AI: {item.category}
+                            </span>
+                          </div>
+                          <div className="flex gap-1 p-2 bg-slate-900 border-t border-slate-700">
+                            <button
+                              type="button"
+                              onClick={() => approveAiImage(idx)}
+                              className="flex-1 bg-emerald-600/20 text-emerald-400 border border-emerald-600/30 text-[8px] font-black py-2 uppercase hover:bg-emerald-600 hover:text-white transition-all"
+                            >
+                              Approve
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setAiStaging((prev) =>
+                                  prev.filter((_, i) => i !== idx),
+                                )
+                              }
+                              className="bg-red-600/20 text-red-400 border border-red-600/30 px-3 py-2 hover:bg-red-600 hover:text-white"
+                            >
+                              <Trash size={12} />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
 
               {/* --- SECTION 4: GALLERY --- */}
               {Object.keys(galleryState).map((category) => (
                 <div key={category} className="space-y-8">
                   <h3 className="text-[11px] font-black uppercase text-[#003566] tracking-widest flex items-center gap-2 italic border-b border-slate-200 pb-4">
-                    <Images size={20} className="text-blue-600" /> {category} Gallery
+                    <Images size={20} className="text-blue-600" /> {category}{" "}
+                    Gallery
                   </h3>
                   <div className="bg-white border border-slate-200 rounded-sm overflow-hidden flex flex-col shadow-sm">
                     <div className="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
@@ -743,16 +931,23 @@ const approveAllAi = () => {
                           multiple
                           className="hidden"
                           accept="image/*"
-                          onChange={(e) => handleGalleryAdd(category, e.target.files)}
+                          onChange={(e) =>
+                            handleGalleryAdd(category, e.target.files)
+                          }
                         />
                       </label>
                     </div>
                     <div className="p-4 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 min-h-[120px]">
                       {galleryState[category].map((item, i) => {
                         const isFile = item instanceof File;
-                        const src = isFile ? URL.createObjectURL(item) : `${STORAGE_URL}${item.url}`;
+                        const src = isFile
+                          ? URL.createObjectURL(item)
+                          : `${STORAGE_URL}${item.url}`;
                         return (
-                          <div key={i} className="aspect-square bg-slate-50 relative group overflow-hidden border border-slate-100">
+                          <div
+                            key={i}
+                            className="aspect-square bg-slate-50 relative group overflow-hidden border border-slate-100"
+                          >
                             <img
                               src={src}
                               onError={handleImageError}
@@ -764,7 +959,9 @@ const approveAllAi = () => {
                                 if (isFile) {
                                   setGalleryState((prev) => ({
                                     ...prev,
-                                    [category]: prev[category].filter((_, idx) => idx !== i),
+                                    [category]: prev[category].filter(
+                                      (_, idx) => idx !== i,
+                                    ),
                                   }));
                                 } else {
                                   deleteExistingImage(item.id, category, i);
@@ -780,7 +977,9 @@ const approveAllAi = () => {
                       {galleryState[category].length === 0 && (
                         <div className="col-span-full flex flex-col items-center justify-center py-8 opacity-30 gap-2">
                           <Images size={24} />
-                          <span className="text-[9px] uppercase font-bold">No Media</span>
+                          <span className="text-[9px] uppercase font-bold">
+                            No Media
+                          </span>
                         </div>
                       )}
                     </div>
@@ -814,25 +1013,35 @@ const approveAllAi = () => {
 // ---------------- Helper Components for Styling ---------------- //
 
 function Label({ children }: { children: React.ReactNode }) {
-    return <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 pl-0.5">{children}</p>;
+  return (
+    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 pl-0.5">
+      {children}
+    </p>
+  );
 }
 
 function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
-    return (
-        <input 
-            {...props} 
-            className={cn(
-                "w-full bg-transparent border-b border-slate-200 py-2.5 text-xs font-bold text-[#003566] outline-none focus:border-blue-600 focus:bg-white/50 transition-all placeholder:text-slate-300",
-                props.className
-            )} 
-        />
-    );
+  return (
+    <input
+      {...props}
+      className={cn(
+        "w-full bg-transparent border-b border-slate-200 py-2.5 text-xs font-bold text-[#003566] outline-none focus:border-blue-600 focus:bg-white/50 transition-all placeholder:text-slate-300",
+        props.className,
+      )}
+    />
+  );
 }
 
-function SectionHeader({ icon, title }: { icon: React.ReactNode, title: string }) {
-    return (
-        <h4 className="text-[10px] font-black uppercase tracking-widest text-blue-600 flex items-center gap-2 mb-4">
-            {icon} {title}
-        </h4>
-    );
+function SectionHeader({
+  icon,
+  title,
+}: {
+  icon: React.ReactNode;
+  title: string;
+}) {
+  return (
+    <h4 className="text-[10px] font-black uppercase tracking-widest text-blue-600 flex items-center gap-2 mb-4">
+      {icon} {title}
+    </h4>
+  );
 }

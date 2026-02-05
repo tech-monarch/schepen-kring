@@ -11,7 +11,7 @@ import { api } from "@/lib/api";
 import YachtPlaceholder from "@/components/homepage/yacht.jpg";
 
 // The storage URL for your Laravel backend
-const STORAGE_URL = "https://kring.answer24.nl/storage/";
+const STORAGE_URL = "https://schepen-kring.nl/storage/";
 
 export default function PublicFleetGallery() {
   const [vessels, setVessels] = useState([]);
@@ -62,66 +62,66 @@ export default function PublicFleetGallery() {
   return (
     <div className="min-h-screen bg-white text-[#003566] selection:bg-blue-100">
       {/* HEADER SECTION */}
-<section className="relative w-full min-h-[40vh] md:h-[50vh] flex flex-col justify-center overflow-hidden pt-20">
-  <div className="absolute inset-0 z-0">
-    <img
-      src="https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?w=1600"
-      alt="Hero Background"
-      className="w-full h-full object-cover scale-105"
-    />
-    <div className="absolute inset-0 bg-[#001D3D]/60 mix-blend-multiply" />
-    <div className="absolute inset-0 bg-gradient-to-t from-[#000814] via-transparent to-[#001D3D]/40" />
-  </div>
-
-  <header className="relative z-10 px-6 md:px-12 max-w-[1400px] mx-auto w-full py-8 md:py-12">
-    <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 md:gap-10 border-b border-white/20 pb-6 md:pb-10">
-      <div className="space-y-3 md:space-y-4">
-        <div className="flex items-center gap-3">
-          <span className="w-6 md:w-10 h-[1px] bg-blue-400" />
-          <p className="text-[8px] md:text-[10px] font-black uppercase tracking-[0.4em] text-blue-300">
-            Current Inventory
-          </p>
-        </div>
-        <h1 className="text-4xl md:text-7xl lg:text-8xl font-serif tracking-tighter leading-[0.9] text-white">
-          The{" "}
-          <span className="italic font-light text-white/40">Fleet</span>
-        </h1>
-      </div>
-
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-        <div className="relative group flex-1 sm:flex-none">
-          <Search
-            className="absolute left-4 top-1/2 -translate-y-1/2 text-white/50"
-            size={14}
+      <section className="relative w-full min-h-[40vh] md:h-[50vh] flex flex-col justify-center overflow-hidden pt-20">
+        <div className="absolute inset-0 z-0">
+          <img
+            src="https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?w=1600"
+            alt="Hero Background"
+            className="w-full h-full object-cover scale-105"
           />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search Vessels..."
-            className="bg-white/10 backdrop-blur-md border border-white/10 pl-10 pr-4 py-2.5 text-[9px] uppercase font-bold tracking-widest text-white outline-none focus:bg-white focus:text-[#003566] transition-all w-full sm:w-48"
-          />
+          <div className="absolute inset-0 bg-[#001D3D]/60 mix-blend-multiply" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#000814] via-transparent to-[#001D3D]/40" />
         </div>
 
-        <div className="flex bg-white/5 backdrop-blur-md border border-white/10 p-1">
-          {["All", "Auction", "Sale"].map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setFilter(cat)}
-              className={cn(
-                "flex-1 sm:flex-none px-4 md:px-6 py-2 text-[8px] md:text-[9px] font-black uppercase tracking-widest transition-all",
-                filter === cat
-                  ? "bg-white text-[#003566]"
-                  : "text-white/60",
-              )}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
-      </div>
-    </div>
-  </header>
-</section>
+        <header className="relative z-10 px-6 md:px-12 max-w-[1400px] mx-auto w-full py-8 md:py-12">
+          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 md:gap-10 border-b border-white/20 pb-6 md:pb-10">
+            <div className="space-y-3 md:space-y-4">
+              <div className="flex items-center gap-3">
+                <span className="w-6 md:w-10 h-[1px] bg-blue-400" />
+                <p className="text-[8px] md:text-[10px] font-black uppercase tracking-[0.4em] text-blue-300">
+                  Current Inventory
+                </p>
+              </div>
+              <h1 className="text-4xl md:text-7xl lg:text-8xl font-serif tracking-tighter leading-[0.9] text-white">
+                The{" "}
+                <span className="italic font-light text-white/40">Fleet</span>
+              </h1>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+              <div className="relative group flex-1 sm:flex-none">
+                <Search
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-white/50"
+                  size={14}
+                />
+                <input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search Vessels..."
+                  className="bg-white/10 backdrop-blur-md border border-white/10 pl-10 pr-4 py-2.5 text-[9px] uppercase font-bold tracking-widest text-white outline-none focus:bg-white focus:text-[#003566] transition-all w-full sm:w-48"
+                />
+              </div>
+
+              <div className="flex bg-white/5 backdrop-blur-md border border-white/10 p-1">
+                {["All", "Auction", "Sale"].map((cat) => (
+                  <button
+                    key={cat}
+                    onClick={() => setFilter(cat)}
+                    className={cn(
+                      "flex-1 sm:flex-none px-4 md:px-6 py-2 text-[8px] md:text-[9px] font-black uppercase tracking-widest transition-all",
+                      filter === cat
+                        ? "bg-white text-[#003566]"
+                        : "text-white/60",
+                    )}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </header>
+      </section>
 
       {/* FLEET GRID */}
       <section className="max-w-[1400px] mx-auto px-6 md:px-12 py-20">

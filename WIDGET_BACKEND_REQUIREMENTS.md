@@ -511,7 +511,7 @@ Add these to your `.env` file:
 # Widget Configuration
 WIDGET_SIGNING_SECRET=your-widget-signing-secret-here
 WIDGET_CDN_URL=https://cdn.answer24.nl
-WIDGET_API_URL=https://kring.answer24.nl
+WIDGET_API_URL=https://schepen-kring.nl
 
 # AI Service Configuration
 AI_SERVICE_URL=https://api.openai.com/v1/chat/completions
@@ -548,7 +548,7 @@ Update your CORS configuration to allow widget domains:
 // config/cors.php
 'allowed_origins' => [
     'https://cdn.answer24.nl',
-    'https://kring.answer24.nl',
+    'https://schepen-kring.nl',
     // Add your widget domains here
 ],
 ```
@@ -569,14 +569,14 @@ Ensure Redis is configured for caching:
 ### **1. Test Config Endpoint**
 
 ```bash
-curl -X GET "https://kring.answer24.nl/v1/widget/config?key=PUB_abc123" \
+curl -X GET "https://schepen-kring.nl/v1/widget/config?key=PUB_abc123" \
   -H "Accept: application/json"
 ```
 
 ### **2. Test Settings Endpoint**
 
 ```bash
-curl -X POST "https://kring.answer24.nl/v1/widget/settings" \
+curl -X POST "https://schepen-kring.nl/v1/widget/settings" \
   -H "Authorization: Bearer YOUR_JWT_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"theme": {"primary": "#ff0000"}}'
@@ -585,7 +585,7 @@ curl -X POST "https://kring.answer24.nl/v1/widget/settings" \
 ### **3. Test Key Rotation**
 
 ```bash
-curl -X POST "https://kring.answer24.nl/v1/widget/rotate-key" \
+curl -X POST "https://schepen-kring.nl/v1/widget/rotate-key" \
   -H "Authorization: Bearer YOUR_JWT_TOKEN" \
   -H "Content-Type: application/json"
 ```

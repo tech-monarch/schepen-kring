@@ -28,7 +28,7 @@ import {
   WifiOff,
   ChevronLeft,
   ChevronRight,
-  Code
+  Code,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
@@ -41,21 +41,22 @@ import { motion } from "framer-motion";
 import { toast, Toaster } from "react-hot-toast"; // Added for feedback
 import { Sidebar } from "@/components/dashboard/Sidebar";
 
-const STORAGE_URL = "https://kring.answer24.nl/storage/";
-const PLACEHOLDER_IMAGE = "https://images.unsplash.com/photo-1569263979104-865ab7cd8d13?auto=format&fit=crop&w=600&q=80";
+const STORAGE_URL = "https://schepen-kring.nl/storage/";
+const PLACEHOLDER_IMAGE =
+  "https://images.unsplash.com/photo-1569263979104-865ab7cd8d13?auto=format&fit=crop&w=600&q=80";
 
 type GalleryState = { [key: string]: any[] };
 
 export default function EmployeeFleetPage() {
   const pathname = usePathname();
   const t = useTranslations("Dashboard");
-  
+
   // Data State
   const [fleet, setFleet] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [isOnline, setIsOnline] = useState(true);
-  
+
   // Bidding State (NEW)
   const [bids, setBids] = useState<any[]>([]);
 
@@ -132,42 +133,47 @@ export default function EmployeeFleetPage() {
       }
 
       // 2. Fetch Bid History if applicable
-      if (yacht.status === 'For Bid' || yacht.status === 'Sold') {
-         try {
-             const res = await api.get(`/bids/${yacht.id}/history`);
-             setBids(res.data);
-         } catch (error) {
-             console.error("Failed to load bids", error);
-         }
+      if (yacht.status === "For Bid" || yacht.status === "Sold") {
+        try {
+          const res = await api.get(`/bids/${yacht.id}/history`);
+          setBids(res.data);
+        } catch (error) {
+          console.error("Failed to load bids", error);
+        }
       }
     }
 
     setGalleryState(initialGallery);
-    setMainPreview(yacht?.main_image ? `${STORAGE_URL}${yacht.main_image}` : null);
+    setMainPreview(
+      yacht?.main_image ? `${STORAGE_URL}${yacht.main_image}` : null,
+    );
     setIsSheetOpen(true);
   };
 
   // NEW: Handle Accept/Decline actions
-  const handleBidAction = async (bidId: number, action: 'accept' | 'decline') => {
+  const handleBidAction = async (
+    bidId: number,
+    action: "accept" | "decline",
+  ) => {
     if (!confirm(`Are you sure you want to ${action} this bid?`)) return;
-    
+
     try {
-        await api.post(`/bids/${bidId}/${action}`);
-        toast.success(`Bid ${action}ed successfully`);
-        
-        // Refresh data
-        fetchFleet();
-        if (selectedYacht) {
-             const res = await api.get(`/bids/${selectedYacht.id}/history`);
-             setBids(res.data);
-        }
-        
-        if (action === 'accept') {
-            setIsSheetOpen(false); // Close terminal on sale
-        }
+      await api.post(`/bids/${bidId}/${action}`);
+      toast.success(`Bid ${action}ed successfully`);
+
+      // Refresh data
+      fetchFleet();
+      if (selectedYacht) {
+        const res = await api.get(`/bids/${selectedYacht.id}/history`);
+        setBids(res.data);
+      }
+
+      if (action === "accept") {
+        setIsSheetOpen(false); // Close terminal on sale
+      }
     } catch (err) {
-        console.error(err);
-        toast.error("Action failed. Check permissions.");
+      console.error(err);
+      toast.error("Action failed. Check permissions.");
     }
   };
 
@@ -179,7 +185,11 @@ export default function EmployeeFleetPage() {
     }));
   };
 
-  const deleteExistingImage = async (id: number, category: string, index: number) => {
+  const deleteExistingImage = async (
+    id: number,
+    category: string,
+    index: number,
+  ) => {
     if (!confirm("Remove this image?")) return;
     try {
       await api.delete(`/gallery/${id}`);
@@ -188,7 +198,9 @@ export default function EmployeeFleetPage() {
         [category]: prev[category].filter((_, i) => i !== index),
       }));
       toast.success("Image removed");
-    } catch (err) { console.error(err); }
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -198,10 +210,19 @@ export default function EmployeeFleetPage() {
     const formData = new FormData(e.currentTarget);
 
     if (mainFile) formData.set("main_image", mainFile);
-    if (!formData.has('trailer_included')) formData.append('trailer_included', '0');
-    else formData.set('trailer_included', '1');
+    if (!formData.has("trailer_included"))
+      formData.append("trailer_included", "0");
+    else formData.set("trailer_included", "1");
 
-    const numericFields = ["cabins", "heads", "price", "year", "engine_hours", "engine_power", "berths"];
+    const numericFields = [
+      "cabins",
+      "heads",
+      "price",
+      "year",
+      "engine_hours",
+      "engine_power",
+      "berths",
+    ];
     numericFields.forEach((field) => {
       if (!formData.get(field)) formData.set(field, "");
     });
@@ -220,7 +241,9 @@ export default function EmployeeFleetPage() {
       }
 
       for (const cat of Object.keys(galleryState)) {
-        const newFiles = galleryState[cat].filter((item) => item instanceof File);
+        const newFiles = galleryState[cat].filter(
+          (item) => item instanceof File,
+        );
         if (newFiles.length > 0) {
           const gData = new FormData();
           newFiles.forEach((file) => gData.append("images[]", file));
@@ -243,14 +266,14 @@ export default function EmployeeFleetPage() {
     <div className="min-h-screen bg-white text-[#003566]">
       <DashboardHeader />
       <Toaster position="top-right" />
-      
+
       <div className="flex pt-20">
         {/* COLLAPSIBLE SIDEBAR */}
-        
+
         <Sidebar onCollapse={setIsSidebarCollapsed} />
 
         {/* MAIN CONTENT AREA */}
-        <motion.main 
+        <motion.main
           animate={{ marginLeft: isSidebarCollapsed ? 80 : 256 }}
           className="flex-1 p-8 lg:p-12 bg-white min-h-[calc(100vh-80px)] z-30 -mt-20"
         >
@@ -258,11 +281,15 @@ export default function EmployeeFleetPage() {
             {/* Header Section */}
             <div className="flex justify-between items-end border-b border-slate-100 pb-10">
               <div>
-                <h1 className="text-5xl font-serif italic text-[#003566]">Registry Command</h1>
-                <p className="text-[10px] font-black uppercase tracking-[0.4em] text-blue-600 mt-3 pl-1">Vessel Inventory Manifest</p>
+                <h1 className="text-5xl font-serif italic text-[#003566]">
+                  Registry Command
+                </h1>
+                <p className="text-[10px] font-black uppercase tracking-[0.4em] text-blue-600 mt-3 pl-1">
+                  Vessel Inventory Manifest
+                </p>
               </div>
-              <Button 
-                onClick={() => openTerminal()} 
+              <Button
+                onClick={() => openTerminal()}
                 className="bg-[#003566] text-white hover:bg-[#003566]/90 rounded-none h-14 px-12 font-black uppercase text-[10px] tracking-widest transition-all shadow-xl flex items-center gap-2"
               >
                 <Plus size={18} /> Register Vessel
@@ -271,13 +298,16 @@ export default function EmployeeFleetPage() {
 
             {/* Search Manifest */}
             <div className="relative group">
-              <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300" size={20} />
-              <input 
-                type="text" 
-                placeholder="SEARCH MANIFEST..." 
-                className="w-full bg-white border border-slate-200 p-6 pl-16 text-[11px] font-black tracking-widest outline-none shadow-sm focus:border-blue-200 transition-colors" 
-                value={searchQuery} 
-                onChange={(e) => setSearchQuery(e.target.value)} 
+              <Search
+                className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300"
+                size={20}
+              />
+              <input
+                type="text"
+                placeholder="SEARCH MANIFEST..."
+                className="w-full bg-white border border-slate-200 p-6 pl-16 text-[11px] font-black tracking-widest outline-none shadow-sm focus:border-blue-200 transition-colors"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
 
@@ -286,62 +316,113 @@ export default function EmployeeFleetPage() {
               {loading ? (
                 <div className="col-span-full py-20 text-center flex flex-col items-center gap-4">
                   <Loader2 className="animate-spin text-blue-600" size={32} />
-                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Synchronizing Fleet Data...</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                    Synchronizing Fleet Data...
+                  </p>
                 </div>
               ) : (
-                fleet.filter(y => y.name.toLowerCase().includes(searchQuery.toLowerCase())).map((yacht) => (
-                  <div key={yacht.id} className="bg-white border border-slate-200 group overflow-hidden flex flex-col hover:shadow-2xl transition-all duration-500">
-                    <div className="h-80 bg-slate-100 overflow-hidden relative">
-                      <img 
-                        src={yacht.main_image ? `${STORAGE_URL}${yacht.main_image}` : PLACEHOLDER_IMAGE} 
-                        onError={handleImageError} 
-                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
-                        alt={yacht.name}
-                      />
-                      <div className="absolute inset-0 bg-[#003566]/40 opacity-0 group-hover:opacity-100 flex items-center justify-center backdrop-blur-[2px] transition-opacity">
-                        <button onClick={() => openTerminal(yacht)} className="bg-white text-[#003566] px-6 py-4 rounded-none font-black uppercase text-[10px] tracking-widest shadow-2xl flex items-center gap-3 hover:bg-[#003566] hover:text-white transition-all">
-                          <Edit3 size={14} /> Update Registry
-                        </button>
-                      </div>
-                    </div>
-                   
-                    <div className="p-10 space-y-6">
-                      <div className="flex justify-between items-start">
-                        <h3 className="text-2xl font-serif italic text-[#003566]">{yacht.name}</h3>
-                        <span className={cn(
-                            "text-[9px] font-black px-4 py-1.5 rounded-full uppercase tracking-widest border",
-                            yacht.status === 'Sold' ? "bg-red-50 border-red-100 text-red-600" :
-                            yacht.status === 'For Bid' ? "bg-emerald-50 border-emerald-100 text-emerald-600" :
-                            "bg-blue-50/30 border-blue-100 text-blue-600"
-                        )}>
-                            {yacht.status}
-                        </span>
-                      </div>
-                      
-                      {/* Price Display - Shows Current Bid if applicable */}
-                      <div>
-                          {yacht.status === 'For Bid' && yacht.current_bid ? (
-                              <div className="flex flex-col">
-                                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Current Bid</span>
-                                  <p className="text-2xl font-bold text-emerald-600 tracking-tighter">
-                                    {new Intl.NumberFormat('en-EU', { style: 'currency', currency: 'EUR' }).format(yacht.current_bid)}
-                                  </p>
-                              </div>
-                          ) : (
-                              <p className="text-2xl font-bold text-[#003566] tracking-tighter">
-                                {new Intl.NumberFormat('en-EU', { style: 'currency', currency: 'EUR' }).format(yacht.price)}
-                              </p>
-                          )}
+                fleet
+                  .filter((y) =>
+                    y.name.toLowerCase().includes(searchQuery.toLowerCase()),
+                  )
+                  .map((yacht) => (
+                    <div
+                      key={yacht.id}
+                      className="bg-white border border-slate-200 group overflow-hidden flex flex-col hover:shadow-2xl transition-all duration-500"
+                    >
+                      <div className="h-80 bg-slate-100 overflow-hidden relative">
+                        <img
+                          src={
+                            yacht.main_image
+                              ? `${STORAGE_URL}${yacht.main_image}`
+                              : PLACEHOLDER_IMAGE
+                          }
+                          onError={handleImageError}
+                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                          alt={yacht.name}
+                        />
+                        <div className="absolute inset-0 bg-[#003566]/40 opacity-0 group-hover:opacity-100 flex items-center justify-center backdrop-blur-[2px] transition-opacity">
+                          <button
+                            onClick={() => openTerminal(yacht)}
+                            className="bg-white text-[#003566] px-6 py-4 rounded-none font-black uppercase text-[10px] tracking-widest shadow-2xl flex items-center gap-3 hover:bg-[#003566] hover:text-white transition-all"
+                          >
+                            <Edit3 size={14} /> Update Registry
+                          </button>
+                        </div>
                       </div>
 
-                      <div className="grid grid-cols-3 gap-6 pt-6 border-t border-slate-100 text-[10px] font-black uppercase text-slate-400">
-                        <div className="flex flex-col gap-1"><span className="text-[8px] text-slate-300">Length</span><div className="flex items-center gap-1 text-[#003566]"><Maximize2 size={12} /> {yacht.length}m</div></div>
-                        <div className="flex flex-col gap-1"><span className="text-[8px] text-slate-300">Year</span><div className="flex items-center gap-1 text-[#003566]"><Calendar size={12} /> {yacht.year}</div></div>
-                        <div className="flex flex-col gap-1"><span className="text-[8px] text-slate-300">Port</span><div className="flex items-center gap-1 text-[#003566] truncate"><MapPin size={12} /> {yacht.location || "N/A"}</div></div>
+                      <div className="p-10 space-y-6">
+                        <div className="flex justify-between items-start">
+                          <h3 className="text-2xl font-serif italic text-[#003566]">
+                            {yacht.name}
+                          </h3>
+                          <span
+                            className={cn(
+                              "text-[9px] font-black px-4 py-1.5 rounded-full uppercase tracking-widest border",
+                              yacht.status === "Sold"
+                                ? "bg-red-50 border-red-100 text-red-600"
+                                : yacht.status === "For Bid"
+                                  ? "bg-emerald-50 border-emerald-100 text-emerald-600"
+                                  : "bg-blue-50/30 border-blue-100 text-blue-600",
+                            )}
+                          >
+                            {yacht.status}
+                          </span>
+                        </div>
+
+                        {/* Price Display - Shows Current Bid if applicable */}
+                        <div>
+                          {yacht.status === "For Bid" && yacht.current_bid ? (
+                            <div className="flex flex-col">
+                              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">
+                                Current Bid
+                              </span>
+                              <p className="text-2xl font-bold text-emerald-600 tracking-tighter">
+                                {new Intl.NumberFormat("en-EU", {
+                                  style: "currency",
+                                  currency: "EUR",
+                                }).format(yacht.current_bid)}
+                              </p>
+                            </div>
+                          ) : (
+                            <p className="text-2xl font-bold text-[#003566] tracking-tighter">
+                              {new Intl.NumberFormat("en-EU", {
+                                style: "currency",
+                                currency: "EUR",
+                              }).format(yacht.price)}
+                            </p>
+                          )}
+                        </div>
+
+                        <div className="grid grid-cols-3 gap-6 pt-6 border-t border-slate-100 text-[10px] font-black uppercase text-slate-400">
+                          <div className="flex flex-col gap-1">
+                            <span className="text-[8px] text-slate-300">
+                              Length
+                            </span>
+                            <div className="flex items-center gap-1 text-[#003566]">
+                              <Maximize2 size={12} /> {yacht.length}m
+                            </div>
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <span className="text-[8px] text-slate-300">
+                              Year
+                            </span>
+                            <div className="flex items-center gap-1 text-[#003566]">
+                              <Calendar size={12} /> {yacht.year}
+                            </div>
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <span className="text-[8px] text-slate-300">
+                              Port
+                            </span>
+                            <div className="flex items-center gap-1 text-[#003566] truncate">
+                              <MapPin size={12} /> {yacht.location || "N/A"}
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))
+                  ))
               )}
             </div>
           </div>
@@ -351,22 +432,39 @@ export default function EmployeeFleetPage() {
       {/* REGISTRY TERMINAL (SHEET) */}
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
         <SheetContent className="sm:max-w-[1000px] w-full bg-[#F8FAFC] p-0 border-l-[16px] border-[#003566] overflow-y-auto">
-          <form onSubmit={handleSubmit} className="flex flex-col min-h-full pb-20">
+          <form
+            onSubmit={handleSubmit}
+            className="flex flex-col min-h-full pb-20"
+          >
             <div className="bg-[#003566] p-10 lg:p-12 text-white sticky top-0 z-50 flex justify-between items-center shadow-2xl">
-               <div>
-                <SheetTitle className="text-4xl font-serif italic text-white">Registry Manifest Entry</SheetTitle>
-                <p className="text-blue-400 text-[10px] font-black uppercase tracking-[0.5em] mt-3">Authentication: Operational Staff</p>
+              <div>
+                <SheetTitle className="text-4xl font-serif italic text-white">
+                  Registry Manifest Entry
+                </SheetTitle>
+                <p className="text-blue-400 text-[10px] font-black uppercase tracking-[0.5em] mt-3">
+                  Authentication: Operational Staff
+                </p>
               </div>
-              <button type="button" onClick={() => setIsSheetOpen(false)} className="text-white/30 hover:text-white transition-colors">
+              <button
+                type="button"
+                onClick={() => setIsSheetOpen(false)}
+                className="text-white/30 hover:text-white transition-colors"
+              >
                 <X size={40} />
               </button>
             </div>
 
             {errors && (
               <div className="mx-12 mt-10 p-8 bg-red-50 border-l-4 border-red-500 text-red-700 shadow-sm">
-                <div className="flex items-center gap-3 mb-4 font-black uppercase text-xs tracking-widest"><AlertCircle size={20} /> Data Conflict Detected</div>
+                <div className="flex items-center gap-3 mb-4 font-black uppercase text-xs tracking-widest">
+                  <AlertCircle size={20} /> Data Conflict Detected
+                </div>
                 <div className="grid grid-cols-2 gap-4 text-[10px] font-bold uppercase tracking-wider">
-                  {Object.keys(errors).map(k => <p key={k} className="bg-white p-2 border border-red-100">● {k}: {errors[k][0]}</p>)}
+                  {Object.keys(errors).map((k) => (
+                    <p key={k} className="bg-white p-2 border border-red-100">
+                      ● {k}: {errors[k][0]}
+                    </p>
+                  ))}
                 </div>
               </div>
             )}
@@ -374,27 +472,101 @@ export default function EmployeeFleetPage() {
             <div className="p-12 lg:p-16 space-y-20">
               {/* Profile Photo */}
               <div className="space-y-6">
-                <label className="text-[11px] font-black uppercase text-[#003566] tracking-[0.3em] flex items-center gap-3 italic"><Camera size={20} className="text-blue-600" /> 01. Primary Visual Asset</label>
-                <div onClick={() => document.getElementById("main_image_input")?.click()} className="h-[500px] bg-white border-2 border-dashed border-slate-200 flex items-center justify-center cursor-pointer overflow-hidden shadow-inner group transition-all hover:border-blue-400 hover:bg-slate-50">
-                  <input id="main_image_input" name="main_image" type="file" className="hidden" accept="image/*" onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) { setMainFile(file); setMainPreview(URL.createObjectURL(file)); }
-                  }} />
-                  {mainPreview ? <img src={mainPreview} className="w-full h-full object-cover" /> : <div className="text-center space-y-4"><Upload className="mx-auto text-slate-200" size={64} /><p className="text-slate-300 text-[11px] font-black uppercase tracking-widest">Upload Primary Vessel Profile</p></div>}
+                <label className="text-[11px] font-black uppercase text-[#003566] tracking-[0.3em] flex items-center gap-3 italic">
+                  <Camera size={20} className="text-blue-600" /> 01. Primary
+                  Visual Asset
+                </label>
+                <div
+                  onClick={() =>
+                    document.getElementById("main_image_input")?.click()
+                  }
+                  className="h-[500px] bg-white border-2 border-dashed border-slate-200 flex items-center justify-center cursor-pointer overflow-hidden shadow-inner group transition-all hover:border-blue-400 hover:bg-slate-50"
+                >
+                  <input
+                    id="main_image_input"
+                    name="main_image"
+                    type="file"
+                    className="hidden"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        setMainFile(file);
+                        setMainPreview(URL.createObjectURL(file));
+                      }
+                    }}
+                  />
+                  {mainPreview ? (
+                    <img
+                      src={mainPreview}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="text-center space-y-4">
+                      <Upload className="mx-auto text-slate-200" size={64} />
+                      <p className="text-slate-300 text-[11px] font-black uppercase tracking-widest">
+                        Upload Primary Vessel Profile
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
 
               {/* Core Specs */}
               <div className="bg-white p-12 border border-slate-200 shadow-sm space-y-10">
-                <h3 className="text-[11px] font-black text-slate-300 uppercase tracking-[0.4em] flex items-center gap-3 italic border-b border-slate-50 pb-6"><Coins size={20} className="text-blue-600" /> Essential Registry Data</h3>
+                <h3 className="text-[11px] font-black text-slate-300 uppercase tracking-[0.4em] flex items-center gap-3 italic border-b border-slate-50 pb-6">
+                  <Coins size={20} className="text-blue-600" /> Essential
+                  Registry Data
+                </h3>
                 <div className="grid grid-cols-3 gap-12">
-                  <div className="space-y-2"><Label>Vessel Name</Label><Input name="name" defaultValue={selectedYacht?.name} required /></div>
-                  <div className="space-y-2"><Label>Price (€)</Label><Input name="price" type="number" defaultValue={selectedYacht?.price} required /></div>
-                  <div className="space-y-2"><Label>Year Built</Label><Input name="year" type="number" defaultValue={selectedYacht?.year} required /></div>
-                  <div className="space-y-2"><Label>Length (m)</Label><Input name="length" defaultValue={selectedYacht?.length} required /></div>
-                  <div className="space-y-2"><Label>Location</Label><Input name="location" defaultValue={selectedYacht?.location} /></div>
-                  <div className="space-y-2"><Label>Status</Label>
-                    <select name="status" defaultValue={selectedYacht?.status || "Draft"} className="w-full bg-slate-50 p-4 border-b-2 border-slate-100 text-[11px] font-black uppercase tracking-widest text-[#003566] outline-none">
+                  <div className="space-y-2">
+                    <Label>Vessel Name</Label>
+                    <Input
+                      name="name"
+                      defaultValue={selectedYacht?.name}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Price (€)</Label>
+                    <Input
+                      name="price"
+                      type="number"
+                      defaultValue={selectedYacht?.price}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Year Built</Label>
+                    <Input
+                      name="year"
+                      type="number"
+                      defaultValue={selectedYacht?.year}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Length (m)</Label>
+                    <Input
+                      name="length"
+                      defaultValue={selectedYacht?.length}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Location</Label>
+                    <Input
+                      name="location"
+                      defaultValue={selectedYacht?.location}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Status</Label>
+                    <select
+                      name="status"
+                      defaultValue={selectedYacht?.status || "Draft"}
+                      className="w-full bg-slate-50 p-4 border-b-2 border-slate-100 text-[11px] font-black uppercase tracking-widest text-[#003566] outline-none"
+                    >
                       <option value="For Sale">For Sale</option>
                       <option value="For Bid">For Bid</option>
                       <option value="Sold">Sold</option>
@@ -405,99 +577,217 @@ export default function EmployeeFleetPage() {
               </div>
 
               {/* NEW: BIDDING MANIFEST SECTION */}
-              {selectedYacht && (selectedYacht.status === "For Bid" || selectedYacht.status === "Sold") && (
-                <div className="space-y-10 bg-blue-50/20 p-12 border border-blue-100">
+              {selectedYacht &&
+                (selectedYacht.status === "For Bid" ||
+                  selectedYacht.status === "Sold") && (
+                  <div className="space-y-10 bg-blue-50/20 p-12 border border-blue-100">
                     <div className="flex justify-between items-center border-b border-blue-200 pb-6">
-                    <h3 className="text-[14px] font-black text-[#003566] uppercase tracking-[0.4em] flex items-center gap-4">
-                        <Coins size={24} className="text-blue-600" /> Bidding Manifest
-                    </h3>
-                    <div className="text-right">
-                        <p className="text-[8px] font-black uppercase text-blue-400">High Bid Value</p>
-                        <p className="text-2xl font-bold text-[#003566]">
-                        {selectedYacht.current_bid ? 
-                           new Intl.NumberFormat('en-EU', { style: 'currency', currency: 'EUR' }).format(selectedYacht.current_bid) : 
-                           '--'}
+                      <h3 className="text-[14px] font-black text-[#003566] uppercase tracking-[0.4em] flex items-center gap-4">
+                        <Coins size={24} className="text-blue-600" /> Bidding
+                        Manifest
+                      </h3>
+                      <div className="text-right">
+                        <p className="text-[8px] font-black uppercase text-blue-400">
+                          High Bid Value
                         </p>
-                    </div>
+                        <p className="text-2xl font-bold text-[#003566]">
+                          {selectedYacht.current_bid
+                            ? new Intl.NumberFormat("en-EU", {
+                                style: "currency",
+                                currency: "EUR",
+                              }).format(selectedYacht.current_bid)
+                            : "--"}
+                        </p>
+                      </div>
                     </div>
 
                     <div className="space-y-4 max-h-[400px] overflow-y-auto">
-                    {bids.length === 0 ? (
-                        <p className="text-[10px] font-black uppercase text-slate-400 text-center py-10 bg-white border border-slate-100 border-dashed">No active offers registered</p>
-                    ) : (
+                      {bids.length === 0 ? (
+                        <p className="text-[10px] font-black uppercase text-slate-400 text-center py-10 bg-white border border-slate-100 border-dashed">
+                          No active offers registered
+                        </p>
+                      ) : (
                         bids.map((bid) => (
-                        <div key={bid.id} className="bg-white p-6 border border-slate-200 flex flex-col md:flex-row justify-between items-center shadow-sm gap-4">
+                          <div
+                            key={bid.id}
+                            className="bg-white p-6 border border-slate-200 flex flex-col md:flex-row justify-between items-center shadow-sm gap-4"
+                          >
                             <div>
-                                <div className="flex items-center gap-2">
-                                    <p className="text-[10px] font-black text-blue-600 uppercase">{bid.user?.name || 'Client'}</p>
-                                    <span className={cn("text-[8px] px-2 py-0.5 rounded font-bold uppercase", 
-                                        bid.status === 'won' ? 'bg-emerald-100 text-emerald-700' : 
-                                        bid.status === 'cancelled' ? 'bg-red-50 text-red-400' :
-                                        'bg-slate-100 text-slate-500'
-                                    )}>{bid.status}</span>
+                              <div className="flex items-center gap-2">
+                                <p className="text-[10px] font-black text-blue-600 uppercase">
+                                  {bid.user?.name || "Client"}
+                                </p>
+                                <span
+                                  className={cn(
+                                    "text-[8px] px-2 py-0.5 rounded font-bold uppercase",
+                                    bid.status === "won"
+                                      ? "bg-emerald-100 text-emerald-700"
+                                      : bid.status === "cancelled"
+                                        ? "bg-red-50 text-red-400"
+                                        : "bg-slate-100 text-slate-500",
+                                  )}
+                                >
+                                  {bid.status}
+                                </span>
+                              </div>
+                              <p className="text-xl font-bold text-[#003566]">
+                                €{bid.amount.toLocaleString()}
+                              </p>
+                              <p className="text-[8px] font-bold text-slate-300 uppercase mt-1">
+                                {new Date(bid.created_at).toLocaleDateString()}
+                              </p>
+                            </div>
+
+                            {bid.status === "active" &&
+                              selectedYacht.status !== "Sold" && (
+                                <div className="flex gap-4 w-full md:w-auto">
+                                  <Button
+                                    type="button"
+                                    onClick={() =>
+                                      handleBidAction(bid.id, "decline")
+                                    }
+                                    className="bg-white flex-1 md:flex-none text-red-600 border-2 border-red-100 hover:bg-red-50 text-[9px] font-black uppercase rounded-none px-6"
+                                  >
+                                    Decline
+                                  </Button>
+                                  <Button
+                                    type="button"
+                                    onClick={() =>
+                                      handleBidAction(bid.id, "accept")
+                                    }
+                                    className="bg-[#003566] flex-1 md:flex-none text-white hover:bg-blue-800 text-[9px] font-black uppercase rounded-none px-8"
+                                  >
+                                    Accept Offer
+                                  </Button>
                                 </div>
-                                <p className="text-xl font-bold text-[#003566]">€{bid.amount.toLocaleString()}</p>
-                                <p className="text-[8px] font-bold text-slate-300 uppercase mt-1">{new Date(bid.created_at).toLocaleDateString()}</p>
-                            </div>
-                            
-                            {bid.status === 'active' && selectedYacht.status !== 'Sold' && (
-                            <div className="flex gap-4 w-full md:w-auto">
-                                <Button 
-                                type="button"
-                                onClick={() => handleBidAction(bid.id, 'decline')}
-                                className="bg-white flex-1 md:flex-none text-red-600 border-2 border-red-100 hover:bg-red-50 text-[9px] font-black uppercase rounded-none px-6"
-                                >
-                                Decline
-                                </Button>
-                                <Button 
-                                type="button"
-                                onClick={() => handleBidAction(bid.id, 'accept')}
-                                className="bg-[#003566] flex-1 md:flex-none text-white hover:bg-blue-800 text-[9px] font-black uppercase rounded-none px-8"
-                                >
-                                Accept Offer
-                                </Button>
-                            </div>
-                            )}
-                        </div>
+                              )}
+                          </div>
                         ))
-                    )}
+                      )}
                     </div>
-                </div>
-              )}
+                  </div>
+                )}
 
               {/* Technical Dossier */}
               <div className="space-y-16">
-                <h3 className="text-[14px] font-black text-[#003566] uppercase tracking-[0.4em] flex items-center gap-4 border-b-4 border-[#003566] pb-6"><Waves size={24} className="text-blue-600" /> Technical Dossier</h3>
-                
+                <h3 className="text-[14px] font-black text-[#003566] uppercase tracking-[0.4em] flex items-center gap-4 border-b-4 border-[#003566] pb-6">
+                  <Waves size={24} className="text-blue-600" /> Technical
+                  Dossier
+                </h3>
+
                 <div className="grid grid-cols-2 gap-16">
                   <div className="space-y-8">
-                    <SectionHeader icon={<Ship size={18} />} title="Hull & Dimensions" />
+                    <SectionHeader
+                      icon={<Ship size={18} />}
+                      title="Hull & Dimensions"
+                    />
                     <div className="grid grid-cols-2 gap-8">
-                      <div className="space-y-2"><Label>Hull Shape</Label><Input name="hull_shape" defaultValue={selectedYacht?.hull_shape} /></div>
-                      <div className="space-y-2"><Label>Material</Label><Input name="construction_material" defaultValue={selectedYacht?.construction_material} /></div>
-                      <div className="space-y-2"><Label>Beam</Label><Input name="beam" defaultValue={selectedYacht?.beam} /></div>
-                      <div className="space-y-2"><Label>Draft</Label><Input name="draft" defaultValue={selectedYacht?.draft} /></div>
+                      <div className="space-y-2">
+                        <Label>Hull Shape</Label>
+                        <Input
+                          name="hull_shape"
+                          defaultValue={selectedYacht?.hull_shape}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Material</Label>
+                        <Input
+                          name="construction_material"
+                          defaultValue={selectedYacht?.construction_material}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Beam</Label>
+                        <Input name="beam" defaultValue={selectedYacht?.beam} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Draft</Label>
+                        <Input
+                          name="draft"
+                          defaultValue={selectedYacht?.draft}
+                        />
+                      </div>
                     </div>
                   </div>
-          
+
                   <div className="space-y-8">
-                    <SectionHeader icon={<Zap size={18} />} title="Engine & Performance" />
+                    <SectionHeader
+                      icon={<Zap size={18} />}
+                      title="Engine & Performance"
+                    />
                     <div className="bg-slate-50 p-8 grid grid-cols-2 gap-8 border border-slate-100">
-                      <div className="space-y-2"><Label>Engine Brand</Label><Input name="engine_brand" defaultValue={selectedYacht?.engine_brand} className="bg-white" /></div>
-                      <div className="space-y-2"><Label>Model</Label><Input name="engine_model" defaultValue={selectedYacht?.engine_model} className="bg-white" /></div>
-                      <div className="space-y-2"><Label>Power (HP)</Label><Input name="engine_power" defaultValue={selectedYacht?.engine_power} className="bg-white" /></div>
-                      <div className="space-y-2"><Label>Hours</Label><Input name="engine_hours" defaultValue={selectedYacht?.engine_hours} className="bg-white" /></div>
+                      <div className="space-y-2">
+                        <Label>Engine Brand</Label>
+                        <Input
+                          name="engine_brand"
+                          defaultValue={selectedYacht?.engine_brand}
+                          className="bg-white"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Model</Label>
+                        <Input
+                          name="engine_model"
+                          defaultValue={selectedYacht?.engine_model}
+                          className="bg-white"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Power (HP)</Label>
+                        <Input
+                          name="engine_power"
+                          defaultValue={selectedYacht?.engine_power}
+                          className="bg-white"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Hours</Label>
+                        <Input
+                          name="engine_hours"
+                          defaultValue={selectedYacht?.engine_hours}
+                          className="bg-white"
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
 
                 <div className="space-y-8">
-                  <SectionHeader icon={<Bed size={18} />} title="Accommodation & Systems" />
+                  <SectionHeader
+                    icon={<Bed size={18} />}
+                    title="Accommodation & Systems"
+                  />
                   <div className="grid grid-cols-4 gap-8">
-                    <div className="space-y-2"><Label>Cabins</Label><Input name="cabins" type="number" defaultValue={selectedYacht?.cabins} /></div>
-                    <div className="space-y-2"><Label>Berths</Label><Input name="berths" defaultValue={selectedYacht?.berths} /></div>
-                    <div className="space-y-2"><Label>Heads</Label><Input name="heads" type="number" defaultValue={selectedYacht?.heads} /></div>
-                    <div className="space-y-2"><Label>Water Tank</Label><Input name="water_tank" defaultValue={selectedYacht?.water_tank} /></div>
+                    <div className="space-y-2">
+                      <Label>Cabins</Label>
+                      <Input
+                        name="cabins"
+                        type="number"
+                        defaultValue={selectedYacht?.cabins}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Berths</Label>
+                      <Input
+                        name="berths"
+                        defaultValue={selectedYacht?.berths}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Heads</Label>
+                      <Input
+                        name="heads"
+                        type="number"
+                        defaultValue={selectedYacht?.heads}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Water Tank</Label>
+                      <Input
+                        name="water_tank"
+                        defaultValue={selectedYacht?.water_tank}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -505,20 +795,59 @@ export default function EmployeeFleetPage() {
               {/* Gallery System */}
               {Object.keys(galleryState).map((cat) => (
                 <div key={cat} className="space-y-8">
-                  <h3 className="text-[12px] font-black uppercase text-[#003566] tracking-[0.3em] flex items-center gap-3 italic border-b border-slate-100 pb-6"><Images size={22} className="text-blue-600" /> {cat} Gallery</h3>
+                  <h3 className="text-[12px] font-black uppercase text-[#003566] tracking-[0.3em] flex items-center gap-3 italic border-b border-slate-100 pb-6">
+                    <Images size={22} className="text-blue-600" /> {cat} Gallery
+                  </h3>
                   <div className="bg-white border-2 border-slate-50 p-6">
                     <div className="flex justify-between items-center mb-8">
-                      <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Categorized Assets</span>
-                      <label className="cursor-pointer bg-[#003566] text-white px-8 py-3 text-[9px] font-black uppercase tracking-widest shadow-lg hover:bg-blue-800 transition-all">Queue {cat} Files<input type="file" multiple className="hidden" accept="image/*" onChange={(e) => handleGalleryAdd(cat, e.target.files)} /></label>
+                      <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
+                        Categorized Assets
+                      </span>
+                      <label className="cursor-pointer bg-[#003566] text-white px-8 py-3 text-[9px] font-black uppercase tracking-widest shadow-lg hover:bg-blue-800 transition-all">
+                        Queue {cat} Files
+                        <input
+                          type="file"
+                          multiple
+                          className="hidden"
+                          accept="image/*"
+                          onChange={(e) =>
+                            handleGalleryAdd(cat, e.target.files)
+                          }
+                        />
+                      </label>
                     </div>
                     <div className="grid grid-cols-4 lg:grid-cols-6 gap-4 min-h-[150px]">
                       {galleryState[cat].map((item, i) => {
                         const isFile = item instanceof File;
-                        const src = isFile ? URL.createObjectURL(item) : `${STORAGE_URL}${item.url}`;
+                        const src = isFile
+                          ? URL.createObjectURL(item)
+                          : `${STORAGE_URL}${item.url}`;
                         return (
-                          <div key={i} className="aspect-square relative group border border-slate-100 overflow-hidden">
-                            <img src={src} className="w-full h-full object-cover transition-transform group-hover:scale-110" onError={handleImageError} />
-                            <button type="button" onClick={() => isFile ? setGalleryState(p => ({...p, [cat]: p[cat].filter((_, idx) => idx !== i)})) : deleteExistingImage(item.id, cat, i)} className="absolute inset-0 bg-red-600/90 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-all"><Trash size={20} /></button>
+                          <div
+                            key={i}
+                            className="aspect-square relative group border border-slate-100 overflow-hidden"
+                          >
+                            <img
+                              src={src}
+                              className="w-full h-full object-cover transition-transform group-hover:scale-110"
+                              onError={handleImageError}
+                            />
+                            <button
+                              type="button"
+                              onClick={() =>
+                                isFile
+                                  ? setGalleryState((p) => ({
+                                      ...p,
+                                      [cat]: p[cat].filter(
+                                        (_, idx) => idx !== i,
+                                      ),
+                                    }))
+                                  : deleteExistingImage(item.id, cat, i)
+                              }
+                              className="absolute inset-0 bg-red-600/90 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-all"
+                            >
+                              <Trash size={20} />
+                            </button>
                           </div>
                         );
                       })}
@@ -528,8 +857,17 @@ export default function EmployeeFleetPage() {
               ))}
 
               <div className="pt-16 border-t-2 border-slate-100 sticky bottom-0 bg-[#F8FAFC] pb-10">
-                <Button type="submit" disabled={isSubmitting} className="w-full bg-[#003566] text-white h-20 font-black uppercase text-[12px] tracking-[0.4em] shadow-2xl hover:bg-blue-800 transition-all">
-                  {isSubmitting ? <Loader2 className="animate-spin mr-3" /> : <Plus className="mr-3" />} Commit Vessel to Registry
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full bg-[#003566] text-white h-20 font-black uppercase text-[12px] tracking-[0.4em] shadow-2xl hover:bg-blue-800 transition-all"
+                >
+                  {isSubmitting ? (
+                    <Loader2 className="animate-spin mr-3" />
+                  ) : (
+                    <Plus className="mr-3" />
+                  )}{" "}
+                  Commit Vessel to Registry
                 </Button>
               </div>
             </div>
@@ -541,13 +879,35 @@ export default function EmployeeFleetPage() {
 }
 
 function Label({ children }: { children: React.ReactNode }) {
-  return <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3">{children}</p>;
+  return (
+    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3">
+      {children}
+    </p>
+  );
 }
 
 function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
-  return <input {...props} className={cn("w-full bg-transparent border-b-2 border-slate-100 py-3 text-xs font-bold text-[#003566] outline-none focus:border-blue-600 transition-all placeholder:text-slate-200", props.className)} />;
+  return (
+    <input
+      {...props}
+      className={cn(
+        "w-full bg-transparent border-b-2 border-slate-100 py-3 text-xs font-bold text-[#003566] outline-none focus:border-blue-600 transition-all placeholder:text-slate-200",
+        props.className,
+      )}
+    />
+  );
 }
 
-function SectionHeader({ icon, title }: { icon: React.ReactNode, title: string }) {
-  return <h4 className="text-[11px] font-black uppercase tracking-[0.3em] text-blue-600 flex items-center gap-3 mb-6 bg-blue-50/50 p-3 border-l-4 border-blue-600">{icon} {title}</h4>;
+function SectionHeader({
+  icon,
+  title,
+}: {
+  icon: React.ReactNode;
+  title: string;
+}) {
+  return (
+    <h4 className="text-[11px] font-black uppercase tracking-[0.3em] text-blue-600 flex items-center gap-3 mb-6 bg-blue-50/50 p-3 border-l-4 border-blue-600">
+      {icon} {title}
+    </h4>
+  );
 }

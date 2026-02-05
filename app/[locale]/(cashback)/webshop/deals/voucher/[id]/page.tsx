@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { Loader2, Printer, ArrowLeft } from "lucide-react";
 import { tokenUtils } from "@/utils/auth"; // Adjust path to your auth utils
 
-const API_BASE = "https://kring.answer24.nl/api/v1";
+const API_BASE = "https://schepen-kring.nl/api/v1";
 
 interface RequestedDeal {
   id: number | string;
@@ -117,7 +117,7 @@ export default function VoucherPage() {
         {/* Header */}
         <div className="p-10 text-left border-b-2 border-dashed border-slate-100">
           <img
-            src={deal.deal_image || "https://kring.answer24.nl/placeholder.png"}
+            src={deal.deal_image || "https://schepen-kring.nl/placeholder.png"}
             className="w-16 h-16 rounded-[20px] object-cover mb-6 shadow-sm"
             alt="Logo"
           />

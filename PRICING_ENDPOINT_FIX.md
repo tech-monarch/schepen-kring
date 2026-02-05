@@ -43,7 +43,7 @@ The backend endpoint is now working correctly:
 
 ```bash
 curl --request GET \
-  --url https://kring.answer24.nl/api/v1/plans \
+  --url https://schepen-kring.nl/api/v1/plans \
   --header 'Accept: application/json'
 ```
 

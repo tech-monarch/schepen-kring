@@ -221,7 +221,7 @@ const LockScreen: React.FC<LockScreenProps> = ({ onUnlock, show }) => {
       }
 
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL || "https://kring.answer24.nl/api/v1"}/create-pin`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL || "https://schepen-kring.nl/api/v1"}/create-pin`,
         {
           method: "POST",
           headers: {

@@ -10,7 +10,7 @@ Successfully refactored the pricing page and payment modal to use centralized AP
 
 - **Issue**: Hardcoded URL on line 55
   ```typescript
-  const pricingEndpoint = "https://kring.answer24.nl/api/v1/plan";
+  const pricingEndpoint = "https://schepen-kring.nl/api/v1/plan";
   ```
 
 ### 2. **Payment Modal** (`components/plans/PaymentModal.tsx`)
@@ -18,7 +18,7 @@ Successfully refactored the pricing page and payment modal to use centralized AP
 - **Issue**: Hardcoded URL on line 73
   ```typescript
   const response = await fetch(
-    "https://kring.answer24.nl/api/v1/wallet/deposit",
+    "https://schepen-kring.nl/api/v1/wallet/deposit",
     // ...
   );
   ```
@@ -37,7 +37,7 @@ import { getApiUrl, API_CONFIG } from "@/lib/api-config";
 
 ```typescript
 // BEFORE
-const pricingEndpoint = "https://kring.answer24.nl/api/v1/plan";
+const pricingEndpoint = "https://schepen-kring.nl/api/v1/plan";
 const response = await fetch(pricingEndpoint, {
   method: "GET",
   headers: {
@@ -68,18 +68,15 @@ import { getApiUrl, API_CONFIG } from "@/lib/api-config";
 
 ```typescript
 // BEFORE
-const response = await fetch(
-  "https://kring.answer24.nl/api/v1/wallet/deposit",
-  {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-      Accept: "application/json",
-    },
-    body: JSON.stringify(requestPayload),
+const response = await fetch("https://schepen-kring.nl/api/v1/wallet/deposit", {
+  method: "POST",
+  headers: {
+    Authorization: `Bearer ${token}`,
+    "Content-Type": "application/json",
+    Accept: "application/json",
   },
-);
+  body: JSON.stringify(requestPayload),
+});
 
 // AFTER
 const response = await fetch(getApiUrl(API_CONFIG.ENDPOINTS.WALLET.DEPOSIT), {
@@ -142,7 +139,7 @@ const response = await fetch(getApiUrl(API_CONFIG.ENDPOINTS.WALLET.DEPOSIT), {
 Ensure `.env.local` contains:
 
 ```bash
-NEXT_PUBLIC_API_BASE_URL=https://kring.answer24.nl/api/v1
+NEXT_PUBLIC_API_BASE_URL=https://schepen-kring.nl/api/v1
 ```
 
 Or for local development:

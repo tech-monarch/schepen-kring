@@ -20,7 +20,7 @@ export function FaqsSection() {
   useEffect(() => {
     const fetchFaqs = async () => {
       try {
-        const response = await fetch("https://kring.answer24.nl/api/v1/faqs", {
+        const response = await fetch("https://schepen-kring.nl/api/v1/faqs", {
           headers: { Accept: "application/json" },
         });
 

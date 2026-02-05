@@ -33,7 +33,7 @@ import { Avatar } from "@/types/avatar.d";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 // ✅ Hardcoded API base
-const API_BASE = "https://kring.answer24.nl/api/v1";
+const API_BASE = "https://schepen-kring.nl/api/v1";
 
 // ✅ Create avatar (POST)
 export async function createAvatar(token: string, payload: any) {

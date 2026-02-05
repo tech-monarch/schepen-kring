@@ -21,7 +21,7 @@ import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-toastify";
 
-const API_BASE = "https://kring.answer24.nl/api/v1";
+const API_BASE = "https://schepen-kring.nl/api/v1";
 
 interface KnowledgeItem {
   id: number;

@@ -6,7 +6,7 @@ export interface TranslationKey {
   [lang: string]: string; // dynamic keys for languages like en, nl, es, etc.
 }
 
-const API_BASE = "https://kring.answer24.nl/api/v1";
+const API_BASE = "https://schepen-kring.nl/api/v1";
 
 export const translationService = {
   // Fetch translations for a specific language
@@ -30,7 +30,7 @@ export const translationService = {
   // Update a translation for a specific key and language
   async updateTranslation(key: string, langCode: string, text: string) {
     const response = await fetch(
-      `https://kring.answer24.nl/api/v1/admin/translations/${key}/${langCode}`,
+      `https://schepen-kring.nl/api/v1/admin/translations/${key}/${langCode}`,
       {
         method: "PUT",
         headers: {

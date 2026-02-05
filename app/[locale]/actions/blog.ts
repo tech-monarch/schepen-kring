@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { tokenUtils } from "@/utils/auth";
 
 // ✅ Hardcoded API domain
-const API_URL = "https://kring.answer24.nl/api/v1";
+const API_URL = "https://schepen-kring.nl/api/v1";
 
 // Zod schema for blog post
 const blogSchema = z.object({

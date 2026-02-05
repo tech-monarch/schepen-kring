@@ -54,7 +54,7 @@ Some files may need manual updates. Here are the patterns to look for:
 
 ```typescript
 // OLD
-const API_BASE_URL = "https://kring.answer24.nl/api/v1";
+const API_BASE_URL = "https://schepen-kring.nl/api/v1";
 const response = await fetch(`${API_BASE_URL}/endpoint`);
 
 // NEW
@@ -66,7 +66,7 @@ const response = await fetch(getApiUrl("/endpoint"));
 
 ```typescript
 // OLD
-process.env.NEXT_PUBLIC_API_BASE_URL || "https://kring.answer24.nl/api/v1";
+process.env.NEXT_PUBLIC_API_BASE_URL || "https://schepen-kring.nl/api/v1";
 
 // NEW
 API_CONFIG.BASE_URL;

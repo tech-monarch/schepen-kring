@@ -34,7 +34,7 @@ import { useParams, useRouter } from "next/navigation";
 import { getAllBlogs } from "@/app/[locale]/actions/blog";
 import fallbackLogo from "./logo.jpg";
 
-const API_BASE = "https://kring.answer24.nl/api/v1";
+const API_BASE = "https://schepen-kring.nl/api/v1";
 interface RequestedDeal {
   id: number | string;
   deal_name: string;
@@ -178,7 +178,7 @@ export default function DealDetailPage() {
         setLoading(true);
 
         const [dealsRes, blogResponse] = await Promise.all([
-          fetch(`https://kring.answer24.nl/api/v1/merchant/deals`),
+          fetch(`https://schepen-kring.nl/api/v1/merchant/deals`),
           getAllBlogs(),
         ]);
 
@@ -266,7 +266,7 @@ export default function DealDetailPage() {
 
         // Fetch Deal using your hardcoded merchant route
         const res = await fetch(
-          `https://kring.answer24.nl/api/v1/merchant/deals`,
+          `https://schepen-kring.nl/api/v1/merchant/deals`,
         );
         const result = await res.json();
         if (result.success) {
@@ -279,7 +279,7 @@ export default function DealDetailPage() {
         // Fetch Wallet using your hardcoded ledger route
         if (token && userId) {
           const walletRes = await fetch(
-            `https://kring.answer24.nl/api/v1/admin/ledger/balance/${userId}`,
+            `https://schepen-kring.nl/api/v1/admin/ledger/balance/${userId}`,
             {
               headers: {
                 Authorization: `Bearer ${token}`,
@@ -309,7 +309,7 @@ export default function DealDetailPage() {
 
         // Change this to use API_BASE to match your working deals fetch
         const response = await fetch(
-          `https://kring.answer24.nl/api/v1/wallet/balance`,
+          `https://schepen-kring.nl/api/v1/wallet/balance`,
           {
             method: "GET",
             headers: {
@@ -338,7 +338,7 @@ export default function DealDetailPage() {
       try {
         // Fetch Deal
         const res = await fetch(
-          `https://kring.answer24.nl/api/v1/merchant/deals`,
+          `https://schepen-kring.nl/api/v1/merchant/deals`,
         );
         const result = await res.json();
         if (result.success) {
@@ -403,7 +403,7 @@ export default function DealDetailPage() {
   //     setIsProcessing(true);
   //     try {
   //       const token = localStorage.getItem('auth_token');
-  //       const API_URL = "https://kring.answer24.nl/api/v1";
+  //       const API_URL = "https://schepen-kring.nl/api/v1";
 
   //       const deductRes = await fetch(`${API_URL}/admin/ledger/adjust`, {
   //         method: 'POST',
@@ -457,7 +457,7 @@ export default function DealDetailPage() {
     const unitPrice = parseFloat(String(selectedItem.deal_price || 0));
     const totalToPay = unitPrice * (peopleCount || 1);
     const token = localStorage.getItem("auth_token");
-    const API_URL = "https://kring.answer24.nl/api/v1";
+    const API_URL = "https://schepen-kring.nl/api/v1";
 
     setIsProcessing(true);
 
@@ -724,7 +724,7 @@ export default function DealDetailPage() {
       <body>
         <div class="voucher">
           <div class="header">
-            <img src="${deal.deal_image || "https://kring.answer24.nl/placeholder.png"}" class="merchant-logo" alt="Logo">
+            <img src="${deal.deal_image || "https://schepen-kring.nl/placeholder.png"}" class="merchant-logo" alt="Logo">
             <h1>${deal.deal_name}</h1>
             <p class="deal-summary">Reservation Confirmation & Voucher</p>
           </div>

@@ -17,7 +17,8 @@ import {
   AlertTriangle,
   Info,
   ChevronLeft,
-  ChevronRight, Code
+  ChevronRight,
+  Code,
 } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { usePathname } from "next/navigation";
@@ -29,8 +30,7 @@ import { Button } from "@/components/ui/button";
 import { Toaster, toast } from "react-hot-toast";
 import axios from "axios";
 
-import { Sidebar } from "@/components/dashboard/Sidebar"; 
-
+import { Sidebar } from "@/components/dashboard/Sidebar";
 
 interface Task {
   id: string | number;
@@ -50,11 +50,11 @@ export default function TaskManifestPage() {
   const [loading, setLoading] = useState(true);
   const [isOnline, setIsOnline] = useState(true);
   const [now, setNow] = useState(Date.now());
-  
+
   // Sidebar State
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
-  const API_BASE = "https://kring.answer24.nl/api";
+  const API_BASE = "https://schepen-kring.nl/api";
   const THREE_DAYS_MS = 3 * 24 * 60 * 60 * 1000;
 
   useEffect(() => {
@@ -88,9 +88,11 @@ export default function TaskManifestPage() {
           timestamp: t.timestamp || Date.now(),
         }));
 
-        const personal = JSON.parse(localStorage.getItem("personal_tasks") || "[]");
+        const personal = JSON.parse(
+          localStorage.getItem("personal_tasks") || "[]",
+        );
         currentTasks = [...fetchedTasks, ...personal];
-        const filteredTasks = currentTasks.filter(task => {
+        const filteredTasks = currentTasks.filter((task) => {
           if (task.status === "Done" && task.completedAt) {
             return Date.now() - task.completedAt < THREE_DAYS_MS;
           }
@@ -111,7 +113,10 @@ export default function TaskManifestPage() {
 
   const saveToLocalStorage = (allTasks: Task[]) => {
     localStorage.setItem("task_cache", JSON.stringify(allTasks));
-    localStorage.setItem("personal_tasks", JSON.stringify(allTasks.filter((t) => t.type === "personal")));
+    localStorage.setItem(
+      "personal_tasks",
+      JSON.stringify(allTasks.filter((t) => t.type === "personal")),
+    );
   };
 
   const processSyncQueue = async () => {
@@ -120,8 +125,14 @@ export default function TaskManifestPage() {
     const token = localStorage.getItem("auth_token");
     for (const action of queue) {
       try {
-        await axios.patch(`${API_BASE}/tasks/${action.id}/status`, { status: action.status }, { headers: { Authorization: `Bearer ${token}` } });
-      } catch (e) { console.error(e); }
+        await axios.patch(
+          `${API_BASE}/tasks/${action.id}/status`,
+          { status: action.status },
+          { headers: { Authorization: `Bearer ${token}` } },
+        );
+      } catch (e) {
+        console.error(e);
+      }
     }
     localStorage.setItem("sync_queue", "[]");
   };
@@ -131,7 +142,10 @@ export default function TaskManifestPage() {
       if (a.status === "Done" && b.status !== "Done") return 1;
       if (a.status !== "Done" && b.status === "Done") return -1;
       const pMap = { Urgent: 4, High: 3, Medium: 2, Low: 1 };
-      return (pMap[b.priority] || 0) - (pMap[a.priority] || 0) || b.timestamp - a.timestamp;
+      return (
+        (pMap[b.priority] || 0) - (pMap[a.priority] || 0) ||
+        b.timestamp - a.timestamp
+      );
     });
   }, [tasks]);
 
@@ -152,17 +166,28 @@ export default function TaskManifestPage() {
   };
 
   const deletePersonalTask = (id: string | number) => {
-    const updated = tasks.filter(t => t.id !== id);
+    const updated = tasks.filter((t) => t.id !== id);
     setTasks(updated);
     saveToLocalStorage(updated);
     toast.success("Task removed");
   };
 
-  const advanceStatus = async (id: string | number, currentStatus: string, type: string) => {
+  const advanceStatus = async (
+    id: string | number,
+    currentStatus: string,
+    type: string,
+  ) => {
     const sequence: Task["status"][] = ["To Do", "In Progress", "Done"];
-    const nextStatus = sequence[(sequence.indexOf(currentStatus as any) + 1) % sequence.length];
+    const nextStatus =
+      sequence[(sequence.indexOf(currentStatus as any) + 1) % sequence.length];
     const updatedTasks = tasks.map((t) =>
-      t.id === id ? { ...t, status: nextStatus, completedAt: nextStatus === "Done" ? Date.now() : undefined } : t
+      t.id === id
+        ? {
+            ...t,
+            status: nextStatus,
+            completedAt: nextStatus === "Done" ? Date.now() : undefined,
+          }
+        : t,
     );
     setTasks(updatedTasks);
     saveToLocalStorage(updatedTasks);
@@ -171,8 +196,14 @@ export default function TaskManifestPage() {
       if (navigator.onLine) {
         try {
           const token = localStorage.getItem("auth_token");
-          await axios.patch(`${API_BASE}/tasks/${id}/status`, { status: nextStatus }, { headers: { Authorization: `Bearer ${token}` } });
-        } catch (err) { addToQueue(id, nextStatus); }
+          await axios.patch(
+            `${API_BASE}/tasks/${id}/status`,
+            { status: nextStatus },
+            { headers: { Authorization: `Bearer ${token}` } },
+          );
+        } catch (err) {
+          addToQueue(id, nextStatus);
+        }
       } else {
         addToQueue(id, nextStatus);
       }
@@ -187,9 +218,25 @@ export default function TaskManifestPage() {
 
   const getSidebarItems = () => {
     return [
-      { title: t("overview"), href: userRole === "Admin" ? "/dashboard/admin" : "/dashboard", icon: BarChart3 },
-      { title: t("fleet_management"), href: userRole === "Admin" ? "/dashboard/admin/yachts" : "/dashboard/yachts", icon: Anchor },
-      { title: t("task_board"), href: userRole === "Admin" ? "/dashboard/admin/tasks" : "/dashboard/tasks", icon: CheckSquare },
+      {
+        title: t("overview"),
+        href: userRole === "Admin" ? "/dashboard/admin" : "/dashboard",
+        icon: BarChart3,
+      },
+      {
+        title: t("fleet_management"),
+        href:
+          userRole === "Admin"
+            ? "/dashboard/admin/yachts"
+            : "/dashboard/yachts",
+        icon: Anchor,
+      },
+      {
+        title: t("task_board"),
+        href:
+          userRole === "Admin" ? "/dashboard/admin/tasks" : "/dashboard/tasks",
+        icon: CheckSquare,
+      },
     ];
   };
 
@@ -202,24 +249,36 @@ export default function TaskManifestPage() {
   };
 
   const getPriorityStyles = (priority: Task["priority"], status: string) => {
-    if (status === "Done") return "border-l-4 border-l-emerald-500 bg-slate-50 opacity-60";
+    if (status === "Done")
+      return "border-l-4 border-l-emerald-500 bg-slate-50 opacity-60";
     switch (priority) {
-      case "Urgent": return "border-l-4 border-l-red-600 bg-red-50/30";
-      case "High": return "border-l-4 border-l-orange-500 bg-orange-50/30";
-      case "Medium": return "border-l-4 border-l-blue-500 bg-blue-50/30";
-      case "Low": return "border-l-4 border-l-slate-400 bg-slate-50/30";
-      default: return "border-l-4 border-l-[#003566]";
+      case "Urgent":
+        return "border-l-4 border-l-red-600 bg-red-50/30";
+      case "High":
+        return "border-l-4 border-l-orange-500 bg-orange-50/30";
+      case "Medium":
+        return "border-l-4 border-l-blue-500 bg-blue-50/30";
+      case "Low":
+        return "border-l-4 border-l-slate-400 bg-slate-50/30";
+      default:
+        return "border-l-4 border-l-[#003566]";
     }
   };
 
   const getIconStyles = (priority: Task["priority"], status: string) => {
-    if (status === "Done") return "text-emerald-500 bg-emerald-50 border-emerald-100";
+    if (status === "Done")
+      return "text-emerald-500 bg-emerald-50 border-emerald-100";
     switch (priority) {
-      case "Urgent": return "text-red-600 bg-red-100 border-red-200";
-      case "High": return "text-orange-500 bg-orange-100 border-orange-200";
-      case "Medium": return "text-blue-500 bg-blue-100 border-blue-200";
-      case "Low": return "text-slate-500 bg-slate-100 border-slate-200";
-      default: return "text-slate-300 bg-slate-50 border-slate-100";
+      case "Urgent":
+        return "text-red-600 bg-red-100 border-red-200";
+      case "High":
+        return "text-orange-500 bg-orange-100 border-orange-200";
+      case "Medium":
+        return "text-blue-500 bg-blue-100 border-blue-200";
+      case "Low":
+        return "text-slate-500 bg-slate-100 border-slate-200";
+      default:
+        return "text-slate-300 bg-slate-50 border-slate-100";
     }
   };
 
@@ -227,12 +286,11 @@ export default function TaskManifestPage() {
     <div className="min-h-screen bg-white text-[#003566]">
       <DashboardHeader />
       <div className="flex pt-20">
-              {/* COLLAPSIBLE SIDEBAR */}
-                    <Sidebar onCollapse={setIsSidebarCollapsed} />   
-      
+        {/* COLLAPSIBLE SIDEBAR */}
+        <Sidebar onCollapse={setIsSidebarCollapsed} />
 
         {/* MAIN CONTENT AREA */}
-        <motion.main 
+        <motion.main
           animate={{ marginLeft: isSidebarCollapsed ? 80 : 256 }}
           className="flex-1 p-8 bg-white min-h-[calc(100vh-80px)] z-30 -mt-20"
         >
@@ -240,11 +298,15 @@ export default function TaskManifestPage() {
             <Toaster position="top-right" />
             <div className="flex justify-between items-end border-b border-slate-100 pb-8 mt-4">
               <div>
-                <h1 className="text-3xl font-serif italic text-[#003566]">Operational Manifest</h1>
-                <p className="text-[9px] font-black uppercase tracking-[0.3em] text-blue-600 mt-2">Vessel Maintenance & Directives</p>
+                <h1 className="text-3xl font-serif italic text-[#003566]">
+                  Operational Manifest
+                </h1>
+                <p className="text-[9px] font-black uppercase tracking-[0.3em] text-blue-600 mt-2">
+                  Vessel Maintenance & Directives
+                </p>
               </div>
-              <Button 
-                onClick={addPersonalTask} 
+              <Button
+                onClick={addPersonalTask}
                 className="bg-[#003566] text-white hover:bg-[#003566]/90 text-[10px] font-black uppercase tracking-widest px-8 h-12 rounded-none transition-all shadow-xl"
               >
                 <Plus size={14} className="mr-2" /> New Personal Task
@@ -254,44 +316,103 @@ export default function TaskManifestPage() {
             <div className="space-y-4">
               <AnimatePresence mode="popLayout">
                 {sortedTasks.map((task) => (
-                  <motion.div layout key={task.id} className={cn("flex flex-col md:flex-row items-center justify-between p-6 gap-6 border shadow-sm", task.type === "personal" ? "border-dashed border-2 bg-slate-50/50" : "bg-white", getPriorityStyles(task.priority, task.status))}>
+                  <motion.div
+                    layout
+                    key={task.id}
+                    className={cn(
+                      "flex flex-col md:flex-row items-center justify-between p-6 gap-6 border shadow-sm",
+                      task.type === "personal"
+                        ? "border-dashed border-2 bg-slate-50/50"
+                        : "bg-white",
+                      getPriorityStyles(task.priority, task.status),
+                    )}
+                  >
                     <div className="flex items-center gap-6 flex-1 w-full">
-                      <div className={cn("w-12 h-12 flex items-center justify-center border", getIconStyles(task.priority, task.status))}>
-                        {task.type === "personal" ? <User size={18} /> : 
-                         task.status === "Done" ? <CheckSquare size={18} /> : 
-                         task.priority === "Urgent" ? <AlertCircle size={20} /> :
-                         task.priority === "High" ? <AlertTriangle size={18} /> :
-                         task.priority === "Medium" ? <ShieldAlert size={18} /> : <Info size={18} />}
+                      <div
+                        className={cn(
+                          "w-12 h-12 flex items-center justify-center border",
+                          getIconStyles(task.priority, task.status),
+                        )}
+                      >
+                        {task.type === "personal" ? (
+                          <User size={18} />
+                        ) : task.status === "Done" ? (
+                          <CheckSquare size={18} />
+                        ) : task.priority === "Urgent" ? (
+                          <AlertCircle size={20} />
+                        ) : task.priority === "High" ? (
+                          <AlertTriangle size={18} />
+                        ) : task.priority === "Medium" ? (
+                          <ShieldAlert size={18} />
+                        ) : (
+                          <Info size={18} />
+                        )}
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center gap-3">
-                          <h3 className="text-sm font-black uppercase tracking-wider text-[#003566]">{task.title}</h3>
-                          {task.type === "personal" && <span className="px-2 py-0.5 bg-blue-100 text-[#003566] text-[7px] font-black uppercase border border-blue-200">Personal</span>}
-                          {task.status !== "Done" && task.priority === "Urgent" && (
-                            <span className="px-2 py-0.5 bg-red-600 text-white text-[7px] font-black uppercase animate-pulse">Critical</span>
+                          <h3 className="text-sm font-black uppercase tracking-wider text-[#003566]">
+                            {task.title}
+                          </h3>
+                          {task.type === "personal" && (
+                            <span className="px-2 py-0.5 bg-blue-100 text-[#003566] text-[7px] font-black uppercase border border-blue-200">
+                              Personal
+                            </span>
                           )}
+                          {task.status !== "Done" &&
+                            task.priority === "Urgent" && (
+                              <span className="px-2 py-0.5 bg-red-600 text-white text-[7px] font-black uppercase animate-pulse">
+                                Critical
+                              </span>
+                            )}
                           {task.status === "Done" && (
                             <span className="flex items-center gap-1 text-[8px] font-black uppercase text-emerald-600 bg-emerald-50 px-2 py-0.5 border border-emerald-100">
-                              <Clock size={10} /> {getRemainingTime(task.completedAt!)}
+                              <Clock size={10} />{" "}
+                              {getRemainingTime(task.completedAt!)}
                             </span>
                           )}
                         </div>
                         <p className="text-[9px] font-bold text-slate-300 uppercase tracking-widest mt-1">
-                          Ref: {task.id} • <span className={cn(
-                            task.priority === "Urgent" ? "text-red-600" :
-                            task.priority === "High" ? "text-orange-500" :
-                            task.priority === "Medium" ? "text-blue-500" : "text-slate-400"
-                          )}>{task.priority} Priority</span> {task.status === "Done" && "• Clears automatically"}
+                          Ref: {task.id} •{" "}
+                          <span
+                            className={cn(
+                              task.priority === "Urgent"
+                                ? "text-red-600"
+                                : task.priority === "High"
+                                  ? "text-orange-500"
+                                  : task.priority === "Medium"
+                                    ? "text-blue-500"
+                                    : "text-slate-400",
+                            )}
+                          >
+                            {task.priority} Priority
+                          </span>{" "}
+                          {task.status === "Done" && "• Clears automatically"}
                         </p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2 w-full md:w-auto">
                       {task.type === "personal" && (
-                        <button onClick={() => deletePersonalTask(task.id)} className="p-3 text-red-400 hover:text-red-600 transition-all border border-transparent hover:bg-red-50">
+                        <button
+                          onClick={() => deletePersonalTask(task.id)}
+                          className="p-3 text-red-400 hover:text-red-600 transition-all border border-transparent hover:bg-red-50"
+                        >
                           <Trash2 size={16} />
                         </button>
                       )}
-                      <button onClick={() => advanceStatus(task.id, task.status, task.type)} className={cn("flex-1 md:flex-none px-8 py-3 text-[10px] font-black uppercase tracking-widest border transition-all min-w-[160px]", task.status === "To Do" && "border-slate-200 text-slate-400 hover:bg-[#003566] hover:text-white", task.status === "In Progress" && "border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white", task.status === "Done" && "border-emerald-500 text-emerald-500")}>
+                      <button
+                        onClick={() =>
+                          advanceStatus(task.id, task.status, task.type)
+                        }
+                        className={cn(
+                          "flex-1 md:flex-none px-8 py-3 text-[10px] font-black uppercase tracking-widest border transition-all min-w-[160px]",
+                          task.status === "To Do" &&
+                            "border-slate-200 text-slate-400 hover:bg-[#003566] hover:text-white",
+                          task.status === "In Progress" &&
+                            "border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white",
+                          task.status === "Done" &&
+                            "border-emerald-500 text-emerald-500",
+                        )}
+                      >
                         {task.status}
                       </button>
                     </div>

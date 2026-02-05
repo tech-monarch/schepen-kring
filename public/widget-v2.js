@@ -9,7 +9,7 @@
   // Configuration
   const WIDGET_VERSION = "2.0.0";
   const API_BASE_URL =
-    window.Answer24Config?.API_BASE_URL || "https://kring.answer24.nl/api/v1";
+    window.Answer24Config?.API_BASE_URL || "https://schepen-kring.nl/api/v1";
   const CDN_BASE_URL =
     window.Answer24Config?.CDN_BASE_URL || window.location.origin;
 

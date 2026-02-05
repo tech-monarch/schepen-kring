@@ -60,7 +60,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Link } from "@/i18n/navigation";
 
-const API_BASE = "https://kring.answer24.nl/api/v1/blogs";
+const API_BASE = "https://schepen-kring.nl/api/v1/blogs";
 
 // 🔹 Get all blogs
 const getAllBlogs = async () => {

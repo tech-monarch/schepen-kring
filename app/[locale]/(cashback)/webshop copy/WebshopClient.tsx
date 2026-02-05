@@ -37,7 +37,7 @@ interface RequestedDeal {
   people_count?: string | number;
 }
 
-const API_BASE = "https://kring.answer24.nl/api/v1";
+const API_BASE = "https://schepen-kring.nl/api/v1";
 
 const dummyDealsForWebshops = [
   {

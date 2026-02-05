@@ -31,7 +31,7 @@ export default function ChatLogPage() {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const API_BASE_URL =
-    process.env.NEXT_PUBLIC_API_URL || "https://kring.answer24.nl/api/v1";
+    process.env.NEXT_PUBLIC_API_URL || "https://schepen-kring.nl/api/v1";
 
   const getAuthToken = () => {
     try {

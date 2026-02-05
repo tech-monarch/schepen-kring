@@ -3,8 +3,8 @@ import axios from "axios";
 const isLocal =
   typeof window !== "undefined" && window.location.hostname === "localhost";
 const BASE_URL = isLocal
-  ? "https://kring.answer24.nl/api"
-  : "https://kring.answer24.nl/api";
+  ? "https://schepen-kring.nl/api"
+  : "https://schepen-kring.nl/api";
 
 export const api = axios.create({
   baseURL: BASE_URL,

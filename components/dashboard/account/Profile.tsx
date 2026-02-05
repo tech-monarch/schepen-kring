@@ -42,7 +42,7 @@ const updateUserProfile = async (data: {
     const response = await fetch(
       `${
         process.env.NEXT_PUBLIC_API_BASE_URL ||
-        "https://kring.answer24.nl/api/v1"
+        "https://schepen-kring.nl/api/v1"
       }/profile`,
       {
         method: "PUT",
@@ -332,7 +332,7 @@ export function Profile() {
       toast.info("Updating profile picture...");
 
       const response = await fetch(
-        "https://kring.answer24.nl/api/v1/user/update-image",
+        "https://schepen-kring.nl/api/v1/user/update-image",
         {
           method: "POST",
           headers: {

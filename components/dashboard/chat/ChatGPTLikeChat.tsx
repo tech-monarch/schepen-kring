@@ -121,7 +121,7 @@ export function ChatGPTLikeChat() {
     try {
       // 3. Notify the backend to flag the chat for human intervention
       await fetch(
-        `https://kring.answer24.nl/api/v1/history/${currentSessionId}/escalate`,
+        `https://schepen-kring.nl/api/v1/history/${currentSessionId}/escalate`,
         {
           method: "POST",
           headers: {
@@ -151,7 +151,7 @@ export function ChatGPTLikeChat() {
 
       try {
         const response = await fetch(
-          "https://kring.answer24.nl/api/v1/history",
+          "https://schepen-kring.nl/api/v1/history",
           {
             headers: { Authorization: `Bearer ${tokenUtils.getToken()}` },
           },
@@ -229,7 +229,7 @@ export function ChatGPTLikeChat() {
   // --- API HELPER: SYNC TO DB ---
   const syncToDatabase = async (session: ChatSession) => {
     try {
-      await fetch("https://kring.answer24.nl/api/v1/history", {
+      await fetch("https://schepen-kring.nl/api/v1/history", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -335,7 +335,7 @@ export function ChatGPTLikeChat() {
 
   //       // MODIFIED: Point to your NEW Laravel Controller Route
   //       // Ensure this URL matches your Laravel API route
-  //       const response = await fetch("https://kring.answer24.nl/api/v1/chat-storage", {
+  //       const response = await fetch("https://schepen-kring.nl/api/v1/chat-storage", {
   //         method: "POST",
   //         headers: {
   //           // "Content-Type": "application/json", <--- Removed so browser sets boundary
@@ -451,7 +451,7 @@ export function ChatGPTLikeChat() {
         if (selectedImage) formData.append("image", selectedImage);
 
         const response = await fetch(
-          "https://kring.answer24.nl/api/v1/chat-storage",
+          "https://schepen-kring.nl/api/v1/chat-storage",
           {
             method: "POST",
             headers: { Authorization: `Bearer ${tokenUtils.getToken()}` },
@@ -531,7 +531,7 @@ export function ChatGPTLikeChat() {
       setIsFetchingHistory(true);
       try {
         const response = await fetch(
-          "https://kring.answer24.nl/api/v1/history",
+          "https://schepen-kring.nl/api/v1/history",
           {
             headers: { Authorization: `Bearer ${tokenUtils.getToken()}` },
           },
@@ -582,7 +582,7 @@ export function ChatGPTLikeChat() {
     if (!sessionToDelete) return;
     try {
       await fetch(
-        `https://kring.answer24.nl/api/v1/history/${sessionToDelete}`,
+        `https://schepen-kring.nl/api/v1/history/${sessionToDelete}`,
         {
           method: "DELETE",
           headers: { Authorization: `Bearer ${tokenUtils.getToken()}` },

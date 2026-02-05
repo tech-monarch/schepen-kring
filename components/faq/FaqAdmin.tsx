@@ -51,7 +51,7 @@ type FAQFormData = {
   [key: string]: string | string[] | boolean | number | undefined;
 };
 
-const API_BASE = "https://kring.answer24.nl";
+const API_BASE = "https://schepen-kring.nl";
 
 const groupFAQs = (faqs: FAQItem[] | any) => {
   if (!Array.isArray(faqs)) return {};

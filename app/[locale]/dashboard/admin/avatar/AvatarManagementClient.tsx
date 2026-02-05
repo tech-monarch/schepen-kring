@@ -50,7 +50,7 @@ export default function AdminAvatarPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [avatarToDelete, setAvatarToDelete] = useState<string | null>(null);
 
-  const API_BASE = "https://kring.answer24.nl/api/v1";
+  const API_BASE = "https://schepen-kring.nl/api/v1";
 
   useEffect(() => {
     loadAvatars();

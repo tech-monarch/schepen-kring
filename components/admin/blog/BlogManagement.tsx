@@ -62,7 +62,7 @@ import {
 import { Link } from "@/i18n/navigation";
 import { useRouter } from "next/navigation"; // add this import near your other imports
 
-const API_BASE = "https://kring.answer24.nl/api/v1/blogs";
+const API_BASE = "https://schepen-kring.nl/api/v1/blogs";
 
 // 🔹 Get all blogs
 const getAllBlogs = async () => {

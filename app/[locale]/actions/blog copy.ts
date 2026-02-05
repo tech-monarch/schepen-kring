@@ -8,7 +8,7 @@ import {
   BlogFormData,
 } from "@/types/blog.d";
 
-const BASE_BLOG_URL = "https://kring.answer24.nl/api/v1";
+const BASE_BLOG_URL = "https://schepen-kring.nl/api/v1";
 
 /* =====================
    GET ALL BLOGS

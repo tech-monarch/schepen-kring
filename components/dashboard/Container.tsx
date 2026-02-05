@@ -30,7 +30,7 @@ export default function CleanDashboardContainer() {
   const [loading, setLoading] = useState(true);
   const [userName, setUserName] = useState("Crew Member");
 
-  const API_BASE = "https://kring.answer24.nl/api";
+  const API_BASE = "https://schepen-kring.nl/api";
   const headers = {
     Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
   };
