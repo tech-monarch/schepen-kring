@@ -52,43 +52,43 @@ export function Sidebar({ onCollapse }: { onCollapse?: (collapsed: boolean) => v
   }, []);
 
   // --- MENU CONFIGURATION ---
-  const menuItems = [
-    // 1. DASHBOARD (Everyone except Customer)
+const menuItems = [
+    // 1. DASHBOARD
     { 
       title: "Overview", 
-      href: "/dashboard", 
+      href: userRole === "Admin" ? "/dashboard/admin" : "/dashboard", 
       icon: BarChart3, 
       roles: ["Admin", "Employee", "Partner"] 
     },
-    // 2. FLEET (Employees & Admins)
+    // 2. FLEET
     { 
       title: "Fleet Management", 
-      href: "/dashboard/yachts", 
+      href: userRole === "Admin" ? "/dashboard/admin/yachts" : "/dashboard/yachts", 
       icon: Anchor, 
       roles: ["Admin", "Employee"] 
     },
-    // 3. TASKS (Employees & Admins)
+    // 3. TASKS
     { 
       title: "Task Board", 
-      href: "/dashboard/tasks", 
+      href: userRole === "Admin" ? "/dashboard/admin/tasks" : "/dashboard/tasks", 
       icon: CheckSquare, 
       roles: ["Admin", "Employee"] 
     },
-    // 4. USERS (Admin Only)
+    // 4. USERS
     { 
       title: "User Registry", 
-      href: "/dashboard/users", 
+      href: "/dashboard/admin/users", 
       icon: Users, 
       roles: ["Admin"] 
     },
-    // 5. PARTNER BOATS (Partner Only - Placeholder)
+    // 5. PARTNER BOATS
     { 
       title: "My Boats", 
       href: "/dashboard/partner/boats", 
       icon: Ship, 
       roles: ["Partner"] 
     },
-    // 6. WIDGETS (Admin & Partner)
+    // 6. WIDGETS
     { 
       title: "Widget Manager", 
       href: "/dashboard/widgets", 
