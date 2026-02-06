@@ -231,7 +231,6 @@ export default function YachtEditorPage() {
     setAvailabilityRules(newRules);
   };
 
-  // --- 3. SUBMIT LOGIC ---
 // --- 3. SUBMIT LOGIC ---
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -268,8 +267,8 @@ export default function YachtEditorPage() {
       let finalYachtId = selectedYacht?.id;
       
       if (!isNewMode && selectedYacht) {
-        // FIX: Laravel requires _method: PUT for multipart/form-data updates via POST
-        formData.append("_method", "PUT"); 
+        // MATCHING YOUR BACKEND: Your back end.txt uses Route::post for updates
+        // No _method spoofing needed since the route is already POST
         await api.post(`/yachts/${selectedYacht.id}`, formData);
       } else {
         // CREATE NEW
