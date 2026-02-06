@@ -30,7 +30,7 @@ export default function ReturnToAdmin() {
       }));
 
       // 4. Force reload back to the management page
-      window.location.href = "/dashboard/admin/users";
+      window.location.href = "/nl/dashboard/admin/users";
     }
   };
 
