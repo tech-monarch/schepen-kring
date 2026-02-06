@@ -23,7 +23,6 @@ export function Sidebar({ onCollapse }: { onCollapse?: (collapsed: boolean) => v
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
-  const [userPermissions, setUserPermissions] = useState<string[]>([]); // Added permissions state
   const [isOnline, setIsOnline] = useState(true);
 
   // Sync collapse state with parent page for layout adjustments
@@ -37,14 +36,12 @@ export function Sidebar({ onCollapse }: { onCollapse?: (collapsed: boolean) => v
     window.addEventListener("online", updateStatus);
     window.addEventListener("offline", updateStatus);
 
-    // 2. Read User Role and Permissions from LocalStorage
-    // This matches the 'userType' and 'permissions' keys sent by your UserController
+    // 2. Read User Role from LocalStorage
     const userData = localStorage.getItem("user_data");
     if (userData) {
       try {
         const parsed = JSON.parse(userData);
         setUserRole(parsed.userType || "Customer");
-        setUserPermissions(parsed.permissions || []); // Store the array of granted permission strings
       } catch (e) { console.error("Auth Data Corrupt", e); }
     }
 
@@ -54,42 +51,44 @@ export function Sidebar({ onCollapse }: { onCollapse?: (collapsed: boolean) => v
     };
   }, []);
 
-// --- MENU CONFIGURATION ---
-// The 'permission' strings here match your Route::middleware('permission:...') in API.php
+  // --- MENU CONFIGURATION ---
 const menuItems = [
+    // 1. DASHBOARD
     { 
       title: "Overview", 
       href: userRole === "Admin" ? "/dashboard/admin" : "/dashboard", 
       icon: BarChart3, 
       roles: ["Admin", "Employee", "Partner"] 
     },
+    // 2. FLEET
     { 
       title: "Fleet Management", 
       href: userRole === "Admin" ? "/dashboard/admin/yachts" : "/dashboard/yachts", 
       icon: Anchor, 
-      roles: ["Admin", "Employee"],
-      permission: "manage yachts" // Matches backend middleware
+      roles: ["Admin", "Employee"] 
     },
+    // 3. TASKS
     { 
       title: "Task Board", 
       href: userRole === "Admin" ? "/dashboard/admin/tasks" : "/dashboard/tasks", 
       icon: CheckSquare, 
-      roles: ["Admin", "Employee"],
-      permission: "manage tasks" // Matches backend middleware
+      roles: ["Admin", "Employee"] 
     },
+    // 4. USERS
     { 
       title: "User Registry", 
       href: "/dashboard/admin/users", 
       icon: Users, 
-      roles: ["Admin"],
-      permission: "manage users" // Admin specific but included for logic consistency
+      roles: ["Admin"] 
     },
+    // 5. PARTNER BOATS
     { 
       title: "My Boats", 
       href: "/dashboard/partner/boats", 
       icon: Ship, 
       roles: ["Partner"] 
     },
+    // 6. WIDGETS
     { 
       title: "Widget Manager", 
       href: "/dashboard/widgets", 
@@ -98,20 +97,10 @@ const menuItems = [
     },
   ];
 
-  // LOGIC: Filter items based on Role AND specific Permissions
-  const visibleItems = menuItems.filter(item => {
-    // 1. First check if the user's role is allowed to see this page at all
-    const hasRole = userRole && item.roles.includes(userRole);
-    
-    // 2. Second, if a specific permission is required (for Employees), 
-    // check if it exists in their permission array.
-    // If no permission is specified for the item, it defaults to 'true'.
-    const hasPermission = item.permission 
-      ? userPermissions.includes(item.permission) 
-      : true;
-
-    return hasRole && hasPermission;
-  });
+  // Filter items based on the current user's role
+  const visibleItems = menuItems.filter(item => 
+    userRole && item.roles.includes(userRole)
+  );
 
   return (
     <motion.aside 
@@ -137,7 +126,7 @@ const menuItems = [
             {isOnline ? <Wifi size={10} className="text-emerald-500" /> : <WifiOff size={10} className="text-red-500" />}
           </div>
 
-          {/* Render Filtered Links */}
+          {/* Render Links */}
           {visibleItems.map((item) => (
             <Link 
               key={item.href} 
