@@ -90,7 +90,7 @@ export default function AnalyticsPage() {
 
       <div className="flex pt-20">
         {/* COLLAPSIBLE SIDEBAR */}
-        <Sidebar onCollapse={setIsSidebarCollapsed} />
+        {/* <Sidebar onCollapse={setIsSidebarCollapsed} /> */}
 
         {/* Adjust Margin based on sidebar state */}
         <main
