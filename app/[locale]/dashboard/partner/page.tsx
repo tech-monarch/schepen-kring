@@ -29,6 +29,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Toaster, toast } from "react-hot-toast";
 import axios from "axios";
+import {Sidebar} from "@/components/dashboard/Sidebar";
 
 interface Task {
   id: string | number;
@@ -227,69 +228,7 @@ export default function TaskManifestPage() {
       <DashboardHeader />
       <div className="flex pt-20">
         {/* COLLAPSIBLE SIDEBAR */}
-        <motion.aside
-          initial={false}
-          animate={{ width: isSidebarCollapsed ? 80 : 256 }}
-          className="fixed left-0 top-20 bottom-0 border-r border-slate-200 bg-white hidden lg:block z-40 overflow-hidden"
-        >
-          <div className="flex flex-col h-full relative">
-            <button
-              onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-              className="absolute right-3 top-4 bg-[#003566] border border-slate-200 rounded-full p-1 text-white hover:bg-[#003566]/90 transition-colors z-[999] shadow-sm"
-            >
-              {isSidebarCollapsed ? (
-                <ChevronRight size={14} />
-              ) : (
-                <ChevronLeft size={14} />
-              )}
-            </button>
-            <nav className="p-4 space-y-2 mt-4">
-              <div
-                className={cn(
-                  "px-4 mb-6 flex items-center justify-between transition-opacity",
-                  isSidebarCollapsed && "opacity-0",
-                )}
-              >
-                <p className="text-[9px] font-black uppercase tracking-[0.4em] text-slate-300">
-                  Staff Terminal
-                </p>
-                {isOnline ? (
-                  <Wifi size={10} className="text-emerald-500" />
-                ) : (
-                  <WifiOff size={10} className="text-red-500" />
-                )}
-              </div>
-              {[
-                { title: t("overview"), href: "/dashboard", icon: BarChart3 },
-                {
-                  title: t("fleet_management"),
-                  href: "/dashboard/yachts",
-                  icon: Anchor,
-                },
-                {
-                  title: t("task_board"),
-                  href: "/dashboard/tasks",
-                  icon: CheckSquare,
-                },
-              ].map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={cn(
-                    "flex items-center gap-4 px-4 py-3 text-[10px] font-bold uppercase tracking-[0.2em] transition-all relative group",
-                    pathname === item.href
-                      ? "bg-[#003566] text-white shadow-md"
-                      : "text-slate-400 hover:bg-slate-50",
-                    isSidebarCollapsed && "justify-center px-0",
-                  )}
-                >
-                  <item.icon size={16} className="shrink-0" />
-                  {!isSidebarCollapsed && <span>{item.title}</span>}
-                </Link>
-              ))}
-            </nav>
-          </div>
-        </motion.aside>
+        <Sidebar onCollapse={setIsSidebarCollapsed} />
 
         {/* MAIN CONTENT - Removed -mt-20 and fixed Margin */}
         <motion.main
