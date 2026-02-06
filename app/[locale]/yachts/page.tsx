@@ -223,7 +223,7 @@ export default function PublicFleetGallery() {
 
                     <div className="flex gap-2">
                       {v.status === "For Bid" && (
-                        <Link href={`/bids/${v.id}`}>
+                        <Link href={`/nl/yachts/${v.id}`}>
                           <button className="w-12 h-12 flex items-center justify-center rounded-full bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-all shadow-sm">
                             <Gavel size={20} />
                           </button>
