@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Link, usePathname } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
+import axios from "axios"; // Added axios for live sync
 import { 
   BarChart3, 
   Anchor, 
@@ -22,25 +23,44 @@ export function Sidebar({ onCollapse }: { onCollapse?: (collapsed: boolean) => v
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
-  const [userPermissions, setUserPermissions] = useState<string[]>([]); // New state for permissions 
+  const [userPermissions, setUserPermissions] = useState<string[]>([]); // Array for DB permissions
   const [isOnline, setIsOnline] = useState(true);
 
+  const API_BASE = "https://schepen-kring.nl/api"; // Update if your local dev URL is different
+
+  // Sync collapse state with parent page
   useEffect(() => {
     onCollapse?.(isCollapsed);
   }, [isCollapsed, onCollapse]);
 
   useEffect(() => {
+    // 1. Check Online Status
     const updateStatus = () => setIsOnline(navigator.onLine);
     window.addEventListener("online", updateStatus);
     window.addEventListener("offline", updateStatus);
 
-    const userData = localStorage.getItem("user_data");
-    if (userData) {
+    // 2. Read User Info and Fetch Live Permissions
+    const userDataStr = localStorage.getItem("user_data");
+    const token = localStorage.getItem("auth_token");
+
+    if (userDataStr && token) {
       try {
-        const parsed = JSON.parse(userData);
+        const parsed = JSON.parse(userDataStr);
         setUserRole(parsed.userType || "Customer");
-        // Extract permissions from stored user data 
-        setUserPermissions(parsed.permissions || []);
+
+        // CRITICAL: Fetch permissions directly from the new table
+        const syncPermissions = async () => {
+          try {
+            const res = await axios.get(`${API_BASE}/user/authorizations/${parsed.id}`, {
+              headers: { Authorization: `Bearer ${token}` }
+            });
+            setUserPermissions(res.data); // e.g. ["manage yachts", "manage tasks"]
+          } catch (err) {
+            console.error("Authorization sync failed", err);
+          }
+        };
+
+        syncPermissions();
       } catch (e) { console.error("Auth Data Corrupt", e); }
     }
 
@@ -48,8 +68,9 @@ export function Sidebar({ onCollapse }: { onCollapse?: (collapsed: boolean) => v
         window.removeEventListener("online", updateStatus);
         window.removeEventListener("offline", updateStatus);
     };
-  }, []);
+  }, [pathname]); // Refresh on navigation to keep rights up to date
 
+  // --- MENU CONFIGURATION ---
   const menuItems = [
     { 
       title: "Overview", 
@@ -62,21 +83,21 @@ export function Sidebar({ onCollapse }: { onCollapse?: (collapsed: boolean) => v
       href: userRole === "Admin" ? "/dashboard/admin/yachts" : "/dashboard/yachts", 
       icon: Anchor, 
       roles: ["Admin", "Employee"],
-      permission: "manage yachts" // Requirement from API.php [cite: 146]
+      permission: "manage yachts" 
     },
     { 
       title: "Task Board", 
       href: userRole === "Admin" ? "/dashboard/admin/tasks" : "/dashboard/tasks", 
       icon: CheckSquare, 
       roles: ["Admin", "Employee"],
-      permission: "manage tasks" // Requirement from API.php [cite: 149]
+      permission: "manage tasks" 
     },
     { 
       title: "User Registry", 
       href: "/dashboard/admin/users", 
       icon: Users, 
       roles: ["Admin"],
-      permission: "manage users" // Requirement from API.php [cite: 150]
+      permission: "manage users" 
     },
     { 
       title: "My Boats", 
@@ -92,16 +113,14 @@ export function Sidebar({ onCollapse }: { onCollapse?: (collapsed: boolean) => v
     },
   ];
 
-  // Logic to filter items based on role AND specific permissions [cite: 146, 149, 150, 180]
+  // Logic: Only show if role matches AND (if permission required) user has permission
   const visibleItems = menuItems.filter(item => {
     const hasRole = userRole && item.roles.includes(userRole);
     
-    // If an item has a specific permission requirement, check it
-    if (item.permission) {
-      return hasRole && userPermissions.includes(item.permission);
-    }
-    
-    return hasRole;
+    // Admins see everything they are allowed by role; Employees check the permissions array
+    const hasPermission = userRole === "Admin" || (item.permission ? userPermissions.includes(item.permission) : true);
+
+    return hasRole && hasPermission;
   });
 
   return (
