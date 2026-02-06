@@ -36,6 +36,12 @@ const PLACEHOLDER_IMAGE =
   "https://images.unsplash.com/photo-1569263979104-865ab7cd8d13?auto=format&fit=crop&w=1200&q=80";
 
 // --- EXTENDED INTERFACE TO MATCH DATABASE ---
+interface AvailabilityRule {
+  day_of_week: number;
+  start_time: string;
+  end_time: string;
+}
+
 interface Yacht {
   id: number;
   vessel_id: string;
@@ -62,7 +68,6 @@ interface Yacht {
   clearance?: string;
   displacement?: string;
   steering?: string;
-
   // Engine
   engine_brand?: string;
   engine_model?: string;
@@ -87,6 +92,7 @@ interface Yacht {
   trailer_included?: boolean | number; // sometimes comes as 0/1 from DB
   beam?: string;
   draft?: string;
+  availability_rules: AvailabilityRule[];
 }
 
 export default function YachtTerminalPage() {
@@ -96,10 +102,8 @@ export default function YachtTerminalPage() {
   const [bidAmount, setBidAmount] = useState<string>("");
   const [activeImage, setActiveImage] = useState<string>("");
   const [loading, setLoading] = useState(true);
-  const [trialDate, setTrialDate] = useState<string>("");
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
-  const [availableSlots, setAvailableSlots] = useState<string[]>([]);
 
   // Payment states
   const [paymentMode, setPaymentMode] = useState<
@@ -144,8 +148,7 @@ export default function YachtTerminalPage() {
   const placeBid = async () => {
     const amount = parseFloat(bidAmount);
     if (!yacht) return;
-
-    // Check if bid is valid (higher than current bid or base price)
+    
     const currentPrice = yacht.current_bid
       ? Number(yacht.current_bid)
       : Number(yacht.price);
@@ -165,73 +168,87 @@ export default function YachtTerminalPage() {
     }
   };
 
-const handleDepositPayment = async () => {
-  setPaymentStatus("processing");
-  
-  // Artificial delay to simulate gateway processing as per your original code
-  setTimeout(async () => {
-    try {
-      const isBuyNow = paymentMode === "buy_now";
+  const handleDepositPayment = async () => {
+    setPaymentStatus("processing");
+    
+    setTimeout(async () => {
+      try {
+        const isBuyNow = paymentMode === "buy_now";
 
-      // 1. If it's a Test Sail, record the booking in the database first
-      if (paymentMode === "test_sail") {
-        if (!selectedDate || !selectedTime) {
-          toast.error("Please select a date and time.");
-          setPaymentStatus("idle");
-          return;
+        if (paymentMode === "test_sail") {
+          if (!selectedDate || !selectedTime) {
+            toast.error("Please select a date and time.");
+            setPaymentStatus("idle");
+            return;
+          }
+
+          const formattedStart = `${selectedDate.toISOString().split('T')[0]} ${selectedTime}`;
+          
+          await api.post(`/yachts/${yacht?.id}/book`, {
+            start_at: formattedStart
+          });
         }
 
-        // Format: YYYY-MM-DD HH:mm
-        const formattedStart = `${selectedDate.toISOString().split('T')[0]} ${selectedTime}`;
-        
-        await api.post(`/yachts/${yacht?.id}/book`, {
-          start_at: formattedStart
+        await api.post("/tasks", {
+          title: isBuyNow ? `URGENT: BUY NOW REQUEST` : `TEST SAIL REQUEST`,
+          description: isBuyNow
+            ? `CLIENT PAID DEPOSIT FOR FULL PURCHASE: €${yacht?.price.toLocaleString()}. Please halt auction.`
+            : `Client paid deposit for Test Sail on ${yacht?.name}. Start: ${selectedDate?.toLocaleDateString()} at ${selectedTime}. Duration: 15m (+ buffer).`,
+          priority: "High",
+          status: "To Do",
+          yacht_id: yacht?.id,
         });
-      }
 
-      // 2. Create the notification task for the admin panel
-      await api.post("/tasks", {
-        title: isBuyNow ? `URGENT: BUY NOW REQUEST` : `TEST SAIL REQUEST`,
-        description: isBuyNow
-          ? `CLIENT PAID DEPOSIT FOR FULL PURCHASE: €${yacht?.price.toLocaleString()}. Please halt auction.`
-          : `Client paid deposit for Test Sail on ${yacht?.name}. Start: ${selectedDate?.toLocaleDateString()} at ${selectedTime}. Duration: 60m (+ 15m buffer).`,
-        priority: "High",
-        status: "To Do",
-        yacht_id: yacht?.id,
-      });
+        setPaymentStatus("success");
 
-      setPaymentStatus("success");
-
-      // Reset modal after success
-      setTimeout(() => {
-        setPaymentMode(null);
+        setTimeout(() => {
+          setPaymentMode(null);
+          setPaymentStatus("idle");
+          setSelectedTime(null);
+          setSelectedDate(null);
+        }, 3000);
+      } catch (error: any) {
         setPaymentStatus("idle");
-        // Optional: clear selection
-        setSelectedTime(null);
-      }, 3000);
+        const errorMessage = error.response?.data?.error || "Transaction failed.";
+        toast.error(errorMessage);
+      }
+    }, 2000);
+  };
 
-    } catch (error: any) { // Change 'error' to 'error: any'
-      setPaymentStatus("idle");
-      const errorMessage = error.response?.data?.error || "Transaction failed.";
-      toast.error(errorMessage);
-    }
-  }, 2000);
-};
-  const fetchAvailableSlots = async (date: string) => {
-  try {
-    const res = await api.get(`/yachts/${id}/available-slots?date=${date}`);
-    setAvailableSlots(res.data); // Expecting ["10:00", "10:15", ...]
-  } catch (e) {
-    toast.error("Could not load time slots.");
-  }
-};
+  // Generate next 30 days
+  const days = Array.from({ length: 30 }, (_, i) => {
+    const date = new Date();
+    date.setDate(date.getDate() + i);
+    return date;
+  });
 
-const calculateEndTime = (startTime: string) => {
-  const [hh, mm] = startTime.split(':').map(Number);
-  const end = new Date();
-  end.setHours(hh, mm + 60); // 60 min duration
-  return end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-};
+  const isDateAvailable = (date: Date) => {
+    if (!yacht?.availability_rules) return false;
+    const dayOfWeek = date.getDay();
+    return yacht.availability_rules.some(rule => Number(rule.day_of_week) === dayOfWeek);
+  };
+
+  const calculateEndTime = (time: string) => {
+    const [h, m] = time.split(':').map(Number);
+    const date = new Date();
+    date.setHours(h, m + 15);
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+  };
+
+  const availableSlots = selectedDate ?
+    (yacht?.availability_rules || [])
+    .filter(rule => Number(rule.day_of_week) === selectedDate.getDay())
+    .flatMap(rule => {
+      const slots = [];
+      let current = new Date(`2000-01-01 ${rule.start_time}`);
+      const end = new Date(`2000-01-01 ${rule.end_time}`);
+
+      while (current < end) {
+        slots.push(current.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }));
+        current.setMinutes(current.getMinutes() + 15);
+      }
+      return slots;
+    }) : [];
 
   if (loading || !yacht) {
     return (
@@ -248,7 +265,6 @@ const calculateEndTime = (startTime: string) => {
   const isTrailerIncluded =
     yacht.trailer_included === true || yacht.trailer_included === 1;
 
-  // Helper to process textarea lists
   const renderList = (text?: string) => {
     if (!text)
       return (
@@ -293,9 +309,8 @@ const calculateEndTime = (startTime: string) => {
 
       <main className="pt-20">
         <section className="grid grid-cols-1 lg:grid-cols-12 min-h-[85vh]">
-          {/* LEFT: MEDIA & TECHNICAL DOSSIER (8 Cols) */}
+          {/* LEFT: MEDIA & TECHNICAL DOSSIER */}
           <div className="lg:col-span-8 bg-slate-50 border-r border-slate-100 flex flex-col">
-            {/* Image Gallery */}
             <div className="relative h-[60vh] overflow-hidden group bg-slate-200">
               <motion.img
                 key={activeImage}
@@ -307,7 +322,6 @@ const calculateEndTime = (startTime: string) => {
                 className="w-full h-full object-cover"
                 alt={yacht.name}
               />
-              {/* Thumbnails Overlay */}
               <div className="absolute bottom-6 left-6 right-6 flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
                 <Thumbnail
                   src={
@@ -337,17 +351,14 @@ const calculateEndTime = (startTime: string) => {
               </div>
             </div>
 
-            {/* Vessel Description */}
             <div className="p-8 md:p-12 bg-white border-b border-slate-100">
               <h3 className="text-2xl font-serif italic text-[#003566] mb-6">
                 Captain's Note
               </h3>
               <p className="text-sm font-light leading-relaxed text-slate-600 mb-8 whitespace-pre-line">
-                {yacht.description ||
-                  "Specifications pending final maritime certification."}
+                {yacht.description || "Specifications pending final maritime certification."}
               </p>
 
-              {/* Highlight Badges */}
               <div className="flex gap-4">
                 {isTrailerIncluded && (
                   <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 text-[10px] font-black uppercase tracking-widest border border-blue-100">
@@ -362,14 +373,12 @@ const calculateEndTime = (startTime: string) => {
               </div>
             </div>
 
-            {/* TECHNICAL DOSSIER GRID */}
             <div className="bg-slate-50/50 p-8 md:p-12">
               <h3 className="text-[12px] font-black uppercase tracking-[0.3em] text-[#003566] mb-8 flex items-center gap-2">
                 <Waves size={16} /> Technical Dossier
               </h3>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-12">
-                {/* Category: General */}
                 <div className="space-y-6">
                   <div className="flex items-center gap-2 text-blue-600 border-b border-blue-100 pb-2 mb-4">
                     <Ship size={16} />
@@ -380,10 +389,7 @@ const calculateEndTime = (startTime: string) => {
                   <div className="grid grid-cols-2 gap-y-4">
                     <SpecRow label="Builder" value={yacht.make} />
                     <SpecRow label="Model" value={yacht.model} />
-                    <SpecRow
-                      label="Construction"
-                      value={yacht.construction_material}
-                    />
+                    <SpecRow label="Construction" value={yacht.construction_material} />
                     <SpecRow label="Hull Shape" value={yacht.hull_shape} />
                     <SpecRow label="Hull Color" value={yacht.hull_color} />
                     <SpecRow label="Displacement" value={yacht.displacement} />
@@ -392,7 +398,6 @@ const calculateEndTime = (startTime: string) => {
                   </div>
                 </div>
 
-                {/* Category: Engine */}
                 <div className="space-y-6">
                   <div className="flex items-center gap-2 text-blue-600 border-b border-blue-100 pb-2 mb-4">
                     <Zap size={16} />
@@ -412,7 +417,6 @@ const calculateEndTime = (startTime: string) => {
                   </div>
                 </div>
 
-                {/* Category: Accommodation */}
                 <div className="space-y-6">
                   <div className="flex items-center gap-2 text-blue-600 border-b border-blue-100 pb-2 mb-4">
                     <Bed size={16} />
@@ -424,19 +428,11 @@ const calculateEndTime = (startTime: string) => {
                     <SpecRow label="Berths" value={yacht.berths} />
                     <SpecRow label="Cabins" value={yacht.cabins?.toString()} />
                     <SpecRow label="Heads" value={yacht.heads?.toString()} />
-                    <SpecRow
-                      label="Water Tank"
-                      value={yacht.water_tank || yacht.water_capacity}
-                    />
-                    <SpecRow
-                      label="Water System"
-                      value={yacht.water_capacity}
-                    />{" "}
-                    {/* Fallback if needed */}
+                    <SpecRow label="Water Tank" value={yacht.water_tank || yacht.water_capacity} />
+                    <SpecRow label="Water System" value={yacht.water_capacity} />
                   </div>
                 </div>
 
-                {/* Category: Equipment Lists */}
                 <div className="space-y-6">
                   <div className="flex items-center gap-2 text-blue-600 border-b border-blue-100 pb-2 mb-4">
                     <Compass size={16} />
@@ -463,7 +459,7 @@ const calculateEndTime = (startTime: string) => {
             </div>
           </div>
 
-          {/* RIGHT: ACTION CENTER (Sticky Sidebar) */}
+          {/* RIGHT: ACTION CENTER */}
           <div className="lg:col-span-4 p-8 md:p-12 flex flex-col gap-8 bg-white sticky top-20 h-fit border-l border-slate-50">
             <div className="space-y-2">
               <h1 className="text-5xl font-serif text-[#003566] leading-none">
@@ -474,7 +470,6 @@ const calculateEndTime = (startTime: string) => {
               </p>
             </div>
 
-            {/* Bidding Module */}
             <div className="bg-slate-50 p-6 border border-slate-100 rounded-sm">
               <div className="flex justify-between items-center mb-1">
                 <p className="text-[9px] font-black uppercase tracking-widest text-blue-600">
@@ -509,7 +504,6 @@ const calculateEndTime = (startTime: string) => {
               </div>
             </div>
 
-            {/* Direct Purchase Module */}
             <div className="border-2 border-[#003566] p-6 rounded-sm relative overflow-hidden">
               <div className="absolute top-0 right-0 p-2 bg-[#003566] text-white text-[8px] font-black uppercase">
                 Buy Now
@@ -531,7 +525,6 @@ const calculateEndTime = (startTime: string) => {
               </Button>
             </div>
 
-            {/* Quick Specs List */}
             <div className="space-y-4 pt-4 border-t border-slate-100">
               <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest text-slate-400">
                 <span>Location</span>
@@ -561,7 +554,6 @@ const calculateEndTime = (startTime: string) => {
               <Anchor size={14} className="mr-2" /> Book Sea Trial
             </Button>
 
-            {/* Transaction Log Widget */}
             <div className="bg-slate-50 p-6 rounded-sm border border-slate-100 mt-4">
               <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4 flex items-center gap-2">
                 <History size={14} /> Bid History
@@ -598,7 +590,7 @@ const calculateEndTime = (startTime: string) => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] bg-[#001D3D]/90 backdrop-blur-md flex items-center justify-center p-4"
+            className="fixed inset-0 z-100 bg-[#001D3D]/90 backdrop-blur-md flex items-center justify-center p-4"
           >
             <motion.div
               initial={{ y: 50 }}
@@ -616,55 +608,82 @@ const calculateEndTime = (startTime: string) => {
                     </p>
                   </div>
 
-                  {/* BEAUTIFULLY STYLED CALENDAR INJECTION */}
-{paymentMode === "test_sail" && (
-  <div className="space-y-6">
-    {/* Header & Date Picker */}
-    <div className="text-center">
-      <input 
-        type="date" 
-        className="text-lg font-serif italic border-none focus:ring-0 cursor-pointer"
-        onChange={(e) => {
-          setSelectedDate(new Date(e.target.value));
-          fetchAvailableSlots(e.target.value);
-        }}
-      />
-    </div>
+                  {paymentMode === "test_sail" && (
+                    <div className="space-y-6">
+                      <div className="mt-8">
+                        <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4">
+                          Select Availability
+                        </h3>
+                        <div className="flex gap-2 overflow-x-auto pb-4 scrollbar-hide">
+                          {days.map((date, idx) => {
+                            const available = isDateAvailable(date);
+                            const isSelected = selectedDate?.toDateString() === date.toDateString();
+                            return (
+                              <button
+                                key={idx}
+                                onClick={() => available && setSelectedDate(date)}
+                                className={cn(
+                                  "flex flex-col items-center min-w-[60px] py-4 border transition-all",
+                                  available 
+                                    ? "bg-white border-slate-200 hover:border-[#003566] cursor-pointer" 
+                                    : "bg-slate-50 border-transparent opacity-40 cursor-not-allowed",
+                                  isSelected && "bg-[#003566] border-[#003566] shadow-lg scale-105"
+                                )}
+                              >
+                                <span className={cn(
+                                  "text-[9px] font-bold uppercase",
+                                  isSelected ? "text-blue-200" : "text-slate-400"
+                                )}>
+                                  {date.toLocaleDateString('en-US', { weekday: 'short' })}
+                                </span>
+                                <span className={cn(
+                                  "text-lg font-black mt-1",
+                                  isSelected ? "text-white" : "text-[#003566]"
+                                )}>
+                                  {date.getDate()}
+                                </span>
+                                {available && !isSelected && (
+                                  <div className="w-1 h-1 bg-green-500 rounded-full mt-2" />
+                                )}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
 
-    {/* Slot Grid - Style matching your uploaded image */}
-    <div className="grid grid-cols-4 gap-2">
-      {availableSlots.length > 0 ? (
-        availableSlots.map((time) => (
-          <button
-            key={time}
-            onClick={() => setSelectedTime(time)}
-            className={cn(
-              "py-3 rounded-xl text-xs font-bold transition-all",
-              selectedTime === time 
-                ? "bg-[#003566] text-white" 
-                : "bg-emerald-200 text-emerald-900 hover:bg-emerald-300"
-            )}
-          >
-            {time}
-          </button>
-        ))
-      ) : (
-        <p className="col-span-4 text-center text-[9px] text-slate-400 uppercase tracking-widest">
-          Select a date to view 15-min slots
-        </p>
-      )}
-    </div>
+                      <div className="grid grid-cols-4 gap-2">
+                        {availableSlots.length > 0 ? (
+                          availableSlots.map((time) => (
+                            <button
+                              key={time}
+                              onClick={() => setSelectedTime(time)}
+                              className={cn(
+                                "py-3 rounded-xl text-xs font-bold transition-all",
+                                selectedTime === time 
+                                  ? "bg-[#003566] text-white" 
+                                  : "bg-emerald-200 text-emerald-900 hover:bg-emerald-300"
+                              )}
+                            >
+                              {time}
+                            </button>
+                          ))
+                        ) : (
+                          <p className="col-span-4 text-center text-[9px] text-slate-400 uppercase tracking-widest">
+                            Select a date to view 15-min slots
+                          </p>
+                        )}
+                      </div>
 
-    {/* Confirmation Details */}
-    {selectedTime && (
-      <div className="text-center p-2 bg-slate-50 border border-dashed border-slate-200">
-        <p className="text-[10px] font-black uppercase text-slate-500">
-          Selected: {selectedTime} - {calculateEndTime(selectedTime)} (+15m Buffer)
-        </p>
-      </div>
-    )}
-  </div>
-)}
+                      {selectedTime && (
+                        <div className="text-center p-2 bg-slate-50 border border-dashed border-slate-200">
+                          <p className="text-[10px] font-black uppercase text-slate-500">
+                            Selected: {selectedTime} - {calculateEndTime(selectedTime)} (+15m Buffer)
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   <div className="p-4 bg-blue-50 text-[#003566] flex gap-3 rounded-sm">
                     <FileText size={20} className="shrink-0" />
                     <p className="text-[9px] leading-relaxed font-medium">
@@ -678,25 +697,24 @@ const calculateEndTime = (startTime: string) => {
                     </Button>
                     <Button
                       onClick={handleDepositPayment}
-                      disabled={paymentMode === "test_sail" && !trialDate}
-                      className="flex-[2] bg-[#003566] hover:bg-blue-900 text-white font-bold uppercase tracking-widest text-[10px] disabled:bg-slate-300"
+                      disabled={paymentMode === "test_sail" && (!selectedDate || !selectedTime)}
+                      className="flex-2 bg-[#003566] hover:bg-blue-900 text-white font-bold uppercase tracking-widest text-[10px] disabled:bg-slate-300"
                     >
                       Confirm & Pay
                     </Button>
                   </div>
                 </div>
               )}
+
               {paymentStatus === "processing" && (
                 <div className="py-20 text-center flex flex-col items-center">
-                  <Loader2
-                    className="animate-spin text-[#003566] mb-4"
-                    size={32}
-                  />
+                  <Loader2 className="animate-spin text-[#003566] mb-4" size={32} />
                   <p className="text-[10px] font-black uppercase tracking-widest">
                     Contacting Secure Gateway...
                   </p>
                 </div>
               )}
+
               {paymentStatus === "success" && (
                 <div className="py-12 text-center">
                   <div className="w-16 h-16 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -751,7 +769,7 @@ function Thumbnail({
 }
 
 function SpecRow({ label, value }: { label: string; value?: string }) {
-  if (!value) return null; // Don't render empty rows
+  if (!value) return null;
   return (
     <div className="flex justify-between items-center border-b border-slate-200 pb-2">
       <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest">

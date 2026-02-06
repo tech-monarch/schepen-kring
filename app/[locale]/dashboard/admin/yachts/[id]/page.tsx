@@ -294,7 +294,7 @@ export default function YachtEditorPage() {
           ? "Vessel Registered Successfully"
           : "Manifest Updated Successfully",
       );
-      router.push("/admin/yachts");
+      router.push("/nl/dashboard/admin/yachts");
     } catch (err: any) {
       if (err.response?.status === 422) {
         setErrors(err.response.data.errors);
