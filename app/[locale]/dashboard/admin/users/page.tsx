@@ -30,7 +30,7 @@ export default function RoleManagementPage() {
     password: "",
     role: "Employee",
     access_level: "Limited",
-  status: "Active",
+    status: "Active",
   });
 
   const API_BASE = "https://schepen-kring.nl/api";
@@ -56,32 +56,26 @@ export default function RoleManagementPage() {
     }
   };
 
-const handleEnrollment = async (e: React.FormEvent) => {
-  e.preventDefault();
-  try {
-    toast.loading("Enrolling new personnel...", { id: "enroll" });
-    
-    const res = await axios.post(`${API_BASE}/users`, newUser, getHeaders());
-    
-    setUsers([...users, res.data]);
-    setIsModalOpen(false);
-    
-    // Reset form including status
-    setNewUser({ 
-      name: "", 
-      email: "", 
-      password: "", 
-      role: "Employee", 
-      access_level: "Limited",
-      status: "Active" 
-    });
-    
-    toast.success("Personnel successfully enrolled.", { id: "enroll" });
-  } catch (err: any) {
-    console.error("Enrollment error details:", err.response?.data);
-    toast.error(err.response?.data?.message || "Enrollment failed.", { id: "enroll" });
-  }
-};
+  const handleEnrollment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      toast.loading("Enrolling new personnel...", { id: "enroll" });
+      const res = await axios.post(`${API_BASE}/users`, newUser, getHeaders());
+      setUsers([...users, res.data]);
+      setIsModalOpen(false);
+      setNewUser({ 
+        name: "", 
+        email: "", 
+        password: "", 
+        role: "Employee", 
+        access_level: "Limited",
+        status: "Active" 
+      });
+      toast.success("Personnel successfully enrolled.", { id: "enroll" });
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Enrollment failed.", { id: "enroll" });
+    }
+  };
 
   const handleDeleteUser = async (userId: number) => {
     try {
@@ -94,69 +88,47 @@ const handleEnrollment = async (e: React.FormEvent) => {
     }
   };
 
-const impersonateUser = async (userId: number) => {
-  try {
-    toast.loading("Assimilating identity...", { id: "impersonate" });
-    
-    const res = await axios.post(`${API_BASE}/users/${userId}/impersonate`, {}, getHeaders());
-    
-    // 1. Save the current Admin Token so you can "Log Back In" later
-    const adminToken = localStorage.getItem("auth_token");
-    
-    // 2. Clear EVERYTHING to prevent cache leaking (tasks, old user info)
-    localStorage.clear(); 
-
-    // 3. Restore the admin backup token and set new user data
-    if (adminToken) localStorage.setItem("admin_token", adminToken);
-    
-    // 4. Set the new user's authentication data
-    localStorage.setItem("auth_token", res.data.token);
-    
-    // Map the backend user object to your frontend's 'user_data' format
-    const impersonatedUserData = JSON.stringify({
-        id: res.data.user.id,
-        name: res.data.user.name,
-        email: res.data.user.email,
-        userType: res.data.user.role // Ensure this matches your frontend 'Admin' | 'Partner' check
-    });
-    localStorage.setItem("user_data", impersonatedUserData);
-
-    toast.success(`Identity assumed: ${res.data.user.name}`, { id: "impersonate" });
-
-    // 5. Force a hard reload to the dashboard to refresh all data providers/contexts
-    setTimeout(() => {
-        window.location.href = "/nl/dashboard";
-    }, 1000);
-
-  } catch (err) {
-    console.error(err);
-    toast.error("Impersonation protocol failed.", { id: "impersonate" });
-  }
-};
-
-const togglePermission = async (user: any, permName: string) => {
+  const impersonateUser = async (userId: number) => {
     try {
-      // 1. Get current permissions from the user object
-      let currentPerms = [...(user.permissions || [])];
+      toast.loading("Assimilating identity...", { id: "impersonate" });
+      const res = await axios.post(`${API_BASE}/users/${userId}/impersonate`, {}, getHeaders());
+      const adminToken = localStorage.getItem("auth_token");
+      localStorage.clear();
+      if (adminToken) localStorage.setItem("admin_token", adminToken);
+      localStorage.setItem("auth_token", res.data.token);
+      const impersonatedUserData = JSON.stringify({
+          id: res.data.user.id,
+          name: res.data.user.name,
+          email: res.data.user.email,
+          userType: res.data.user.role
+      });
+      localStorage.setItem("user_data", impersonatedUserData);
+      toast.success(`Identity assumed: ${res.data.user.name}`, { id: "impersonate" });
+      setTimeout(() => { window.location.href = "/nl/dashboard"; }, 1000);
+    } catch (err) {
+      toast.error("Impersonation protocol failed.", { id: "impersonate" });
+    }
+  };
 
-      // 2. Add or Remove the clicked permission from the local array
+  const togglePermission = async (user: any, permName: string) => {
+    try {
+      let currentPerms = [...(user.permissions || [])];
       if (currentPerms.includes(permName)) {
         currentPerms = currentPerms.filter(p => p !== permName);
       } else {
         currentPerms.push(permName);
       }
 
-      // 3. Send the entire updated array to the new 'sync' endpoint
       await axios.post(`${API_BASE}/user/authorizations/${user.id}/sync`, { 
         operations: currentPerms 
       }, getHeaders());
-      
-      fetchData(); // Refresh the list
+
+      fetchData();
       toast.success("Authorizations synchronized.");
     } catch (err) {
       toast.error("Update failed.");
     }
-};
+  };
 
   const filteredUsers = useMemo(() => {
     return users.filter(u => 
@@ -239,30 +211,22 @@ const togglePermission = async (user: any, permName: string) => {
                 </div>
               </div>
 
-              {/* PERMISSIONS (Personnel Only) */}
               {(user.role === "Admin" || user.role === "Employee") && (
                 <div className="lg:w-2/3 lg:border-l border-slate-100 lg:pl-10">
                   <p className="text-[8px] font-black uppercase text-slate-400 tracking-[0.3em] mb-4">Operations Authorization</p>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                     {permissions.map((perm) => (
-                        <button 
-                            key={perm.id} 
-                            onClick={() => togglePermission(user.id, perm.name)} 
-                            className={cn(
-                                "flex items-center justify-between px-4 py-3 text-[9px] font-bold uppercase tracking-widest border transition-all",
-                                // Check if the permission string exists in the user's permission array [cite: 265]
-                                user.permissions?.includes(perm.name) 
-                                    ? "bg-[#003566] text-white" 
-                                    : "bg-white text-slate-400 border-slate-100"
-                            )}
-                        >
-                            {/* Replace underscores with spaces for cleaner UI labels [cite: 266] */}
-                            {perm.name.replace(/_/g, " ")} 
-                            {user.permissions?.includes(perm.name) 
-                                ? <Check size={12} /> 
-                                : <div className="w-1 h-1 rounded-full bg-slate-200" />
-                            }
-                        </button>
+                      <button 
+                        key={perm.id} 
+                        onClick={() => togglePermission(user, perm.name)} // FIXED: Passing full user object [cite: 379]
+                        className={cn(
+                          "flex items-center justify-between px-4 py-3 text-[9px] font-bold uppercase tracking-widest border transition-all",
+                          user.permissions?.includes(perm.name) ? "bg-[#003566] text-white" : "bg-white text-slate-400 border-slate-100"
+                        )}
+                      >
+                        {perm.name.replace(/_/g, " ")}
+                        {user.permissions?.includes(perm.name) ? <Check size={12} /> : <div className="w-1 h-1 rounded-full bg-slate-200" /> }
+                      </button>
                     ))}
                   </div>
                 </div>
@@ -272,36 +236,50 @@ const togglePermission = async (user: any, permName: string) => {
         ))}
       </div>
 
-      {/* ENROLLMENT MODAL (Restored from your old code) */}
+      {/* ENROLLMENT MODAL */}
       <AnimatePresence>
         {isModalOpen && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsModalOpen(false)} className="absolute inset-0 bg-[#003566]/60 backdrop-blur-md" />
-            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="relative bg-white w-full max-w-xl p-10 shadow-2xl border border-slate-200">
-              <button onClick={() => setIsModalOpen(false)} className="absolute top-6 right-6 text-slate-400 hover:text-red-500"><X size={24} /></button>
+            <motion.div 
+              initial={{ opacity: 0 }} 
+              animate={{ opacity: 1 }} 
+              exit={{ opacity: 0 }} 
+              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" 
+              onClick={() => setIsModalOpen(false)} 
+            />
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0 }} 
+              animate={{ scale: 1, opacity: 1 }} 
+              exit={{ scale: 0.95, opacity: 0 }} 
+              className="bg-white w-full max-w-xl p-10 shadow-2xl relative z-10 border border-slate-200 rounded-none"
+            >
+              <button onClick={() => setIsModalOpen(false)} className="absolute right-6 top-6 text-slate-400 hover:text-slate-600"><X size={20} /></button>
               <div className="mb-8">
                 <h2 className="text-2xl font-serif italic text-[#003566]">Personnel Enrollment</h2>
-                <p className="text-[10px] font-black uppercase tracking-widest text-blue-600 mt-1">Add new user to the global manifest</p>
+                <p className="text-[9px] font-black uppercase tracking-widest text-blue-600">Establish new system identity</p>
               </div>
-              
-              <form onSubmit={handleEnrollment} className="space-y-6">
-                <div className="space-y-1">
-                  <label className="text-[8px] font-black uppercase tracking-widest text-slate-400">Full Name</label>
-                  <input required className="w-full border-b border-slate-200 py-3 text-sm font-bold text-[#003566] outline-none focus:border-blue-600" onChange={(e) => setNewUser({...newUser, name: e.target.value})} />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[8px] font-black uppercase tracking-widest text-slate-400">Email Address</label>
-                  <input type="email" required className="w-full border-b border-slate-200 py-3 text-sm font-bold text-[#003566] outline-none focus:border-blue-600" onChange={(e) => setNewUser({...newUser, email: e.target.value})} />
-                </div>
-                <div className="space-y-1 relative">
-                  <label className="text-[8px] font-black uppercase tracking-widest text-slate-400">Access Key</label>
-                  <input type={showPassword ? "text" : "password"} required className="w-full border-b border-slate-200 py-3 text-sm font-bold text-[#003566] outline-none focus:border-blue-600" onChange={(e) => setNewUser({...newUser, password: e.target.value})} />
-                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-0 bottom-3 text-slate-400">{showPassword ? <EyeOff size={16} /> : <Eye size={16} />}</button>
-                </div>
 
+              <form onSubmit={handleEnrollment} className="space-y-6">
                 <div className="grid grid-cols-2 gap-6">
                   <div className="space-y-1">
-                    <label className="text-[8px] font-black uppercase tracking-widest text-slate-400">Classification</label>
+                    <label className="text-[8px] font-black uppercase tracking-widest text-slate-400">Full Name</label>
+                    <input required className="w-full border-b border-slate-200 py-2 text-[10px] font-bold uppercase outline-none focus:border-blue-400" value={newUser.name} onChange={(e) => setNewUser({...newUser, name: e.target.value})} />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[8px] font-black uppercase tracking-widest text-slate-400">Email Address</label>
+                    <input required type="email" className="w-full border-b border-slate-200 py-2 text-[10px] font-bold uppercase outline-none focus:border-blue-400" value={newUser.email} onChange={(e) => setNewUser({...newUser, email: e.target.value})} />
+                  </div>
+                </div>
+
+                <div className="space-y-1 relative">
+                  <label className="text-[8px] font-black uppercase tracking-widest text-slate-400">System Password</label>
+                  <input required type={showPassword ? "text" : "password"} className="w-full border-b border-slate-200 py-2 text-[10px] font-bold uppercase outline-none focus:border-blue-400" value={newUser.password} onChange={(e) => setNewUser({...newUser, password: e.target.value})} />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-0 bottom-2 text-slate-400">{showPassword ? <EyeOff size={14} /> : <Eye size={14} />}</button>
+                </div>
+
+                <div className="grid grid-cols-3 gap-6 pt-4">
+                  <div className="space-y-1">
+                    <label className="text-[8px] font-black uppercase tracking-widest text-slate-400">Assignment</label>
                     <select className="w-full border-b border-slate-200 py-2 text-[10px] font-bold uppercase outline-none" onChange={(e) => setNewUser({...newUser, role: e.target.value})}>
                       <option value="Employee">Employee</option>
                       <option value="Admin">Admin</option>
@@ -318,11 +296,7 @@ const togglePermission = async (user: any, permName: string) => {
                   </div>
                   <div className="space-y-1">
                     <label className="text-[8px] font-black uppercase tracking-widest text-slate-400">Account Status</label>
-                    <select 
-                      className="w-full border-b border-slate-200 py-2 text-[10px] font-bold uppercase outline-none" 
-                      value={newUser.status}
-                      onChange={(e) => setNewUser({...newUser, status: e.target.value})}
-                    >
+                    <select className="w-full border-b border-slate-200 py-2 text-[10px] font-bold uppercase outline-none" value={newUser.status} onChange={(e) => setNewUser({...newUser, status: e.target.value})}>
                       <option value="Active">Active</option>
                       <option value="Inactive">Inactive</option>
                       <option value="Pending">Pending</option>
