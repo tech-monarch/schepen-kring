@@ -91,6 +91,13 @@ interface Yacht {
   fuel_consumption?: string;
   interior_type?: string;
   dimensions?: string;
+  
+  // Availability Rules
+  availability_rules?: {
+    day_of_week: number; // 0=Sunday, 1=Monday, ..., 6=Saturday
+    start_time: string;
+    end_time: string;
+  }[];
 }
 
 export default function YachtTerminalPage() {
@@ -271,6 +278,19 @@ export default function YachtTerminalPage() {
     return date.getDate() === today.getDate() &&
            date.getMonth() === today.getMonth() &&
            date.getFullYear() === today.getFullYear();
+  };
+
+  // Check if a day is active based on availability rules
+  const isDayActive = (date: Date) => {
+    if (!yacht?.availability_rules || yacht.availability_rules.length === 0) {
+      return false;
+    }
+    
+    // Get day of week (0=Sunday, 1=Monday, ..., 6=Saturday)
+    const dayOfWeek = date.getDay();
+    
+    // Check if this day has any availability rules
+    return yacht.availability_rules.some(rule => rule.day_of_week === dayOfWeek);
   };
 
   if (loading || !yacht) {
@@ -682,7 +702,7 @@ export default function YachtTerminalPage() {
                         {/* Calendar Grid - 30 Days */}
                         <div className="grid grid-cols-7 gap-2 mb-6">
                           {/* Day Headers */}
-                          {['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'].map((day) => (
+                          {['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'].map((day) => (
                             <div key={day} className="text-center py-2">
                               <span className="text-[8px] font-black uppercase text-slate-400">
                                 {day}
@@ -696,18 +716,22 @@ export default function YachtTerminalPage() {
                               date.getDate() === selectedDate.getDate() &&
                               date.getMonth() === selectedDate.getMonth() &&
                               date.getFullYear() === selectedDate.getFullYear();
+                            const isActive = isDayActive(date);
                             
                             return (
                               <button
                                 key={date.toISOString()}
                                 onClick={() => handleDateSelect(date)}
+                                disabled={!isActive}
                                 className={cn(
-                                  "aspect-square flex flex-col items-center justify-center rounded-xl text-xs transition-all",
+                                  "aspect-square flex flex-col items-center justify-center rounded-xl text-xs transition-all relative",
                                   isSelected
                                     ? "bg-[#003566] text-white"
                                     : isToday(date)
                                     ? "bg-slate-100 text-[#003566] font-bold"
-                                    : "bg-white border border-slate-100 text-slate-600 hover:bg-slate-50"
+                                    : isActive
+                                    ? "bg-emerald-50 border border-emerald-200 text-emerald-800 hover:bg-emerald-100"
+                                    : "bg-white border border-slate-100 text-slate-300 hover:bg-slate-50"
                                 )}
                               >
                                 <span className="text-[10px] font-bold">
@@ -716,9 +740,29 @@ export default function YachtTerminalPage() {
                                 <span className="text-lg font-serif">
                                   {formatDateNumber(date)}
                                 </span>
+                                {/* Dot indicator for active days */}
+                                {isActive && !isSelected && (
+                                  <span className="absolute top-1 right-1 w-2 h-2 bg-emerald-500 rounded-full"></span>
+                                )}
                               </button>
                             );
                           })}
+                        </div>
+
+                        {/* Legend */}
+                        <div className="flex justify-center items-center gap-4 mb-4">
+                          <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 bg-emerald-500 rounded-full"></div>
+                            <span className="text-[8px] font-bold uppercase text-slate-400">
+                              Available Day
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 bg-slate-300 rounded-full"></div>
+                            <span className="text-[8px] font-bold uppercase text-slate-400">
+                              Unavailable
+                            </span>
+                          </div>
                         </div>
 
                         {/* Selected Date Display */}
@@ -731,6 +775,9 @@ export default function YachtTerminalPage() {
                                 month: 'long', 
                                 day: 'numeric' 
                               })}
+                              {!isDayActive(selectedDate) && (
+                                <span className="ml-2 text-red-500">(Not available for bookings)</span>
+                              )}
                             </p>
                           </div>
                         )}
@@ -760,10 +807,14 @@ export default function YachtTerminalPage() {
                           ) : selectedDate ? (
                             <div className="text-center py-6 border border-slate-200 rounded-lg">
                               <p className="text-[10px] font-black uppercase text-slate-400">
-                                No available slots for this date
+                                {isDayActive(selectedDate) 
+                                  ? "No available time slots for this date" 
+                                  : "This day is not available for bookings"}
                               </p>
                               <p className="text-[8px] text-slate-500 mt-1">
-                                Please select another date
+                                {isDayActive(selectedDate)
+                                  ? "Please select another date"
+                                  : "Please select an available day (green dot)"}
                               </p>
                             </div>
                           ) : (
