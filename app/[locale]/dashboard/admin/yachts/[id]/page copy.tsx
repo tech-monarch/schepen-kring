@@ -22,18 +22,13 @@ import {
   Bed,
   Save,
   ArrowLeft,
-  Calendar,
-  Clock
-} from "lucide-react";
-// // [cite: 2]
-import { Button } from "@/components/ui/button"; // // [cite: 3]
-import { cn } from "@/lib/utils";
-// // [cite: 3]
-import { toast, Toaster } from "react-hot-toast"; // // [cite: 4]
+} from "lucide-react"; // [cite_start]// [cite: 2]
+import { Button } from "@/components/ui/button"; // [cite_start]// [cite: 3]
+import { cn } from "@/lib/utils"; // [cite_start]// [cite: 3]
+import { toast, Toaster } from "react-hot-toast"; // [cite_start]// [cite: 4]
 
 // Configuration
-const STORAGE_URL = "https://schepen-kring.nl/storage/";
-// // [cite: 4]
+const STORAGE_URL = "https://schepen-kring.nl/storage/"; // [cite_start]// [cite: 4]
 const PLACEHOLDER_IMAGE =
   "https://images.unsplash.com/photo-1569263979104-865ab7cd8d13?auto=format&fit=crop&w=600&q=80"; // [cite: 4]
 
@@ -42,30 +37,23 @@ type AiStagedImage = {
   preview: string;
   category: string;
   originalName: string;
-}; // // [cite: 5]
+}; // [cite_start]// [cite: 5]
 type GalleryState = { [key: string]: any[] };
-
-// NEW: Type for Availability Rules
-type AvailabilityRule = {
-  day_of_week: number;
-  start_time: string;
-  end_time: string;
-};
 
 export default function YachtEditorPage() {
   const params = useParams();
   const router = useRouter();
+
   // Logic: 'new' means create mode, otherwise it's the ID
   const isNewMode = params.id === "new";
   const yachtId = params.id;
 
   // Form State
-  const [selectedYacht, setSelectedYacht] = useState<any>(null);
-  // Stores fetched data
+  const [selectedYacht, setSelectedYacht] = useState<any>(null); // Stores fetched data
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [loading, setLoading] = useState(!isNewMode);
-  // Only load if not new
+  const [loading, setLoading] = useState(!isNewMode); // Only load if not new
   const [errors, setErrors] = useState<any>(null);
+
   // AI & Media State
   const [aiStaging, setAiStaging] = useState<AiStagedImage[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -77,9 +65,6 @@ export default function YachtEditorPage() {
     "Engine Room": [],
     Bridge: [],
   });
-
-  // NEW: Availability State
-  const [availabilityRules, setAvailabilityRules] = useState<AvailabilityRule[]>([]);
 
   // --- 1. FETCH DATA (IF EDITING) ---
   useEffect(() => {
@@ -116,12 +101,6 @@ export default function YachtEditorPage() {
           });
         } // [cite: 20]
         setGalleryState(initialGallery);
-
-        // NEW: Load existing availability rules if they exist
-        if (yacht.availability_rules) {
-          setAvailabilityRules(yacht.availability_rules);
-        }
-
       } catch (err) {
         console.error("Failed to fetch yacht details", err);
         toast.error("Could not load vessel data.");
@@ -216,21 +195,6 @@ export default function YachtEditorPage() {
     toast.success("All assets approved");
   };
 
-  // NEW: Availability Handlers
-  const addAvailabilityRule = () => {
-    setAvailabilityRules([...availabilityRules, { day_of_week: 1, start_time: "10:00", end_time: "18:00" }]);
-  };
-
-  const removeAvailabilityRule = (index: number) => {
-    setAvailabilityRules(availabilityRules.filter((_, i) => i !== index));
-  };
-
-  const updateAvailabilityRule = (index: number, field: keyof AvailabilityRule, value: any) => {
-    const newRules = [...availabilityRules];
-    newRules[index] = { ...newRules[index], [field]: value };
-    setAvailabilityRules(newRules);
-  };
-
   // --- 3. SUBMIT LOGIC ---
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -239,6 +203,7 @@ export default function YachtEditorPage() {
     const formData = new FormData(e.currentTarget);
 
     if (mainFile) formData.set("main_image", mainFile);
+
     if (!formData.has("trailer_included")) {
       formData.append("trailer_included", "0");
     } else {
@@ -258,14 +223,11 @@ export default function YachtEditorPage() {
     numericFields.forEach((field) => {
       const val = formData.get(field);
       if (!val || val === "") formData.set(field, "");
-    });
-    // [cite: 30]
-
-    // NEW: Append Availability Rules to main form data
-    formData.append("availability_rules", JSON.stringify(availabilityRules));
+    }); // [cite: 30]
 
     try {
       let finalYachtId = selectedYacht?.id;
+
       if (!isNewMode && selectedYacht) {
         // UPDATE EXISTING
         formData.append("_method", "PUT");
@@ -354,7 +316,8 @@ export default function YachtEditorPage() {
                 {Object.keys(errors).map((key) => (
                   <p key={key} className="text-[10px] font-bold">
                     ● {key.toUpperCase()}: {errors[key][0]}
-                  </p>
+                    [cite_start]
+                  </p> // [cite: 81]
                 ))}
               </div>
             </div>
@@ -711,90 +674,6 @@ export default function YachtEditorPage() {
             </div>
           </div>
 
-          {/* NEW SECTION: SCHEDULING AUTHORITY */}
-          <div className="space-y-8 bg-slate-50 p-10 border border-slate-200 shadow-sm">
-             <div className="flex justify-between items-center border-b border-slate-200 pb-4">
-               <h3 className="text-[12px] font-black uppercase text-[#003566] tracking-[0.4em] flex items-center gap-3 italic">
-                  <Calendar size={20} className="text-blue-600" /> 04. Scheduling Authority
-                </h3>
-                <Button 
-                  type="button" 
-                  onClick={addAvailabilityRule}
-                  className="bg-[#003566] text-white text-[8px] font-black uppercase tracking-widest px-6 h-8"
-                >
-                  Add Window
-                </Button>
-             </div>
-
-             <div className="space-y-4">
-                {availabilityRules.map((rule, idx) => (
-                  <div key={idx} className="flex flex-wrap items-end gap-6 bg-white p-4 border border-slate-100 shadow-sm relative group">
-                    <div className="flex-1 min-w-[150px]">
-                      <Label>Day of Week</Label>
-                      <select
-                        value={rule.day_of_week}
-                        onChange={(e) => updateAvailabilityRule(idx, 'day_of_week', parseInt(e.target.value))}
-                        className="w-full bg-slate-50 p-2 border-b border-slate-200 text-[#003566] font-bold text-xs outline-none"
-                      >
-                        <option value={1}>Monday</option>
-                        <option value={2}>Tuesday</option>
-                        <option value={3}>Wednesday</option>
-                        <option value={4}>Thursday</option>
-                        <option value={5}>Friday</option>
-                        <option value={6}>Saturday</option>
-                        <option value={0}>Sunday</option>
-                      </select>
-                    </div>
-
-                    <div className="flex-1 min-w-[120px]">
-                      <Label>Start Time</Label>
-                      <div className="flex items-center gap-2 bg-slate-50 p-2 border-b border-slate-200">
-                        <Clock size={12} className="text-slate-400" />
-                        <input 
-                          type="time" 
-                          step="900" 
-                          value={rule.start_time}
-                          onChange={(e) => updateAvailabilityRule(idx, 'start_time', e.target.value)}
-                          className="bg-transparent text-xs font-bold text-[#003566] outline-none w-full"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="flex-1 min-w-[120px]">
-                      <Label>End Time</Label>
-                      <div className="flex items-center gap-2 bg-slate-50 p-2 border-b border-slate-200">
-                        <Clock size={12} className="text-slate-400" />
-                        <input 
-                          type="time" 
-                          step="900" 
-                          value={rule.end_time}
-                          onChange={(e) => updateAvailabilityRule(idx, 'end_time', e.target.value)}
-                          className="bg-transparent text-xs font-bold text-[#003566] outline-none w-full"
-                        />
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => removeAvailabilityRule(idx)}
-                      className="p-2 text-red-400 hover:text-red-600 transition-colors"
-                    >
-                      <Trash size={16} />
-                    </button>
-                  </div>
-                ))}
-
-                {availabilityRules.length === 0 && (
-                  <div className="text-center py-12 border-2 border-dashed border-slate-200 bg-white">
-                    <Calendar size={32} className="mx-auto text-slate-200 mb-2" />
-                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
-                      No Booking Windows Defined. Test Sails will be disabled.
-                    </p>
-                  </div>
-                )}
-             </div>
-          </div>
-
           {/* 03. AI CARGO DROP */}
           <div className="space-y-8 bg-slate-900 p-12 border-l-8 border-blue-500 shadow-2xl">
             <div className="flex justify-between items-start">
@@ -992,7 +871,7 @@ function Label({ children }: { children: React.ReactNode }) {
     <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 pl-0.5">
       {children}
     </p>
-  );
+  ); // [cite: 172]
 }
 
 function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
@@ -1004,7 +883,7 @@ function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
         props.className,
       )}
     />
-  );
+  ); // [cite: 173]
 }
 
 function SectionHeader({
@@ -1018,5 +897,5 @@ function SectionHeader({
     <h4 className="text-[10px] font-black uppercase tracking-widest text-blue-600 flex items-center gap-2 mb-4">
       {icon} {title}
     </h4>
-  );
+  ); // [cite: 175]
 }

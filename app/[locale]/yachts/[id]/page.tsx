@@ -97,6 +97,9 @@ export default function YachtTerminalPage() {
   const [activeImage, setActiveImage] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [trialDate, setTrialDate] = useState<string>("");
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedTime, setSelectedTime] = useState<string | null>(null);
+  const [availableSlots, setAvailableSlots] = useState<string[]>([]);
 
   // Payment states
   const [paymentMode, setPaymentMode] = useState<
@@ -162,31 +165,73 @@ export default function YachtTerminalPage() {
     }
   };
 
-  const handleDepositPayment = async () => {
-    setPaymentStatus("processing");
-    setTimeout(async () => {
-      try {
-        const isBuyNow = paymentMode === "buy_now";
-        await api.post("/tasks", {
-          title: isBuyNow ? `URGENT: BUY NOW REQUEST` : `TEST SAIL REQUEST`,
-          description: isBuyNow
-            ? `CLIENT PAID DEPOSIT FOR FULL PURCHASE: €${yacht?.price.toLocaleString()}. Please halt auction.`
-            : `Client paid deposit for Test Sail on ${yacht?.name}. Scheduled Date: ${trialDate}`,
-          priority: "High",
-          status: "To Do",
-          yacht_id: yacht?.id,
-        });
-        setPaymentStatus("success");
-        setTimeout(() => {
-          setPaymentMode(null);
+const handleDepositPayment = async () => {
+  setPaymentStatus("processing");
+  
+  // Artificial delay to simulate gateway processing as per your original code
+  setTimeout(async () => {
+    try {
+      const isBuyNow = paymentMode === "buy_now";
+
+      // 1. If it's a Test Sail, record the booking in the database first
+      if (paymentMode === "test_sail") {
+        if (!selectedDate || !selectedTime) {
+          toast.error("Please select a date and time.");
           setPaymentStatus("idle");
-        }, 3000);
-      } catch (error) {
-        setPaymentStatus("idle");
-        toast.error("Transaction failed.");
+          return;
+        }
+
+        // Format: YYYY-MM-DD HH:mm
+        const formattedStart = `${selectedDate.toISOString().split('T')[0]} ${selectedTime}`;
+        
+        await api.post(`/yachts/${yacht?.id}/book`, {
+          start_at: formattedStart
+        });
       }
-    }, 2000);
-  };
+
+      // 2. Create the notification task for the admin panel
+      await api.post("/tasks", {
+        title: isBuyNow ? `URGENT: BUY NOW REQUEST` : `TEST SAIL REQUEST`,
+        description: isBuyNow
+          ? `CLIENT PAID DEPOSIT FOR FULL PURCHASE: €${yacht?.price.toLocaleString()}. Please halt auction.`
+          : `Client paid deposit for Test Sail on ${yacht?.name}. Start: ${selectedDate?.toLocaleDateString()} at ${selectedTime}. Duration: 60m (+ 15m buffer).`,
+        priority: "High",
+        status: "To Do",
+        yacht_id: yacht?.id,
+      });
+
+      setPaymentStatus("success");
+
+      // Reset modal after success
+      setTimeout(() => {
+        setPaymentMode(null);
+        setPaymentStatus("idle");
+        // Optional: clear selection
+        setSelectedTime(null);
+      }, 3000);
+
+    } catch (error: any) { // Change 'error' to 'error: any'
+      setPaymentStatus("idle");
+      const errorMessage = error.response?.data?.error || "Transaction failed.";
+      toast.error(errorMessage);
+    }
+  }, 2000);
+};
+  const fetchAvailableSlots = async (date: string) => {
+  try {
+    const res = await api.get(`/yachts/${id}/available-slots?date=${date}`);
+    setAvailableSlots(res.data); // Expecting ["10:00", "10:15", ...]
+  } catch (e) {
+    toast.error("Could not load time slots.");
+  }
+};
+
+const calculateEndTime = (startTime: string) => {
+  const [hh, mm] = startTime.split(':').map(Number);
+  const end = new Date();
+  end.setHours(hh, mm + 60); // 60 min duration
+  return end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+};
 
   if (loading || !yacht) {
     return (
@@ -572,22 +617,54 @@ export default function YachtTerminalPage() {
                   </div>
 
                   {/* BEAUTIFULLY STYLED CALENDAR INJECTION */}
-                  {paymentMode === "test_sail" && (
-                    <div className="space-y-2">
-                      <label className="text-[9px] font-black uppercase tracking-widest text-blue-600">
-                        Select Arrival Date & Time (Min. 3 days notice)
-                      </label>
-                      <input
-                        type="datetime-local"
-                        required
-                        min={new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16)}
-                        value={trialDate}
-                        onChange={(e) => setTrialDate(e.target.value)}
-                        className="w-full bg-slate-50 border border-slate-200 p-3 text-sm font-serif outline-none focus:border-[#003566] transition-colors"
-                      />
-                    </div>
-                  )}
+{paymentMode === "test_sail" && (
+  <div className="space-y-6">
+    {/* Header & Date Picker */}
+    <div className="text-center">
+      <input 
+        type="date" 
+        className="text-lg font-serif italic border-none focus:ring-0 cursor-pointer"
+        onChange={(e) => {
+          setSelectedDate(new Date(e.target.value));
+          fetchAvailableSlots(e.target.value);
+        }}
+      />
+    </div>
 
+    {/* Slot Grid - Style matching your uploaded image */}
+    <div className="grid grid-cols-4 gap-2">
+      {availableSlots.length > 0 ? (
+        availableSlots.map((time) => (
+          <button
+            key={time}
+            onClick={() => setSelectedTime(time)}
+            className={cn(
+              "py-3 rounded-xl text-xs font-bold transition-all",
+              selectedTime === time 
+                ? "bg-[#003566] text-white" 
+                : "bg-emerald-200 text-emerald-900 hover:bg-emerald-300"
+            )}
+          >
+            {time}
+          </button>
+        ))
+      ) : (
+        <p className="col-span-4 text-center text-[9px] text-slate-400 uppercase tracking-widest">
+          Select a date to view 15-min slots
+        </p>
+      )}
+    </div>
+
+    {/* Confirmation Details */}
+    {selectedTime && (
+      <div className="text-center p-2 bg-slate-50 border border-dashed border-slate-200">
+        <p className="text-[10px] font-black uppercase text-slate-500">
+          Selected: {selectedTime} - {calculateEndTime(selectedTime)} (+15m Buffer)
+        </p>
+      </div>
+    )}
+  </div>
+)}
                   <div className="p-4 bg-blue-50 text-[#003566] flex gap-3 rounded-sm">
                     <FileText size={20} className="shrink-0" />
                     <p className="text-[9px] leading-relaxed font-medium">
