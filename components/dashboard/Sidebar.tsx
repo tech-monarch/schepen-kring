@@ -151,7 +151,7 @@ const menuItems = [
                     localStorage.removeItem("auth_token");
                     localStorage.removeItem("user_data");
                     localStorage.removeItem("task_cache");
-                    localStorage.removeItem("user_role");
+                    localStorage.removeItem("personal_tasks");
                     window.location.href = "/";
                   }
               }}

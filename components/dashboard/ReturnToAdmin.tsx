@@ -18,6 +18,8 @@ export default function ReturnToAdmin() {
     if (originalToken) {
       // 1. Clear the impersonated cache
       localStorage.clear();
+      localStorage.removeItem("task_cache");  
+      localStorage.removeItem("personal_tasks");
       
       // 2. Restore original admin token
       localStorage.setItem("auth_token", originalToken);
