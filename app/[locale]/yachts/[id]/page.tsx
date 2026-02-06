@@ -87,6 +87,10 @@ interface Yacht {
   trailer_included?: boolean | number; // sometimes comes as 0/1 from DB
   beam?: string;
   draft?: string;
+  water_system?: string;
+  fuel_consumption?: string;
+  interior_type?: string;
+  dimensions?: string;
 }
 
 export default function YachtTerminalPage() {
@@ -96,10 +100,10 @@ export default function YachtTerminalPage() {
   const [bidAmount, setBidAmount] = useState<string>("");
   const [activeImage, setActiveImage] = useState<string>("");
   const [loading, setLoading] = useState(true);
-  const [trialDate, setTrialDate] = useState<string>("");
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [availableSlots, setAvailableSlots] = useState<string[]>([]);
+  const [calendarDays, setCalendarDays] = useState<Date[]>([]);
 
   // Payment states
   const [paymentMode, setPaymentMode] = useState<
@@ -114,6 +118,25 @@ export default function YachtTerminalPage() {
     const interval = setInterval(fetchVesselData, 10000);
     return () => clearInterval(interval);
   }, [id]);
+
+  useEffect(() => {
+    // Generate next 30 days for calendar
+    const days = [];
+    const today = new Date();
+    for (let i = 0; i < 30; i++) {
+      const date = new Date(today);
+      date.setDate(today.getDate() + i);
+      days.push(date);
+    }
+    setCalendarDays(days);
+    
+    // Set today as default selected date
+    if (paymentMode === "test_sail" && !selectedDate) {
+      const today = new Date();
+      setSelectedDate(today);
+      fetchAvailableSlots(today);
+    }
+  }, [paymentMode]);
 
   const fetchVesselData = async () => {
     try {
@@ -166,6 +189,11 @@ export default function YachtTerminalPage() {
   };
 
   const handleDepositPayment = async () => {
+    if (paymentMode === "test_sail" && (!selectedDate || !selectedTime)) {
+      toast.error("Please select a date and time for your test sail");
+      return;
+    }
+
     setPaymentStatus("processing");
     setTimeout(async () => {
       try {
@@ -174,15 +202,30 @@ export default function YachtTerminalPage() {
           title: isBuyNow ? `URGENT: BUY NOW REQUEST` : `TEST SAIL REQUEST`,
           description: isBuyNow
             ? `CLIENT PAID DEPOSIT FOR FULL PURCHASE: €${yacht?.price.toLocaleString()}. Please halt auction.`
-            : `Client paid deposit for Test Sail on ${yacht?.name}. Test Sail on ${yacht?.name}. Start: ${selectedDate?.toLocaleDateString()} at ${selectedTime}.`,
+            : `Client paid deposit for Test Sail on ${yacht?.name}. Test Sail scheduled on ${selectedDate?.toLocaleDateString()} at ${selectedTime}.`,
           priority: "High",
           status: "To Do",
           yacht_id: yacht?.id,
         });
+
+        // Also create a booking if test sail
+        if (paymentMode === "test_sail" && selectedDate && selectedTime && yacht) {
+          const startDateTime = new Date(selectedDate);
+          const [hours, minutes] = selectedTime.split(':').map(Number);
+          startDateTime.setHours(hours, minutes, 0, 0);
+          
+          await api.post(`/yachts/${yacht.id}/book`, {
+            start_at: startDateTime.toISOString(),
+          });
+        }
+
         setPaymentStatus("success");
         setTimeout(() => {
           setPaymentMode(null);
           setPaymentStatus("idle");
+          setSelectedDate(null);
+          setSelectedTime(null);
+          setAvailableSlots([]);
         }, 3000);
       } catch (error) {
         setPaymentStatus("idle");
@@ -190,21 +233,45 @@ export default function YachtTerminalPage() {
       }
     }, 2000);
   };
-  const fetchAvailableSlots = async (date: string) => {
-  try {
-    const res = await api.get(`/yachts/${id}/available-slots?date=${date}`);
-    setAvailableSlots(res.data); // Expecting ["10:00", "10:15", ...]
-  } catch (e) {
-    toast.error("Could not load time slots.");
-  }
-};
 
-const calculateEndTime = (startTime: string) => {
-  const [hh, mm] = startTime.split(':').map(Number);
-  const end = new Date();
-  end.setHours(hh, mm + 60); // 60 min duration
-  return end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-};
+  const fetchAvailableSlots = async (date: Date) => {
+    try {
+      const dateStr = date.toISOString().split('T')[0];
+      const res = await api.get(`/yachts/${id}/available-slots?date=${dateStr}`);
+      setAvailableSlots(res.data);
+    } catch (e) {
+      toast.error("Could not load time slots.");
+      setAvailableSlots([]);
+    }
+  };
+
+  const calculateEndTime = (startTime: string) => {
+    const [hh, mm] = startTime.split(':').map(Number);
+    const end = new Date();
+    end.setHours(hh, mm + 60); // 60 min duration
+    return end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
+  const handleDateSelect = (date: Date) => {
+    setSelectedDate(date);
+    setSelectedTime(null);
+    fetchAvailableSlots(date);
+  };
+
+  const formatDay = (date: Date) => {
+    return date.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
+  };
+
+  const formatDateNumber = (date: Date) => {
+    return date.getDate();
+  };
+
+  const isToday = (date: Date) => {
+    const today = new Date();
+    return date.getDate() === today.getDate() &&
+           date.getMonth() === today.getMonth() &&
+           date.getFullYear() === today.getFullYear();
+  };
 
   if (loading || !yacht) {
     return (
@@ -332,6 +399,11 @@ const calculateEndTime = (startTime: string) => {
                     <FileText size={14} /> {yacht.vat_status}
                   </div>
                 )}
+                {yacht.reference_code && (
+                  <div className="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 text-slate-600 text-[10px] font-black uppercase tracking-widest border border-slate-200">
+                    <Box size={14} /> REF: {yacht.reference_code}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -353,12 +425,17 @@ const calculateEndTime = (startTime: string) => {
                   <div className="grid grid-cols-2 gap-y-4">
                     <SpecRow label="Builder" value={yacht.make} />
                     <SpecRow label="Model" value={yacht.model} />
+                    <SpecRow label="Year" value={yacht.year?.toString()} />
+                    <SpecRow label="Length" value={yacht.length} />
+                    <SpecRow label="Beam" value={yacht.beam} />
+                    <SpecRow label="Draft" value={yacht.draft} />
                     <SpecRow
                       label="Construction"
                       value={yacht.construction_material}
                     />
                     <SpecRow label="Hull Shape" value={yacht.hull_shape} />
                     <SpecRow label="Hull Color" value={yacht.hull_color} />
+                    <SpecRow label="Deck Color" value={yacht.deck_color} />
                     <SpecRow label="Displacement" value={yacht.displacement} />
                     <SpecRow label="Clearance" value={yacht.clearance} />
                     <SpecRow label="Steering" value={yacht.steering} />
@@ -378,10 +455,12 @@ const calculateEndTime = (startTime: string) => {
                     <SpecRow label="Model" value={yacht.engine_model} />
                     <SpecRow label="Power" value={yacht.engine_power} />
                     <SpecRow label="Hours" value={yacht.engine_hours} />
+                    <SpecRow label="Engine Type" value={yacht.engine_type} />
                     <SpecRow label="Fuel Type" value={yacht.fuel_type} />
                     <SpecRow label="Max Speed" value={yacht.max_speed} />
                     <SpecRow label="Voltage" value={yacht.voltage} />
                     <SpecRow label="Tank (Fuel)" value={yacht.fuel_capacity} />
+                    <SpecRow label="Fuel Consumption" value={yacht.fuel_consumption} />
                   </div>
                 </div>
 
@@ -403,9 +482,12 @@ const calculateEndTime = (startTime: string) => {
                     />
                     <SpecRow
                       label="Water System"
-                      value={yacht.water_capacity}
-                    />{" "}
-                    {/* Fallback if needed */}
+                      value={yacht.water_system}
+                    />
+                    <SpecRow
+                      label="Interior Type"
+                      value={yacht.interior_type}
+                    />
                   </div>
                 </div>
 
@@ -576,7 +658,7 @@ const calculateEndTime = (startTime: string) => {
             <motion.div
               initial={{ y: 50 }}
               animate={{ y: 0 }}
-              className="bg-white max-w-md w-full p-8 shadow-2xl"
+              className="bg-white max-w-2xl w-full p-8 shadow-2xl"
             >
               {paymentStatus === "idle" && (
                 <div className="space-y-6">
@@ -589,55 +671,126 @@ const calculateEndTime = (startTime: string) => {
                     </p>
                   </div>
 
-                  {/* BEAUTIFULLY STYLED CALENDAR INJECTION */}
-{paymentMode === "test_sail" && (
-  <div className="space-y-6">
-    {/* Header & Date Picker */}
-    <div className="text-center">
-      <input 
-        type="date" 
-        className="text-lg font-serif italic border-none focus:ring-0 cursor-pointer"
-        onChange={(e) => {
-          setSelectedDate(new Date(e.target.value));
-          fetchAvailableSlots(e.target.value);
-        }}
-      />
-    </div>
+                  {/* CALENDAR FOR TEST SAIL */}
+                  {paymentMode === "test_sail" && (
+                    <div className="space-y-6">
+                      <div className="text-center">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4">
+                          Select Date for Sea Trial
+                        </p>
+                        
+                        {/* Calendar Grid - 30 Days */}
+                        <div className="grid grid-cols-7 gap-2 mb-6">
+                          {/* Day Headers */}
+                          {['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'].map((day) => (
+                            <div key={day} className="text-center py-2">
+                              <span className="text-[8px] font-black uppercase text-slate-400">
+                                {day}
+                              </span>
+                            </div>
+                          ))}
+                          
+                          {/* Calendar Days */}
+                          {calendarDays.map((date) => {
+                            const isSelected = selectedDate && 
+                              date.getDate() === selectedDate.getDate() &&
+                              date.getMonth() === selectedDate.getMonth() &&
+                              date.getFullYear() === selectedDate.getFullYear();
+                            
+                            return (
+                              <button
+                                key={date.toISOString()}
+                                onClick={() => handleDateSelect(date)}
+                                className={cn(
+                                  "aspect-square flex flex-col items-center justify-center rounded-xl text-xs transition-all",
+                                  isSelected
+                                    ? "bg-[#003566] text-white"
+                                    : isToday(date)
+                                    ? "bg-slate-100 text-[#003566] font-bold"
+                                    : "bg-white border border-slate-100 text-slate-600 hover:bg-slate-50"
+                                )}
+                              >
+                                <span className="text-[10px] font-bold">
+                                  {formatDay(date)}
+                                </span>
+                                <span className="text-lg font-serif">
+                                  {formatDateNumber(date)}
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
 
-    {/* Slot Grid - Style matching your uploaded image */}
-    <div className="grid grid-cols-4 gap-2">
-      {availableSlots.length > 0 ? (
-        availableSlots.map((time) => (
-          <button
-            key={time}
-            onClick={() => setSelectedTime(time)}
-            className={cn(
-              "py-3 rounded-xl text-xs font-bold transition-all",
-              selectedTime === time 
-                ? "bg-[#003566] text-white" 
-                : "bg-emerald-200 text-emerald-900 hover:bg-emerald-300"
-            )}
-          >
-            {time}
-          </button>
-        ))
-      ) : (
-        <p className="col-span-4 text-center text-[9px] text-slate-400 uppercase tracking-widest">
-          Select a date to view 15-min slots
-        </p>
-      )}
-    </div>
+                        {/* Selected Date Display */}
+                        {selectedDate && (
+                          <div className="mb-4 p-3 bg-blue-50 border border-blue-100">
+                            <p className="text-[10px] font-black uppercase tracking-widest text-blue-600">
+                              Selected Date: {selectedDate.toLocaleDateString('en-US', { 
+                                weekday: 'long', 
+                                year: 'numeric', 
+                                month: 'long', 
+                                day: 'numeric' 
+                              })}
+                            </p>
+                          </div>
+                        )}
 
-    {/* Confirmation Details */}
-    {selectedTime && (
-      <div className="text-center p-2 bg-slate-50 border border-dashed border-slate-200">
-        <p className="text-[10px] font-black uppercase text-slate-500">
-          Selected: {selectedTime} - {calculateEndTime(selectedTime)} (+15m Buffer)
-        </p>
-      </div>
-    )}
-  </div>
-)}
+                        {/* Time Slots Grid */}
+                        <div>
+                          <p className="text-[9px] font-bold uppercase text-slate-400 mb-3">
+                            Available Time Slots (60min viewing + 15min buffer)
+                          </p>
+                          {availableSlots.length > 0 ? (
+                            <div className="grid grid-cols-4 gap-2">
+                              {availableSlots.map((time) => (
+                                <button
+                                  key={time}
+                                  onClick={() => setSelectedTime(time)}
+                                  className={cn(
+                                    "py-3 rounded-xl text-xs font-bold transition-all",
+                                    selectedTime === time 
+                                      ? "bg-[#003566] text-white" 
+                                      : "bg-emerald-200 text-emerald-900 hover:bg-emerald-300"
+                                  )}
+                                >
+                                  {time}
+                                </button>
+                              ))}
+                            </div>
+                          ) : selectedDate ? (
+                            <div className="text-center py-6 border border-slate-200 rounded-lg">
+                              <p className="text-[10px] font-black uppercase text-slate-400">
+                                No available slots for this date
+                              </p>
+                              <p className="text-[8px] text-slate-500 mt-1">
+                                Please select another date
+                              </p>
+                            </div>
+                          ) : (
+                            <div className="text-center py-6 border border-slate-200 rounded-lg">
+                              <p className="text-[10px] font-black uppercase text-slate-400">
+                                Please select a date first
+                              </p>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Confirmation Details */}
+                        {selectedTime && (
+                          <div className="mt-4 p-3 bg-slate-50 border border-dashed border-slate-200 rounded-lg">
+                            <p className="text-[10px] font-black uppercase text-slate-500 mb-1">
+                              Selected Time Slot
+                            </p>
+                            <p className="text-sm font-serif text-[#003566]">
+                              {selectedTime} - {calculateEndTime(selectedTime)} 
+                              <span className="text-[9px] text-slate-500 ml-2">(+15m Buffer)</span>
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
                   <div className="p-4 bg-blue-50 text-[#003566] flex gap-3 rounded-sm">
                     <FileText size={20} className="shrink-0" />
                     <p className="text-[9px] leading-relaxed font-medium">
@@ -646,12 +799,21 @@ const calculateEndTime = (startTime: string) => {
                   </div>
                   
                   <div className="flex gap-4">
-                    <Button onClick={() => setPaymentMode(null)} variant="ghost" className="flex-1">
+                    <Button 
+                      onClick={() => {
+                        setPaymentMode(null);
+                        setSelectedDate(null);
+                        setSelectedTime(null);
+                        setAvailableSlots([]);
+                      }} 
+                      variant="ghost" 
+                      className="flex-1"
+                    >
                       Cancel
                     </Button>
                     <Button
                       onClick={handleDepositPayment}
-                      disabled={paymentMode === "test_sail" && !trialDate}
+                      disabled={paymentMode === "test_sail" && (!selectedDate || !selectedTime)}
                       className="flex-[2] bg-[#003566] hover:bg-blue-900 text-white font-bold uppercase tracking-widest text-[10px] disabled:bg-slate-300"
                     >
                       Confirm & Pay
@@ -681,6 +843,16 @@ const calculateEndTime = (startTime: string) => {
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                     A terminal ticket has been dispatched.
                   </p>
+                  {paymentMode === "test_sail" && selectedDate && selectedTime && (
+                    <div className="mt-4 p-3 bg-slate-50 rounded-sm">
+                      <p className="text-[9px] font-bold uppercase text-slate-500">
+                        Test Sail Scheduled
+                      </p>
+                      <p className="text-xs font-serif">
+                        {selectedDate.toLocaleDateString()} at {selectedTime}
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
             </motion.div>
