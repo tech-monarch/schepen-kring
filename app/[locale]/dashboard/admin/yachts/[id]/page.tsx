@@ -232,6 +232,7 @@ export default function YachtEditorPage() {
   };
 
   // --- 3. SUBMIT LOGIC ---
+// --- 3. SUBMIT LOGIC ---
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -243,7 +244,7 @@ export default function YachtEditorPage() {
       formData.append("trailer_included", "0");
     } else {
       formData.set("trailer_included", "1");
-    } // [cite: 28]
+    }
 
     // Cleanup empty numeric fields
     const numericFields = [
@@ -259,21 +260,21 @@ export default function YachtEditorPage() {
       const val = formData.get(field);
       if (!val || val === "") formData.set(field, "");
     });
-    // [cite: 30]
 
-    // NEW: Append Availability Rules to main form data
+    // Append Availability Rules
     formData.append("availability_rules", JSON.stringify(availabilityRules));
 
     try {
       let finalYachtId = selectedYacht?.id;
+      
       if (!isNewMode && selectedYacht) {
-        // UPDATE EXISTING
-        formData.append("_method", "PUT");
-        await api.post(`/yachts/${selectedYacht.id}`, formData); // [cite: 32]
+        // FIX: Laravel requires _method: PUT for multipart/form-data updates via POST
+        formData.append("_method", "PUT"); 
+        await api.post(`/yachts/${selectedYacht.id}`, formData);
       } else {
         // CREATE NEW
         const res = await api.post("/yachts", formData);
-        finalYachtId = res.data.id; // [cite: 33]
+        finalYachtId = res.data.id;
       }
 
       // Bulk gallery submission (new files only)
@@ -285,7 +286,7 @@ export default function YachtEditorPage() {
           const gData = new FormData();
           newFiles.forEach((file) => gData.append("images[]", file));
           gData.append("category", cat);
-          await api.post(`/yachts/${finalYachtId}/gallery`, gData); // [cite: 36]
+          await api.post(`/yachts/${finalYachtId}/gallery`, gData);
         }
       }
 
@@ -294,14 +295,14 @@ export default function YachtEditorPage() {
           ? "Vessel Registered Successfully"
           : "Manifest Updated Successfully",
       );
-      router.push("/admin/yachts"); // Return to list
+      router.push("/admin/yachts");
     } catch (err: any) {
       if (err.response?.status === 422) {
         setErrors(err.response.data.errors);
         toast.error("Please fix validation errors");
       } else {
         console.error(err);
-        toast.error("Critical System Error");
+        toast.error(`Error ${err.response?.status}: ${err.response?.data?.message || "Critical System Error"}`);
       }
     } finally {
       setIsSubmitting(false);
