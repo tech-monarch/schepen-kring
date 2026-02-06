@@ -140,60 +140,121 @@ export default function RoleManagementPage() {
           <div className="text-center py-20 border-2 border-dashed border-slate-100 text-[10px] font-black uppercase text-slate-400">No personnel matching this classification.</div>
         ) : (
           filteredUsers.map((user) => (
-            <motion.div layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} key={user.id} className="bg-white border border-slate-200 p-8 hover:shadow-lg transition-all">
-              <div className="flex flex-col lg:flex-row gap-10">
-                
-                {/* ID & Profile Data */}
-                <div className="lg:w-1/3 space-y-6">
-                  <div className="flex items-center gap-4">
-                    <div className="w-16 h-16 bg-slate-50 border border-slate-200 flex items-center justify-center text-[#003566]">
-                      {user.profile_image ? <img src={user.profile_image} className="w-full h-full object-cover" /> : <UserCheck size={32} />}
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-serif italic text-[#003566]">{user.name}</h3>
-                      <p className="text-[10px] text-blue-600 font-black uppercase tracking-widest">{user.access_level} CLEARANCE</p>
-                    </div>
-                  </div>
+<motion.div
+  layout
+  initial={{ opacity: 0 }}
+  animate={{ opacity: 1 }}
+  key={user.id}
+  className="bg-white border border-slate-200 p-8 hover:shadow-lg transition-all"
+>
+  <div className="flex flex-col lg:flex-row gap-10">
+    {/* LEFT COLUMN: PROFILE & IDENTITY */}
+    <div className="lg:w-1/3 space-y-6">
+      <div className="flex items-center gap-4">
+        <div className="w-16 h-16 bg-slate-50 border border-slate-200 flex items-center justify-center text-[#003566] overflow-hidden">
+          {user.profile_image ? (
+            <img src={user.profile_image} className="w-full h-full object-cover" />
+          ) : (
+            <UserCheck size={32} />
+          )}
+        </div>
+        <div>
+          <h3 className="text-xl font-serif italic text-[#003566]">{user.name}</h3>
+          <p className="text-[10px] text-blue-600 font-black uppercase tracking-widest">
+            {user.access_level} CLEARANCE • {user.role}
+          </p>
+        </div>
+      </div>
 
-                  <div className="space-y-3 text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                    <div className="flex items-center gap-2"><Mail size={14} className="text-slate-300" /> {user.email}</div>
-                    {user.phone_number && <div className="flex items-center gap-2"><Phone size={14} className="text-slate-300" /> {user.phone_number}</div>}
-                    {user.city && <div className="flex items-center gap-2"><MapPin size={14} className="text-slate-300" /> {user.city}, {user.state}</div>}
-                  </div>
+      <div className="space-y-3 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+        <div className="flex items-center gap-2">
+          <Mail size={14} className="text-slate-300" /> {user.email}
+        </div>
+        {user.phone_number && (
+          <div className="flex items-center gap-2">
+            <Phone size={14} className="text-slate-300" /> {user.phone_number}
+          </div>
+        )}
+        {(user.city || user.state) && (
+          <div className="flex items-center gap-2">
+            <MapPin size={14} className="text-slate-300" /> {user.city}, {user.state}
+          </div>
+        )}
+      </div>
 
-                  <div className="flex gap-4 pt-4 border-t border-slate-50">
-                    <button onClick={() => impersonateUser(user.id)} className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-emerald-600 hover:text-emerald-700">
-                      <LogIn size={14} /> Assume Identity
-                    </button>
-                    <button onClick={() => toast.error("Editing locked.")} className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-600">
-                      <Settings size={14} /> Full File
-                    </button>
-                  </div>
-                </div>
+      {/* ACTION BUTTONS */}
+      <div className="flex flex-wrap gap-4 pt-4 border-t border-slate-50">
+        {/* Impersonate - Available for all users */}
+        <button
+          onClick={() => impersonateUser(user.id)}
+          className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-emerald-600 hover:text-emerald-700 transition-colors"
+        >
+          <LogIn size={14} /> Assume Identity
+        </button>
 
-                {/* Permissions (Only for Admins/Employees) */}
-                {(user.role === "Admin" || user.role === "Employee") && (
-                  <div className="lg:w-2/3 lg:border-l border-slate-100 lg:pl-10">
-                    <p className="text-[8px] font-black uppercase text-slate-400 tracking-widest mb-4">Operations Authorization</p>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                      {permissions.map((perm) => (
-                        <button
-                          key={perm.id}
-                          onClick={() => togglePermission(user.id, perm.name)}
-                          className={cn(
-                            "flex items-center justify-between px-4 py-3 text-[9px] font-bold uppercase tracking-widest border transition-all",
-                            user.permissions?.includes(perm.name) ? "bg-[#003566] text-white border-[#003566]" : "bg-white text-slate-400 border-slate-100"
-                          )}
-                        >
-                          {perm.name.replace(/_/g, " ")}
-                          {user.permissions?.includes(perm.name) ? <Check size={12} /> : <div className="w-1.5 h-1.5 rounded-full bg-slate-100" />}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+        {/* Delete Button - Available for all users with Confirmation */}
+        <button
+          onClick={() => {
+            if (window.confirm(`CRITICAL ACTION: Are you sure you want to permanently delete ${user.name}? This cannot be undone.`)) {
+              handleDeleteUser(user.id);
+            }
+          }}
+          className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-red-400 hover:text-red-600 transition-colors"
+        >
+          <Trash2 size={14} /> Terminate Access
+        </button>
+
+        <button
+          onClick={() => toast.error("Full profile dossiers are currently encrypted.")}
+          className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-600"
+        >
+          <Settings size={14} /> Settings
+        </button>
+      </div>
+    </div>
+
+    {/* RIGHT COLUMN: PERMISSIONS (RESTRICTED TO PERSONNEL) */}
+    <div className="lg:w-2/3 lg:border-l border-slate-100 lg:pl-10">
+      {(user.role === "Admin" || user.role === "Employee") ? (
+        <>
+          <p className="text-[8px] font-black uppercase text-slate-400 tracking-widest mb-4 flex items-center gap-2">
+            <ShieldCheck size={12} className="text-blue-600" /> Operations Authorization
+          </p>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+            {permissions.map((perm) => (
+              <button
+                key={perm.id}
+                onClick={() => togglePermission(user.id, perm.name)}
+                className={cn(
+                  "flex items-center justify-between px-4 py-3 text-[9px] font-bold uppercase tracking-widest border transition-all",
+                  user.permissions?.includes(perm.name)
+                    ? "bg-[#003566] text-white border-[#003566]"
+                    : "bg-white text-slate-400 border-slate-100 hover:border-slate-300"
                 )}
-              </div>
-            </motion.div>
+              >
+                {perm.name.replace(/_/g, " ")}
+                {user.permissions?.includes(perm.name) ? (
+                  <Check size={12} />
+                ) : (
+                  <div className="w-1.5 h-1.5 rounded-full bg-slate-100" />
+                )}
+              </button>
+            ))}
+          </div>
+        </>
+      ) : (
+        <div className="h-full flex items-center justify-center border-2 border-dashed border-slate-50 rounded-lg p-6">
+          <div className="text-center">
+            <UserCircle className="mx-auto text-slate-200 mb-2" size={32} />
+            <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest">
+              Standard Account: No Operational Overrides Required
+            </p>
+          </div>
+        </div>
+      )}
+    </div>
+  </div>
+</motion.div>
           ))
         )}
       </div>
