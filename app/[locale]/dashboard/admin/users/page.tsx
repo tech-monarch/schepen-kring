@@ -94,17 +94,45 @@ const handleEnrollment = async (e: React.FormEvent) => {
     }
   };
 
-  const impersonateUser = async (userId: number) => {
-    try {
-      const res = await axios.post(`${API_BASE}/users/${userId}/impersonate`, {}, getHeaders());
-      localStorage.setItem("admin_token", localStorage.getItem("auth_token") || "");
-      localStorage.setItem("auth_token", res.data.token);
-      toast.success("Identity Assumed. Redirecting...");
-      window.location.href = "/nl/dashboard";
-    } catch (err) {
-      toast.error("Impersonation failed.");
-    }
-  };
+const impersonateUser = async (userId: number) => {
+  try {
+    toast.loading("Assimilating identity...", { id: "impersonate" });
+    
+    const res = await axios.post(`${API_BASE}/users/${userId}/impersonate`, {}, getHeaders());
+    
+    // 1. Save the current Admin Token so you can "Log Back In" later
+    const adminToken = localStorage.getItem("auth_token");
+    
+    // 2. Clear EVERYTHING to prevent cache leaking (tasks, old user info)
+    localStorage.clear(); 
+
+    // 3. Restore the admin backup token and set new user data
+    if (adminToken) localStorage.setItem("admin_token", adminToken);
+    
+    // 4. Set the new user's authentication data
+    localStorage.setItem("auth_token", res.data.token);
+    
+    // Map the backend user object to your frontend's 'user_data' format
+    const impersonatedUserData = JSON.stringify({
+        id: res.data.user.id,
+        name: res.data.user.name,
+        email: res.data.user.email,
+        userType: res.data.user.role // Ensure this matches your frontend 'Admin' | 'Partner' check
+    });
+    localStorage.setItem("user_data", impersonatedUserData);
+
+    toast.success(`Identity assumed: ${res.data.user.name}`, { id: "impersonate" });
+
+    // 5. Force a hard reload to the dashboard to refresh all data providers/contexts
+    setTimeout(() => {
+        window.location.href = "/nl/dashboard";
+    }, 1000);
+
+  } catch (err) {
+    console.error(err);
+    toast.error("Impersonation protocol failed.", { id: "impersonate" });
+  }
+};
 
   const togglePermission = async (userId: number, permName: string) => {
     try {
