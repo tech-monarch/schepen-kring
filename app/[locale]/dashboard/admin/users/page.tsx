@@ -92,6 +92,23 @@ export default function RoleManagementPage() {
     { id: "Customer", label: "Client Registry", icon: UserCircle },
   ];
 
+  const handleDeleteUser = async (userId: number) => {
+  try {
+    toast.loading("Terminating access...", { id: "delete-user" });
+    
+    // Using the standard users resource route
+    await axios.delete(`${API_BASE}/users/${userId}`, getHeaders());
+    
+    // Update local state to remove the user from the UI immediately
+    setUsers((prev) => prev.filter((u) => u.id !== userId));
+    
+    toast.success("Personnel record expunged.", { id: "delete-user" });
+  } catch (err) {
+    console.error(err);
+    toast.error("Termination failed. System override required.", { id: "delete-user" });
+  }
+};
+
   return (
     <div className="space-y-10 p-6 max-w-7xl mx-auto min-h-screen">
       <Toaster position="top-right" />
