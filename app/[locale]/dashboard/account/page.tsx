@@ -9,68 +9,61 @@ import {
   Save,
   Loader2,
   Shield,
-  BarChart3,
-  Anchor,
-  CheckSquare,
-  Wifi,
-  WifiOff,
-  ChevronLeft,
-  ChevronRight,
-  Code,
+  Phone,
+  MapPin,
+  Building2,
+  Globe
 } from "lucide-react";
-import { Link } from "@/i18n/navigation";
-import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { motion } from "framer-motion";
 import { Toaster, toast } from "react-hot-toast";
 import axios from "axios";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 import DEFAULT_PFP from "@/components/dashboard/pfp.webp";
+import { Sidebar } from "@/components/dashboard/Sidebar";
 
 const API_BASE = "https://schepen-kring.nl/api";
 const STORAGE_URL = "https://schepen-kring.nl/storage/";
-import { Sidebar } from "@/components/dashboard/Sidebar";
 
 export default function ProfileSettingsPage() {
-  const pathname = usePathname();
   const t = useTranslations("Dashboard");
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [user, setUser] = useState<any>(null);
-  const [isOnline, setIsOnline] = useState(true);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Form State
+  // 1. UPDATED FORM STATE
   const [formData, setFormData] = useState({
     name: "",
     email: "",
+    phone_number: "",
+    address: "",
+    city: "",
+    state: "",
     profile_image: null as File | null,
   });
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    setIsOnline(navigator.onLine);
-    window.addEventListener("online", () => setIsOnline(true));
-    window.addEventListener("offline", () => setIsOnline(false));
     fetchProfile();
-    return () => {
-      window.removeEventListener("online", () => setIsOnline(true));
-      window.removeEventListener("offline", () => setIsOnline(false));
-    };
   }, []);
 
+  // 2. UPDATED FETCH LOGIC
   const fetchProfile = async () => {
     try {
       const token = localStorage.getItem("auth_token");
       const res = await axios.get(`${API_BASE}/profile`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setUser(res.data);
+      const data = res.data;
+      setUser(data);
       setFormData({
-        name: res.data.name,
-        email: res.data.email,
+        name: data.name || "",
+        email: data.email || "",
+        phone_number: data.phone_number || "",
+        address: data.address || "",
+        city: data.city || "",
+        state: data.state || "",
         profile_image: null,
       });
       setLoading(false);
@@ -92,6 +85,7 @@ export default function ProfileSettingsPage() {
     }
   };
 
+  // 3. UPDATED SUBMIT LOGIC
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -99,6 +93,11 @@ export default function ProfileSettingsPage() {
     const data = new FormData();
     data.append("name", formData.name);
     data.append("email", formData.email);
+    data.append("phone_number", formData.phone_number);
+    data.append("address", formData.address);
+    data.append("city", formData.city);
+    data.append("state", formData.state);
+    
     if (formData.profile_image) {
       data.append("profile_image", formData.profile_image);
     }
@@ -138,41 +137,28 @@ export default function ProfileSettingsPage() {
       <Toaster position="top-right" />
 
       <div className="flex pt-20">
-        {/* COLLAPSIBLE SIDEBAR */}
         <Sidebar onCollapse={setIsSidebarCollapsed} />
 
-        {/* MAIN CONTENT - WHITE BACKGROUND */}
         <motion.main
           animate={{ marginLeft: isSidebarCollapsed ? 80 : 256 }}
           className="flex-1 p-8 bg-white min-h-[calc(100vh-80px)] -mt-20"
         >
           <div className="max-w-4xl mx-auto space-y-12">
-            {/* Header Section */}
             <div className="border-b border-slate-100 pb-8 mt-4">
-              <h1 className="text-5xl font-serif italic text-[#003566]">
-                Profile Identity
-              </h1>
+              <h1 className="text-5xl font-serif italic text-[#003566]">Profile Identity</h1>
               <p className="text-[10px] font-black uppercase tracking-[0.4em] text-blue-600 mt-2">
                 Personnel Credentials & Asset Management
               </p>
             </div>
 
-            <form
-              onSubmit={handleSubmit}
-              className="grid grid-cols-1 lg:grid-cols-3 gap-12"
-            >
-              {/* Left Column: Avatar */}
+            <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+              {/* Left Column */}
               <div className="lg:col-span-1 space-y-6">
                 <div className="bg-white border border-slate-100 p-8 text-center shadow-sm relative">
                   <div className="relative inline-block group">
                     <div className="w-40 h-40 border border-slate-200 overflow-hidden bg-white mx-auto">
                       <img
-                        src={
-                          previewUrl ||
-                          (user?.profile_image
-                            ? `${STORAGE_URL}${user.profile_image}`
-                            : DEFAULT_PFP.src)
-                        }
+                        src={previewUrl || (user?.profile_image ? `${STORAGE_URL}${user.profile_image}` : DEFAULT_PFP.src)}
                         alt="Profile"
                         className="w-full h-full object-cover"
                       />
@@ -184,94 +170,99 @@ export default function ProfileSettingsPage() {
                     >
                       <Camera size={18} />
                     </button>
-                    <input
-                      type="file"
-                      ref={fileInputRef}
-                      onChange={handleImageChange}
-                      className="hidden"
-                      accept="image/*"
-                    />
+                    <input type="file" ref={fileInputRef} onChange={handleImageChange} className="hidden" accept="image/*" />
                   </div>
-
                   <div className="mt-8">
-                    <h2 className="text-xs font-black uppercase tracking-[0.2em] text-[#003566]">
-                      {user?.name}
-                    </h2>
+                    <h2 className="text-xs font-black uppercase tracking-[0.2em] text-[#003566]">{user?.name}</h2>
                     <p className="text-[9px] font-bold text-blue-500 uppercase tracking-widest mt-2">
                       {user?.userType || "Staff Member"}
                     </p>
                   </div>
                 </div>
-
-                <div className="bg-slate-50 border-l-4 border-l-blue-500 p-6 flex gap-4">
-                  <Shield className="text-blue-600 shrink-0" size={18} />
-                  <p className="text-[9px] text-slate-500 leading-relaxed uppercase font-black tracking-tighter">
-                    Identity verification is active. Profile changes are logged
-                    for security auditing.
-                  </p>
-                </div>
               </div>
 
-              {/* Right Column: Fields */}
+              {/* Right Column: ALL FIELDS */}
               <div className="lg:col-span-2 space-y-8">
-                <div className="space-y-10">
-                  <div className="space-y-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  {/* Name */}
+                  <div className="space-y-2">
                     <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-2">
                       <User size={12} /> Full Name
                     </label>
                     <input
                       type="text"
                       value={formData.name}
-                      onChange={(e) =>
-                        setFormData({ ...formData, name: e.target.value })
-                      }
-                      className="w-full bg-transparent border-b border-slate-200 py-3 text-sm font-bold text-[#003566] outline-none focus:border-[#003566] transition-all uppercase tracking-wider"
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      className="w-full bg-transparent border-b border-slate-200 py-2 text-sm font-bold text-[#003566] outline-none focus:border-[#003566] transition-all uppercase tracking-wider"
                       required
                     />
                   </div>
 
-                  <div className="space-y-3">
+                  {/* Email */}
+                  <div className="space-y-2">
                     <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-2">
                       <Mail size={12} /> Email Address
                     </label>
                     <input
                       type="email"
                       value={formData.email}
-                      onChange={(e) =>
-                        setFormData({ ...formData, email: e.target.value })
-                      }
-                      className="w-full bg-transparent border-b border-slate-200 py-3 text-sm font-bold text-[#003566] outline-none focus:border-[#003566] transition-all lowercase tracking-tight"
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      className="w-full bg-transparent border-b border-slate-200 py-2 text-sm font-bold text-[#003566] outline-none focus:border-[#003566] transition-all lowercase"
                       required
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-12 pt-6">
-                    <div className="space-y-2">
-                      <p className="text-[8px] font-black text-slate-300 uppercase tracking-[0.4em]">
-                        Member Since
-                      </p>
-                      <p className="text-xs font-serif italic text-slate-500">
-                        {user?.created_at
-                          ? new Date(user.created_at).toLocaleDateString(
-                              undefined,
-                              {
-                                year: "numeric",
-                                month: "long",
-                                day: "numeric",
-                              },
-                            )
-                          : "N/A"}
-                      </p>
-                    </div>
-                    <div className="space-y-2">
-                      <p className="text-[8px] font-black text-slate-300 uppercase tracking-[0.4em]">
-                        Access Level
-                      </p>
-                      <p className="text-[10px] font-black text-[#003566] uppercase tracking-[0.2em] bg-slate-50 px-3 py-1 inline-block border border-slate-100">
-                        {user?.userType}
-                      </p>
-                    </div>
+                  {/* Phone Number */}
+                  <div className="space-y-2">
+                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-2">
+                      <Phone size={12} /> Phone Number
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.phone_number}
+                      onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
+                      className="w-full bg-transparent border-b border-slate-200 py-2 text-sm font-bold text-[#003566] outline-none focus:border-[#003566]"
+                    />
                   </div>
+
+                  {/* City */}
+                  <div className="space-y-2">
+                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-2">
+                      <Building2 size={12} /> City
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.city}
+                      onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                      className="w-full bg-transparent border-b border-slate-200 py-2 text-sm font-bold text-[#003566] outline-none focus:border-[#003566]"
+                    />
+                  </div>
+                </div>
+
+                {/* House Address */}
+                <div className="space-y-2">
+                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-2">
+                    <MapPin size={12} /> House Address
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.address}
+                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                    className="w-full bg-transparent border-b border-slate-200 py-2 text-sm font-bold text-[#003566] outline-none focus:border-[#003566]"
+                  />
+                </div>
+
+                {/* State/Region */}
+                <div className="space-y-2">
+                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-2">
+                    <Globe size={12} /> State / Province
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.state}
+                    onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+                    className="w-full bg-transparent border-b border-slate-200 py-2 text-sm font-bold text-[#003566] outline-none focus:border-[#003566]"
+                  />
                 </div>
 
                 <div className="mt-16 flex justify-end">
@@ -280,11 +271,7 @@ export default function ProfileSettingsPage() {
                     disabled={isSubmitting}
                     className="bg-[#003566] text-white hover:bg-[#003566]/90 h-14 px-12 text-[10px] font-black uppercase tracking-[0.4em] transition-all shadow-lg disabled:opacity-50 flex items-center gap-3"
                   >
-                    {isSubmitting ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Save size={14} />
-                    )}
+                    {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save size={14} />}
                     Synchronize Profile
                   </button>
                 </div>
