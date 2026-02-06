@@ -28,6 +28,7 @@ import Image from "next/image";
 import ANSWER24LOGO from "@/public/schepenkring-logo.png";
 // Import your default profile picture
 import DEFAULT_PFP from "@/components/dashboard/pfp.webp";
+import ReturnToAdmin from "./ReturnToAdmin";
 
 // Storage URL constant
 const STORAGE_URL = "https://schepen-kring.nl/storage/";
@@ -128,6 +129,7 @@ export function DashboardHeader() {
 
       {/* User Actions */}
       <div className="flex items-center gap-8">
+        <ReturnToAdmin />
         {/* Notifications Dropdown */}
         <DropdownMenu>
           <DropdownMenuTrigger className="relative text-slate-400 hover:text-[#003566] transition-colors outline-none">
