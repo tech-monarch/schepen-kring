@@ -34,6 +34,8 @@ import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { toast, Toaster } from "react-hot-toast";
 
+import { Sidebar } from "@/components/dashboard/Sidebar";
+
 // Configuration
 const STORAGE_URL = "https://schepen-kring.nl/storage/";
 const PLACEHOLDER_IMAGE =
@@ -60,6 +62,7 @@ export default function FleetManagementPage() {
 
   const [aiStaging, setAiStaging] = useState<AiStagedImage[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   // Media State
   const [mainPreview, setMainPreview] = useState<string | null>(null);
@@ -303,6 +306,9 @@ export default function FleetManagementPage() {
   return (
     <div className="min-h-screen bg-[#F8FAFC] p-6 lg:p-12 text-[#003566] \ -mt-20">
       <Toaster position="top-right" />
+      
+              {/* COLLAPSIBLE SIDEBAR */}
+              <Sidebar onCollapse={setIsSidebarCollapsed} />
       {/* HEADER */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-6">
         <div>
