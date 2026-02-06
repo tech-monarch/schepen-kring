@@ -54,7 +54,7 @@ export default function RoleManagementPage() {
       localStorage.setItem("admin_token", localStorage.getItem("auth_token") || "");
       localStorage.setItem("auth_token", res.data.token);
       toast.success("Identity Assumed. Redirecting...");
-      window.location.href = "/dashboard";
+      window.location.href = "/nl/dashboard";
     } catch (err) {
       toast.error("Impersonation protocol failed.");
     }
