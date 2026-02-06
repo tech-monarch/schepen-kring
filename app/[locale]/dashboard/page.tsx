@@ -228,7 +228,7 @@ export default function TaskManifestPage() {
     <div className="min-h-screen bg-white text-[#003566]">
       <DashboardHeader />
       <div className="flex pt-20">
-              {/* <Sidebar onCollapse={setIsSidebarCollapsed} /> */}
+              <Sidebar onCollapse={setIsSidebarCollapsed} />
 
 
         {/* MAIN CONTENT - Removed -mt-20 and fixed Margin */}

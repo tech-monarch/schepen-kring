@@ -71,7 +71,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       
       <div className="flex pt-20">
         {/* COLLAPSIBLE SIDEBAR */}
-                 <Sidebar onCollapse={setIsSidebarCollapsed} />   
+                 {/* <Sidebar onCollapse={setIsSidebarCollapsed} />    */}
 
         {/* Main Content Area */}
         <motion.main 
