@@ -96,6 +96,7 @@ export default function YachtTerminalPage() {
   const [bidAmount, setBidAmount] = useState<string>("");
   const [activeImage, setActiveImage] = useState<string>("");
   const [loading, setLoading] = useState(true);
+  const [trialDate, setTrialDate] = useState<string>("");
 
   // Payment states
   const [paymentMode, setPaymentMode] = useState<
@@ -170,7 +171,7 @@ export default function YachtTerminalPage() {
           title: isBuyNow ? `URGENT: BUY NOW REQUEST` : `TEST SAIL REQUEST`,
           description: isBuyNow
             ? `CLIENT PAID DEPOSIT FOR FULL PURCHASE: €${yacht?.price.toLocaleString()}. Please halt auction.`
-            : `Client paid deposit for Test Sail on ${yacht?.name}.`,
+            : `Client paid deposit for Test Sail on ${yacht?.name}. Scheduled Date: ${trialDate}`,
           priority: "High",
           status: "To Do",
           yacht_id: yacht?.id,
@@ -563,33 +564,45 @@ export default function YachtTerminalPage() {
                 <div className="space-y-6">
                   <div className="text-center">
                     <h2 className="text-2xl font-serif italic mb-2">
-                      {paymentMode === "buy_now"
-                        ? "Direct Purchase"
-                        : "Secure Test Sail"}
+                      {paymentMode === "buy_now" ? "Direct Purchase" : "Secure Test Sail"}
                     </h2>
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                       Deposit Due: €{depositAmount.toLocaleString()}
                     </p>
                   </div>
+
+                  {/* BEAUTIFULLY STYLED CALENDAR INJECTION */}
+                  {paymentMode === "test_sail" && (
+                    <div className="space-y-2">
+                      <label className="text-[9px] font-black uppercase tracking-widest text-blue-600">
+                        Select Arrival Date & Time (Min. 3 days notice)
+                      </label>
+                      <input
+                        type="datetime-local"
+                        required
+                        min={new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16)}
+                        value={trialDate}
+                        onChange={(e) => setTrialDate(e.target.value)}
+                        className="w-full bg-slate-50 border border-slate-200 p-3 text-sm font-serif outline-none focus:border-[#003566] transition-colors"
+                      />
+                    </div>
+                  )}
+
                   <div className="p-4 bg-blue-50 text-[#003566] flex gap-3 rounded-sm">
                     <FileText size={20} className="shrink-0" />
                     <p className="text-[9px] leading-relaxed font-medium">
-                      This deposit initiates the official transfer sequence. Our
-                      legal team will generate a maritime contract within 24
-                      hours.
+                      This deposit initiates the official transfer sequence. Our legal team will generate a maritime contract within 24 hours.
                     </p>
                   </div>
+                  
                   <div className="flex gap-4">
-                    <Button
-                      onClick={() => setPaymentMode(null)}
-                      variant="ghost"
-                      className="flex-1"
-                    >
+                    <Button onClick={() => setPaymentMode(null)} variant="ghost" className="flex-1">
                       Cancel
                     </Button>
                     <Button
                       onClick={handleDepositPayment}
-                      className="flex-[2] bg-[#003566] hover:bg-blue-900 text-white font-bold uppercase tracking-widest text-[10px]"
+                      disabled={paymentMode === "test_sail" && !trialDate}
+                      className="flex-[2] bg-[#003566] hover:bg-blue-900 text-white font-bold uppercase tracking-widest text-[10px] disabled:bg-slate-300"
                     >
                       Confirm & Pay
                     </Button>
