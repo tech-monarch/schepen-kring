@@ -84,24 +84,13 @@ interface Yacht {
   // Equipment
   navigation_electronics?: string;
   exterior_equipment?: string;
-  trailer_included?: boolean | number;
+  trailer_included?: boolean | number; // sometimes comes as 0/1 from DB
   beam?: string;
   draft?: string;
   water_system?: string;
   fuel_consumption?: string;
   interior_type?: string;
   dimensions?: string;
-  
-  // Availability Rules
-  availability_rules?: {
-    id: number;
-    yacht_id: number;
-    day_of_week: number; // 0=Sunday, 1=Monday, ..., 6=Saturday
-    start_time: string;
-    end_time: string;
-    created_at: string;
-    updated_at: string;
-  }[];
 }
 
 export default function YachtTerminalPage() {
@@ -140,6 +129,13 @@ export default function YachtTerminalPage() {
       days.push(date);
     }
     setCalendarDays(days);
+    
+    // Set today as default selected date
+    if (paymentMode === "test_sail" && !selectedDate) {
+      const today = new Date();
+      setSelectedDate(today);
+      fetchAvailableSlots(today);
+    }
   }, [paymentMode]);
 
   const fetchVesselData = async () => {
@@ -252,7 +248,7 @@ export default function YachtTerminalPage() {
   const calculateEndTime = (startTime: string) => {
     const [hh, mm] = startTime.split(':').map(Number);
     const end = new Date();
-    end.setHours(hh, mm + 60);
+    end.setHours(hh, mm + 60); // 60 min duration
     return end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
@@ -275,18 +271,6 @@ export default function YachtTerminalPage() {
     return date.getDate() === today.getDate() &&
            date.getMonth() === today.getMonth() &&
            date.getFullYear() === today.getFullYear();
-  };
-
-  // Check if a day is active based on availability rules
-  const isDayActive = (date: Date) => {
-    if (!yacht?.availability_rules || yacht.availability_rules.length === 0) {
-      return true; // If no rules set, all days are available
-    }
-    
-    const dayOfWeek = date.getDay(); // 0=Sunday, 1=Monday, ..., 6=Saturday
-    
-    // Check if this day has any availability rules
-    return yacht.availability_rules.some(rule => rule.day_of_week === dayOfWeek);
   };
 
   if (loading || !yacht) {
@@ -662,132 +646,108 @@ export default function YachtTerminalPage() {
         </section>
       </main>
 
-      {/* PAYMENT MODAL - MOBILE RESPONSIVE */}
+      {/* PAYMENT MODAL */}
       <AnimatePresence>
         {paymentMode && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] bg-[#001D3D]/90 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto"
+            className="fixed inset-0 z-[100] bg-[#001D3D]/90 backdrop-blur-md flex items-center justify-center p-4"
           >
             <motion.div
               initial={{ y: 50 }}
               animate={{ y: 0 }}
-              className="bg-white w-full max-w-md md:max-w-lg lg:max-w-2xl p-4 md:p-6 lg:p-8 shadow-2xl my-4 max-h-[90vh] overflow-y-auto"
+              className="bg-white max-w-2xl w-full p-8 shadow-2xl"
             >
               {paymentStatus === "idle" && (
-                <div className="space-y-4 md:space-y-6">
+                <div className="space-y-6">
                   <div className="text-center">
-                    <h2 className="text-xl md:text-2xl font-serif italic mb-2">
+                    <h2 className="text-2xl font-serif italic mb-2">
                       {paymentMode === "buy_now" ? "Direct Purchase" : "Secure Test Sail"}
                     </h2>
-                    <p className="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                       Deposit Due: €{depositAmount.toLocaleString()}
                     </p>
                   </div>
 
                   {/* CALENDAR FOR TEST SAIL */}
                   {paymentMode === "test_sail" && (
-                    <div className="space-y-4 md:space-y-6">
+                    <div className="space-y-6">
                       <div className="text-center">
-                        <p className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3 md:mb-4">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4">
                           Select Date for Sea Trial
                         </p>
                         
-                        {/* Calendar Grid - 30 Days - MOBILE FRIENDLY */}
-                        <div className="grid grid-cols-7 gap-1 md:gap-2 mb-4 md:mb-6">
-                          {/* Day Headers - SMALLER ON MOBILE */}
-                          {['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'].map((day) => (
-                            <div key={day} className="text-center py-1 md:py-2">
-                              <span className="text-[7px] md:text-[8px] font-black uppercase text-slate-400">
+                        {/* Calendar Grid - 30 Days */}
+                        <div className="grid grid-cols-7 gap-2 mb-6">
+                          {/* Day Headers */}
+                          {['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'].map((day) => (
+                            <div key={day} className="text-center py-2">
+                              <span className="text-[8px] font-black uppercase text-slate-400">
                                 {day}
                               </span>
                             </div>
                           ))}
                           
-                          {/* Calendar Days - SMALLER ON MOBILE */}
+                          {/* Calendar Days */}
                           {calendarDays.map((date) => {
                             const isSelected = selectedDate && 
                               date.getDate() === selectedDate.getDate() &&
                               date.getMonth() === selectedDate.getMonth() &&
                               date.getFullYear() === selectedDate.getFullYear();
-                            const isActive = isDayActive(date);
                             
                             return (
                               <button
                                 key={date.toISOString()}
-                                onClick={() => isActive && handleDateSelect(date)}
-                                disabled={!isActive}
+                                onClick={() => handleDateSelect(date)}
                                 className={cn(
-                                  "aspect-square flex flex-col items-center justify-center rounded-lg md:rounded-xl text-xs transition-all relative",
+                                  "aspect-square flex flex-col items-center justify-center rounded-xl text-xs transition-all",
                                   isSelected
                                     ? "bg-[#003566] text-white"
                                     : isToday(date)
                                     ? "bg-slate-100 text-[#003566] font-bold"
-                                    : isActive
-                                    ? "bg-emerald-50 border border-emerald-200 text-emerald-800 hover:bg-emerald-100"
-                                    : "bg-white border border-slate-100 text-slate-300"
+                                    : "bg-white border border-slate-100 text-slate-600 hover:bg-slate-50"
                                 )}
                               >
-                                <span className="text-[8px] md:text-[10px] font-bold">
+                                <span className="text-[10px] font-bold">
                                   {formatDay(date)}
                                 </span>
-                                <span className="text-sm md:text-lg font-serif">
+                                <span className="text-lg font-serif">
                                   {formatDateNumber(date)}
                                 </span>
-                                {/* Dot indicator for active days */}
-                                {isActive && !isSelected && (
-                                  <span className="absolute top-1 right-1 w-1.5 h-1.5 md:w-2 md:h-2 bg-emerald-500 rounded-full"></span>
-                                )}
                               </button>
                             );
                           })}
                         </div>
 
-                        {/* Legend - SMALLER ON MOBILE */}
-                        <div className="flex flex-wrap justify-center items-center gap-2 md:gap-4 mb-3 md:mb-4">
-                          <div className="flex items-center gap-1 md:gap-2">
-                            <div className="w-2 h-2 md:w-3 md:h-3 bg-emerald-500 rounded-full"></div>
-                            <span className="text-[7px] md:text-[8px] font-bold uppercase text-slate-400">
-                              Available
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-1 md:gap-2">
-                            <div className="w-2 h-2 md:w-3 md:h-3 bg-slate-300 rounded-full"></div>
-                            <span className="text-[7px] md:text-[8px] font-bold uppercase text-slate-400">
-                              Unavailable
-                            </span>
-                          </div>
-                        </div>
-
                         {/* Selected Date Display */}
                         {selectedDate && (
-                          <div className="mb-3 md:mb-4 p-2 md:p-3 bg-blue-50 border border-blue-100 rounded">
-                            <p className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-blue-600">
+                          <div className="mb-4 p-3 bg-blue-50 border border-blue-100">
+                            <p className="text-[10px] font-black uppercase tracking-widest text-blue-600">
                               Selected Date: {selectedDate.toLocaleDateString('en-US', { 
-                                weekday: 'short', 
+                                weekday: 'long', 
                                 year: 'numeric', 
-                                month: 'short', 
+                                month: 'long', 
                                 day: 'numeric' 
                               })}
                             </p>
                           </div>
                         )}
 
-                        {/* Time Slots Grid - MOBILE RESPONSIVE */}
+                        {/* Time Slots Grid */}
                         <div>
-                          <p className="text-[8px] md:text-[9px] font-bold uppercase text-slate-400 mb-2 md:mb-3">
-                            Available Time Slots (60min + 15min buffer)
+                          <p className="text-[9px] font-bold uppercase text-slate-400 mb-3">
+                            Available Time Slots (60min viewing + 15min buffer)
                           </p>
                           {availableSlots.length > 0 ? (
-                            <div className="grid grid-cols-3 md:grid-cols-4 gap-1.5 md:gap-2">
+                            <div className="grid grid-cols-4 gap-2">
                               {availableSlots.map((time) => (
                                 <button
                                   key={time}
                                   onClick={() => setSelectedTime(time)}
                                   className={cn(
-                                    "py-2 md:py-3 rounded-lg md:rounded-xl text-[10px] md:text-xs font-bold transition-all",
+                                    "py-3 rounded-xl text-xs font-bold transition-all",
                                     selectedTime === time 
                                       ? "bg-[#003566] text-white" 
                                       : "bg-emerald-200 text-emerald-900 hover:bg-emerald-300"
@@ -798,21 +758,17 @@ export default function YachtTerminalPage() {
                               ))}
                             </div>
                           ) : selectedDate ? (
-                            <div className="text-center py-4 md:py-6 border border-slate-200 rounded-lg">
-                              <p className="text-[9px] md:text-[10px] font-black uppercase text-slate-400">
-                                {isDayActive(selectedDate) 
-                                  ? "No available time slots" 
-                                  : "This day is not available"}
+                            <div className="text-center py-6 border border-slate-200 rounded-lg">
+                              <p className="text-[10px] font-black uppercase text-slate-400">
+                                No available slots for this date
                               </p>
-                              <p className="text-[7px] md:text-[8px] text-slate-500 mt-1">
-                                {isDayActive(selectedDate)
-                                  ? "Please select another date"
-                                  : "Select an available day (green dot)"}
+                              <p className="text-[8px] text-slate-500 mt-1">
+                                Please select another date
                               </p>
                             </div>
                           ) : (
-                            <div className="text-center py-4 md:py-6 border border-slate-200 rounded-lg">
-                              <p className="text-[9px] md:text-[10px] font-black uppercase text-slate-400">
+                            <div className="text-center py-6 border border-slate-200 rounded-lg">
+                              <p className="text-[10px] font-black uppercase text-slate-400">
                                 Please select a date first
                               </p>
                             </div>
@@ -821,13 +777,13 @@ export default function YachtTerminalPage() {
 
                         {/* Confirmation Details */}
                         {selectedTime && (
-                          <div className="mt-3 md:mt-4 p-2 md:p-3 bg-slate-50 border border-dashed border-slate-200 rounded-lg">
-                            <p className="text-[9px] md:text-[10px] font-black uppercase text-slate-500 mb-1">
+                          <div className="mt-4 p-3 bg-slate-50 border border-dashed border-slate-200 rounded-lg">
+                            <p className="text-[10px] font-black uppercase text-slate-500 mb-1">
                               Selected Time Slot
                             </p>
-                            <p className="text-xs md:text-sm font-serif text-[#003566]">
+                            <p className="text-sm font-serif text-[#003566]">
                               {selectedTime} - {calculateEndTime(selectedTime)} 
-                              <span className="text-[8px] md:text-[9px] text-slate-500 ml-2">(+15m Buffer)</span>
+                              <span className="text-[9px] text-slate-500 ml-2">(+15m Buffer)</span>
                             </p>
                           </div>
                         )}
@@ -835,14 +791,14 @@ export default function YachtTerminalPage() {
                     </div>
                   )}
 
-                  <div className="p-3 md:p-4 bg-blue-50 text-[#003566] flex gap-2 md:gap-3 rounded-sm">
-                    <FileText size={16} className="md:size-[20px] shrink-0 mt-0.5" />
-                    <p className="text-[8px] md:text-[9px] leading-relaxed font-medium">
+                  <div className="p-4 bg-blue-50 text-[#003566] flex gap-3 rounded-sm">
+                    <FileText size={20} className="shrink-0" />
+                    <p className="text-[9px] leading-relaxed font-medium">
                       This deposit initiates the official transfer sequence. Our legal team will generate a maritime contract within 24 hours.
                     </p>
                   </div>
                   
-                  <div className="flex flex-col md:flex-row gap-3 md:gap-4">
+                  <div className="flex gap-4">
                     <Button 
                       onClick={() => {
                         setPaymentMode(null);
@@ -851,14 +807,14 @@ export default function YachtTerminalPage() {
                         setAvailableSlots([]);
                       }} 
                       variant="ghost" 
-                      className="w-full md:flex-1"
+                      className="flex-1"
                     >
                       Cancel
                     </Button>
                     <Button
                       onClick={handleDepositPayment}
                       disabled={paymentMode === "test_sail" && (!selectedDate || !selectedTime)}
-                      className="w-full md:flex-[2] bg-[#003566] hover:bg-blue-900 text-white font-bold uppercase tracking-widest text-[10px] disabled:bg-slate-300"
+                      className="flex-[2] bg-[#003566] hover:bg-blue-900 text-white font-bold uppercase tracking-widest text-[10px] disabled:bg-slate-300"
                     >
                       Confirm & Pay
                     </Button>
@@ -866,7 +822,7 @@ export default function YachtTerminalPage() {
                 </div>
               )}
               {paymentStatus === "processing" && (
-                <div className="py-12 md:py-20 text-center flex flex-col items-center">
+                <div className="py-20 text-center flex flex-col items-center">
                   <Loader2
                     className="animate-spin text-[#003566] mb-4"
                     size={32}
@@ -877,22 +833,22 @@ export default function YachtTerminalPage() {
                 </div>
               )}
               {paymentStatus === "success" && (
-                <div className="py-8 md:py-12 text-center">
-                  <div className="w-12 h-12 md:w-16 md:h-16 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4 md:mb-6">
-                    <CheckCircle2 size={24} className="md:size-[32px]" />
+                <div className="py-12 text-center">
+                  <div className="w-16 h-16 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <CheckCircle2 size={32} />
                   </div>
-                  <h3 className="text-lg md:text-xl font-serif mb-2 text-[#003566]">
+                  <h3 className="text-xl font-serif mb-2 text-[#003566]">
                     Transaction Secured
                   </h3>
-                  <p className="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                     A terminal ticket has been dispatched.
                   </p>
                   {paymentMode === "test_sail" && selectedDate && selectedTime && (
-                    <div className="mt-3 md:mt-4 p-2 md:p-3 bg-slate-50 rounded-sm">
-                      <p className="text-[8px] md:text-[9px] font-bold uppercase text-slate-500">
+                    <div className="mt-4 p-3 bg-slate-50 rounded-sm">
+                      <p className="text-[9px] font-bold uppercase text-slate-500">
                         Test Sail Scheduled
                       </p>
-                      <p className="text-[11px] md:text-xs font-serif">
+                      <p className="text-xs font-serif">
                         {selectedDate.toLocaleDateString()} at {selectedTime}
                       </p>
                     </div>
