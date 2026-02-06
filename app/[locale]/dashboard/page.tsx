@@ -29,7 +29,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Toaster, toast } from "react-hot-toast";
 import axios from "axios";
-import {Sidebar} from "@components/dashboard/Sidebar"
+import {Sidebar} from "@/components/dashboard/Sidebar";
+
 
 interface Task {
   id: string | number;
