@@ -30,6 +30,7 @@ export default function RoleManagementPage() {
     password: "",
     role: "Employee",
     access_level: "Limited",
+  status: "Active",
   });
 
   const API_BASE = "https://schepen-kring.nl/api";
@@ -55,19 +56,32 @@ export default function RoleManagementPage() {
     }
   };
 
-  const handleEnrollment = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      toast.loading("Enrolling new personnel...", { id: "enroll" });
-      const res = await axios.post(`${API_BASE}/users`, newUser, getHeaders());
-      setUsers([...users, res.data]);
-      setIsModalOpen(false);
-      setNewUser({ name: "", email: "", password: "", role: "Employee", access_level: "Limited" });
-      toast.success("Personnel successfully enrolled.", { id: "enroll" });
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || "Enrollment failed.", { id: "enroll" });
-    }
-  };
+const handleEnrollment = async (e: React.FormEvent) => {
+  e.preventDefault();
+  try {
+    toast.loading("Enrolling new personnel...", { id: "enroll" });
+    
+    const res = await axios.post(`${API_BASE}/users`, newUser, getHeaders());
+    
+    setUsers([...users, res.data]);
+    setIsModalOpen(false);
+    
+    // Reset form including status
+    setNewUser({ 
+      name: "", 
+      email: "", 
+      password: "", 
+      role: "Employee", 
+      access_level: "Limited",
+      status: "Active" 
+    });
+    
+    toast.success("Personnel successfully enrolled.", { id: "enroll" });
+  } catch (err: any) {
+    console.error("Enrollment error details:", err.response?.data);
+    toast.error(err.response?.data?.message || "Enrollment failed.", { id: "enroll" });
+  }
+};
 
   const handleDeleteUser = async (userId: number) => {
     try {
@@ -247,6 +261,18 @@ export default function RoleManagementPage() {
                     <select className="w-full border-b border-slate-200 py-2 text-[10px] font-bold uppercase outline-none" onChange={(e) => setNewUser({...newUser, access_level: e.target.value})}>
                       <option value="Limited">Limited</option>
                       <option value="Full">Full</option>
+                    </select>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[8px] font-black uppercase tracking-widest text-slate-400">Account Status</label>
+                    <select 
+                      className="w-full border-b border-slate-200 py-2 text-[10px] font-bold uppercase outline-none" 
+                      value={newUser.status}
+                      onChange={(e) => setNewUser({...newUser, status: e.target.value})}
+                    >
+                      <option value="Active">Active</option>
+                      <option value="Inactive">Inactive</option>
+                      <option value="Pending">Pending</option>
                     </select>
                   </div>
                 </div>
