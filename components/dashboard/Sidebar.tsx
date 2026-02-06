@@ -150,7 +150,9 @@ const menuItems = [
                   if(confirm("Terminate Session?")) {
                     localStorage.removeItem("auth_token");
                     localStorage.removeItem("user_data");
-                    window.location.href = "/login";
+                    localStorage.removeItem("task_cache");
+                    localStorage.removeItem("user_role");
+                    window.location.href = "/";
                   }
               }}
               className={cn(
