@@ -95,165 +95,160 @@ interface Yacht {
   availability_rules: AvailabilityRule[];
 }
 
-  export default function YachtTerminalPage() {
-    const { id } = useParams();
-    const [yacht, setYacht] = useState<Yacht | null>(null);
-    const [bids, setBids] = useState([]);
-    const [bidAmount, setBidAmount] = useState<string>("");
-    const [activeImage, setActiveImage] = useState<string>("");
-    const [loading, setLoading] = useState(true);
-    const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-    const [selectedTime, setSelectedTime] = useState<string | null>(null);
-    // Inside YachtTerminalPage component
-  const [availableSlots, setAvailableSlots] = useState<string[]>([]); // This defines setAvailableSlots [cite: 16]
+export default function YachtTerminalPage() {
+  const { id } = useParams();
+  const [yacht, setYacht] = useState<Yacht | null>(null);
+  const [bids, setBids] = useState([]);
+  const [bidAmount, setBidAmount] = useState<string>("");
+  const [activeImage, setActiveImage] = useState<string>("");
+  const [loading, setLoading] = useState(true);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedTime, setSelectedTime] = useState<string | null>(null);
 
-    // Payment states
-    const [paymentMode, setPaymentMode] = useState<
-      "test_sail" | "buy_now" | null
-    >(null);
-    const [paymentStatus, setPaymentStatus] = useState<
-      "idle" | "processing" | "success"
-    >("idle");
+  // Payment states
+  const [paymentMode, setPaymentMode] = useState<
+    "test_sail" | "buy_now" | null
+  >(null);
+  const [paymentStatus, setPaymentStatus] = useState<
+    "idle" | "processing" | "success"
+  >("idle");
 
   useEffect(() => {
-    if (selectedDate && id) {
-      const formattedDate = selectedDate.toISOString().split('T')[0];
-      api.get(`/yachts/${id}/available-slots?date=${formattedDate}`)
-        .then(res => {
-          setAvailableSlots(res.data); // Successfully using the setter here [cite: 38]
-        })
-        .catch(() => {
-          toast.error("Could not load time slots.");
-        });
+    fetchVesselData();
+    const interval = setInterval(fetchVesselData, 10000);
+    return () => clearInterval(interval);
+  }, [id]);
+
+  const fetchVesselData = async () => {
+    try {
+      const [yachtRes, historyRes] = await Promise.all([
+        api.get(`/yachts/${id}`),
+        api.get(`/bids/${id}/history`),
+      ]);
+      setYacht(yachtRes.data);
+      setBids(historyRes.data);
+
+      // Set initial active image safely
+      if (!activeImage) {
+        const mainImg = yachtRes.data.main_image
+          ? `${STORAGE_URL}${yachtRes.data.main_image}`
+          : PLACEHOLDER_IMAGE;
+        setActiveImage(mainImg);
+      }
+      setLoading(false);
+    } catch (error) {
+      console.error("Vessel Retrieval Failed:", error);
     }
-  }, [selectedDate, id]);
+  };
 
-    useEffect(() => {
+  const handleImageError = (e: SyntheticEvent<HTMLImageElement, Event>) => {
+    e.currentTarget.src = PLACEHOLDER_IMAGE;
+  };
+
+  const placeBid = async () => {
+    const amount = parseFloat(bidAmount);
+    if (!yacht) return;
+    
+    const currentPrice = yacht.current_bid
+      ? Number(yacht.current_bid)
+      : Number(yacht.price);
+
+    if (amount <= currentPrice) {
+      toast.error(`Bid must be higher than €${currentPrice.toLocaleString()}`);
+      return;
+    }
+
+    try {
+      await api.post("/bids/place", { yacht_id: yacht.id, amount });
+      toast.success("Bid placed successfully!");
+      setBidAmount("");
       fetchVesselData();
-      const interval = setInterval(fetchVesselData, 10000);
-      return () => clearInterval(interval);
-    }, [id]);
+    } catch (e) {
+      toast.error("Bidding failed. Check connection.");
+    }
+  };
 
-    const fetchVesselData = async () => {
+  const handleDepositPayment = async () => {
+    setPaymentStatus("processing");
+    
+    setTimeout(async () => {
       try {
-        const [yachtRes, historyRes] = await Promise.all([
-          api.get(`/yachts/${id}`),
-          api.get(`/bids/${id}/history`),
-        ]);
-        setYacht(yachtRes.data);
-        setBids(historyRes.data);
+        const isBuyNow = paymentMode === "buy_now";
 
-        // Set initial active image safely
-        if (!activeImage) {
-          const mainImg = yachtRes.data.main_image
-            ? `${STORAGE_URL}${yachtRes.data.main_image}`
-            : PLACEHOLDER_IMAGE;
-          setActiveImage(mainImg);
-        }
-        setLoading(false);
-      } catch (error) {
-        console.error("Vessel Retrieval Failed:", error);
-      }
-    };
-
-    const handleImageError = (e: SyntheticEvent<HTMLImageElement, Event>) => {
-      e.currentTarget.src = PLACEHOLDER_IMAGE;
-    };
-
-    const placeBid = async () => {
-      const amount = parseFloat(bidAmount);
-      if (!yacht) return;
-      
-      const currentPrice = yacht.current_bid
-        ? Number(yacht.current_bid)
-        : Number(yacht.price);
-
-      if (amount <= currentPrice) {
-        toast.error(`Bid must be higher than €${currentPrice.toLocaleString()}`);
-        return;
-      }
-
-      try {
-        await api.post("/bids/place", { yacht_id: yacht.id, amount });
-        toast.success("Bid placed successfully!");
-        setBidAmount("");
-        fetchVesselData();
-      } catch (e) {
-        toast.error("Bidding failed. Check connection.");
-      }
-    };
-
-    const handleDepositPayment = async () => {
-      setPaymentStatus("processing");
-      
-      setTimeout(async () => {
-        try {
-          const isBuyNow = paymentMode === "buy_now";
-
-  // Inside handleDepositPayment
-          if (paymentMode === "test_sail") {
-            if (!selectedDate || !selectedTime) {
-              toast.error("Please select a date and time.");
-              setPaymentStatus("idle");
-              return;
-            }
-
-            // Backend expects YYYY-MM-DD HH:mm
-            const formattedStart = `${selectedDate.toISOString().split('T')[0]} ${selectedTime}`;
-            
-            await api.post(`/yachts/${yacht?.id}/book`, {
-              start_at: formattedStart // Matches backend $request->start_at 
-            });
+        if (paymentMode === "test_sail") {
+          if (!selectedDate || !selectedTime) {
+            toast.error("Please select a date and time.");
+            setPaymentStatus("idle");
+            return;
           }
 
-          await api.post("/tasks", {
-            title: isBuyNow ? `URGENT: BUY NOW REQUEST` : `TEST SAIL REQUEST`,
-            description: isBuyNow
-              ? `CLIENT PAID DEPOSIT FOR FULL PURCHASE: €${yacht?.price.toLocaleString()}. Please halt auction.`
-              : `Client paid deposit for Test Sail on ${yacht?.name}. Start: ${selectedDate?.toLocaleDateString()} at ${selectedTime}. Duration: 15m (+ buffer).`,
-            priority: "High",
-            status: "To Do",
-            yacht_id: yacht?.id,
+          const formattedStart = `${selectedDate.toISOString().split('T')[0]} ${selectedTime}`;
+          
+          await api.post(`/yachts/${yacht?.id}/book`, {
+            start_at: formattedStart
           });
-
-          setPaymentStatus("success");
-
-          setTimeout(() => {
-            setPaymentMode(null);
-            setPaymentStatus("idle");
-            setSelectedTime(null);
-            setSelectedDate(null);
-          }, 3000);
-        } catch (error: any) {
-          setPaymentStatus("idle");
-          const errorMessage = error.response?.data?.error || "Transaction failed.";
-          toast.error(errorMessage);
         }
-      }, 2000);
-    };
 
-    // Generate next 30 days
-    const days = Array.from({ length: 30 }, (_, i) => {
-      const date = new Date();
-      date.setDate(date.getDate() + i);
-      return date;
-    });
+        await api.post("/tasks", {
+          title: isBuyNow ? `URGENT: BUY NOW REQUEST` : `TEST SAIL REQUEST`,
+          description: isBuyNow
+            ? `CLIENT PAID DEPOSIT FOR FULL PURCHASE: €${yacht?.price.toLocaleString()}. Please halt auction.`
+            : `Client paid deposit for Test Sail on ${yacht?.name}. Start: ${selectedDate?.toLocaleDateString()} at ${selectedTime}. Duration: 15m (+ buffer).`,
+          priority: "High",
+          status: "To Do",
+          yacht_id: yacht?.id,
+        });
 
-  const isDateAvailable = (date: Date) => {
-    if (!yacht?.availability_rules) return false;
-    const dayOfWeek = date.getDay(); // JS: 0 (Sun) - 6 (Sat)
-    return yacht.availability_rules.some(rule => Number(rule.day_of_week) === dayOfWeek);
+        setPaymentStatus("success");
+
+        setTimeout(() => {
+          setPaymentMode(null);
+          setPaymentStatus("idle");
+          setSelectedTime(null);
+          setSelectedDate(null);
+        }, 3000);
+      } catch (error: any) {
+        setPaymentStatus("idle");
+        const errorMessage = error.response?.data?.error || "Transaction failed.";
+        toast.error(errorMessage);
+      }
+    }, 2000);
   };
+
+  // Generate next 30 days
+  const days = Array.from({ length: 30 }, (_, i) => {
+    const date = new Date();
+    date.setDate(date.getDate() + i);
+    return date;
+  });
+
+const isDateAvailable = (date: Date) => {
+  if (!yacht?.availability_rules) return false;
+  const dayOfWeek = date.getDay(); // JS: 0 (Sun) - 6 (Sat)
+  return yacht.availability_rules.some(rule => Number(rule.day_of_week) === dayOfWeek);
+};
 
   const calculateEndTime = (time: string) => {
     const [h, m] = time.split(':').map(Number);
     const date = new Date();
-    date.setHours(h, m + 60); // 60 min viewing
-    const end = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
-    return `${end} (+15m buffer)`; 
+    date.setHours(h, m + 15);
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
   };
 
-    
+  const availableSlots = selectedDate ?
+    (yacht?.availability_rules || [])
+    .filter(rule => Number(rule.day_of_week) === selectedDate.getDay())
+    .flatMap(rule => {
+      const slots = [];
+      let current = new Date(`2000-01-01 ${rule.start_time}`);
+      const end = new Date(`2000-01-01 ${rule.end_time}`);
+
+      while (current < end) {
+        slots.push(current.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }));
+        current.setMinutes(current.getMinutes() + 15);
+      }
+      return slots;
+    }) : [];
 
   if (loading || !yacht) {
     return (
@@ -703,7 +698,7 @@ interface Yacht {
                     <Button
                       onClick={handleDepositPayment}
                       disabled={paymentMode === "test_sail" && (!selectedDate || !selectedTime)}
-                      className="flex-2 bg-[#003566] ..."
+                      className="flex-2 bg-[#003566] hover:bg-blue-900 text-white font-bold uppercase tracking-widest text-[10px] disabled:bg-slate-300"
                     >
                       Confirm & Pay
                     </Button>
