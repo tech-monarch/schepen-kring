@@ -134,15 +134,19 @@ const impersonateUser = async (userId: number) => {
   }
 };
 
-  const togglePermission = async (userId: number, permName: string) => {
+const togglePermission = async (userId: number, permName: string) => {
     try {
-      await axios.post(`${API_BASE}/users/${userId}/toggle-permission`, { permission: permName }, getHeaders());
-      fetchData(); // Refresh to show changes
-      toast.success("Authorization updated.");
+      // Hit the new toggle endpoint with the 'operation' payload 
+      await axios.post(`${API_BASE}/user/authorizations/${userId}/toggle`, { 
+        operation: permName 
+      }, getHeaders());
+      
+      fetchData(); // Refresh list to show changes [cite: 249]
+      toast.success("Authorization updated."); // [cite: 249]
     } catch (err) {
-      toast.error("Update failed.");
+      toast.error("Update failed."); // [cite: 250]
     }
-  };
+};
 
   const filteredUsers = useMemo(() => {
     return users.filter(u => 
@@ -231,13 +235,24 @@ const impersonateUser = async (userId: number) => {
                   <p className="text-[8px] font-black uppercase text-slate-400 tracking-[0.3em] mb-4">Operations Authorization</p>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                     {permissions.map((perm) => (
-                      <button key={perm.id} onClick={() => togglePermission(user.id, perm.name)} className={cn(
-                        "flex items-center justify-between px-4 py-3 text-[9px] font-bold uppercase tracking-widest border transition-all",
-                        user.permissions?.includes(perm.name) ? "bg-[#003566] text-white" : "bg-white text-slate-400 border-slate-100"
-                      )}>
-                        {perm.name.replace(/_/g, " ")}
-                        {user.permissions?.includes(perm.name) ? <Check size={12} /> : <div className="w-1 h-1 rounded-full bg-slate-200" />}
-                      </button>
+                        <button 
+                            key={perm.id} 
+                            onClick={() => togglePermission(user.id, perm.name)} 
+                            className={cn(
+                                "flex items-center justify-between px-4 py-3 text-[9px] font-bold uppercase tracking-widest border transition-all",
+                                // Check if the permission string exists in the user's permission array [cite: 265]
+                                user.permissions?.includes(perm.name) 
+                                    ? "bg-[#003566] text-white" 
+                                    : "bg-white text-slate-400 border-slate-100"
+                            )}
+                        >
+                            {/* Replace underscores with spaces for cleaner UI labels [cite: 266] */}
+                            {perm.name.replace(/_/g, " ")} 
+                            {user.permissions?.includes(perm.name) 
+                                ? <Check size={12} /> 
+                                : <div className="w-1 h-1 rounded-full bg-slate-200" />
+                            }
+                        </button>
                     ))}
                   </div>
                 </div>
