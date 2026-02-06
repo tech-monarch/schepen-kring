@@ -134,17 +134,27 @@ const impersonateUser = async (userId: number) => {
   }
 };
 
-const togglePermission = async (userId: number, permName: string) => {
+const togglePermission = async (user: any, permName: string) => {
     try {
-      // Hit the new toggle endpoint with the 'operation' payload 
-      await axios.post(`${API_BASE}/user/authorizations/${userId}/toggle`, { 
-        operation: permName 
+      // 1. Get current permissions from the user object
+      let currentPerms = [...(user.permissions || [])];
+
+      // 2. Add or Remove the clicked permission from the local array
+      if (currentPerms.includes(permName)) {
+        currentPerms = currentPerms.filter(p => p !== permName);
+      } else {
+        currentPerms.push(permName);
+      }
+
+      // 3. Send the entire updated array to the new 'sync' endpoint
+      await axios.post(`${API_BASE}/user/authorizations/${user.id}/sync`, { 
+        operations: currentPerms 
       }, getHeaders());
       
-      fetchData(); // Refresh list to show changes [cite: 249]
-      toast.success("Authorization updated."); // [cite: 249]
+      fetchData(); // Refresh the list
+      toast.success("Authorizations synchronized.");
     } catch (err) {
-      toast.error("Update failed."); // [cite: 250]
+      toast.error("Update failed.");
     }
 };
 
