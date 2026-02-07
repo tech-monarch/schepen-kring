@@ -23,24 +23,7 @@ import {
   Save,
   ArrowLeft,
   Calendar,
-  Clock,
-  Fuel,
-  Droplets,
-  Palette,
-  Cpu,
-  Battery,
-  Shield,
-  ThermometerSun,
-  Tv,
-  Music,
-  Anchor,
-  Wind,
-  Home,
-  Info,
-  Ruler,
-  Weight,
-  Navigation,
-  Power
+  Clock
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -57,32 +40,13 @@ type AiStagedImage = {
   category: string;
   originalName: string;
 };
-
 type GalleryState = { [key: string]: any[] };
 
+// Availability Rule Type
 type AvailabilityRule = {
   day_of_week: number;
   start_time: string;
   end_time: string;
-};
-
-type BooleanAmenities = {
-  trailer_included: boolean;
-  oven: boolean;
-  microwave: boolean;
-  fridge: boolean;
-  freezer: boolean;
-  air_conditioning: boolean;
-  generator: boolean;
-  inverter: boolean;
-  television: boolean;
-  dvd_player: boolean;
-  cd_player: boolean;
-  anchor: boolean;
-  bimini: boolean;
-  spray_hood: boolean;
-  heating: boolean;
-  central_heating: boolean;
 };
 
 export default function YachtEditorPage() {
@@ -97,7 +61,7 @@ export default function YachtEditorPage() {
   const [loading, setLoading] = useState(!isNewMode);
   const [errors, setErrors] = useState<any>(null);
   
-  // Media State
+  // AI & Media State
   const [aiStaging, setAiStaging] = useState<AiStagedImage[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [mainPreview, setMainPreview] = useState<string | null>(null);
@@ -107,31 +71,11 @@ export default function YachtEditorPage() {
     Interior: [],
     "Engine Room": [],
     Bridge: [],
-    General: []
+    General: [],
   });
 
   // Availability State
   const [availabilityRules, setAvailabilityRules] = useState<AvailabilityRule[]>([]);
-
-  // Boolean Amenities State
-  const [booleanAmenities, setBooleanAmenities] = useState<BooleanAmenities>({
-    trailer_included: false,
-    oven: false,
-    microwave: false,
-    fridge: false,
-    freezer: false,
-    air_conditioning: false,
-    generator: false,
-    inverter: false,
-    television: false,
-    dvd_player: false,
-    cd_player: false,
-    anchor: false,
-    bimini: false,
-    spray_hood: false,
-    heating: false,
-    central_heating: false
-  });
 
   // --- 1. FETCH DATA (IF EDITING) ---
   useEffect(() => {
@@ -155,7 +99,7 @@ export default function YachtEditorPage() {
           Interior: [],
           "Engine Room": [],
           Bridge: [],
-          General: []
+          General: [],
         };
 
         if (yacht.images) {
@@ -170,31 +114,12 @@ export default function YachtEditorPage() {
         }
         setGalleryState(initialGallery);
 
-        // Load availability rules
+        // Load existing availability rules
         if (yacht.availability_rules) {
           setAvailabilityRules(yacht.availability_rules);
+        } else if (yacht.availabilityRules) {
+          setAvailabilityRules(yacht.availabilityRules);
         }
-
-        // Load boolean amenities
-        const amenities: BooleanAmenities = {
-          trailer_included: yacht.trailer_included || false,
-          oven: yacht.oven || false,
-          microwave: yacht.microwave || false,
-          fridge: yacht.fridge || false,
-          freezer: yacht.freezer || false,
-          air_conditioning: yacht.air_conditioning || false,
-          generator: yacht.generator || false,
-          inverter: yacht.inverter || false,
-          television: yacht.television || false,
-          dvd_player: yacht.dvd_player || false,
-          cd_player: yacht.cd_player || false,
-          anchor: yacht.anchor || false,
-          bimini: yacht.bimini || false,
-          spray_hood: yacht.spray_hood || false,
-          heating: yacht.heating || false,
-          central_heating: yacht.central_heating || false
-        };
-        setBooleanAmenities(amenities);
 
       } catch (err) {
         console.error("Failed to fetch yacht details", err);
@@ -280,9 +205,8 @@ export default function YachtEditorPage() {
   const approveAllAi = () => {
     const updatedGallery = { ...galleryState };
     aiStaging.forEach((item) => {
-      const category = item.category;
-      updatedGallery[category] = [
-        ...updatedGallery[category],
+      updatedGallery[item.category] = [
+        ...updatedGallery[item.category],
         item.file,
       ];
     });
@@ -293,7 +217,7 @@ export default function YachtEditorPage() {
 
   // Availability Handlers
   const addAvailabilityRule = () => {
-    setAvailabilityRules([...availabilityRules, { day_of_week: 1, start_time: "10:00", end_time: "18:00" }]);
+    setAvailabilityRules([...availabilityRules, { day_of_week: 1, start_time: "09:00", end_time: "17:00" }]);
   };
 
   const removeAvailabilityRule = (index: number) => {
@@ -306,14 +230,6 @@ export default function YachtEditorPage() {
     setAvailabilityRules(newRules);
   };
 
-  // Boolean Amenities Handler
-  const handleBooleanAmenityChange = (field: keyof BooleanAmenities) => {
-    setBooleanAmenities(prev => ({
-      ...prev,
-      [field]: !prev[field]
-    }));
-  };
-
   // --- 3. SUBMIT LOGIC ---
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -322,47 +238,63 @@ export default function YachtEditorPage() {
     
     const formData = new FormData(e.currentTarget);
 
-    // Add main image
-    if (mainFile) formData.append("main_image", mainFile);
+    // Handle main image
+    if (mainFile) {
+      formData.set("main_image", mainFile);
+    }
 
-    // Add boolean amenities
-    Object.keys(booleanAmenities).forEach(key => {
-      formData.append(key, booleanAmenities[key as keyof BooleanAmenities] ? "1" : "0");
-    });
-
-    // Add availability rules
-    formData.append("availability_rules", JSON.stringify(availabilityRules));
-
-    // Cleanup empty numeric fields
-    const numericFields = [
-      "cabins", "heads", "price", "year", "engine_hours", 
-      "engine_power", "berths", "length", "beam", "draft"
+    // Set boolean fields from checkboxes
+    const booleanFields = [
+      'allow_bidding', 'flybridge', 'oven', 'microwave', 'fridge', 'freezer',
+      'air_conditioning', 'navigation_lights', 'compass', 'depth_instrument',
+      'wind_instrument', 'autopilot', 'gps', 'vhf', 'plotter', 'speed_instrument',
+      'radar', 'life_raft', 'epirb', 'bilge_pump', 'fire_extinguisher',
+      'mob_system', 'spinnaker', 'battery', 'battery_charger', 'generator',
+      'inverter', 'television', 'cd_player', 'dvd_player', 'anchor',
+      'spray_hood', 'bimini'
     ];
-    
-    numericFields.forEach((field) => {
-      const val = formData.get(field);
-      if (!val || val === "" || val === "undefined") {
-        formData.set(field, "");
+
+    booleanFields.forEach(field => {
+      if (!formData.has(field)) {
+        formData.append(field, 'false');
+      } else {
+        const value = formData.get(field);
+        formData.set(field, value === 'on' || value === 'true' || value === '1' ? 'true' : 'false');
       }
     });
+
+    // Clean empty fields
+    const allFields = [
+      'boat_name', 'price', 'status', 'year',
+      'beam', 'draft', 'loa', 'lwl', 'air_draft', 'passenger_capacity',
+      'designer', 'builder', 'where', 'hull_colour', 'hull_construction',
+      'hull_number', 'hull_type', 'super_structure_colour', 'super_structure_construction',
+      'deck_colour', 'deck_construction', 'cockpit_type', 'control_type', 'ballast',
+      'displacement', 'cabins', 'berths', 'toilet', 'shower', 'bath', 'heating',
+      'stern_thruster', 'bow_thruster', 'fuel', 'hours', 'cruising_speed', 'max_speed',
+      'horse_power', 'engine_manufacturer', 'tankage', 'gallons_per_hour',
+      'starting_type', 'drive_type'
+    ];
+
+    allFields.forEach(field => {
+      const val = formData.get(field);
+      if (!val || val === '') formData.delete(field);
+    });
+
+    // Append Availability Rules
+    if (availabilityRules.length > 0) {
+      formData.append("availability_rules", JSON.stringify(availabilityRules));
+    }
 
     try {
       let finalYachtId = selectedYacht?.id;
       
       if (!isNewMode && selectedYacht) {
-        // Update existing yacht
-        await api.post(`/yachts/${selectedYacht.id}`, formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data'
-          }
-        });
+        // Use PUT method for updates
+        await api.put(`/yachts/${selectedYacht.id}`, formData);
       } else {
-        // Create new yacht
-        const res = await api.post("/yachts", formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data'
-          }
-        });
+        // CREATE NEW
+        const res = await api.post("/yachts", formData);
         finalYachtId = res.data.id;
       }
 
@@ -375,11 +307,7 @@ export default function YachtEditorPage() {
           const gData = new FormData();
           newFiles.forEach((file) => gData.append("images[]", file));
           gData.append("category", cat);
-          await api.post(`/yachts/${finalYachtId}/gallery`, gData, {
-            headers: {
-              'Content-Type': 'multipart/form-data'
-            }
-          });
+          await api.post(`/yachts/${finalYachtId}/gallery`, gData);
         }
       }
 
@@ -427,7 +355,7 @@ export default function YachtEditorPage() {
             <h1 className="text-2xl lg:text-3xl font-serif italic">
               {isNewMode
                 ? "New Vessel Registration"
-                : `Manifest: ${selectedYacht?.name || "Loading..."}`}
+                : `Manifest: ${selectedYacht?.boat_name || "Loading..."}`}
             </h1>
             <p className="text-blue-400 text-[10px] font-black uppercase tracking-[0.4em] mt-1">
               Registry Auth: Admin
@@ -484,7 +412,6 @@ export default function YachtEditorPage() {
                   src={mainPreview}
                   onError={handleImageError}
                   className="w-full h-full object-cover group-hover:opacity-90 transition-opacity"
-                  alt="Main yacht image"
                 />
               ) : (
                 <div className="text-center">
@@ -508,23 +435,21 @@ export default function YachtEditorPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               <div className="space-y-2">
-                <Label>Vessel Name*</Label>
+                <Label>Vessel Name</Label>
                 <Input
-                  name="name"
-                  defaultValue={selectedYacht?.name}
+                  name="boat_name"
+                  defaultValue={selectedYacht?.boat_name}
                   placeholder="e.g. M/Y NOBILITY"
                   required
                 />
               </div>
               <div className="space-y-2">
-                <Label>Price (€)*</Label>
+                <Label>Price (€)</Label>
                 <Input
                   name="price"
                   type="number"
-                  step="0.01"
                   defaultValue={selectedYacht?.price}
                   placeholder="1500000"
-                  required
                 />
               </div>
               <div className="space-y-2">
@@ -537,49 +462,28 @@ export default function YachtEditorPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Make</Label>
+                <Label>LOA (Length Overall)</Label>
                 <Input
-                  name="make"
-                  defaultValue={selectedYacht?.make}
-                  placeholder="e.g. Sunseeker"
+                  name="loa"
+                  defaultValue={selectedYacht?.loa}
+                  placeholder="45.5"
                 />
               </div>
               <div className="space-y-2">
-                <Label>Model</Label>
+                <Label>LWL (Waterline Length)</Label>
                 <Input
-                  name="model"
-                  defaultValue={selectedYacht?.model}
-                  placeholder="e.g. Predator 50"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Reference Code</Label>
-                <Input
-                  name="reference_code"
-                  defaultValue={selectedYacht?.reference_code}
-                  placeholder="e.g. SSK-2024-001"
+                  name="lwl"
+                  defaultValue={selectedYacht?.lwl}
+                  placeholder="40.2"
                 />
               </div>
               <div className="space-y-2">
                 <Label>Location</Label>
                 <Input
-                  name="location"
-                  defaultValue={selectedYacht?.location}
+                  name="where"
+                  defaultValue={selectedYacht?.where}
                   placeholder="e.g. Monaco"
                 />
-              </div>
-              <div className="space-y-2">
-                <Label>VAT Status</Label>
-                <select
-                  name="vat_status"
-                  defaultValue={selectedYacht?.vat_status || "VAT Included"}
-                  className="w-full bg-slate-50 p-3 border-b border-slate-200 text-[#003566] font-bold text-xs outline-none focus:border-blue-600 transition-all"
-                >
-                  <option value="VAT Included">VAT Included</option>
-                  <option value="VAT Excluded">VAT Excluded</option>
-                  <option value="Margin Scheme">Margin Scheme</option>
-                  <option value="Not Applicable">Not Applicable</option>
-                </select>
               </div>
               <div className="space-y-2">
                 <Label>Status</Label>
@@ -592,21 +496,17 @@ export default function YachtEditorPage() {
                   <option value="For Bid">For Bid</option>
                   <option value="Sold">Sold</option>
                   <option value="Draft">Draft</option>
-                  <option value="Under Offer">Under Offer</option>
-                  <option value="Reserved">Reserved</option>
                 </select>
               </div>
-            </div>
-            
-            {/* Description */}
-            <div className="space-y-2">
-              <Label>Description</Label>
-              <textarea
-                name="description"
-                defaultValue={selectedYacht?.description}
-                placeholder="Detailed description of the yacht including features, condition, and history..."
-                className="w-full border border-slate-200 p-4 text-xs font-medium text-[#003566] h-40 outline-none focus:border-blue-600 resize-none bg-slate-50/50"
-              />
+              <div className="space-y-2">
+                <Label>Passenger Capacity</Label>
+                <Input
+                  name="passenger_capacity"
+                  type="number"
+                  defaultValue={selectedYacht?.passenger_capacity}
+                  placeholder="12"
+                />
+              </div>
             </div>
           </div>
 
@@ -616,92 +516,36 @@ export default function YachtEditorPage() {
               <Waves size={18} /> Technical Dossier
             </h3>
 
-            {/* Sub-Section: Dimensions & Hull */}
-            <div className="space-y-6">
-              <SectionHeader
-                icon={<Ruler size={14} />}
-                title="Dimensions"
-              />
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                <div className="space-y-1">
-                  <Label>Length (m)</Label>
-                  <Input
-                    name="length"
-                    type="number"
-                    step="0.01"
-                    defaultValue={selectedYacht?.length}
-                    placeholder="45.5"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label>Beam (m)</Label>
-                  <Input
-                    name="beam"
-                    type="number"
-                    step="0.01"
-                    defaultValue={selectedYacht?.beam}
-                    placeholder="8.5"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label>Draft (m)</Label>
-                  <Input
-                    name="draft"
-                    type="number"
-                    step="0.01"
-                    defaultValue={selectedYacht?.draft}
-                    placeholder="2.1"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label>Clearance (m)</Label>
-                  <Input
-                    name="clearance"
-                    defaultValue={selectedYacht?.clearance}
-                    placeholder="4.5"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Sub-Section: Hull Details */}
+            {/* Sub-Section: General & Hull */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
               <div className="space-y-6">
                 <SectionHeader
                   icon={<Ship size={14} />}
-                  title="Hull & Construction"
+                  title="Hull & Dimensions"
                 />
                 <div className="grid grid-cols-2 gap-6">
                   <div className="space-y-1">
-                    <Label>Construction Material</Label>
+                    <Label>Beam (Width)</Label>
                     <Input
-                      name="construction_material"
-                      defaultValue={selectedYacht?.construction_material}
-                      placeholder="e.g. GRP / Polyester"
+                      name="beam"
+                      defaultValue={selectedYacht?.beam}
+                      placeholder="e.g. 8.5m"
                     />
                   </div>
                   <div className="space-y-1">
-                    <Label>Hull Shape</Label>
+                    <Label>Draft (Depth)</Label>
                     <Input
-                      name="hull_shape"
-                      defaultValue={selectedYacht?.hull_shape}
-                      placeholder="e.g. V-Bottom"
+                      name="draft"
+                      defaultValue={selectedYacht?.draft}
+                      placeholder="e.g. 2.1m"
                     />
                   </div>
                   <div className="space-y-1">
-                    <Label>Hull Color</Label>
+                    <Label>Air Draft (Clearance)</Label>
                     <Input
-                      name="hull_color"
-                      defaultValue={selectedYacht?.hull_color}
-                      placeholder="e.g. White"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <Label>Deck Color</Label>
-                    <Input
-                      name="deck_color"
-                      defaultValue={selectedYacht?.deck_color}
-                      placeholder="e.g. Teak"
+                      name="air_draft"
+                      defaultValue={selectedYacht?.air_draft}
+                      placeholder="e.g. 4.5m"
                     />
                   </div>
                   <div className="space-y-1">
@@ -713,11 +557,35 @@ export default function YachtEditorPage() {
                     />
                   </div>
                   <div className="space-y-1">
-                    <Label>Overall Dimensions</Label>
+                    <Label>Hull Type</Label>
                     <Input
-                      name="dimensions"
-                      defaultValue={selectedYacht?.dimensions}
-                      placeholder="e.g. 45.5m x 8.5m x 2.1m"
+                      name="hull_type"
+                      defaultValue={selectedYacht?.hull_type}
+                      placeholder="e.g. Monohull"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label>Hull Construction</Label>
+                    <Input
+                      name="hull_construction"
+                      defaultValue={selectedYacht?.hull_construction}
+                      placeholder="e.g. GRP / Polyester"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label>Hull Colour</Label>
+                    <Input
+                      name="hull_colour"
+                      defaultValue={selectedYacht?.hull_colour}
+                      placeholder="White"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label>Hull Number</Label>
+                    <Input
+                      name="hull_number"
+                      defaultValue={selectedYacht?.hull_number}
+                      placeholder="e.g. HULL001"
                     />
                   </div>
                 </div>
@@ -730,83 +598,75 @@ export default function YachtEditorPage() {
                 />
                 <div className="bg-slate-50 p-6 border border-slate-100 grid grid-cols-2 gap-6">
                   <div className="space-y-1">
-                    <Label>Engine Type</Label>
+                    <Label>Engine Manufacturer</Label>
                     <Input
-                      name="engine_type"
-                      defaultValue={selectedYacht?.engine_type}
-                      placeholder="e.g. Inboard Diesel"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <Label>Engine Brand</Label>
-                    <Input
-                      name="engine_brand"
-                      defaultValue={selectedYacht?.engine_brand}
+                      name="engine_manufacturer"
+                      defaultValue={selectedYacht?.engine_manufacturer}
                       placeholder="e.g. CAT / MTU"
+                      className="bg-white"
                     />
                   </div>
                   <div className="space-y-1">
-                    <Label>Engine Model</Label>
+                    <Label>Horse Power</Label>
                     <Input
-                      name="engine_model"
-                      defaultValue={selectedYacht?.engine_model}
-                      placeholder="e.g. V12 2000"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <Label>Engine Power (HP)</Label>
-                    <Input
-                      name="engine_power"
-                      defaultValue={selectedYacht?.engine_power}
+                      name="horse_power"
+                      defaultValue={selectedYacht?.horse_power}
                       placeholder="e.g. 2x 1500HP"
+                      className="bg-white"
                     />
                   </div>
                   <div className="space-y-1">
                     <Label>Engine Hours</Label>
                     <Input
-                      name="engine_hours"
-                      defaultValue={selectedYacht?.engine_hours}
+                      name="hours"
+                      defaultValue={selectedYacht?.hours}
                       placeholder="e.g. 450 hrs"
+                      className="bg-white"
                     />
                   </div>
                   <div className="space-y-1">
                     <Label>Fuel Type</Label>
                     <Input
-                      name="fuel_type"
-                      defaultValue={selectedYacht?.fuel_type}
+                      name="fuel"
+                      defaultValue={selectedYacht?.fuel}
                       placeholder="Diesel"
+                      className="bg-white"
                     />
                   </div>
                   <div className="space-y-1">
-                    <Label>Fuel Capacity</Label>
-                    <Input
-                      name="fuel_capacity"
-                      defaultValue={selectedYacht?.fuel_capacity}
-                      placeholder="e.g. 2000L"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <Label>Fuel Consumption</Label>
-                    <Input
-                      name="fuel_consumption"
-                      defaultValue={selectedYacht?.fuel_consumption}
-                      placeholder="e.g. 100L/h"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <Label>Max Speed (knots)</Label>
+                    <Label>Max Speed</Label>
                     <Input
                       name="max_speed"
                       defaultValue={selectedYacht?.max_speed}
                       placeholder="e.g. 35 kn"
+                      className="bg-white"
                     />
                   </div>
                   <div className="space-y-1">
-                    <Label>Steering</Label>
+                    <Label>Cruising Speed</Label>
                     <Input
-                      name="steering"
-                      defaultValue={selectedYacht?.steering}
-                      placeholder="Wheel / Joystick"
+                      name="cruising_speed"
+                      defaultValue={selectedYacht?.cruising_speed}
+                      placeholder="e.g. 25 kn"
+                      className="bg-white"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label>Gallons per Hour</Label>
+                    <Input
+                      name="gallons_per_hour"
+                      defaultValue={selectedYacht?.gallons_per_hour}
+                      placeholder="e.g. 50"
+                      className="bg-white"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label>Tankage</Label>
+                    <Input
+                      name="tankage"
+                      defaultValue={selectedYacht?.tankage}
+                      placeholder="e.g. 2000L"
+                      className="bg-white"
                     />
                   </div>
                 </div>
@@ -817,7 +677,7 @@ export default function YachtEditorPage() {
             <div className="space-y-6">
               <SectionHeader
                 icon={<Bed size={14} />}
-                title="Accommodation"
+                title="Accommodation & Facilities"
               />
               <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                 <div className="space-y-1">
@@ -830,346 +690,191 @@ export default function YachtEditorPage() {
                   />
                 </div>
                 <div className="space-y-1">
-                  <Label>Berths (Beds)</Label>
+                  <Label>Berths</Label>
                   <Input
                     name="berths"
                     defaultValue={selectedYacht?.berths}
-                    placeholder="6 + 2 Crew"
+                    placeholder="6"
                   />
                 </div>
                 <div className="space-y-1">
-                  <Label>Heads (Baths)</Label>
+                  <Label>Toilet</Label>
                   <Input
-                    name="heads"
-                    type="number"
-                    defaultValue={selectedYacht?.heads}
+                    name="toilet"
+                    defaultValue={selectedYacht?.toilet}
                     placeholder="2"
                   />
                 </div>
                 <div className="space-y-1">
-                  <Label>Interior Type</Label>
+                  <Label>Shower</Label>
                   <Input
-                    name="interior_type"
-                    defaultValue={selectedYacht?.interior_type}
-                    placeholder="e.g. Modern / Classic"
+                    name="shower"
+                    defaultValue={selectedYacht?.shower}
+                    placeholder="2"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label>Bath</Label>
+                  <Input
+                    name="bath"
+                    defaultValue={selectedYacht?.bath}
+                    placeholder="1"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label>Heating</Label>
+                  <Input
+                    name="heating"
+                    defaultValue={selectedYacht?.heating}
+                    placeholder="e.g. Central heating"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label>Cockpit Type</Label>
+                  <Input
+                    name="cockpit_type"
+                    defaultValue={selectedYacht?.cockpit_type}
+                    placeholder="e.g. Open / Closed"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label>Control Type</Label>
+                  <Input
+                    name="control_type"
+                    defaultValue={selectedYacht?.control_type}
+                    placeholder="e.g. Wheel / Joystick"
                   />
                 </div>
               </div>
             </div>
 
-            {/* Sub-Section: Tanks & Water Systems */}
-            <div className="space-y-6">
-              <SectionHeader
-                icon={<Droplets size={14} />}
-                title="Tanks & Water Systems"
-              />
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-                <div className="space-y-1">
-                  <Label>Water Capacity</Label>
-                  <Input
-                    name="water_capacity"
-                    defaultValue={selectedYacht?.water_capacity}
-                    placeholder="e.g. 1000L"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label>Water Tank</Label>
-                  <Input
-                    name="water_tank"
-                    defaultValue={selectedYacht?.water_tank}
-                    placeholder="e.g. 800L"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label>Water System</Label>
-                  <Input
-                    name="water_system"
-                    defaultValue={selectedYacht?.water_system}
-                    placeholder="e.g. Pressurized"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Sub-Section: Electrical */}
-            <div className="space-y-6">
-              <SectionHeader
-                icon={<Power size={14} />}
-                title="Electrical Systems"
-              />
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-                <div className="space-y-1">
-                  <Label>Voltage</Label>
-                  <Input
-                    name="voltage"
-                    defaultValue={selectedYacht?.voltage}
-                    placeholder="e.g. 12V/220V"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label>Generator</Label>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      checked={booleanAmenities.generator}
-                      onChange={() => handleBooleanAmenityChange('generator')}
-                      className="w-4 h-4 accent-[#003566]"
-                    />
-                    <span className="text-xs">Generator Installed</span>
-                  </div>
-                </div>
-                <div className="space-y-1">
-                  <Label>Inverter</Label>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      checked={booleanAmenities.inverter}
-                      onChange={() => handleBooleanAmenityChange('inverter')}
-                      className="w-4 h-4 accent-[#003566]"
-                    />
-                    <span className="text-xs">Inverter Installed</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Sub-Section: Equipment */}
+            {/* Sub-Section: Equipment Checkboxes */}
             <div className="space-y-6">
               <SectionHeader
                 icon={<Box size={14} />}
                 title="Equipment & Features"
               />
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="space-y-2">
-                  <Label>Navigation & Electronics</Label>
-                  <textarea
-                    name="navigation_electronics"
-                    defaultValue={selectedYacht?.navigation_electronics}
-                    placeholder="List all navigation equipment (GPS, Radar, Autopilot, etc.)"
-                    className="w-full border border-slate-200 p-4 text-xs font-medium text-[#003566] h-32 outline-none focus:border-blue-600 resize-none bg-slate-50/50"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Exterior & Deck Equipment</Label>
-                  <textarea
-                    name="exterior_equipment"
-                    defaultValue={selectedYacht?.exterior_equipment}
-                    placeholder="Anchor, Teak deck, Swimming ladder, Davits, etc."
-                    className="w-full border border-slate-200 p-4 text-xs font-medium text-[#003566] h-32 outline-none focus:border-blue-600 resize-none bg-slate-50/50"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Safety Equipment</Label>
-                  <textarea
-                    name="safety_equipment"
-                    defaultValue={selectedYacht?.safety_equipment}
-                    placeholder="Life jackets, Life raft, Fire extinguishers, EPIRB, etc."
-                    className="w-full border border-slate-200 p-4 text-xs font-medium text-[#003566] h-32 outline-none focus:border-blue-600 resize-none bg-slate-50/50"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Sub-Section: Boolean Amenities */}
-            <div className="space-y-6">
-              <SectionHeader
-                icon={<Home size={14} />}
-                title="Amenities & Features"
-              />
-              <div className="bg-slate-50 p-6 border border-slate-100 rounded-sm">
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                  {/* Kitchen/Galley */}
-                  <div className="space-y-2">
-                    <h5 className="text-[10px] font-black uppercase text-slate-500">Galley</h5>
-                    <div className="space-y-1">
-                      <CheckboxField
-                        label="Oven"
-                        checked={booleanAmenities.oven}
-                        onChange={() => handleBooleanAmenityChange('oven')}
-                      />
-                      <CheckboxField
-                        label="Microwave"
-                        checked={booleanAmenities.microwave}
-                        onChange={() => handleBooleanAmenityChange('microwave')}
-                      />
-                      <CheckboxField
-                        label="Fridge"
-                        checked={booleanAmenities.fridge}
-                        onChange={() => handleBooleanAmenityChange('fridge')}
-                      />
-                      <CheckboxField
-                        label="Freezer"
-                        checked={booleanAmenities.freezer}
-                        onChange={() => handleBooleanAmenityChange('freezer')}
-                      />
-                    </div>
-                  </div>
-                  
-                  {/* Climate Control */}
-                  <div className="space-y-2">
-                    <h5 className="text-[10px] font-black uppercase text-slate-500">Climate</h5>
-                    <div className="space-y-1">
-                      <CheckboxField
-                        label="Air Conditioning"
-                        checked={booleanAmenities.air_conditioning}
-                        onChange={() => handleBooleanAmenityChange('air_conditioning')}
-                      />
-                      <CheckboxField
-                        label="Heating"
-                        checked={booleanAmenities.heating}
-                        onChange={() => handleBooleanAmenityChange('heating')}
-                      />
-                      <CheckboxField
-                        label="Central Heating"
-                        checked={booleanAmenities.central_heating}
-                        onChange={() => handleBooleanAmenityChange('central_heating')}
-                      />
-                    </div>
-                  </div>
-                  
-                  {/* Entertainment */}
-                  <div className="space-y-2">
-                    <h5 className="text-[10px] font-black uppercase text-slate-500">Entertainment</h5>
-                    <div className="space-y-1">
-                      <CheckboxField
-                        label="Television"
-                        checked={booleanAmenities.television}
-                        onChange={() => handleBooleanAmenityChange('television')}
-                      />
-                      <CheckboxField
-                        label="DVD Player"
-                        checked={booleanAmenities.dvd_player}
-                        onChange={() => handleBooleanAmenityChange('dvd_player')}
-                      />
-                      <CheckboxField
-                        label="CD Player"
-                        checked={booleanAmenities.cd_player}
-                        onChange={() => handleBooleanAmenityChange('cd_player')}
-                      />
-                    </div>
-                  </div>
-                  
-                  {/* Deck & Exterior */}
-                  <div className="space-y-2">
-                    <h5 className="text-[10px] font-black uppercase text-slate-500">Deck & Exterior</h5>
-                    <div className="space-y-1">
-                      <CheckboxField
-                        label="Anchor"
-                        checked={booleanAmenities.anchor}
-                        onChange={() => handleBooleanAmenityChange('anchor')}
-                      />
-                      <CheckboxField
-                        label="Bimini"
-                        checked={booleanAmenities.bimini}
-                        onChange={() => handleBooleanAmenityChange('bimini')}
-                      />
-                      <CheckboxField
-                        label="Spray Hood"
-                        checked={booleanAmenities.spray_hood}
-                        onChange={() => handleBooleanAmenityChange('spray_hood')}
-                      />
-                      <CheckboxField
-                        label="Trailer Included"
-                        checked={booleanAmenities.trailer_included}
-                        onChange={() => handleBooleanAmenityChange('trailer_included')}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* --- SECTION 4: SCHEDULING AUTHORITY --- */}
-          <div className="space-y-8 bg-slate-50 p-10 border border-slate-200 shadow-sm">
-            <div className="flex justify-between items-center border-b border-slate-200 pb-4">
-              <h3 className="text-[12px] font-black uppercase text-[#003566] tracking-[0.4em] flex items-center gap-3 italic">
-                <Calendar size={20} className="text-blue-600" /> 04. Scheduling Authority
-              </h3>
-              <Button 
-                type="button" 
-                onClick={addAvailabilityRule}
-                className="bg-[#003566] text-white text-[8px] font-black uppercase tracking-widest px-6 h-8"
-              >
-                Add Window
-              </Button>
-            </div>
-
-            <div className="space-y-4">
-              {availabilityRules.map((rule, idx) => (
-                <div key={idx} className="flex flex-wrap items-end gap-6 bg-white p-4 border border-slate-100 shadow-sm relative group">
-                  <div className="flex-1 min-w-[150px]">
-                    <Label>Day of Week</Label>
-                    <select
-                      value={rule.day_of_week}
-                      onChange={(e) => updateAvailabilityRule(idx, 'day_of_week', parseInt(e.target.value))}
-                      className="w-full bg-slate-50 p-2 border-b border-slate-200 text-[#003566] font-bold text-xs outline-none"
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                {[
+                  'allow_bidding', 'flybridge', 'oven', 'microwave', 'fridge', 'freezer',
+                  'air_conditioning', 'navigation_lights', 'compass', 'depth_instrument',
+                  'wind_instrument', 'autopilot', 'gps', 'vhf', 'plotter', 'speed_instrument',
+                  'radar', 'life_raft', 'epirb', 'bilge_pump', 'fire_extinguisher',
+                  'mob_system', 'spinnaker', 'battery', 'battery_charger', 'generator',
+                  'inverter', 'television', 'cd_player', 'dvd_player', 'anchor',
+                  'spray_hood', 'bimini'
+                ].map((field) => (
+                  <div key={field} className="flex items-center gap-2 bg-slate-50/50 p-3">
+                    <input
+                      type="checkbox"
+                      name={field}
+                      id={field}
+                      defaultChecked={selectedYacht?.[field]}
+                      className="w-3 h-3 accent-[#003566] cursor-pointer"
+                    />
+                    <label
+                      htmlFor={field}
+                      className="text-[8px] font-black uppercase tracking-wider text-slate-600 cursor-pointer select-none flex-1"
                     >
-                      <option value={1}>Monday</option>
-                      <option value={2}>Tuesday</option>
-                      <option value={3}>Wednesday</option>
-                      <option value={4}>Thursday</option>
-                      <option value={5}>Friday</option>
-                      <option value={6}>Saturday</option>
-                      <option value={0}>Sunday</option>
-                    </select>
+                      {field.replace('_', ' ')}
+                    </label>
                   </div>
-
-                  <div className="flex-1 min-w-[120px]">
-                    <Label>Start Time</Label>
-                    <div className="flex items-center gap-2 bg-slate-50 p-2 border-b border-slate-200">
-                      <Clock size={12} className="text-slate-400" />
-                      <input 
-                        type="time" 
-                        step="900" 
-                        value={rule.start_time}
-                        onChange={(e) => updateAvailabilityRule(idx, 'start_time', e.target.value)}
-                        className="bg-transparent text-xs font-bold text-[#003566] outline-none w-full"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex-1 min-w-[120px]">
-                    <Label>End Time</Label>
-                    <div className="flex items-center gap-2 bg-slate-50 p-2 border-b border-slate-200">
-                      <Clock size={12} className="text-slate-400" />
-                      <input 
-                        type="time" 
-                        step="900" 
-                        value={rule.end_time}
-                        onChange={(e) => updateAvailabilityRule(idx, 'end_time', e.target.value)}
-                        className="bg-transparent text-xs font-bold text-[#003566] outline-none w-full"
-                      />
-                    </div>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => removeAvailabilityRule(idx)}
-                    className="p-2 text-red-400 hover:text-red-600 transition-colors"
-                  >
-                    <Trash size={16} />
-                  </button>
-                </div>
-              ))}
-
-              {availabilityRules.length === 0 && (
-                <div className="text-center py-12 border-2 border-dashed border-slate-200 bg-white">
-                  <Calendar size={32} className="mx-auto text-slate-200 mb-2" />
-                  <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
-                    No Booking Windows Defined. Test Sails will be disabled.
-                  </p>
-                </div>
-              )}
+                ))}
+              </div>
             </div>
           </div>
 
-          {/* --- SECTION 5: AI CARGO DROP --- */}
+          {/* NEW SECTION: SCHEDULING AUTHORITY */}
+          <div className="space-y-8 bg-slate-50 p-10 border border-slate-200 shadow-sm">
+             <div className="flex justify-between items-center border-b border-slate-200 pb-4">
+               <h3 className="text-[12px] font-black uppercase text-[#003566] tracking-[0.4em] flex items-center gap-3 italic">
+                  <Calendar size={20} className="text-blue-600" /> 04. Scheduling Authority
+                </h3>
+                <Button 
+                  type="button" 
+                  onClick={addAvailabilityRule}
+                  className="bg-[#003566] text-white text-[8px] font-black uppercase tracking-widest px-6 h-8"
+                >
+                  Add Window
+                </Button>
+             </div>
+
+             <div className="space-y-4">
+                {availabilityRules.map((rule, idx) => (
+                  <div key={idx} className="flex flex-wrap items-end gap-6 bg-white p-4 border border-slate-100 shadow-sm relative group">
+                    <div className="flex-1 min-w-[150px]">
+                      <Label>Day of Week</Label>
+                      <select
+                        value={rule.day_of_week}
+                        onChange={(e) => updateAvailabilityRule(idx, 'day_of_week', parseInt(e.target.value))}
+                        className="w-full bg-slate-50 p-2 border-b border-slate-200 text-[#003566] font-bold text-xs outline-none"
+                      >
+                        <option value={1}>Monday</option>
+                        <option value={2}>Tuesday</option>
+                        <option value={3}>Wednesday</option>
+                        <option value={4}>Thursday</option>
+                        <option value={5}>Friday</option>
+                        <option value={6}>Saturday</option>
+                        <option value={0}>Sunday</option>
+                      </select>
+                    </div>
+
+                    <div className="flex-1 min-w-[120px]">
+                      <Label>Start Time</Label>
+                      <div className="flex items-center gap-2 bg-slate-50 p-2 border-b border-slate-200">
+                        <Clock size={12} className="text-slate-400" />
+                        <input 
+                          type="time" 
+                          step="900" 
+                          value={rule.start_time}
+                          onChange={(e) => updateAvailabilityRule(idx, 'start_time', e.target.value)}
+                          className="bg-transparent text-xs font-bold text-[#003566] outline-none w-full"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex-1 min-w-[120px]">
+                      <Label>End Time</Label>
+                      <div className="flex items-center gap-2 bg-slate-50 p-2 border-b border-slate-200">
+                        <Clock size={12} className="text-slate-400" />
+                        <input 
+                          type="time" 
+                          step="900" 
+                          value={rule.end_time}
+                          onChange={(e) => updateAvailabilityRule(idx, 'end_time', e.target.value)}
+                          className="bg-transparent text-xs font-bold text-[#003566] outline-none w-full"
+                        />
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => removeAvailabilityRule(idx)}
+                      className="p-2 text-red-400 hover:text-red-600 transition-colors"
+                    >
+                      <Trash size={16} />
+                    </button>
+                  </div>
+                ))}
+
+                {availabilityRules.length === 0 && (
+                  <div className="text-center py-12 border-2 border-dashed border-slate-200 bg-white">
+                    <Calendar size={32} className="mx-auto text-slate-200 mb-2" />
+                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
+                      No Booking Windows Defined. Test Sails will be disabled.
+                    </p>
+                  </div>
+                )}
+             </div>
+          </div>
+
+          {/* 05. AI CARGO DROP */}
           <div className="space-y-8 bg-slate-900 p-12 border-l-8 border-blue-500 shadow-2xl">
             <div className="flex justify-between items-start">
               <div>
                 <h3 className="text-[12px] font-black uppercase text-blue-400 tracking-[0.4em] flex items-center gap-3 italic">
-                  <Sparkles size={20} className="fill-blue-400" /> Gemini AI Categorizer
+                  <Sparkles size={20} className="fill-blue-400" /> Gemini AI
+                  Categorizer
                 </h3>
                 <p className="text-[9px] text-slate-500 font-bold uppercase mt-2 tracking-widest italic">
                   Automated asset classification via Neural Engine
@@ -1219,7 +924,6 @@ export default function YachtEditorPage() {
                       <img
                         src={item.preview}
                         className="h-40 w-full object-cover opacity-80"
-                        alt={item.originalName}
                       />
                       <div className="absolute top-2 left-2">
                         <span className="bg-blue-600 text-white text-[8px] font-black px-3 py-1 uppercase tracking-tighter">
@@ -1257,7 +961,8 @@ export default function YachtEditorPage() {
           {Object.keys(galleryState).map((category) => (
             <div key={category} className="space-y-8">
               <h3 className="text-[11px] font-black uppercase text-[#003566] tracking-widest flex items-center gap-2 italic border-b border-slate-200 pb-4">
-                <Images size={20} className="text-blue-600" /> {category} Gallery
+                <Images size={20} className="text-blue-600" /> {category}{" "}
+                Gallery
               </h3>
               <div className="bg-white border border-slate-200 rounded-sm overflow-hidden flex flex-col shadow-sm">
                 <div className="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
@@ -1292,7 +997,6 @@ export default function YachtEditorPage() {
                           src={src}
                           onError={handleImageError}
                           className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity"
-                          alt={`Gallery image ${i + 1}`}
                         />
                         <button
                           type="button"
@@ -1354,7 +1058,7 @@ export default function YachtEditorPage() {
   );
 }
 
-// ---------------- Helper Components ----------------
+// ---------------- Helper Components ---------------- //
 
 function Label({ children }: { children: React.ReactNode }) {
   return (
@@ -1387,29 +1091,5 @@ function SectionHeader({
     <h4 className="text-[10px] font-black uppercase tracking-widest text-blue-600 flex items-center gap-2 mb-4">
       {icon} {title}
     </h4>
-  );
-}
-
-function CheckboxField({ 
-  label, 
-  checked, 
-  onChange 
-}: { 
-  label: string; 
-  checked: boolean; 
-  onChange: () => void 
-}) {
-  return (
-    <div className="flex items-center gap-2">
-      <input
-        type="checkbox"
-        checked={checked}
-        onChange={onChange}
-        className="w-4 h-4 accent-[#003566]"
-      />
-      <label className="text-xs font-medium text-slate-700 cursor-pointer select-none">
-        {label}
-      </label>
-    </div>
   );
 }
