@@ -1,3 +1,4 @@
+"use client";
 
 import { useState, useEffect, SyntheticEvent } from "react";
 import { useParams } from "next/navigation";
