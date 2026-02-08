@@ -15,15 +15,18 @@ import {
   Ship,
   Euro,
   Users,
-  Clock,
-  Eye,
   CheckCircle,
   XCircle,
   AlertTriangle,
   ChevronRight,
   Filter,
-  MoreVertical,
-  BarChart3
+  BarChart3,
+  RefreshCw,
+  Eye,
+  Settings,
+  MoreHorizontal,
+  Grid3x3,
+  List
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast, Toaster } from "react-hot-toast";
@@ -34,14 +37,14 @@ const PLACEHOLDER_IMAGE =
   "https://images.unsplash.com/photo-1569263979104-865ab7cd8d13?auto=format&fit=crop&w=600&q=80";
 
 // Status badge configuration
-const statusConfig: Record<string, { color: string; bg: string; border: string }> = {
-  'For Sale': { color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-100' },
-  'For Bid': { color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-100' },
-  'Sold': { color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-100' },
-  'Draft': { color: 'text-slate-500', bg: 'bg-slate-100', border: 'border-slate-200' },
-  'Active': { color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-100' },
-  'Inactive': { color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-100' },
-  'Maintenance': { color: 'text-orange-600', bg: 'bg-orange-50', border: 'border-orange-100' },
+const statusConfig: Record<string, { color: string; bg: string; border: string; label: string }> = {
+  'For Sale': { color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-100', label: 'For Sale' },
+  'For Bid': { color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-100', label: 'For Bid' },
+  'Sold': { color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-100', label: 'Sold' },
+  'Draft': { color: 'text-slate-500', bg: 'bg-slate-100', border: 'border-slate-200', label: 'Draft' },
+  'Active': { color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-100', label: 'Active' },
+  'Inactive': { color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-100', label: 'Inactive' },
+  'Maintenance': { color: 'text-orange-600', bg: 'bg-orange-50', border: 'border-orange-100', label: 'Maintenance' },
 };
 
 // Status options
@@ -54,6 +57,18 @@ const statusOptions = [
   { value: 'Active', label: 'Active' },
   { value: 'Inactive', label: 'Inactive' },
   { value: 'Maintenance', label: 'Maintenance' },
+];
+
+// Sort options
+const sortOptions = [
+  { value: 'boat_name-asc', label: 'Name (A-Z)' },
+  { value: 'boat_name-desc', label: 'Name (Z-A)' },
+  { value: 'price-desc', label: 'Price (High to Low)' },
+  { value: 'price-asc', label: 'Price (Low to High)' },
+  { value: 'year-desc', label: 'Year (New to Old)' },
+  { value: 'year-asc', label: 'Year (Old to New)' },
+  { value: 'created_at-desc', label: 'Recently Added' },
+  { value: 'updated_at-desc', label: 'Recently Updated' },
 ];
 
 export default function FleetManagementPage() {
@@ -71,14 +86,17 @@ export default function FleetManagementPage() {
     forBid: 0,
     sold: 0,
     draft: 0,
+    active: 0,
+    inactive: 0,
   });
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   // Fetch fleet
   const fetchFleet = async () => {
     try {
       setLoading(true);
       const res = await api.get("/yachts");
-      setFleet(res.data);
+      setFleet(res.data || []);
       
       // Calculate stats
       const statsData = {
@@ -86,10 +104,12 @@ export default function FleetManagementPage() {
         forSale: res.data.filter((y: any) => y.status === 'For Sale').length,
         forBid: res.data.filter((y: any) => y.status === 'For Bid').length,
         sold: res.data.filter((y: any) => y.status === 'Sold').length,
-        draft: res.data.filter((y: any) => y.status === 'Draft').length,
+        draft: res.data.filter((y: any) => y.status === 'Draft' || !y.status).length,
+        active: res.data.filter((y: any) => y.status === 'Active').length,
+        inactive: res.data.filter((y: any) => y.status === 'Inactive').length,
       };
       setStats(statsData);
-    } catch (err) {
+    } catch (err: any) {
       console.error("API Sync Error", err);
       toast.error("Failed to load fleet data");
     } finally {
@@ -107,8 +127,9 @@ export default function FleetManagementPage() {
   };
 
   const handleDelete = async (yacht: any) => {
+    const yachtName = yacht.boat_name || yacht.name || 'Unnamed Vessel';
     const confirmed = window.confirm(
-      `CRITICAL ACTION: Are you sure you want to permanently remove "${yacht.boat_name}" from the registry?`,
+      `CRITICAL ACTION: Are you sure you want to permanently remove "${yachtName}" from the registry?`,
     );
     if (!confirmed) return;
 
@@ -141,48 +162,80 @@ export default function FleetManagementPage() {
     }
   };
 
-  const getImageUrl = (imagePath: string | null) => {
+  const getImageUrl = (imagePath: string | null | undefined) => {
     if (!imagePath) return PLACEHOLDER_IMAGE;
     if (imagePath.startsWith('http')) return imagePath;
     return `${STORAGE_URL}${imagePath}`;
   };
 
+  // Safe string access with null checks
+  const safeString = (value: any): string => {
+    if (value === null || value === undefined) return '';
+    return String(value).trim();
+  };
+
   // Filter and sort fleet
   const filteredAndSortedFleet = fleet
     .filter(yacht => {
-      // Search filter
-      const matchesSearch = yacht.boat_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          yacht.vessel_id?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          yacht.where?.toLowerCase().includes(searchQuery.toLowerCase());
+      if (!yacht) return false;
+      
+      // Search filter - safe with null checks
+      const boatName = safeString(yacht.boat_name).toLowerCase();
+      const vesselId = safeString(yacht.vessel_id).toLowerCase();
+      const location = safeString(yacht.where).toLowerCase();
+      const query = searchQuery.toLowerCase();
+      
+      const matchesSearch = 
+        boatName.includes(query) || 
+        vesselId.includes(query) || 
+        location.includes(query);
       
       // Status filter
-      const matchesStatus = selectedStatus === 'all' || yacht.status === selectedStatus;
+      const yachtStatus = yacht.status || 'Draft';
+      const matchesStatus = selectedStatus === 'all' || yachtStatus === selectedStatus;
       
       return matchesSearch && matchesStatus;
     })
     .sort((a, b) => {
-      // Sorting logic
-      let aValue = a[sortBy];
-      let bValue = b[sortBy];
+      // Sorting logic with null checks
+      let aValue: any = '';
+      let bValue: any = '';
+      
+      if (sortBy.includes('.')) {
+        // Handle nested properties if needed
+        const keys = sortBy.split('.');
+        aValue = keys.reduce((obj, key) => obj?.[key], a) || '';
+        bValue = keys.reduce((obj, key) => obj?.[key], b) || '';
+      } else {
+        aValue = a[sortBy] || '';
+        bValue = b[sortBy] || '';
+      }
       
       // Handle numeric sorting for price, year, etc.
       if (sortBy === 'price' || sortBy === 'year') {
-        aValue = parseFloat(aValue) || 0;
-        bValue = parseFloat(bValue) || 0;
+        const aNum = parseFloat(aValue) || 0;
+        const bNum = parseFloat(bValue) || 0;
+        return sortOrder === 'asc' ? aNum - bNum : bNum - aNum;
+      }
+      
+      // Handle date sorting
+      if (sortBy.includes('_at')) {
+        const aDate = new Date(aValue || 0).getTime();
+        const bDate = new Date(bValue || 0).getTime();
+        return sortOrder === 'asc' ? aDate - bDate : bDate - aDate;
       }
       
       // Handle string sorting
-      if (typeof aValue === 'string' && typeof bValue === 'string') {
-        return sortOrder === 'asc' 
-          ? aValue.localeCompare(bValue)
-          : bValue.localeCompare(aValue);
-      }
+      const aStr = safeString(aValue);
+      const bStr = safeString(bValue);
       
-      // Handle numeric sorting
-      return sortOrder === 'asc' ? aValue - bValue : bValue - aValue;
+      return sortOrder === 'asc' 
+        ? aStr.localeCompare(bStr)
+        : bStr.localeCompare(aStr);
     });
 
-  const formatCurrency = (amount: number | string | null) => {
+  const formatCurrency = (amount: number | string | null | undefined) => {
+    if (amount === null || amount === undefined || amount === '') return '€ --';
     const numAmount = Number(amount);
     if (isNaN(numAmount)) return '€ --';
     return new Intl.NumberFormat('nl-NL', {
@@ -193,14 +246,57 @@ export default function FleetManagementPage() {
     }).format(numAmount);
   };
 
-  const formatLength = (loa: string | number | null) => {
-    if (!loa) return '-- m';
+  const formatLength = (loa: string | number | null | undefined) => {
+    if (loa === null || loa === undefined || loa === '') return '-- m';
     return `${loa} m`;
   };
 
-  const getStatusConfig = (status: string) => {
-    return statusConfig[status] || statusConfig['Draft'];
+  const getStatusConfig = (status: string | null | undefined) => {
+    const safeStatus = status || 'Draft';
+    return statusConfig[safeStatus] || statusConfig['Draft'];
   };
+
+  const getYachtName = (yacht: any): string => {
+    return yacht.boat_name || yacht.name || 'Unnamed Vessel';
+  };
+
+  const getYachtStatus = (yacht: any): string => {
+    return yacht.status || 'Draft';
+  };
+
+  const handleSortChange = (value: string) => {
+    const [newSortBy, newSortOrder] = value.split('-');
+    setSortBy(newSortBy);
+    setSortOrder(newSortOrder as 'asc' | 'desc');
+  };
+
+  // View toggle buttons
+  const ViewToggle = () => (
+    <div className="flex border border-slate-200 rounded-sm overflow-hidden">
+      <button
+        onClick={() => setViewMode('grid')}
+        className={cn(
+          "px-4 py-2 text-[10px] font-black uppercase tracking-widest transition-colors",
+          viewMode === 'grid' 
+            ? 'bg-[#003566] text-white' 
+            : 'bg-white text-slate-600 hover:bg-slate-50'
+        )}
+      >
+        <Grid3x3 size={14} />
+      </button>
+      <button
+        onClick={() => setViewMode('list')}
+        className={cn(
+          "px-4 py-2 text-[10px] font-black uppercase tracking-widest transition-colors border-l border-slate-200",
+          viewMode === 'list' 
+            ? 'bg-[#003566] text-white' 
+            : 'bg-white text-slate-600 hover:bg-slate-50'
+        )}
+      >
+        <List size={14} />
+      </button>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] p-6 lg:p-12">
@@ -217,95 +313,126 @@ export default function FleetManagementPage() {
               Fleet Management System v2.1
             </p>
           </div>
-          <Button
-            onClick={() => router.push("/nl/dashboard/admin/yachts/new")}
-            className="bg-[#003566] text-white hover:bg-blue-800 rounded-none h-14 px-10 font-black uppercase text-[10px] tracking-widest transition-all shadow-lg flex items-center gap-2"
-          >
-            <Plus className="w-5 h-5" />
-            Register New Vessel
-          </Button>
+          <div className="flex items-center gap-4">
+            <Button
+              onClick={fetchFleet}
+              className="bg-white text-[#003566] border border-slate-200 hover:bg-slate-50 rounded-none h-12 px-6 font-black uppercase text-[10px] tracking-widest transition-all shadow-sm flex items-center gap-2"
+            >
+              <RefreshCw size={14} />
+              Refresh
+            </Button>
+            <Button
+              onClick={() => router.push("/nl/dashboard/admin/yachts/new")}
+              className="bg-[#003566] text-white hover:bg-blue-800 rounded-none h-12 px-8 font-black uppercase text-[10px] tracking-widest transition-all shadow-lg flex items-center gap-2"
+            >
+              <Plus size={14} />
+              New Vessel
+            </Button>
+          </div>
         </div>
 
         {/* STATS CARDS */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-7 gap-3 mb-8">
           <div className="bg-white p-4 border border-slate-200 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">
-                  Total Fleet
+                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">
+                  Total
                 </p>
-                <p className="text-2xl font-bold text-[#003566]">{stats.total}</p>
+                <p className="text-xl font-bold text-[#003566]">{stats.total}</p>
               </div>
-              <BarChart3 className="text-blue-600" size={20} />
+              <BarChart3 className="text-blue-600" size={18} />
             </div>
           </div>
           <div className="bg-white p-4 border border-slate-200 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">
+                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">
                   For Sale
                 </p>
-                <p className="text-2xl font-bold text-emerald-600">{stats.forSale}</p>
+                <p className="text-xl font-bold text-emerald-600">{stats.forSale}</p>
               </div>
-              <Euro className="text-emerald-600" size={20} />
+              <Euro className="text-emerald-600" size={18} />
             </div>
           </div>
           <div className="bg-white p-4 border border-slate-200 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">
+                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">
                   For Bid
                 </p>
-                <p className="text-2xl font-bold text-blue-600">{stats.forBid}</p>
+                <p className="text-xl font-bold text-blue-600">{stats.forBid}</p>
               </div>
-              <Users className="text-blue-600" size={20} />
+              <Users className="text-blue-600" size={18} />
             </div>
           </div>
           <div className="bg-white p-4 border border-slate-200 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">
+                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">
                   Sold
                 </p>
-                <p className="text-2xl font-bold text-amber-600">{stats.sold}</p>
+                <p className="text-xl font-bold text-amber-600">{stats.sold}</p>
               </div>
-              <CheckCircle className="text-amber-600" size={20} />
+              <CheckCircle className="text-amber-600" size={18} />
             </div>
           </div>
           <div className="bg-white p-4 border border-slate-200 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">
+                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">
                   Draft
                 </p>
-                <p className="text-2xl font-bold text-slate-500">{stats.draft}</p>
+                <p className="text-xl font-bold text-slate-500">{stats.draft}</p>
               </div>
-              <AlertTriangle className="text-slate-500" size={20} />
+              <AlertTriangle className="text-slate-500" size={18} />
+            </div>
+          </div>
+          <div className="bg-white p-4 border border-slate-200 shadow-sm">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">
+                  Active
+                </p>
+                <p className="text-xl font-bold text-emerald-600">{stats.active}</p>
+              </div>
+              <CheckCircle className="text-emerald-600" size={18} />
+            </div>
+          </div>
+          <div className="bg-white p-4 border border-slate-200 shadow-sm">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">
+                  Inactive
+                </p>
+                <p className="text-xl font-bold text-red-600">{stats.inactive}</p>
+              </div>
+              <XCircle className="text-red-600" size={18} />
             </div>
           </div>
         </div>
 
         {/* SEARCH AND FILTERS */}
         <div className="bg-white p-6 border border-slate-200 shadow-sm mb-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div className="relative group md:col-span-2">
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 items-center">
+            <div className="relative group lg:col-span-2">
               <Search
                 className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-600 transition-colors"
-                size={20}
+                size={18}
               />
               <input
                 type="text"
-                placeholder="SEARCH BY VESSEL NAME, VESSEL ID, OR LOCATION..."
-                className="w-full bg-slate-50 border border-slate-200 p-4 pl-12 text-[11px] font-black tracking-widest outline-none focus:ring-1 focus:ring-blue-600 transition-all"
+                placeholder="SEARCH BY NAME, ID, OR LOCATION..."
+                className="w-full bg-slate-50 border border-slate-200 p-3 pl-12 text-[11px] font-black tracking-widest outline-none focus:ring-1 focus:ring-blue-600 transition-all"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
             
             <div className="relative">
-              <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={20} />
+              <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
               <select
-                className="w-full bg-slate-50 border border-slate-200 p-4 pl-12 text-[11px] font-black tracking-widest outline-none appearance-none"
+                className="w-full bg-slate-50 border border-slate-200 p-3 pl-12 text-[11px] font-black tracking-widest outline-none appearance-none"
                 value={selectedStatus}
                 onChange={(e) => setSelectedStatus(e.target.value)}
               >
@@ -319,42 +446,46 @@ export default function FleetManagementPage() {
             
             <div className="relative">
               <select
-                className="w-full bg-slate-50 border border-slate-200 p-4 text-[11px] font-black tracking-widest outline-none"
+                className="w-full bg-slate-50 border border-slate-200 p-3 text-[11px] font-black tracking-widest outline-none"
                 value={`${sortBy}-${sortOrder}`}
-                onChange={(e) => {
-                  const [newSortBy, newSortOrder] = e.target.value.split('-');
-                  setSortBy(newSortBy);
-                  setSortOrder(newSortOrder as 'asc' | 'desc');
-                }}
+                onChange={(e) => handleSortChange(e.target.value)}
               >
-                <option value="boat_name-asc">Sort: Name (A-Z)</option>
-                <option value="boat_name-desc">Sort: Name (Z-A)</option>
-                <option value="price-desc">Sort: Price (High to Low)</option>
-                <option value="price-asc">Sort: Price (Low to High)</option>
-                <option value="year-desc">Sort: Year (New to Old)</option>
-                <option value="year-asc">Sort: Year (Old to New)</option>
+                {sortOptions.map(option => (
+                  <option key={option.value} value={option.value}>
+                    Sort: {option.label}
+                  </option>
+                ))}
               </select>
+            </div>
+
+            <div className="flex justify-end">
+              <ViewToggle />
             </div>
           </div>
         </div>
       </div>
 
-      {/* FLEET GRID */}
-      {loading ? (
+      {/* LOADING STATE */}
+      {loading && (
         <div className="col-span-full py-20 text-center">
           <Loader2 className="animate-spin mx-auto text-blue-600" size={40} />
           <p className="mt-4 text-[10px] font-black uppercase tracking-widest text-slate-400">
-            Synchronizing Database...
+            Loading Fleet Data...
           </p>
         </div>
-      ) : filteredAndSortedFleet.length === 0 ? (
+      )}
+
+      {/* EMPTY STATE */}
+      {!loading && filteredAndSortedFleet.length === 0 && (
         <div className="text-center py-20">
           <Ship className="mx-auto text-slate-300 mb-4" size={48} />
           <p className="text-[12px] font-black uppercase tracking-widest text-slate-400 mb-2">
             No vessels found
           </p>
           <p className="text-[10px] text-slate-400 mb-6">
-            {searchQuery || selectedStatus !== 'all' ? 'Try adjusting your search or filters' : 'No vessels in the registry yet'}
+            {searchQuery || selectedStatus !== 'all' 
+              ? 'Try adjusting your search or filters' 
+              : 'No vessels in the registry yet'}
           </p>
           <Button
             onClick={() => router.push("/nl/dashboard/admin/yachts/new")}
@@ -364,115 +495,103 @@ export default function FleetManagementPage() {
             Register First Vessel
           </Button>
         </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+      )}
+
+      {/* GRID VIEW */}
+      {!loading && viewMode === 'grid' && filteredAndSortedFleet.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {filteredAndSortedFleet.map((yacht) => (
             <div
               key={yacht.id}
               className="bg-white border border-slate-200 group overflow-hidden flex flex-col hover:shadow-xl transition-all duration-300"
             >
               {/* IMAGE SECTION */}
-              <div className="h-72 bg-slate-100 overflow-hidden relative">
+              <div className="h-64 bg-slate-100 overflow-hidden relative">
                 <img
                   src={getImageUrl(yacht.main_image)}
                   onError={handleImageError}
-                  alt={yacht.boat_name}
+                  alt={getYachtName(yacht)}
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />
                 
                 {/* VESSEL ID BADGE */}
-                <div className="absolute top-4 left-4 bg-black/80 text-white text-[8px] font-black uppercase tracking-widest px-3 py-1">
-                  {yacht.vessel_id || 'N/A'}
+                {yacht.vessel_id && (
+                  <div className="absolute top-3 left-3 bg-black/80 text-white text-[8px] font-black uppercase tracking-widest px-2 py-1">
+                    {yacht.vessel_id}
+                  </div>
+                )}
+                
+                {/* STATUS BADGE */}
+                <div className="absolute top-3 right-3">
+                  <span className={cn(
+                    "text-[8px] font-black px-3 py-1 rounded-full uppercase tracking-widest border",
+                    getStatusConfig(yacht.status).color,
+                    getStatusConfig(yacht.status).bg,
+                    getStatusConfig(yacht.status).border
+                  )}>
+                    {getYachtStatus(yacht)}
+                  </span>
                 </div>
                 
                 {/* ACTION OVERLAY */}
-                <div className="absolute inset-0 bg-[#003566]/90 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm gap-3 p-6">
+                <div className="absolute inset-0 bg-[#003566]/90 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-3 p-6">
                   <button
                     onClick={() => router.push(`/nl/dashboard/admin/yachts/${yacht.id}`)}
-                    className="bg-white text-[#003566] px-6 py-3 font-black uppercase text-[9px] tracking-widest hover:bg-blue-600 hover:text-white transition-all flex-1 max-w-[140px] flex items-center justify-center gap-2"
+                    className="w-full max-w-[200px] bg-white text-[#003566] px-4 py-3 font-black uppercase text-[9px] tracking-widest hover:bg-blue-600 hover:text-white transition-all flex items-center justify-center gap-2"
                   >
                     <Edit3 size={12} />
-                    Edit
+                    Edit Manifest
                   </button>
                   
                   <button
-                    onClick={() => toggleAvailability(yacht)}
-                    className={`px-6 py-3 font-black uppercase text-[9px] tracking-widest transition-all flex-1 max-w-[140px] flex items-center justify-center gap-2 ${
-                      yacht.status === 'Active' || yacht.status === 'For Sale'
-                        ? 'bg-amber-600 text-white hover:bg-amber-700'
-                        : 'bg-emerald-600 text-white hover:bg-emerald-700'
-                    }`}
+                    onClick={() => router.push(`/nl/dashboard/admin/yachts/${yacht.id}`)}
+                    className="w-full max-w-[200px] bg-blue-600 text-white px-4 py-3 font-black uppercase text-[9px] tracking-widest hover:bg-blue-700 transition-all flex items-center justify-center gap-2"
                   >
-                    {yacht.status === 'Active' || yacht.status === 'For Sale' ? (
-                      <>
-                        <XCircle size={12} />
-                        Deactivate
-                      </>
-                    ) : (
-                      <>
-                        <CheckCircle size={12} />
-                        Activate
-                      </>
-                    )}
+                    <Eye size={12} />
+                    View Details
                   </button>
                   
                   <button
                     onClick={() => handleDelete(yacht)}
                     disabled={isSubmitting}
-                    className="bg-red-600 text-white px-6 py-3 font-black uppercase text-[9px] tracking-widest hover:bg-red-700 transition-all flex-1 max-w-[140px] flex items-center justify-center gap-2"
+                    className="w-full max-w-[200px] bg-red-600 text-white px-4 py-3 font-black uppercase text-[9px] tracking-widest hover:bg-red-700 transition-all flex items-center justify-center gap-2"
                   >
                     {isSubmitting ? (
                       <Loader2 className="animate-spin" size={12} />
                     ) : (
                       <Trash size={12} />
                     )}
-                    Delete
+                    Delete Vessel
                   </button>
                 </div>
               </div>
               
               {/* DETAILS SECTION */}
-              <div className="p-6 space-y-4 flex-1 flex flex-col">
-                <div className="flex justify-between items-start">
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-xl font-serif italic truncate pr-4 mb-1">
-                      {yacht.boat_name || 'Unnamed Vessel'}
-                    </h3>
-                    <p className="text-lg font-bold text-blue-900">
-                      {formatCurrency(yacht.price)}
-                    </p>
-                  </div>
-                  <span className={cn(
-                    "text-[8px] font-black px-3 py-1 rounded-full uppercase tracking-widest border shrink-0",
-                    getStatusConfig(yacht.status).color,
-                    getStatusConfig(yacht.status).bg,
-                    getStatusConfig(yacht.status).border
-                  )}>
-                    {yacht.status || 'Draft'}
-                  </span>
+              <div className="p-5 space-y-4 flex-1 flex flex-col">
+                <div>
+                  <h3 className="text-lg font-serif italic mb-1 line-clamp-1">
+                    {getYachtName(yacht)}
+                  </h3>
+                  <p className="text-lg font-bold text-blue-900">
+                    {formatCurrency(yacht.price)}
+                  </p>
                 </div>
                 
                 {/* SPECIFICATIONS */}
                 <div className="grid grid-cols-2 gap-3 pt-4 border-t border-slate-100">
                   <div className="space-y-1">
                     <p className="text-[9px] font-black uppercase text-slate-400 tracking-widest">
-                      Specifications
+                      Dimensions
                     </p>
                     <div className="space-y-1">
                       <div className="flex items-center gap-2 text-[10px] text-slate-600">
                         <Maximize2 size={12} className="text-blue-600" />
-                        <span className="font-bold">{formatLength(yacht.loa)} LOA</span>
+                        <span className="font-medium">{formatLength(yacht.loa)} LOA</span>
                       </div>
                       {yacht.beam && (
                         <div className="flex items-center gap-2 text-[10px] text-slate-600">
                           <Maximize2 size={12} className="text-blue-600 rotate-90" />
                           <span>{yacht.beam}m Beam</span>
-                        </div>
-                      )}
-                      {yacht.year && (
-                        <div className="flex items-center gap-2 text-[10px] text-slate-600">
-                          <Calendar size={12} className="text-blue-600" />
-                          <span>Built {yacht.year}</span>
                         </div>
                       )}
                     </div>
@@ -483,22 +602,16 @@ export default function FleetManagementPage() {
                       Details
                     </p>
                     <div className="space-y-1">
+                      {yacht.year && (
+                        <div className="flex items-center gap-2 text-[10px] text-slate-600">
+                          <Calendar size={12} className="text-blue-600" />
+                          <span>{yacht.year}</span>
+                        </div>
+                      )}
                       {yacht.where && (
-                        <div className="flex items-center gap-2 text-[10px] text-slate-600">
+                        <div className="flex items-center gap-2 text-[10px] text-slate-600 line-clamp-1">
                           <MapPin size={12} className="text-blue-600" />
-                          <span className="truncate">{yacht.where}</span>
-                        </div>
-                      )}
-                      {yacht.cabins && (
-                        <div className="flex items-center gap-2 text-[10px] text-slate-600">
-                          <Ship size={12} className="text-blue-600" />
-                          <span>{yacht.cabins} Cabins</span>
-                        </div>
-                      )}
-                      {yacht.passenger_capacity && (
-                        <div className="flex items-center gap-2 text-[10px] text-slate-600">
-                          <Users size={12} className="text-blue-600" />
-                          <span>{yacht.passenger_capacity} Passengers</span>
+                          <span>{yacht.where}</span>
                         </div>
                       )}
                     </div>
@@ -506,15 +619,12 @@ export default function FleetManagementPage() {
                 </div>
                 
                 {/* FOOTER */}
-                <div className="pt-4 border-t border-slate-100 flex justify-between items-center">
-                  <div className="text-[9px] font-black uppercase text-slate-400 tracking-widest">
-                    Last updated: {yacht.updated_at ? new Date(yacht.updated_at).toLocaleDateString() : 'N/A'}
-                  </div>
+                <div className="pt-4 border-t border-slate-100 mt-auto">
                   <button
                     onClick={() => router.push(`/nl/dashboard/admin/yachts/${yacht.id}`)}
-                    className="text-[9px] font-black uppercase text-blue-600 tracking-widest hover:text-blue-800 transition-colors flex items-center gap-1"
+                    className="w-full text-[9px] font-black uppercase text-blue-600 tracking-widest hover:text-blue-800 transition-colors flex items-center justify-center gap-1"
                   >
-                    View Details
+                    Manage Vessel
                     <ChevronRight size={12} />
                   </button>
                 </div>
@@ -523,23 +633,134 @@ export default function FleetManagementPage() {
           ))}
         </div>
       )}
-      
-      {/* FOOTER STATS */}
-      {!loading && filteredAndSortedFleet.length > 0 && (
-        <div className="mt-12 pt-8 border-t border-slate-200">
-          <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-slate-400">
-            <div className="flex items-center gap-6">
-              <span>{filteredAndSortedFleet.length} vessels displayed</span>
-              <span>•</span>
-              <span>{fleet.length} total in registry</span>
+
+      {/* LIST VIEW */}
+      {!loading && viewMode === 'list' && filteredAndSortedFleet.length > 0 && (
+        <div className="bg-white border border-slate-200">
+          {/* TABLE HEADER */}
+          <div className="grid grid-cols-12 gap-4 p-4 border-b border-slate-200 bg-slate-50 text-[10px] font-black uppercase tracking-widest text-slate-500">
+            <div className="col-span-3">Vessel</div>
+            <div className="col-span-2">Price</div>
+            <div className="col-span-2">Specifications</div>
+            <div className="col-span-2">Status</div>
+            <div className="col-span-1">Year</div>
+            <div className="col-span-2 text-right">Actions</div>
+          </div>
+          
+          {/* TABLE ROWS */}
+          {filteredAndSortedFleet.map((yacht) => (
+            <div key={yacht.id} className="grid grid-cols-12 gap-4 p-4 border-b border-slate-100 hover:bg-slate-50 transition-colors">
+              {/* VESSEL */}
+              <div className="col-span-3 flex items-center gap-3">
+                <div className="w-16 h-12 bg-slate-100 overflow-hidden flex-shrink-0">
+                  <img
+                    src={getImageUrl(yacht.main_image)}
+                    onError={handleImageError}
+                    alt={getYachtName(yacht)}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div>
+                  <p className="font-medium text-[#003566]">{getYachtName(yacht)}</p>
+                  {yacht.vessel_id && (
+                    <p className="text-[9px] text-slate-500 font-medium">ID: {yacht.vessel_id}</p>
+                  )}
+                </div>
+              </div>
+              
+              {/* PRICE */}
+              <div className="col-span-2 flex items-center">
+                <p className="font-bold text-blue-900">{formatCurrency(yacht.price)}</p>
+              </div>
+              
+              {/* SPECIFICATIONS */}
+              <div className="col-span-2 flex items-center">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 text-[11px] text-slate-600">
+                    <Maximize2 size={12} className="text-blue-600" />
+                    <span>{formatLength(yacht.loa)}</span>
+                  </div>
+                  {yacht.where && (
+                    <div className="flex items-center gap-2 text-[11px] text-slate-600">
+                      <MapPin size={12} className="text-blue-600" />
+                      <span className="truncate">{yacht.where}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              {/* STATUS */}
+              <div className="col-span-2 flex items-center">
+                <span className={cn(
+                  "inline-flex text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-widest border",
+                  getStatusConfig(yacht.status).color,
+                  getStatusConfig(yacht.status).bg,
+                  getStatusConfig(yacht.status).border
+                )}>
+                  {getYachtStatus(yacht)}
+                </span>
+              </div>
+              
+              {/* YEAR */}
+              <div className="col-span-1 flex items-center">
+                <span className="text-[11px] font-medium text-slate-600">{yacht.year || '--'}</span>
+              </div>
+              
+              {/* ACTIONS */}
+              <div className="col-span-2 flex items-center justify-end gap-2">
+                <button
+                  onClick={() => router.push(`/nl/dashboard/admin/yachts/${yacht.id}`)}
+                  className="p-2 text-blue-600 hover:text-blue-800 transition-colors"
+                  title="Edit"
+                >
+                  <Edit3 size={16} />
+                </button>
+                <button
+                  onClick={() => router.push(`/nl/dashboard/admin/yachts/${yacht.id}`)}
+                  className="p-2 text-emerald-600 hover:text-emerald-800 transition-colors"
+                  title="View"
+                >
+                  <Eye size={16} />
+                </button>
+                <button
+                  onClick={() => handleDelete(yacht)}
+                  disabled={isSubmitting}
+                  className="p-2 text-red-600 hover:text-red-800 transition-colors"
+                  title="Delete"
+                >
+                  <Trash size={16} />
+                </button>
+              </div>
             </div>
-            <button
-              onClick={fetchFleet}
-              className="text-blue-600 hover:text-blue-800 transition-colors flex items-center gap-2"
-            >
-              <Loader2 size={12} />
-              Refresh Data
-            </button>
+          ))}
+        </div>
+      )}
+      
+      {/* FOOTER */}
+      {!loading && filteredAndSortedFleet.length > 0 && (
+        <div className="mt-8 pt-6 border-t border-slate-200">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+            <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+              <span className="text-blue-600">{filteredAndSortedFleet.length}</span> of{" "}
+              <span>{fleet.length}</span> vessels displayed
+            </div>
+            <div className="flex items-center gap-4">
+              <Button
+                onClick={fetchFleet}
+                variant="outline"
+                className="h-9 px-4 text-[10px] font-black uppercase tracking-widest"
+              >
+                <RefreshCw size={12} className="mr-2" />
+                Refresh
+              </Button>
+              <Button
+                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                variant="outline"
+                className="h-9 px-4 text-[10px] font-black uppercase tracking-widest"
+              >
+                Back to Top
+              </Button>
+            </div>
           </div>
         </div>
       )}
