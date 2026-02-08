@@ -167,31 +167,44 @@ export default function YachtEditorPage() {
     }
   };
 
-  const handleAiCategorizer = async (files: FileList | null) => {
-    if (!files || files.length === 0) return;
-    setIsAnalyzing(true);
-    const formData = new FormData();
-    const fileArray = Array.from(files);
-    fileArray.forEach((file) => formData.append("images[]", file));
+const handleAiCategorizer = async (files: FileList | null) => {
+  if (!files || files.length === 0) return;
+  setIsAnalyzing(true);
+  const formData = new FormData();
+  const fileArray = Array.from(files);
+  fileArray.forEach((file) => formData.append("images[]", file));
+  try {
+    toast.loading("Gemini is analyzing assets...", { id: "ai-loading" });
+    
+    // Try partner route first
+    let res;
     try {
-      toast.loading("Gemini is analyzing assets...", { id: "ai-loading" });
-      const res = await api.post("/yachts/ai-classify", formData);
-      const analyzedData: AiStagedImage[] = res.data.map(
-        (item: any, index: number) => ({
-          file: fileArray[index],
-          preview: item.preview,
-          category: item.category,
-          originalName: item.originalName,
-        }),
-      );
-      setAiStaging((prev) => [...prev, ...analyzedData]);
-      toast.success("AI Classification complete", { id: "ai-loading" });
-    } catch (err) {
-      toast.error("AI Analysis failed", { id: "ai-loading" });
-    } finally {
-      setIsAnalyzing(false);
+      res = await api.post("/partner/yachts/ai-classify", formData);
+    } catch (aiErr: any) {
+      // If partner route fails, try regular route
+      if (aiErr.response?.status === 403 || aiErr.response?.status === 404) {
+        res = await api.post("/yachts/ai-classify", formData);
+      } else {
+        throw aiErr;
+      }
     }
-  };
+    
+    const analyzedData: AiStagedImage[] = res.data.map(
+      (item: any, index: number) => ({
+        file: fileArray[index],
+        preview: item.preview,
+        category: item.category,
+        originalName: item.originalName,
+      }),
+    );
+    setAiStaging((prev) => [...prev, ...analyzedData]);
+    toast.success("AI Classification complete", { id: "ai-loading" });
+  } catch (err) {
+    toast.error("AI Analysis failed", { id: "ai-loading" });
+  } finally {
+    setIsAnalyzing(false);
+  }
+};
 
   const approveAiImage = (index: number) => {
     const item = aiStaging[index];
@@ -231,104 +244,124 @@ export default function YachtEditorPage() {
   };
 
   // --- 3. SUBMIT LOGIC ---
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setErrors(null);
+// --- 3. SUBMIT LOGIC ---
+const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  e.preventDefault();
+  setIsSubmitting(true);
+  setErrors(null);
+  const formData = new FormData(e.currentTarget);
+
+  if (mainFile) formData.set("main_image", mainFile);
+
+  // Handle boolean fields
+  const booleanFields = [
+    'allow_bidding', 'flybridge', 'oven', 'microwave', 'fridge', 'freezer',
+    'air_conditioning', 'navigation_lights', 'compass', 'depth_instrument',
+    'wind_instrument', 'autopilot', 'gps', 'vhf', 'plotter', 'speed_instrument',
+    'radar', 'life_raft', 'epirb', 'bilge_pump', 'fire_extinguisher',
+    'mob_system', 'spinnaker', 'battery', 'battery_charger', 'generator',
+    'inverter', 'television', 'cd_player', 'dvd_player', 'anchor',
+    'spray_hood', 'bimini'
+  ];
+
+  booleanFields.forEach(field => {
+    if (!formData.has(field)) {
+      formData.append(field, 'false');
+    } else {
+      const value = formData.get(field);
+      formData.set(field, value === 'on' || value === 'true' || value === '1' ? 'true' : 'false');
+    }
+  });
+
+  // Clean empty fields
+  const allFields = [
+    'boat_name', 'price', 'status', 'year',
+    'beam', 'draft', 'loa', 'lwl', 'air_draft', 'passenger_capacity',
+    'designer', 'builder', 'where', 'hull_colour', 'hull_construction',
+    'hull_number', 'hull_type', 'super_structure_colour', 'super_structure_construction',
+    'deck_colour', 'deck_construction', 'cockpit_type', 'control_type', 'ballast',
+    'displacement', 'cabins', 'berths', 'toilet', 'shower', 'bath', 'heating',
+    'stern_thruster', 'bow_thruster', 'fuel', 'hours', 'cruising_speed', 'max_speed',
+    'horse_power', 'engine_manufacturer', 'tankage', 'gallons_per_hour',
+    'starting_type', 'drive_type'
+  ];
+
+  allFields.forEach(field => {
+    const val = formData.get(field);
+    if (!val || val === '') formData.delete(field);
+  });
+
+  // Append Availability Rules
+  if (availabilityRules.length > 0) {
+    formData.append("availability_rules", JSON.stringify(availabilityRules));
+  }
+
+  try {
+    let finalYachtId = selectedYacht?.id;
     
-    const formData = new FormData(e.currentTarget);
-
-    // Handle main image
-    if (mainFile) {
-      formData.set("main_image", mainFile);
-    }
-
-    // Set boolean fields from checkboxes
-    const booleanFields = [
-      'allow_bidding', 'flybridge', 'oven', 'microwave', 'fridge', 'freezer',
-      'air_conditioning', 'navigation_lights', 'compass', 'depth_instrument',
-      'wind_instrument', 'autopilot', 'gps', 'vhf', 'plotter', 'speed_instrument',
-      'radar', 'life_raft', 'epirb', 'bilge_pump', 'fire_extinguisher',
-      'mob_system', 'spinnaker', 'battery', 'battery_charger', 'generator',
-      'inverter', 'television', 'cd_player', 'dvd_player', 'anchor',
-      'spray_hood', 'bimini'
-    ];
-
-    booleanFields.forEach(field => {
-      if (!formData.has(field)) {
-        formData.append(field, 'false');
-      } else {
-        const value = formData.get(field);
-        formData.set(field, value === 'on' || value === 'true' || value === '1' ? 'true' : 'false');
-      }
-    });
-
-    // Clean empty fields
-    const allFields = [
-      'boat_name', 'price', 'status', 'year',
-      'beam', 'draft', 'loa', 'lwl', 'air_draft', 'passenger_capacity',
-      'designer', 'builder', 'where', 'hull_colour', 'hull_construction',
-      'hull_number', 'hull_type', 'super_structure_colour', 'super_structure_construction',
-      'deck_colour', 'deck_construction', 'cockpit_type', 'control_type', 'ballast',
-      'displacement', 'cabins', 'berths', 'toilet', 'shower', 'bath', 'heating',
-      'stern_thruster', 'bow_thruster', 'fuel', 'hours', 'cruising_speed', 'max_speed',
-      'horse_power', 'engine_manufacturer', 'tankage', 'gallons_per_hour',
-      'starting_type', 'drive_type'
-    ];
-
-    allFields.forEach(field => {
-      const val = formData.get(field);
-      if (!val || val === '') formData.delete(field);
-    });
-
-    // Append Availability Rules
-    if (availabilityRules.length > 0) {
-      formData.append("availability_rules", JSON.stringify(availabilityRules));
-    }
-
-    try {
-      let finalYachtId = selectedYacht?.id;
-      
-      if (!isNewMode && selectedYacht) {
-        // Use PUT method for updates
-        await api.put(`/yachts/${selectedYacht.id}`, formData);
-      } else {
-        // CREATE NEW
-        const res = await api.post("/yachts", formData);
+    if (!isNewMode && selectedYacht) {
+      // UPDATE - Use PUT method
+      await api.put(`/yachts/${selectedYacht.id}`, formData);
+    } else {
+      // CREATE NEW - Try partner route first (which doesn't require 'manage yachts' permission)
+      try {
+        const res = await api.post("/partner/yachts", formData);
         finalYachtId = res.data.id;
-      }
-
-      // Bulk gallery submission (new files only)
-      for (const cat of Object.keys(galleryState)) {
-        const newFiles = galleryState[cat].filter(
-          (item) => item instanceof File,
-        );
-        if (newFiles.length > 0) {
-          const gData = new FormData();
-          newFiles.forEach((file) => gData.append("images[]", file));
-          gData.append("category", cat);
-          await api.post(`/yachts/${finalYachtId}/gallery`, gData);
+      } catch (partnerErr: any) {
+        // If partner route fails, try regular route (for admins)
+        if (partnerErr.response?.status === 403 || partnerErr.response?.status === 404) {
+          const res = await api.post("/yachts", formData);
+          finalYachtId = res.data.id;
+        } else {
+          throw partnerErr;
         }
       }
-
-      toast.success(
-        isNewMode
-          ? "Vessel Registered Successfully"
-          : "Manifest Updated Successfully",
-      );
-      router.push("/nl/dashboard/admin/yachts");
-    } catch (err: any) {
-      if (err.response?.status === 422) {
-        setErrors(err.response.data.errors);
-        toast.error("Please fix validation errors");
-      } else {
-        console.error(err);
-        toast.error(`Error ${err.response?.status}: ${err.response?.data?.message || "Critical System Error"}`);
-      }
-    } finally {
-      setIsSubmitting(false);
     }
-  };
+
+    // Bulk gallery submission (new files only)
+    for (const cat of Object.keys(galleryState)) {
+      const newFiles = galleryState[cat].filter(
+        (item) => item instanceof File,
+      );
+      if (newFiles.length > 0) {
+        const gData = new FormData();
+        newFiles.forEach((file) => gData.append("images[]", file));
+        gData.append("category", cat);
+        
+        // Try partner route first for gallery upload
+        try {
+          await api.post(`/partner/yachts/${finalYachtId}/gallery`, gData);
+        } catch (galleryErr: any) {
+          // If partner route fails, try regular route
+          if (galleryErr.response?.status === 403 || galleryErr.response?.status === 404) {
+            await api.post(`/yachts/${finalYachtId}/gallery`, gData);
+          } else {
+            throw galleryErr;
+          }
+        }
+      }
+    }
+
+    toast.success(
+      isNewMode
+        ? "Vessel Registered Successfully"
+        : "Manifest Updated Successfully",
+    );
+    router.push("/nl/dashboard/admin/yachts");
+  } catch (err: any) {
+    if (err.response?.status === 422) {
+      setErrors(err.response.data.errors);
+      toast.error("Please fix validation errors");
+    } else if (err.response?.status === 403) {
+      toast.error("Permission denied. You don't have access to perform this action.");
+    } else {
+      console.error(err);
+      toast.error(`Error ${err.response?.status}: ${err.response?.data?.message || "Critical System Error"}`);
+    }
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   if (loading) {
     return (
