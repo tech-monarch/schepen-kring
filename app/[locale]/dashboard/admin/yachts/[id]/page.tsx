@@ -124,7 +124,7 @@ export default function YachtEditorPage() {
       } catch (err) {
         console.error("Failed to fetch yacht details", err);
         toast.error("Could not load vessel data.");
-        router.push("/admin/yachts");
+        router.push("/nl/dashboard/admin/yachts");
       } finally {
         setLoading(false);
       }
