@@ -124,7 +124,7 @@ export default function YachtEditorPage() {
       } catch (err) {
         console.error("Failed to fetch yacht details", err);
         toast.error("Could not load vessel data.");
-        router.push("/nl/dashboard/yachts");
+        router.push("/nl/dashboard/admin/yachts");
       } finally {
         setLoading(false);
       }
@@ -347,7 +347,7 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         ? "Vessel Registered Successfully"
         : "Manifest Updated Successfully",
     );
-    router.push("/nl/dashboard/yachts");
+    router.push("/nl/dashboard/admin/yachts");
   } catch (err: any) {
     if (err.response?.status === 422) {
       setErrors(err.response.data.errors);
