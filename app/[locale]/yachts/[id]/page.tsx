@@ -1,4 +1,3 @@
-"use client";
 
 import { useState, useEffect, SyntheticEvent } from "react";
 import { useParams } from "next/navigation";
@@ -105,6 +104,13 @@ const DUTCH_MONTHS = [
   'Juli', 'Augustus', 'September', 'Oktober', 'November', 'December'
 ];
 
+// Define type for calendar days
+interface CalendarDay {
+  date: Date;
+  available: boolean;
+  isCurrentMonth: boolean;
+}
+
 export default function YachtTerminalPage() {
   const { id } = useParams();
   const [yacht, setYacht] = useState<Yacht | null>(null);
@@ -115,7 +121,7 @@ export default function YachtTerminalPage() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [availableSlots, setAvailableSlots] = useState<string[]>([]);
-  const [calendarDays, setCalendarDays] = useState<{date: Date, available: boolean}[]>([]);
+  const [calendarDays, setCalendarDays] = useState<CalendarDay[]>([]);
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
 
   // Payment states
@@ -143,7 +149,7 @@ export default function YachtTerminalPage() {
   }, [paymentMode, currentMonth]);
 
   const generateCalendarDays = () => {
-    const days = [];
+    const days: CalendarDay[] = [];
     const startDate = new Date(currentMonth);
     startDate.setDate(1);
     
@@ -159,13 +165,13 @@ export default function YachtTerminalPage() {
     for (let i = 0; i < firstDay; i++) {
       const date = new Date(startDate);
       date.setDate(date.getDate() - (firstDay - i));
-      days.push({ date, available: false, currentMonth: false });
+      days.push({ date, available: false, isCurrentMonth: false });
     }
     
     // Add days of current month (initially all unavailable until we fetch data)
     for (let i = 1; i <= daysInMonth; i++) {
       const date = new Date(year, month, i);
-      days.push({ date, available: false, currentMonth: true });
+      days.push({ date, available: false, isCurrentMonth: true });
     }
     
     setCalendarDays(days);
@@ -404,7 +410,7 @@ export default function YachtTerminalPage() {
       <Toaster position="top-center" />
 
       {/* NAVIGATION HEADER */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-100 h-20 flex items-center px-6 md:px-12 justify-between">
+      <header className="fixed top-0 left-0 right-0 z-100 bg-white/90 backdrop-blur-md border-b border-slate-100 h-20 flex items-center px-6 md:px-12 justify-between">
         <Link
           href="/nl/yachts"
           className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-[#003566] transition-colors"
@@ -728,7 +734,7 @@ export default function YachtTerminalPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] bg-[#001D3D]/90 backdrop-blur-md flex items-center justify-center p-4"
+            className="fixed inset-0 z-100 bg-[#001D3D]/90 backdrop-blur-md flex items-center justify-center p-4"
           >
             <motion.div
               initial={{ y: 50 }}
@@ -792,10 +798,10 @@ export default function YachtTerminalPage() {
                               <button
                                 key={index}
                                 onClick={() => handleDateSelect(day.date, day.available)}
-                                disabled={!day.available || !day.currentMonth}
+                                disabled={!day.available || !day.isCurrentMonth}
                                 className={cn(
                                   "aspect-square flex flex-col items-center justify-center rounded-xl text-xs transition-all",
-                                  !day.currentMonth ? "text-slate-300" :
+                                  !day.isCurrentMonth ? "text-slate-300" :
                                   isSelected
                                     ? "bg-[#003566] text-white"
                                     : isToday(day.date)
@@ -983,7 +989,7 @@ export default function YachtTerminalPage() {
                     <Button
                       onClick={paymentMode === "buy_now" ? handleBuyNow : handleTestSailBooking}
                       disabled={paymentMode === "test_sail" && (!selectedDate || !selectedTime || !bookingForm.name || !bookingForm.email)}
-                      className="flex-[2] bg-[#003566] hover:bg-blue-900 text-white font-bold uppercase tracking-widest text-[10px] disabled:bg-slate-300 disabled:cursor-not-allowed"
+                      className="flex-2 bg-[#003566] hover:bg-blue-900 text-white font-bold uppercase tracking-widest text-[10px] disabled:bg-slate-300 disabled:cursor-not-allowed"
                     >
                       Bevestigen & Betalen
                     </Button>
