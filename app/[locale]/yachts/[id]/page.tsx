@@ -38,6 +38,7 @@ import {
   X,
   Plus,
   Minus,
+  AlertCircle,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
@@ -55,6 +56,7 @@ interface Yacht {
   vessel_id: string;
   boat_name: string;
   price: number;
+  min_bid_amount: number; // NEW FIELD: 90% of price by default
   current_bid: number | null;
   status: "For Sale" | "For Bid" | "Sold" | "Draft";
   year: number;
@@ -205,8 +207,12 @@ export default function YachtTerminalPage() {
   const [expandedGallery, setExpandedGallery] = useState(false);
   
   // Payment states
-  const [paymentMode, setPaymentMode] = useState<"test_sail" | "buy_now" | null>(null);
+  const [paymentMode, setPaymentMode] = useState<"buy_now" | null>(null);
   const [paymentStatus, setPaymentStatus] = useState<"idle" | "processing" | "success">("idle");
+  
+  // Test sail states (moved to main page)
+  const [showTestSailForm, setShowTestSailForm] = useState(false);
+  const [testSailStatus, setTestSailStatus] = useState<"idle" | "processing" | "success">("idle");
   
   // Booking form
   const [bookingForm, setBookingForm] = useState({
@@ -265,11 +271,12 @@ export default function YachtTerminalPage() {
     return () => clearInterval(interval);
   }, [id]);
 
+  // Generate calendar when test sail form is shown
   useEffect(() => {
-    if (paymentMode === "test_sail") {
+    if (showTestSailForm) {
       generateCalendarDays();
     }
-  }, [paymentMode, currentMonth]);
+  }, [showTestSailForm, currentMonth]);
 
   const generateCalendarDays = () => {
     const days: CalendarDay[] = [];
@@ -287,7 +294,7 @@ export default function YachtTerminalPage() {
       days.push({ date, available: false, isCurrentMonth: false });
     }
     
-    // Initially mark all current month days as available (we'll fetch actual availability)
+    // Initially mark all current month days as available
     for (let i = 1; i <= daysInMonth; i++) {
       const date = new Date(year, month, i);
       days.push({ 
@@ -327,7 +334,15 @@ export default function YachtTerminalPage() {
         api.get(`/yachts/${id}`),
         api.get(`/bids/${id}/history`),
       ]);
-      setYacht(yachtRes.data);
+      
+      const yachtData = yachtRes.data;
+      
+      // Calculate min_bid_amount if not provided (90% of price)
+      if (!yachtData.min_bid_amount) {
+        yachtData.min_bid_amount = yachtData.price * 0.9;
+      }
+      
+      setYacht(yachtData);
       setBids(historyRes.data || []);
       setLoading(false);
     } catch (error) {
@@ -402,9 +417,19 @@ export default function YachtTerminalPage() {
     }
 
     const currentPrice = yacht.current_bid ? Number(yacht.current_bid) : Number(yacht.price);
+    const minBidAmount = yacht.min_bid_amount || yacht.price * 0.9;
 
+    // FIRST: Check if bid meets minimum bid requirement (90% of price)
+    if (amount < minBidAmount) {
+      // Auto-reject at frontend - bid is too low
+      setBidError(`Bod moet minimaal €${minBidAmount.toLocaleString('nl-NL')} zijn (90% van vraagprijs)`);
+      toast.error("Bod is te laag. Minimaal bod is 90% van de vraagprijs.");
+      return;
+    }
+
+    // SECOND: Check if bid is higher than current bid/price
     if (amount <= currentPrice) {
-      setBidError(`Bod moet hoger zijn dan €${currentPrice.toLocaleString()}`);
+      setBidError(`Bod moet hoger zijn dan €${currentPrice.toLocaleString('nl-NL')}`);
       return;
     }
 
@@ -447,7 +472,8 @@ export default function YachtTerminalPage() {
         throw new Error(data.message || "Bod plaatsen mislukt");
       }
 
-      toast.success("Bod succesvol geplaatst!");
+      // If bid is above minimum threshold, it goes to seller for review
+      toast.success("Bod geplaatst! De verkoper zal uw bod beoordelen.");
       setBidAmount("");
       
       // Refresh data
@@ -475,7 +501,7 @@ export default function YachtTerminalPage() {
       return;
     }
 
-    setPaymentStatus("processing");
+    setTestSailStatus("processing");
 
     try {
       const startDateTime = new Date(selectedDate);
@@ -522,12 +548,12 @@ export default function YachtTerminalPage() {
         })
       });
 
-      setPaymentStatus("success");
+      setTestSailStatus("success");
       toast.success("Proefvaart succesvol aangevraagd!");
       
       setTimeout(() => {
-        setPaymentMode(null);
-        setPaymentStatus("idle");
+        setShowTestSailForm(false);
+        setTestSailStatus("idle");
         setSelectedDate(null);
         setSelectedTime(null);
         setAvailableSlots([]);
@@ -535,7 +561,7 @@ export default function YachtTerminalPage() {
       }, 3000);
       
     } catch (error) {
-      setPaymentStatus("idle");
+      setTestSailStatus("idle");
       toast.error("Boeking mislukt.");
     }
   };
@@ -679,7 +705,9 @@ export default function YachtTerminalPage() {
   const galleryImagesToShow = expandedGallery ? allImages : allImages.slice(0, 8);
 
   // Format price as per Dutch standards
-  const formattedPrice = `€ ${formatPrice(yacht.price)}`
+  const formattedPrice = `€ ${formatPrice(yacht.price)}`;
+  // Calculate min bid amount
+  const minBidAmount = yacht.min_bid_amount || yacht.price * 0.9;
 
   return (
     <div className="min-h-screen bg-white text-[#333] selection:bg-blue-100">
@@ -762,7 +790,7 @@ export default function YachtTerminalPage() {
           </div>
         </section>
 
-        {/* HEADER ACTION BAR - Updated with Mail icon and removed buttons */}
+        {/* HEADER ACTION BAR */}
         <section className="bg-gray-50 py-6 px-8 border-y border-gray-200">
           <div className="max-w-7xl mx-auto">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -771,9 +799,9 @@ export default function YachtTerminalPage() {
                 {yacht.boat_name} · {formattedPrice}
               </div>
 
-              {/* Action buttons - Only 4 buttons as requested */}
+              {/* Action buttons */}
               <div className="flex flex-wrap gap-3">
-                {/* More Information - Red Button with Mail icon */}
+                {/* More Information */}
                 <button
                   onClick={handleMoreInfo}
                   className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 font-medium text-sm uppercase tracking-wider flex items-center gap-2 transition-colors"
@@ -1000,6 +1028,23 @@ export default function YachtTerminalPage() {
                     {yacht.status === 'For Sale' && (
                       <p className="text-xs text-gray-500 mt-1">Startprijs</p>
                     )}
+                    
+                    {/* Minimum bid information */}
+                    <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded">
+                      <div className="flex items-start gap-2">
+                        <AlertCircle size={16} className="text-amber-600 mt-0.5 flex-shrink-0" />
+                        <div>
+                          <p className="text-sm font-medium text-amber-800">Minimaal bod vereist:</p>
+                          <p className="text-lg font-bold text-amber-900">
+                            €{minBidAmount.toLocaleString('nl-NL')}
+                            <span className="text-sm font-normal text-amber-700 ml-2">(90% van vraagprijs)</span>
+                          </p>
+                          <p className="text-xs text-amber-600 mt-1">
+                            Biedingen onder dit bedrag worden automatisch afgewezen
+                          </p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
                   {yacht.status === 'Sold' ? (
@@ -1016,9 +1061,10 @@ export default function YachtTerminalPage() {
                             setBidAmount(e.target.value);
                             setBidError("");
                           }}
-                          placeholder={`Minimum €${(yacht.current_bid ? Number(yacht.current_bid) + 100 : Number(yacht.price) + 100).toLocaleString('nl-NL')}`}
+                          placeholder={`Minimaal €${minBidAmount.toLocaleString('nl-NL')}`}
                           className="w-full border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-gray-500"
                           step="100"
+                          min={minBidAmount}
                         />
                         {bidError && (
                           <p className="text-red-500 text-xs mt-1">{bidError}</p>
@@ -1071,13 +1117,294 @@ export default function YachtTerminalPage() {
                   </button>
                   
                   <button
-                    onClick={() => setPaymentMode("test_sail")}
+                    onClick={() => setShowTestSailForm(!showTestSailForm)}
                     className="w-full border border-gray-300 hover:bg-gray-50 text-gray-700 py-4 font-medium text-center transition-colors flex items-center justify-center gap-2"
                   >
                     <Anchor size={18} />
-                    Proefvaart boeken
+                    {showTestSailForm ? 'Proefvaart formulier verbergen' : 'Proefvaart boeken'}
                   </button>
                 </div>
+
+                {/* INLINE TEST SAIL BOOKING FORM */}
+                {showTestSailForm && (
+                  <div className="bg-white border border-gray-200 p-6 mt-8">
+                    <div className="space-y-6">
+                      <div className="text-center">
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">
+                          Proefvaart Boeken
+                        </h3>
+                        <p className="text-sm text-gray-600">
+                          Borg Vereist: €{depositAmount.toLocaleString('nl-NL')}
+                        </p>
+                      </div>
+
+                      {/* CALENDAR SECTION - Inline on page */}
+                      <div className="space-y-6">
+                        <div className="text-center">
+                          <div className="flex items-center justify-between mb-6">
+                            <button
+                              onClick={handlePrevMonth}
+                              className="text-gray-400 hover:text-gray-900 p-2"
+                            >
+                              ←
+                            </button>
+                            <h3 className="text-lg font-semibold text-gray-900">
+                              {DUTCH_MONTHS[currentMonth.getMonth()]} {currentMonth.getFullYear()}
+                            </h3>
+                            <button
+                              onClick={handleNextMonth}
+                              className="text-gray-400 hover:text-gray-900 p-2"
+                            >
+                              →
+                            </button>
+                          </div>
+                          
+                          {/* Calendar Grid */}
+                          <div className="grid grid-cols-7 gap-2 mb-6">
+                            {/* Dutch Day Headers */}
+                            {DUTCH_DAYS.map((day) => (
+                              <div key={day} className="text-center py-2">
+                                <span className="text-xs font-medium text-gray-500">
+                                  {day}
+                                </span>
+                              </div>
+                            ))}
+                            
+                            {/* Calendar Days */}
+                            {calendarDays.map((day, index) => {
+                              const isSelected = selectedDate && 
+                                day.date.getDate() === selectedDate.getDate() &&
+                                day.date.getMonth() === selectedDate.getMonth() &&
+                                day.date.getFullYear() === selectedDate.getFullYear();
+                              
+                              return (
+                                <button
+                                  key={index}
+                                  onClick={() => handleDateSelect(day.date, day.available)}
+                                  disabled={!day.available || !day.isCurrentMonth}
+                                  className={cn(
+                                    "aspect-square flex flex-col items-center justify-center text-sm transition-all",
+                                    !day.isCurrentMonth ? "text-gray-300" :
+                                    isSelected
+                                      ? "bg-gray-900 text-white"
+                                      : isToday(day.date)
+                                      ? "bg-gray-100 text-gray-900 font-bold border-2 border-blue-500"
+                                      : day.available
+                                      ? "bg-emerald-50 text-emerald-900 border border-emerald-200 hover:bg-emerald-100"
+                                      : "bg-gray-50 text-gray-400 border border-gray-100 cursor-not-allowed"
+                                  )}
+                                  title={day.available ? "Beschikbaar" : "Niet beschikbaar"}
+                                >
+                                  <span className="text-xs font-medium">
+                                    {day.date.getDate()}
+                                  </span>
+                                  {day.available && (
+                                    <span className="w-1 h-1 rounded-full bg-emerald-500 mt-1" />
+                                  )}
+                                </button>
+                              );
+                            })}
+                          </div>
+
+                          {/* Selected Date Display */}
+                          {selectedDate && (
+                            <div className="mb-6 p-4 bg-blue-50 border border-blue-100 rounded-lg">
+                              <p className="text-sm font-medium text-blue-900">
+                                Geselecteerde datum: {selectedDate.toLocaleDateString('nl-NL', { 
+                                  weekday: 'long', 
+                                  year: 'numeric', 
+                                  month: 'long', 
+                                  day: 'numeric' 
+                                })}
+                              </p>
+                            </div>
+                          )}
+
+                          {/* Time Slots Grid */}
+                          <div>
+                            <p className="text-sm font-medium text-gray-700 mb-4">
+                              Beschikbare Tijdslots
+                            </p>
+                            {availableSlots.length > 0 ? (
+                              <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
+                                {availableSlots.map((time) => (
+                                  <button
+                                    key={time}
+                                    onClick={() => setSelectedTime(time)}
+                                    className={cn(
+                                      "py-3 rounded text-sm font-medium transition-all",
+                                      selectedTime === time 
+                                        ? "bg-gray-900 text-white" 
+                                        : "bg-emerald-100 text-emerald-900 hover:bg-emerald-200"
+                                    )}
+                                  >
+                                    {time}
+                                  </button>
+                                ))}
+                              </div>
+                            ) : selectedDate ? (
+                              <div className="text-center py-6 border border-gray-200 rounded-lg">
+                                <p className="text-sm font-medium text-gray-500">
+                                  Geen beschikbare slots voor deze datum
+                                </p>
+                                <p className="text-xs text-gray-400 mt-1">
+                                  Selecteer een andere datum
+                                </p>
+                              </div>
+                            ) : (
+                              <div className="text-center py-6 border border-gray-200 rounded-lg">
+                                <p className="text-sm font-medium text-gray-500">
+                                  Selecteer eerst een datum
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Confirmation Details */}
+                        {selectedTime && (
+                          <div className="mt-6 space-y-6">
+                            <div className="p-4 bg-gray-50 border border-dashed border-gray-200 rounded-lg">
+                              <p className="text-sm font-medium text-gray-700 mb-1">
+                                Geselecteerd Tijdslot
+                              </p>
+                              <p className="text-lg font-serif text-gray-900">
+                                {selectedTime} - {(() => {
+                                  const [hours, minutes] = selectedTime.split(':').map(Number);
+                                  const endTime = new Date();
+                                  endTime.setHours(hours + 1, minutes);
+                                  return endTime.toLocaleTimeString('nl-NL', { 
+                                    hour: '2-digit', 
+                                    minute: '2-digit' 
+                                  });
+                                })()}
+                                <span className="text-sm text-gray-500 ml-2">(+15m buffer)</span>
+                              </p>
+                            </div>
+
+                            {/* Booking Form */}
+                            <div className="space-y-4">
+                              <h4 className="text-lg font-medium text-gray-900 border-b border-gray-200 pb-2">
+                                Uw Gegevens
+                              </h4>
+                              
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                  <label className="text-sm font-medium text-gray-700 block mb-2">
+                                    Naam *
+                                  </label>
+                                  <input
+                                    type="text"
+                                    value={bookingForm.name}
+                                    onChange={(e) => setBookingForm(prev => ({...prev, name: e.target.value}))}
+                                    className="w-full border border-gray-300 px-4 py-3 text-sm rounded focus:outline-none focus:border-gray-500"
+                                    required
+                                  />
+                                </div>
+                                
+                                <div>
+                                  <label className="text-sm font-medium text-gray-700 block mb-2">
+                                    E-mail *
+                                  </label>
+                                  <input
+                                    type="email"
+                                    value={bookingForm.email}
+                                    onChange={(e) => setBookingForm(prev => ({...prev, email: e.target.value}))}
+                                    className="w-full border border-gray-300 px-4 py-3 text-sm rounded focus:outline-none focus:border-gray-500"
+                                    required
+                                  />
+                                </div>
+                                
+                                <div>
+                                  <label className="text-sm font-medium text-gray-700 block mb-2">
+                                    Telefoonnummer
+                                  </label>
+                                  <input
+                                    type="tel"
+                                    value={bookingForm.phone}
+                                    onChange={(e) => setBookingForm(prev => ({...prev, phone: e.target.value}))}
+                                    className="w-full border border-gray-300 px-4 py-3 text-sm rounded focus:outline-none focus:border-gray-500"
+                                  />
+                                </div>
+                              </div>
+                              
+                              <div>
+                                <label className="text-sm font-medium text-gray-700 block mb-2">
+                                  Opmerkingen
+                                </label>
+                                <textarea
+                                  value={bookingForm.notes}
+                                  onChange={(e) => setBookingForm(prev => ({...prev, notes: e.target.value}))}
+                                  className="w-full border border-gray-300 px-4 py-3 text-sm rounded focus:outline-none focus:border-gray-500"
+                                  rows={3}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="p-4 bg-blue-50 text-gray-700 rounded-lg">
+                          <div className="flex gap-3">
+                            <FileText size={20} className="shrink-0 mt-1" />
+                            <div>
+                              <p className="text-sm font-medium mb-1">Belangrijke informatie:</p>
+                              <ul className="text-sm space-y-1">
+                                <li>• De borg van 10% is volledig terugbetaalbaar</li>
+                                <li>• Proefvaart duurt 60 minuten + 15 minuten buffer</li>
+                                <li>• Annuleren kan tot 24 uur van tevoren kosteloos</li>
+                              </ul>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="flex gap-4 pt-4">
+                        <button 
+                          onClick={() => {
+                            setShowTestSailForm(false);
+                            setSelectedDate(null);
+                            setSelectedTime(null);
+                            setAvailableSlots([]);
+                            setBookingForm({ name: '', email: '', phone: '', notes: '' });
+                            setTestSailStatus("idle");
+                          }} 
+                          className="flex-1 border border-gray-300 py-3 text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+                        >
+                          Annuleren
+                        </button>
+                        <button
+                          onClick={handleTestSailBooking}
+                          disabled={!selectedDate || !selectedTime || !bookingForm.name || !bookingForm.email || testSailStatus === "processing"}
+                          className="flex-2 bg-gray-900 hover:bg-black text-white py-3 font-medium disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                        >
+                          {testSailStatus === "processing" ? (
+                            <>
+                              <Loader2 className="animate-spin inline mr-2" size={16} />
+                              Verwerken...
+                            </>
+                          ) : (
+                            'Bevestigen & Borg Betalen'
+                          )}
+                        </button>
+                      </div>
+
+                      {/* Success Message */}
+                      {testSailStatus === "success" && (
+                        <div className="mt-6 p-4 bg-emerald-50 border border-emerald-200 rounded-lg">
+                          <div className="flex items-center gap-3">
+                            <CheckCircle2 className="text-emerald-600" size={24} />
+                            <div>
+                              <h4 className="font-medium text-emerald-800">Proefvaart Ingepland!</h4>
+                              <p className="text-sm text-emerald-700 mt-1">
+                                Een bevestiging is naar uw e-mail verzonden.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 {/* Bid History */}
                 <div className="bg-gray-50 p-6 border border-gray-200">
@@ -1125,7 +1452,7 @@ export default function YachtTerminalPage() {
           </div>
         </section>
 
-        {/* GALLERY SECTION - Added at the bottom */}
+        {/* GALLERY SECTION */}
         <section className="py-12 px-8 bg-gray-50">
           <div className="max-w-7xl mx-auto">
             <div className="flex justify-between items-center mb-8">
@@ -1271,321 +1598,7 @@ export default function YachtTerminalPage() {
         )}
       </AnimatePresence>
 
-      {/* TEST SAIL MODAL */}
-      <AnimatePresence>
-        {paymentMode === "test_sail" && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-md flex items-center justify-center p-4"
-          >
-            <motion.div
-              initial={{ y: 50 }}
-              animate={{ y: 0 }}
-              className="bg-white max-w-4xl w-full p-8 max-h-[90vh] overflow-y-auto"
-            >
-              {paymentStatus === "idle" && (
-                <div className="space-y-6">
-                  <div className="text-center">
-                    <h2 className="text-2xl font-serif italic mb-2 text-gray-900">
-                      Beveiligde Proefvaart
-                    </h2>
-                    <p className="text-sm text-gray-600">
-                      Borg Vereist: €{depositAmount.toLocaleString('nl-NL')}
-                    </p>
-                  </div>
-
-                  {/* CALENDAR SECTION */}
-                  <div className="space-y-6">
-                    <div className="text-center">
-                      <div className="flex items-center justify-between mb-6">
-                        <button
-                          onClick={handlePrevMonth}
-                          className="text-gray-400 hover:text-gray-900 p-2"
-                        >
-                          ←
-                        </button>
-                        <h3 className="text-lg font-semibold text-gray-900">
-                          {DUTCH_MONTHS[currentMonth.getMonth()]} {currentMonth.getFullYear()}
-                        </h3>
-                        <button
-                          onClick={handleNextMonth}
-                          className="text-gray-400 hover:text-gray-900 p-2"
-                        >
-                          →
-                        </button>
-                      </div>
-                      
-                      {/* Calendar Grid */}
-                      <div className="grid grid-cols-7 gap-2 mb-6">
-                        {/* Dutch Day Headers */}
-                        {DUTCH_DAYS.map((day) => (
-                          <div key={day} className="text-center py-2">
-                            <span className="text-xs font-medium text-gray-500">
-                              {day}
-                            </span>
-                          </div>
-                        ))}
-                        
-                        {/* Calendar Days */}
-                        {calendarDays.map((day, index) => {
-                          const isSelected = selectedDate && 
-                            day.date.getDate() === selectedDate.getDate() &&
-                            day.date.getMonth() === selectedDate.getMonth() &&
-                            day.date.getFullYear() === selectedDate.getFullYear();
-                          
-                          return (
-                            <button
-                              key={index}
-                              onClick={() => handleDateSelect(day.date, day.available)}
-                              disabled={!day.available || !day.isCurrentMonth}
-                              className={cn(
-                                "aspect-square flex flex-col items-center justify-center text-sm transition-all",
-                                !day.isCurrentMonth ? "text-gray-300" :
-                                isSelected
-                                  ? "bg-gray-900 text-white"
-                                  : isToday(day.date)
-                                  ? "bg-gray-100 text-gray-900 font-bold border-2 border-blue-500"
-                                  : day.available
-                                  ? "bg-emerald-50 text-emerald-900 border border-emerald-200 hover:bg-emerald-100"
-                                  : "bg-gray-50 text-gray-400 border border-gray-100 cursor-not-allowed"
-                              )}
-                              title={day.available ? "Beschikbaar" : "Niet beschikbaar"}
-                            >
-                              <span className="text-xs font-medium">
-                                {day.date.getDate()}
-                              </span>
-                              {day.available && (
-                                <span className="w-1 h-1 rounded-full bg-emerald-500 mt-1" />
-                              )}
-                            </button>
-                          );
-                        })}
-                      </div>
-
-                      {/* Selected Date Display */}
-                      {selectedDate && (
-                        <div className="mb-6 p-4 bg-blue-50 border border-blue-100 rounded-lg">
-                          <p className="text-sm font-medium text-blue-900">
-                            Geselecteerde datum: {selectedDate.toLocaleDateString('nl-NL', { 
-                              weekday: 'long', 
-                              year: 'numeric', 
-                              month: 'long', 
-                              day: 'numeric' 
-                            })}
-                          </p>
-                        </div>
-                      )}
-
-                      {/* Time Slots Grid */}
-                      <div>
-                        <p className="text-sm font-medium text-gray-700 mb-4">
-                          Beschikbare Tijdslots
-                        </p>
-                        {availableSlots.length > 0 ? (
-                          <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
-                            {availableSlots.map((time) => (
-                              <button
-                                key={time}
-                                onClick={() => setSelectedTime(time)}
-                                className={cn(
-                                  "py-3 rounded text-sm font-medium transition-all",
-                                  selectedTime === time 
-                                    ? "bg-gray-900 text-white" 
-                                    : "bg-emerald-100 text-emerald-900 hover:bg-emerald-200"
-                                )}
-                              >
-                                {time}
-                              </button>
-                            ))}
-                          </div>
-                        ) : selectedDate ? (
-                          <div className="text-center py-6 border border-gray-200 rounded-lg">
-                            <p className="text-sm font-medium text-gray-500">
-                              Geen beschikbare slots voor deze datum
-                            </p>
-                            <p className="text-xs text-gray-400 mt-1">
-                              Selecteer een andere datum
-                            </p>
-                          </div>
-                        ) : (
-                          <div className="text-center py-6 border border-gray-200 rounded-lg">
-                            <p className="text-sm font-medium text-gray-500">
-                              Selecteer eerst een datum
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Confirmation Details */}
-                    {selectedTime && (
-                      <div className="mt-6 space-y-6">
-                        <div className="p-4 bg-gray-50 border border-dashed border-gray-200 rounded-lg">
-                          <p className="text-sm font-medium text-gray-700 mb-1">
-                            Geselecteerd Tijdslot
-                          </p>
-                          <p className="text-lg font-serif text-gray-900">
-                            {selectedTime} - {(() => {
-                              const [hours, minutes] = selectedTime.split(':').map(Number);
-                              const endTime = new Date();
-                              endTime.setHours(hours + 1, minutes);
-                              return endTime.toLocaleTimeString('nl-NL', { 
-                                hour: '2-digit', 
-                                minute: '2-digit' 
-                              });
-                            })()}
-                            <span className="text-sm text-gray-500 ml-2">(+15m buffer)</span>
-                          </p>
-                        </div>
-
-                        {/* Booking Form */}
-                        <div className="space-y-4">
-                          <h4 className="text-lg font-medium text-gray-900 border-b border-gray-200 pb-2">
-                            Uw Gegevens
-                          </h4>
-                          
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                              <label className="text-sm font-medium text-gray-700 block mb-2">
-                                Naam *
-                              </label>
-                              <input
-                                type="text"
-                                value={bookingForm.name}
-                                onChange={(e) => setBookingForm(prev => ({...prev, name: e.target.value}))}
-                                className="w-full border border-gray-300 px-4 py-3 text-sm rounded focus:outline-none focus:border-gray-500"
-                                required
-                              />
-                            </div>
-                            
-                            <div>
-                              <label className="text-sm font-medium text-gray-700 block mb-2">
-                                E-mail *
-                              </label>
-                              <input
-                                type="email"
-                                value={bookingForm.email}
-                                onChange={(e) => setBookingForm(prev => ({...prev, email: e.target.value}))}
-                                className="w-full border border-gray-300 px-4 py-3 text-sm rounded focus:outline-none focus:border-gray-500"
-                                required
-                              />
-                            </div>
-                            
-                            <div>
-                              <label className="text-sm font-medium text-gray-700 block mb-2">
-                                Telefoonnummer
-                              </label>
-                              <input
-                                type="tel"
-                                value={bookingForm.phone}
-                                onChange={(e) => setBookingForm(prev => ({...prev, phone: e.target.value}))}
-                                className="w-full border border-gray-300 px-4 py-3 text-sm rounded focus:outline-none focus:border-gray-500"
-                              />
-                            </div>
-                          </div>
-                          
-                          <div>
-                            <label className="text-sm font-medium text-gray-700 block mb-2">
-                              Opmerkingen
-                            </label>
-                            <textarea
-                              value={bookingForm.notes}
-                              onChange={(e) => setBookingForm(prev => ({...prev, notes: e.target.value}))}
-                              className="w-full border border-gray-300 px-4 py-3 text-sm rounded focus:outline-none focus:border-gray-500"
-                              rows={3}
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="p-4 bg-blue-50 text-gray-700 rounded-lg">
-                      <div className="flex gap-3">
-                        <FileText size={20} className="shrink-0 mt-1" />
-                        <div>
-                          <p className="text-sm font-medium mb-1">Belangrijke informatie:</p>
-                          <ul className="text-sm space-y-1">
-                            <li>• De borg van 10% is volledig terugbetaalbaar</li>
-                            <li>• Proefvaart duurt 60 minuten + 15 minuten buffer</li>
-                            <li>• Annuleren kan tot 24 uur van tevoren kosteloos</li>
-                          </ul>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex gap-4 pt-4">
-                    <button 
-                      onClick={() => {
-                        setPaymentMode(null);
-                        setSelectedDate(null);
-                        setSelectedTime(null);
-                        setAvailableSlots([]);
-                        setBookingForm({ name: '', email: '', phone: '', notes: '' });
-                      }} 
-                      className="flex-1 border border-gray-300 py-3 text-gray-700 font-medium hover:bg-gray-50 transition-colors"
-                    >
-                      Annuleren
-                    </button>
-                    <button
-                      onClick={handleTestSailBooking}
-                      disabled={!selectedDate || !selectedTime || !bookingForm.name || !bookingForm.email}
-                      className="flex-2 bg-gray-900 hover:bg-black text-white py-3 font-medium disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-                    >
-                      Bevestigen & Borg Betalen
-                    </button>
-                  </div>
-                </div>
-              )}
-              
-              {paymentStatus === "processing" && (
-                <div className="py-20 text-center flex flex-col items-center">
-                  <Loader2
-                    className="animate-spin text-gray-900 mb-4"
-                    size={32}
-                  />
-                  <p className="text-sm font-medium">
-                    Beveiligde gateway contacten...
-                  </p>
-                </div>
-              )}
-              
-              {paymentStatus === "success" && (
-                <div className="py-12 text-center">
-                  <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <CheckCircle2 size={32} />
-                  </div>
-                  <h3 className="text-xl font-serif mb-2 text-gray-900">
-                    Proefvaart Ingepland!
-                  </h3>
-                  <p className="text-sm text-gray-600 mb-4">
-                    Een bevestiging is naar uw e-mail verzonden.
-                  </p>
-                  {selectedDate && selectedTime && (
-                    <div className="mt-4 p-4 bg-gray-50 rounded-lg inline-block">
-                      <p className="text-sm font-medium text-gray-700">
-                        {selectedDate.toLocaleDateString('nl-NL', { 
-                          weekday: 'long', 
-                          year: 'numeric', 
-                          month: 'long', 
-                          day: 'numeric' 
-                        })}
-                      </p>
-                      <p className="text-lg font-serif text-gray-900">
-                        om {selectedTime} uur
-                      </p>
-                    </div>
-                  )}
-                </div>
-              )}
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* BUY NOW MODAL */}
+      {/* BUY NOW MODAL (Kept as popup) */}
       <AnimatePresence>
         {paymentMode === "buy_now" && (
           <motion.div
