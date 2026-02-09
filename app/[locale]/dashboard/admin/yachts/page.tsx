@@ -299,7 +299,7 @@ export default function FleetManagementPage() {
   );
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] p-6 lg:p-12">
+    <div className="min-h-screen bg-[#F8FAFC] p-6 lg:p-12 -top-20">
       <Toaster position="top-right" />
 
       {/* HEADER */}
