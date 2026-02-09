@@ -151,7 +151,7 @@ export function Sidebar({ onCollapse }: { onCollapse?: (collapsed: boolean) => v
       href: userRole === "Admin" ? "/dashboard/admin/yachts" : "/dashboard/yachts", 
       icon: Anchor, 
       roles: ["Admin", "Employee"],
-      page_key: "manage_yachts"  // matches backend page_key
+      page_key: "dashboard"  // matches backend page_key
     },
     { 
       title: "Fleets", 
