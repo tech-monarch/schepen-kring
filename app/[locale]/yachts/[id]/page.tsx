@@ -36,6 +36,8 @@ import {
   ChevronRight,
   Maximize2,
   X,
+  Plus,
+  Minus,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
@@ -172,11 +174,22 @@ interface CalendarDay {
   isCurrentMonth: boolean;
 }
 
+interface Bid {
+  id: number;
+  amount: number;
+  status: string;
+  created_at: string;
+  user: {
+    id: number;
+    name: string;
+  };
+}
+
 export default function YachtTerminalPage() {
   const { id } = useParams();
   const router = useRouter();
   const [yacht, setYacht] = useState<Yacht | null>(null);
-  const [bids, setBids] = useState([]);
+  const [bids, setBids] = useState<Bid[]>([]);
   const [bidAmount, setBidAmount] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -189,6 +202,7 @@ export default function YachtTerminalPage() {
   const [showPhotoGallery, setShowPhotoGallery] = useState(false);
   const [selectedGalleryImage, setSelectedGalleryImage] = useState<string>("");
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
+  const [expandedGallery, setExpandedGallery] = useState(false);
   
   // Payment states
   const [paymentMode, setPaymentMode] = useState<"test_sail" | "buy_now" | null>(null);
@@ -201,6 +215,10 @@ export default function YachtTerminalPage() {
     phone: '',
     notes: ''
   });
+
+  // Bid states
+  const [placingBid, setPlacingBid] = useState(false);
+  const [bidError, setBidError] = useState<string>("");
 
   // Get auth token from localStorage
   const getAuthToken = () => {
@@ -274,7 +292,7 @@ export default function YachtTerminalPage() {
       const date = new Date(year, month, i);
       days.push({ 
         date, 
-        available: true, // Temporarily true until we fetch actual availability
+        available: true,
         isCurrentMonth: true 
       });
     }
@@ -296,11 +314,6 @@ export default function YachtTerminalPage() {
       })));
     } catch (error) {
       console.error("Error fetching available dates:", error);
-      // If API fails, mark weekends as available for demo
-      setCalendarDays(prev => prev.map(day => ({
-        ...day,
-        available: day.isCurrentMonth && (day.date.getDay() !== 0 && day.date.getDay() !== 6)
-      })));
     }
   };
 
@@ -315,7 +328,7 @@ export default function YachtTerminalPage() {
         api.get(`/bids/${id}/history`),
       ]);
       setYacht(yachtRes.data);
-      setBids(historyRes.data);
+      setBids(historyRes.data || []);
       setLoading(false);
     } catch (error) {
       console.error("Vessel Retrieval Failed:", error);
@@ -357,8 +370,14 @@ export default function YachtTerminalPage() {
   };
 
   const placeBid = async () => {
-    const amount = parseFloat(bidAmount);
     if (!yacht) return;
+
+    // Validate bid amount
+    const amount = parseFloat(bidAmount);
+    if (isNaN(amount) || amount <= 0) {
+      setBidError("Voer een geldig bedrag in");
+      return;
+    }
 
     // Check if user is authenticated
     const token = getAuthToken();
@@ -368,26 +387,33 @@ export default function YachtTerminalPage() {
       return;
     }
 
-    const currentPrice = yacht.current_bid
-      ? Number(yacht.current_bid)
-      : Number(yacht.price);
+    // Check if yacht is sold
+    if (yacht.status === 'Sold') {
+      setBidError("Dit schip is al verkocht");
+      toast.error("Dit schip is al verkocht");
+      return;
+    }
+
+    // Check if yacht is available for bidding
+    if (!['For Bid', 'For Sale'].includes(yacht.status)) {
+      setBidError("Dit schip is niet beschikbaar voor biedingen");
+      toast.error("Dit schip is niet beschikbaar voor biedingen");
+      return;
+    }
+
+    const currentPrice = yacht.current_bid ? Number(yacht.current_bid) : Number(yacht.price);
 
     if (amount <= currentPrice) {
-      toast.error(`Bod moet hoger zijn dan €${currentPrice.toLocaleString()}`);
+      setBidError(`Bod moet hoger zijn dan €${currentPrice.toLocaleString()}`);
       return;
     }
 
-    if (isNaN(amount) || amount <= 0) {
-      toast.error("Voer een geldig bedrag in");
-      return;
-    }
+    setPlacingBid(true);
+    setBidError("");
 
     try {
-      // Get the API base URL
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
-      
-      // Make the bid request directly with fetch to ensure proper headers
-      const response = await fetch(`${baseUrl}/bids/place`, {
+      // Make the bid request to your API
+      const response = await fetch(`https://schepen-kring.nl/api/bids/place`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -400,6 +426,8 @@ export default function YachtTerminalPage() {
         })
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
         if (response.status === 401 || response.status === 403) {
           toast.error("Geen toegang. Log opnieuw in.");
@@ -408,22 +436,31 @@ export default function YachtTerminalPage() {
           router.push('/login');
           return;
         }
-        throw new Error(`HTTP error! status: ${response.status}`);
+        
+        // Handle validation errors
+        if (response.status === 422) {
+          setBidError(data.message || data.errors?.amount?.[0] || "Bod plaatsen mislukt");
+          toast.error(data.message || "Bod plaatsen mislukt");
+          return;
+        }
+        
+        throw new Error(data.message || "Bod plaatsen mislukt");
       }
 
-      const data = await response.json();
-      
       toast.success("Bod succesvol geplaatst!");
       setBidAmount("");
-      fetchVesselData();
+      
+      // Refresh data
+      setTimeout(() => {
+        fetchVesselData();
+      }, 1000);
+      
     } catch (e: any) {
       console.error("Bid error:", e);
-      if (e.message?.includes('401') || e.message?.includes('403')) {
-        toast.error("Geen toegang. Log opnieuw in.");
-        router.push('/login');
-      } else {
-        toast.error("Bod plaatsen mislukt. Controleer verbinding.");
-      }
+      setBidError(e.message || "Bod plaatsen mislukt");
+      toast.error(e.message || "Bod plaatsen mislukt");
+    } finally {
+      setPlacingBid(false);
     }
   };
 
@@ -455,7 +492,8 @@ export default function YachtTerminalPage() {
         headers['Authorization'] = `Bearer ${token}`;
       }
       
-      await fetch(`/api/yachts/${yacht?.id}/book`, {
+      // Create booking
+      const bookingResponse = await fetch(`https://schepen-kring.nl/api/yachts/${yacht?.id}/book`, {
         method: 'POST',
         headers,
         body: JSON.stringify({
@@ -467,8 +505,12 @@ export default function YachtTerminalPage() {
         })
       });
 
+      if (!bookingResponse.ok) {
+        throw new Error('Booking failed');
+      }
+
       // Create task for admin
-      const taskResponse = await fetch('/api/tasks', {
+      const taskResponse = await fetch('https://schepen-kring.nl/api/tasks', {
         method: 'POST',
         headers,
         body: JSON.stringify({
@@ -480,11 +522,9 @@ export default function YachtTerminalPage() {
         })
       });
 
-      if (!taskResponse.ok) {
-        console.error("Task creation failed:", await taskResponse.text());
-      }
-
       setPaymentStatus("success");
+      toast.success("Proefvaart succesvol aangevraagd!");
+      
       setTimeout(() => {
         setPaymentMode(null);
         setPaymentStatus("idle");
@@ -493,6 +533,7 @@ export default function YachtTerminalPage() {
         setAvailableSlots([]);
         setBookingForm({ name: '', email: '', phone: '', notes: '' });
       }, 3000);
+      
     } catch (error) {
       setPaymentStatus("idle");
       toast.error("Boeking mislukt.");
@@ -513,7 +554,7 @@ export default function YachtTerminalPage() {
         headers['Authorization'] = `Bearer ${token}`;
       }
       
-      const response = await fetch('/api/tasks', {
+      const response = await fetch('https://schepen-kring.nl/api/tasks', {
         method: 'POST',
         headers,
         body: JSON.stringify({
@@ -530,10 +571,13 @@ export default function YachtTerminalPage() {
       }
 
       setPaymentStatus("success");
+      toast.success("Aankoop aanvraag succesvol verzonden!");
+      
       setTimeout(() => {
         setPaymentMode(null);
         setPaymentStatus("idle");
       }, 3000);
+      
     } catch (error) {
       setPaymentStatus("idle");
       toast.error("Transactie mislukt.");
@@ -543,7 +587,7 @@ export default function YachtTerminalPage() {
   const fetchAvailableSlots = async (date: Date) => {
     try {
       const dateStr = formatDate(date);
-      const res = await api.get(`/yachts/${id}/available-slots?date=${dateStr}`);
+      const res = await api.get(`https://schepen-kring.nl/api/yachts/${id}/available-slots?date=${dateStr}`);
       setAvailableSlots(res.data.timeSlots || [
         '09:00', '10:30', '12:00', '13:30', 
         '15:00', '16:30'
@@ -632,6 +676,7 @@ export default function YachtTerminalPage() {
   const mainImage = allImages[0];
   const otherImages = allImages.slice(1, 5); // Max 4 images for the grid
   const hasMoreImages = allImages.length > 5;
+  const galleryImagesToShow = expandedGallery ? allImages : allImages.slice(0, 8);
 
   // Format price as per Dutch standards
   const formattedPrice = `€ ${formatPrice(yacht.price)}`
@@ -942,52 +987,85 @@ export default function YachtTerminalPage() {
                 <div className="bg-gray-50 p-6 border border-gray-200">
                   <div className="flex justify-between items-center mb-4">
                     <h3 className="text-lg font-medium text-gray-900">Bod uitbrengen</h3>
-                    <span className="text-sm font-medium text-gray-500">{yacht.status}</span>
+                    <span className={`text-sm font-medium px-2 py-1 rounded ${yacht.status === 'Sold' ? 'bg-red-100 text-red-800' : yacht.status === 'For Bid' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}`}>
+                      {yacht.status === 'For Sale' ? 'Te Koop' : yacht.status === 'For Bid' ? 'Veiling Actief' : 'Verkocht'}
+                    </span>
                   </div>
                   
                   <div className="mb-6">
                     <p className="text-sm text-gray-500 mb-1">Huidig hoogste bod:</p>
                     <p className="text-2xl font-serif italic">
-                      €{(yacht.current_bid ? Number(yacht.current_bid) : Number(yacht.price)).toLocaleString()}
+                      €{(yacht.current_bid ? Number(yacht.current_bid) : Number(yacht.price)).toLocaleString('nl-NL')}
                     </p>
+                    {yacht.status === 'For Sale' && (
+                      <p className="text-xs text-gray-500 mt-1">Startprijs</p>
+                    )}
                   </div>
 
-                  <div className="space-y-3">
-                    <input
-                      type="number"
-                      value={bidAmount}
-                      onChange={(e) => setBidAmount(e.target.value)}
-                      placeholder="Voer bedrag in"
-                      className="w-full border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-gray-500"
-                    />
-                    {isAuthenticated ? (
-                      <button
-                        onClick={placeBid}
-                        className="w-full bg-gray-900 hover:bg-black text-white py-3 font-medium transition-colors"
-                      >
-                        Bod plaatsen
-                      </button>
-                    ) : (
-                      <button
-                        onClick={handleLoginRedirect}
-                        className="w-full bg-gray-900 hover:bg-black text-white py-3 font-medium transition-colors"
-                      >
-                        Inloggen om te bieden
-                      </button>
-                    )}
-                    {user && (
-                      <p className="text-xs text-gray-500 text-center">
-                        Ingelogd als: {user.name} ({user.role})
-                      </p>
-                    )}
-                  </div>
+                  {yacht.status === 'Sold' ? (
+                    <div className="text-center py-4 bg-red-50 border border-red-100 rounded">
+                      <p className="text-red-600 font-medium">Dit schip is verkocht</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <div>
+                        <input
+                          type="number"
+                          value={bidAmount}
+                          onChange={(e) => {
+                            setBidAmount(e.target.value);
+                            setBidError("");
+                          }}
+                          placeholder={`Minimum €${(yacht.current_bid ? Number(yacht.current_bid) + 100 : Number(yacht.price) + 100).toLocaleString('nl-NL')}`}
+                          className="w-full border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-gray-500"
+                          step="100"
+                        />
+                        {bidError && (
+                          <p className="text-red-500 text-xs mt-1">{bidError}</p>
+                        )}
+                      </div>
+                      
+                      {isAuthenticated ? (
+                        <button
+                          onClick={placeBid}
+                          disabled={placingBid}
+                          className={`w-full ${placingBid ? 'bg-gray-400' : 'bg-gray-900 hover:bg-black'} text-white py-3 font-medium transition-colors flex items-center justify-center gap-2`}
+                        >
+                          {placingBid ? (
+                            <>
+                              <Loader2 className="animate-spin" size={16} />
+                              Plaatsen...
+                            </>
+                          ) : (
+                            <>
+                              <Gavel size={16} />
+                              Bod plaatsen
+                            </>
+                          )}
+                        </button>
+                      ) : (
+                        <button
+                          onClick={handleLoginRedirect}
+                          className="w-full bg-gray-900 hover:bg-black text-white py-3 font-medium transition-colors"
+                        >
+                          Inloggen om te bieden
+                        </button>
+                      )}
+                      {user && (
+                        <p className="text-xs text-gray-500 text-center">
+                          Ingelogd als: {user.name}
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Quick Actions */}
                 <div className="space-y-4">
                   <button
                     onClick={() => setPaymentMode("buy_now")}
-                    className="w-full bg-red-600 hover:bg-red-700 text-white py-4 font-medium text-center transition-colors"
+                    disabled={yacht.status === 'Sold'}
+                    className={`w-full ${yacht.status === 'Sold' ? 'bg-gray-300 cursor-not-allowed' : 'bg-red-600 hover:bg-red-700'} text-white py-4 font-medium text-center transition-colors`}
                   >
                     Directe aankoop
                   </button>
@@ -1003,19 +1081,36 @@ export default function YachtTerminalPage() {
 
                 {/* Bid History */}
                 <div className="bg-gray-50 p-6 border border-gray-200">
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">Bod geschiedenis</h3>
+                  <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center gap-2">
+                    <History size={16} />
+                    Bod geschiedenis
+                  </h3>
                   <div className="space-y-3 max-h-60 overflow-y-auto">
                     {bids.length > 0 ? (
-                      bids.map((bid: any, i) => (
+                      bids.map((bid, i) => (
                         <div
                           key={bid.id}
                           className={cn(
-                            "flex justify-between items-center py-2 border-b border-gray-100 last:border-0",
-                            i === 0 ? "text-gray-900 font-medium" : "text-gray-600"
+                            "flex justify-between items-center py-3 px-3 rounded border",
+                            i === 0 
+                              ? "bg-blue-50 border-blue-200 text-blue-900 font-medium" 
+                              : "border-gray-100 text-gray-600"
                           )}
                         >
-                          <span className="text-sm">{bid.user?.name || "Anonieme bieder"}</span>
-                          <span className="text-sm font-medium">€{Number(bid.amount).toLocaleString()}</span>
+                          <div>
+                            <span className="text-sm">{bid.user?.name || "Anonieme bieder"}</span>
+                            {bid.status === 'active' && i === 0 && (
+                              <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded ml-2">
+                                Actief
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-right">
+                            <span className="text-sm font-medium">€{Number(bid.amount).toLocaleString('nl-NL')}</span>
+                            <p className="text-xs text-gray-400">
+                              {new Date(bid.created_at).toLocaleDateString('nl-NL')}
+                            </p>
+                          </div>
                         </div>
                       ))
                     ) : (
@@ -1027,6 +1122,71 @@ export default function YachtTerminalPage() {
                 </div>
               </div>
             </div>
+          </div>
+        </section>
+
+        {/* GALLERY SECTION - Added at the bottom */}
+        <section className="py-12 px-8 bg-gray-50">
+          <div className="max-w-7xl mx-auto">
+            <div className="flex justify-between items-center mb-8">
+              <h2 className="text-2xl font-serif italic text-gray-900">
+                Fotogalerij
+              </h2>
+              <span className="text-sm text-gray-500">
+                {allImages.length} foto's
+              </span>
+            </div>
+            
+            {allImages.length > 0 ? (
+              <div className="space-y-6">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {galleryImagesToShow.map((img, index) => (
+                    <div
+                      key={index}
+                      className="relative aspect-square overflow-hidden bg-gray-200 group cursor-pointer"
+                      onClick={() => openPhotoGallery(img, index)}
+                    >
+                      <img
+                        src={img}
+                        onError={handleImageError}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        alt={`${yacht.boat_name} - Afbeelding ${index + 1}`}
+                      />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
+                      <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/60 to-transparent text-white text-xs opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        Klik om te vergroten
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                
+                {allImages.length > 8 && (
+                  <div className="text-center pt-4">
+                    <button
+                      onClick={() => setExpandedGallery(!expandedGallery)}
+                      className="inline-flex items-center gap-2 px-6 py-3 border border-gray-300 hover:bg-gray-100 text-gray-700 font-medium transition-colors"
+                    >
+                      {expandedGallery ? (
+                        <>
+                          <Minus size={16} />
+                          Minder foto's tonen
+                        </>
+                      ) : (
+                        <>
+                          <Plus size={16} />
+                          Alle {allImages.length} foto's tonen
+                        </>
+                      )}
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <ImageIcon size={48} className="mx-auto text-gray-300 mb-4" />
+                <p className="text-gray-500">Geen foto's beschikbaar</p>
+              </div>
+            )}
           </div>
         </section>
       </main>
@@ -1093,8 +1253,8 @@ export default function YachtTerminalPage() {
                       setCurrentPhotoIndex(index);
                     }}
                     className={cn(
-                      "w-20 h-20 flex-shrink-0 border-2",
-                      index === currentPhotoIndex ? "border-white" : "border-transparent"
+                      "w-20 h-20 flex-shrink-0 border-2 transition-all",
+                      index === currentPhotoIndex ? "border-white" : "border-transparent hover:border-white/50"
                     )}
                   >
                     <img
@@ -1111,7 +1271,7 @@ export default function YachtTerminalPage() {
         )}
       </AnimatePresence>
 
-      {/* TEST SAIL MODAL - Updated with Calendar */}
+      {/* TEST SAIL MODAL */}
       <AnimatePresence>
         {paymentMode === "test_sail" && (
           <motion.div
