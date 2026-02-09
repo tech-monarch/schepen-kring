@@ -202,6 +202,45 @@ export default function YachtTerminalPage() {
     notes: ''
   });
 
+  // Get auth token from localStorage
+  const getAuthToken = () => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('auth_token');
+    }
+    return null;
+  };
+
+  // Get user data from localStorage
+  const getUserData = () => {
+    if (typeof window !== 'undefined') {
+      const userDataStr = localStorage.getItem('user_data');
+      if (userDataStr) {
+        try {
+          return JSON.parse(userDataStr);
+        } catch (error) {
+          return null;
+        }
+      }
+    }
+    return null;
+  };
+
+  const [user, setUser] = useState<any>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    // Check authentication on component mount
+    const token = getAuthToken();
+    const userData = getUserData();
+    
+    if (token && userData) {
+      setIsAuthenticated(true);
+      setUser(userData);
+    } else {
+      setIsAuthenticated(false);
+    }
+  }, []);
+
   useEffect(() => {
     fetchVesselData();
     const interval = setInterval(fetchVesselData, 10000);
@@ -322,7 +361,7 @@ export default function YachtTerminalPage() {
     if (!yacht) return;
 
     // Check if user is authenticated
-    const token = localStorage.getItem('token');
+    const token = getAuthToken();
     if (!token) {
       toast.error("U moet ingelogd zijn om een bod te plaatsen.");
       router.push('/login');
@@ -344,24 +383,43 @@ export default function YachtTerminalPage() {
     }
 
     try {
-      await api.post("/bids/place", { 
-        yacht_id: yacht.id, 
-        amount: amount 
-      }, {
+      // Get the API base URL
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+      
+      // Make the bid request directly with fetch to ensure proper headers
+      const response = await fetch(`${baseUrl}/bids/place`, {
+        method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`
-        }
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({ 
+          yacht_id: yacht.id, 
+          amount: amount 
+        })
       });
+
+      if (!response.ok) {
+        if (response.status === 401 || response.status === 403) {
+          toast.error("Geen toegang. Log opnieuw in.");
+          localStorage.removeItem('auth_token');
+          localStorage.removeItem('user_data');
+          router.push('/login');
+          return;
+        }
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
       toast.success("Bod succesvol geplaatst!");
       setBidAmount("");
       fetchVesselData();
     } catch (e: any) {
       console.error("Bid error:", e);
-      if (e.response?.status === 403) {
+      if (e.message?.includes('401') || e.message?.includes('403')) {
         toast.error("Geen toegang. Log opnieuw in.");
-        router.push('/login');
-      } else if (e.response?.status === 401) {
-        toast.error("Sessie verlopen. Log opnieuw in.");
         router.push('/login');
       } else {
         toast.error("Bod plaatsen mislukt. Controleer verbinding.");
@@ -387,21 +445,44 @@ export default function YachtTerminalPage() {
       const [hours, minutes] = selectedTime.split(':').map(Number);
       startDateTime.setHours(hours, minutes, 0, 0);
       
-      await api.post(`/yachts/${yacht?.id}/book`, {
-        start_at: startDateTime.toISOString(),
-        name: bookingForm.name,
-        email: bookingForm.email,
-        phone: bookingForm.phone,
-        notes: bookingForm.notes
+      const token = getAuthToken();
+      const headers: any = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      };
+      
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
+      await fetch(`/api/yachts/${yacht?.id}/book`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          start_at: startDateTime.toISOString(),
+          name: bookingForm.name,
+          email: bookingForm.email,
+          phone: bookingForm.phone,
+          notes: bookingForm.notes
+        })
       });
 
-      await api.post("/tasks", {
-        title: `PROEFVAART AANVRAAG: ${yacht?.boat_name}`,
-        description: `Klant heeft een proefvaart aangevraagd voor ${selectedDate?.toLocaleDateString('nl-NL')} om ${selectedTime}.\n\nKlantgegevens:\nNaam: ${bookingForm.name}\nEmail: ${bookingForm.email}\nTelefoon: ${bookingForm.phone || 'Niet opgegeven'}\nOpmerkingen: ${bookingForm.notes || 'Geen'}`,
-        priority: "Medium",
-        status: "To Do",
-        yacht_id: yacht?.id,
+      // Create task for admin
+      const taskResponse = await fetch('/api/tasks', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          title: `PROEFVAART AANVRAAG: ${yacht?.boat_name}`,
+          description: `Klant heeft een proefvaart aangevraagd voor ${selectedDate?.toLocaleDateString('nl-NL')} om ${selectedTime}.\n\nKlantgegevens:\nNaam: ${bookingForm.name}\nEmail: ${bookingForm.email}\nTelefoon: ${bookingForm.phone || 'Niet opgegeven'}\nOpmerkingen: ${bookingForm.notes || 'Geen'}`,
+          priority: "Medium",
+          status: "To Do",
+          yacht_id: yacht?.id,
+        })
       });
+
+      if (!taskResponse.ok) {
+        console.error("Task creation failed:", await taskResponse.text());
+      }
 
       setPaymentStatus("success");
       setTimeout(() => {
@@ -422,13 +503,31 @@ export default function YachtTerminalPage() {
     setPaymentStatus("processing");
 
     try {
-      await api.post("/tasks", {
-        title: `URGENT: KOOP NU AANVRAAG - ${yacht?.boat_name}`,
-        description: `KLANT WIL DEZE BOOT DIRECT KOPEN!\n\nBedrag: €${yacht?.price.toLocaleString()}\n\nStop de veiling en neem contact op met de klant.`,
-        priority: "High",
-        status: "To Do",
-        yacht_id: yacht?.id,
+      const token = getAuthToken();
+      const headers: any = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      };
+      
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
+      const response = await fetch('/api/tasks', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          title: `URGENT: KOOP NU AANVRAAG - ${yacht?.boat_name}`,
+          description: `KLANT WIL DEZE BOOT DIRECT KOPEN!\n\nBedrag: €${yacht?.price.toLocaleString()}\n\nStop de veiling en neem contact op met de klant.`,
+          priority: "High",
+          status: "To Do",
+          yacht_id: yacht?.id,
+        })
       });
+
+      if (!response.ok) {
+        throw new Error('Task creation failed');
+      }
 
       setPaymentStatus("success");
       setTimeout(() => {
@@ -510,6 +609,10 @@ export default function YachtTerminalPage() {
     }
   };
 
+  const handleLoginRedirect = () => {
+    router.push('/login');
+  };
+
   if (loading || !yacht) {
     return (
       <div className="h-screen flex flex-col items-center justify-center bg-white">
@@ -538,7 +641,7 @@ export default function YachtTerminalPage() {
       <Toaster position="top-center" />
 
       {/* Simple Navigation */}
-      <header className="fixed top-20 left-0 right-0 z-50 bg-white border-b border-gray-200 h-16 flex items-center px-6 justify-between">
+      <header className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 h-16 flex items-center px-6 justify-between">
         <Link
           href="/nl/yachts"
           className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-black transition-colors"
@@ -857,15 +960,26 @@ export default function YachtTerminalPage() {
                       placeholder="Voer bedrag in"
                       className="w-full border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-gray-500"
                     />
-                    <button
-                      onClick={placeBid}
-                      className="w-full bg-gray-900 hover:bg-black text-white py-3 font-medium transition-colors"
-                    >
-                      Bod plaatsen
-                    </button>
-                    <p className="text-xs text-gray-500 text-center">
-                      Je moet ingelogd zijn om te bieden
-                    </p>
+                    {isAuthenticated ? (
+                      <button
+                        onClick={placeBid}
+                        className="w-full bg-gray-900 hover:bg-black text-white py-3 font-medium transition-colors"
+                      >
+                        Bod plaatsen
+                      </button>
+                    ) : (
+                      <button
+                        onClick={handleLoginRedirect}
+                        className="w-full bg-gray-900 hover:bg-black text-white py-3 font-medium transition-colors"
+                      >
+                        Inloggen om te bieden
+                      </button>
+                    )}
+                    {user && (
+                      <p className="text-xs text-gray-500 text-center">
+                        Ingelogd als: {user.name} ({user.role})
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -1026,23 +1140,21 @@ export default function YachtTerminalPage() {
                   <div className="space-y-6">
                     <div className="text-center">
                       <div className="flex items-center justify-between mb-6">
-                        <Button
+                        <button
                           onClick={handlePrevMonth}
-                          variant="ghost"
-                          className="text-gray-400 hover:text-gray-900"
+                          className="text-gray-400 hover:text-gray-900 p-2"
                         >
                           ←
-                        </Button>
+                        </button>
                         <h3 className="text-lg font-semibold text-gray-900">
                           {DUTCH_MONTHS[currentMonth.getMonth()]} {currentMonth.getFullYear()}
                         </h3>
-                        <Button
+                        <button
                           onClick={handleNextMonth}
-                          variant="ghost"
-                          className="text-gray-400 hover:text-gray-900"
+                          className="text-gray-400 hover:text-gray-900 p-2"
                         >
                           →
-                        </Button>
+                        </button>
                       </div>
                       
                       {/* Calendar Grid */}
