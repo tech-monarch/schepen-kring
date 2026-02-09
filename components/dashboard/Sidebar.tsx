@@ -176,7 +176,7 @@ export function Sidebar({ onCollapse }: { onCollapse?: (collapsed: boolean) => v
     },
     { 
       title: "Settings", 
-      href: "/dashboard/settings", 
+      href: "/dashboard/account/settings", 
       icon: Settings, 
       roles: ["Admin", "Employee", "Partner", "Customer"],
       page_key: "settings"
