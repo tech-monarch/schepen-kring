@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Link, usePathname } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
-import axios from "axios"; // Added axios for live sync
+import axios from "axios";
 import { 
   BarChart3, 
   Anchor, 
@@ -16,17 +16,30 @@ import {
   ChevronLeft, 
   ChevronRight,
   Wifi,
-  WifiOff
+  WifiOff,
+  FileText,
+  Gavel,
+  Calendar,
+  Settings
 } from "lucide-react";
+
+type PermissionValue = 0 | 1 | 2;
+
+interface PagePermission {
+  page_key: string;
+  page_name: string;
+  permission_value: PermissionValue;
+}
 
 export function Sidebar({ onCollapse }: { onCollapse?: (collapsed: boolean) => void }) {
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
-  const [userPermissions, setUserPermissions] = useState<string[]>([]); // Array for DB permissions
+  const [userPagePermissions, setUserPagePermissions] = useState<PagePermission[]>([]);
   const [isOnline, setIsOnline] = useState(true);
+  const [userId, setUserId] = useState<number | null>(null);
 
-  const API_BASE = "https://schepen-kring.nl/api"; // Update if your local dev URL is different
+  const API_BASE = "https://schepen-kring.nl/api";
 
   // Sync collapse state with parent page
   useEffect(() => {
@@ -34,12 +47,12 @@ export function Sidebar({ onCollapse }: { onCollapse?: (collapsed: boolean) => v
   }, [isCollapsed, onCollapse]);
 
   useEffect(() => {
-    // 1. Check Online Status
+    // Check Online Status
     const updateStatus = () => setIsOnline(navigator.onLine);
     window.addEventListener("online", updateStatus);
     window.addEventListener("offline", updateStatus);
 
-    // 2. Read User Info and Fetch Live Permissions
+    // Read User Info and Fetch Page Permissions
     const userDataStr = localStorage.getItem("user_data");
     const token = localStorage.getItem("auth_token");
 
@@ -47,81 +60,152 @@ export function Sidebar({ onCollapse }: { onCollapse?: (collapsed: boolean) => v
       try {
         const parsed = JSON.parse(userDataStr);
         setUserRole(parsed.userType || "Customer");
+        setUserId(parsed.id);
 
-        // CRITICAL: Fetch permissions directly from the new table
-        const syncPermissions = async () => {
+        // Fetch page permissions from the new system
+        const fetchPagePermissions = async () => {
           try {
-            const res = await axios.get(`${API_BASE}/user/authorizations/${parsed.id}`, {
+            const res = await axios.get(`${API_BASE}/users/${parsed.id}/page-permissions`, {
               headers: { Authorization: `Bearer ${token}` }
             });
-            setUserPermissions(res.data); // e.g. ["manage yachts", "manage tasks"]
+            setUserPagePermissions(res.data);
           } catch (err) {
-            console.error("Authorization sync failed", err);
+            console.error("Failed to fetch page permissions", err);
+            // If endpoint doesn't exist yet, use empty array
+            setUserPagePermissions([]);
           }
         };
 
-        syncPermissions();
-      } catch (e) { console.error("Auth Data Corrupt", e); }
+        fetchPagePermissions();
+      } catch (e) { 
+        console.error("Auth Data Corrupt", e); 
+      }
     }
 
     return () => {
-        window.removeEventListener("online", updateStatus);
-        window.removeEventListener("offline", updateStatus);
+      window.removeEventListener("online", updateStatus);
+      window.removeEventListener("offline", updateStatus);
     };
-  }, [pathname]); // Refresh on navigation to keep rights up to date
+  }, [pathname]);
+
+  // Helper function to check if a page should be shown
+  const shouldShowPage = (pageKey: string, userRole: string | null): boolean => {
+    // If no user role, don't show
+    if (!userRole) return false;
+    
+    // Find the permission for this page
+    const pagePermission = userPagePermissions.find(p => p.page_key === pageKey);
+    
+    // If no specific permission found, use default behavior based on role
+    if (!pagePermission) {
+      // Default behavior for Employees and Admins: show the page
+      // For other roles: hide unless explicitly allowed
+      return ["Admin", "Employee"].includes(userRole);
+    }
+    
+    // Use the permission value
+    switch (pagePermission.permission_value) {
+      case 1: // Explicitly show
+        return true;
+      case 2: // Explicitly hide
+        return false;
+      case 0: // Use default
+      default:
+        return ["Admin", "Employee"].includes(userRole);
+    }
+  };
 
   // --- MENU CONFIGURATION ---
+  // Each page now has a page_key that matches the backend
   const menuItems = [
     { 
       title: "Overview", 
       href: userRole === "Admin" ? "/dashboard/admin" : "/dashboard", 
       icon: BarChart3, 
-      roles: ["Admin", "Employee", "Partner"] 
+      roles: ["Admin", "Employee", "Partner", "Customer"],
+      page_key: "dashboard" // This might not need permission control
     },
     { 
-      title: "Fleet Management", 
-      href: userRole === "Admin" ? "/dashboard/admin/yachts" : "/dashboard/yachts", 
-      icon: Anchor, 
-      roles: ["Admin", "Employee"],
-      permission: "manage yachts" 
-    },
-    { 
-      title: "Task Board", 
+      title: "Tasks", 
       href: userRole === "Admin" ? "/dashboard/admin/tasks" : "/dashboard/tasks", 
       icon: CheckSquare, 
       roles: ["Admin", "Employee"],
-      permission: "manage tasks" 
+      page_key: "tasks"  // matches backend page_key
     },
     { 
-      title: "User Registry", 
+      title: "Assign Tasks", 
+      href: userRole === "Admin" ? "/dashboard/admin/assign-tasks" : "/dashboard/assign-tasks", 
+      icon: Calendar, 
+      roles: ["Admin", "Employee"],
+      page_key: "assign_tasks"  // matches backend page_key
+    },
+    { 
+      title: "View Users", 
       href: "/dashboard/admin/users", 
       icon: Users, 
-      roles: ["Admin"],
-      permission: "manage users" 
+      roles: ["Admin", "Employee"],
+      page_key: "view_users"  // matches backend page_key
+    },
+    { 
+      title: "Yachts", 
+      href: userRole === "Admin" ? "/dashboard/admin/yachts" : "/dashboard/yachts", 
+      icon: Anchor, 
+      roles: ["Admin", "Employee"],
+      page_key: "manage_yachts"  // matches backend page_key
+    },
+    { 
+      title: "Biddings", 
+      href: userRole === "Admin" ? "/dashboard/admin/biddings" : "/dashboard/biddings", 
+      icon: Gavel, 
+      roles: ["Admin", "Employee"],
+      page_key: "biddings"  // matches backend page_key
+    },
+    { 
+      title: "Blog", 
+      href: userRole === "Admin" ? "/dashboard/admin/blog" : "/dashboard/blog", 
+      icon: FileText, 
+      roles: ["Admin", "Employee"],
+      page_key: "blog"  // matches backend page_key
     },
     { 
       title: "My Boats", 
       href: "/dashboard/partner/boats", 
       icon: Ship, 
-      roles: ["Partner"] 
+      roles: ["Partner"],
+      page_key: "partner_boats"  // Special page for partners
     },
     { 
-      title: "Widget Manager", 
-      href: "/dashboard/widgets", 
-      icon: Code, 
-      roles: ["Admin", "Partner"] 
+      title: "Settings", 
+      href: "/dashboard/settings", 
+      icon: Settings, 
+      roles: ["Admin", "Employee", "Partner", "Customer"],
+      page_key: "settings"
     },
   ];
 
-  // Logic: Only show if role matches AND (if permission required) user has permission
+  // Filter menu items based on role AND page permissions
   const visibleItems = menuItems.filter(item => {
+    // Check if user has required role
     const hasRole = userRole && item.roles.includes(userRole);
-    
-    // Admins see everything they are allowed by role; Employees check the permissions array
-    const hasPermission = userRole === "Admin" || (item.permission ? userPermissions.includes(item.permission) : true);
+    if (!hasRole) return false;
 
-    return hasRole && hasPermission;
+    // Check page permission if page_key exists
+    if (item.page_key) {
+      return shouldShowPage(item.page_key, userRole);
+    }
+
+    // If no page_key specified, show by default for allowed roles
+    return true;
   });
+
+  // For debugging: show current permissions
+  useEffect(() => {
+    if (userRole && userId) {
+      console.log("User Role:", userRole);
+      console.log("User ID:", userId);
+      console.log("Page Permissions:", userPagePermissions);
+    }
+  }, [userRole, userId, userPagePermissions]);
 
   return (
     <motion.aside 
@@ -145,40 +229,66 @@ export function Sidebar({ onCollapse }: { onCollapse?: (collapsed: boolean) => v
             {isOnline ? <Wifi size={10} className="text-emerald-500" /> : <WifiOff size={10} className="text-red-500" />}
           </div>
 
-          {visibleItems.map((item) => (
-            <Link 
-              key={item.href} 
-              href={item.href} 
-              className={cn(
-                "flex items-center gap-4 px-4 py-3 text-[10px] font-bold uppercase tracking-[0.2em] transition-all relative group",
-                pathname === item.href ? "bg-[#003566] text-white shadow-md" : "text-slate-400 hover:bg-slate-50",
-                isCollapsed && "justify-center px-0"
-              )}
-            >
-              <item.icon size={16} className="shrink-0" />
-              {!isCollapsed && <span>{item.title}</span>}
-            </Link>
-          ))}
+          {visibleItems.map((item) => {
+            const isActive = pathname === item.href;
+            const permission = userPagePermissions.find(p => p.page_key === item.page_key);
+            
+            return (
+              <Link 
+                key={item.href} 
+                href={item.href} 
+                className={cn(
+                  "flex items-center gap-4 px-4 py-3 text-[10px] font-bold uppercase tracking-[0.2em] transition-all relative group",
+                  isActive ? "bg-[#003566] text-white shadow-md" : "text-slate-400 hover:bg-slate-50",
+                  isCollapsed && "justify-center px-0"
+                )}
+                title={item.title}
+              >
+                <item.icon size={16} className="shrink-0" />
+                {!isCollapsed && (
+                  <div className="flex-1 flex items-center justify-between">
+                    <span>{item.title}</span>
+                    {permission && permission.permission_value !== 0 && (
+                      <span className={cn(
+                        "text-[8px] px-1.5 py-0.5 rounded",
+                        permission.permission_value === 1 ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+                      )}>
+                        {permission.permission_value === 1 ? "✓" : "✗"}
+                      </span>
+                    )}
+                  </div>
+                )}
+                
+                {/* Permission indicator dot for collapsed sidebar */}
+                {isCollapsed && permission && permission.permission_value !== 0 && (
+                  <div className={cn(
+                    "absolute top-1 right-1 w-1.5 h-1.5 rounded-full",
+                    permission.permission_value === 1 ? "bg-green-500" : "bg-red-500"
+                  )} />
+                )}
+              </Link>
+            );
+          })}
         </nav>
 
         <div className="p-4 border-t border-slate-100 bg-slate-50/50">
-           <button 
-              onClick={() => {
-                  if(confirm("Terminate Session?")) {
-                    localStorage.removeItem("auth_token");
-                    localStorage.removeItem("user_data");
-                    localStorage.removeItem("task_cache");
-                    localStorage.removeItem("personal_tasks");
-                    window.location.href = "/";
-                  }
-              }}
-              className={cn(
-                  "w-full flex items-center gap-3 border-2 border-red-100 text-red-400 hover:bg-red-50 p-3 rounded-none font-black uppercase text-[10px] tracking-widest transition-all",
-                  isCollapsed && "justify-center px-0 gap-0 border-none"
-              )}
+          <button 
+            onClick={() => {
+              if(confirm("Terminate Session?")) {
+                localStorage.removeItem("auth_token");
+                localStorage.removeItem("user_data");
+                localStorage.removeItem("task_cache");
+                localStorage.removeItem("personal_tasks");
+                window.location.href = "/";
+              }
+            }}
+            className={cn(
+              "w-full flex items-center gap-3 border-2 border-red-100 text-red-400 hover:bg-red-50 p-3 rounded-none font-black uppercase text-[10px] tracking-widest transition-all",
+              isCollapsed && "justify-center px-0 gap-0 border-none"
+            )}
           >
-              <LogOut size={16} className="shrink-0" />
-              {!isCollapsed && <span>Terminate Session</span>}
+            <LogOut size={16} className="shrink-0" />
+            {!isCollapsed && <span>Terminate Session</span>}
           </button>
         </div>
       </div>
