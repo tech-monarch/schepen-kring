@@ -4,35 +4,32 @@ import { useState, useEffect, SyntheticEvent } from "react";
 import { useParams } from "next/navigation";
 import {
   ArrowLeft,
-  Gavel,
-  CheckCircle2,
-  History,
+  Share2,
+  MapPin,
+  Phone,
+  Mail,
+  Calendar,
+  Ruler,
   Anchor,
+  Ship,
+  Gauge,
   Box,
   Droplets,
   Fuel,
-  Share2,
-  Loader2,
-  Zap,
-  Wind,
   Compass,
-  Ship,
-  Bed,
-  Waves,
-  FileText,
-  CheckSquare,
-  Thermometer,
-  MapPin,
-  Calendar,
-  Clock,
   User,
-  Mail,
-  Phone,
-  Printer,
-  Download,
-  Camera,
+  CheckCircle2,
   ChevronRight,
-  Home,
+  Printer,
+  X,
+  Gavel,
+  History,
+  CheckSquare,
+  FileText,
+  Waves,
+  Zap,
+  Bed,
+  Loader2
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
@@ -41,29 +38,32 @@ import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { toast, Toaster } from "react-hot-toast";
 
-const STORAGE_URL = "https://schepen-kring.nl/storage/";
-const PLACEHOLDER_IMAGE =
-  "https://images.unsplash.com/photo-1569263979104-865ab7cd8d13?auto=format&fit=crop&w=1200&q=80";
+// --- CONSTANTS ---
+const STORAGE_URL = "https://schepen-kring.nl/storage/"; // [cite: 5]
+const PLACEHOLDER_IMAGE = "https://images.unsplash.com/photo-1569263979104-865ab7cd8d13?auto=format&fit=crop&w=1200&q=80";
+const DUTCH_DAYS = ['Zo', 'Ma', 'Di', 'Wo', 'Do', 'Vr', 'Za']; // [cite: 13]
+const DUTCH_MONTHS = ['Januari', 'Februari', 'Maart', 'April', 'Mei', 'Juni', 'Juli', 'Augustus', 'September', 'Oktober', 'November', 'December']; // [cite: 14]
 
+// --- INTERFACES (Strictly matching your provided file) ---
 interface Yacht {
   id: number;
-  vessel_id: string;
+  vessel_id: string; // 
   boat_name: string;
   price: number;
   current_bid: number | null;
-  status: "For Sale" | "For Bid" | "Sold" | "Draft";
+  status: "For Sale" | "For Bid" | "Sold" | "Draft"; // [cite: 7]
   year: number;
   length: string;
   make: string;
   model: string;
   location: string;
-  description: string;
+  description: string; // [cite: 8]
   main_image: string;
   images: { id: number; url: string; category: string }[];
   
-  // General specifications
+  // Technical Fields
   vat_status?: string;
-  reference_code?: string;
+  reference_code?: string; // [cite: 9]
   construction_material?: string;
   hull_shape?: string;
   hull_color?: string;
@@ -71,800 +71,715 @@ interface Yacht {
   clearance?: string;
   displacement?: string;
   steering?: string;
-  beam?: string;
-  draft?: string;
-  
-  // From screenshots
-  ce_category?: string;
-  ce_max_weight?: string;
-  deck_superstructure_color?: string;
-  deck_superstructure_construction?: string;
-  open_cockpit?: boolean;
-  waterline_length?: string;
-  water_displacement?: string;
-  control?: string;
-  control_place?: string;
-  trim_flaps?: boolean;
-  
-  // Engine and propulsion from Screenshot 2026-02-08 093802.png
-  number_of_identical_engines?: string;
-  start_type?: string;
-  engine_type?: string;
-  engine_brand?: string;
+
+  // Engine
+  engine_brand?: string; // [cite: 10]
   engine_model?: string;
-  serial_number?: string;
-  engine_year?: string;
-  amount_of_cylinders?: string;
   engine_power?: string;
-  hour_meter?: boolean;
-  running_hours?: string;
-  fuel_type?: string;
-  fuel_consumption?: string;
-  propulsion?: string;
-  fuel_tank_quantity?: boolean;
+  engine_hours?: string;
+  engine_type?: string;
   max_speed?: string;
-  tachometer?: boolean;
-  battery?: boolean;
-  battery_capacity?: string;
-  dynamo?: boolean;
-  voltmeter?: boolean;
-  voltage?: string;
-  engine_comments?: string;
+  fuel_type?: string;
+  fuel_capacity?: string;
+  voltage?: string; // [cite: 11]
   
-  // Accommodation from Screenshot 2026-02-08 093746.png
+  // Accommodation
   cabins?: number;
   berths?: string;
-  interior_type?: string;
-  mattresses?: boolean;
+  heads?: number;
   water_tank?: string;
-  water_tank_material?: string;
+  water_capacity?: string;
+  
+  // Equipment
+  navigation_electronics?: string;
+  exterior_equipment?: string; // [cite: 12]
+  trailer_included?: boolean | number;
+  beam?: string;
+  draft?: string;
   water_system?: string;
-  number_of_showers?: string;
-  radio_cd_player?: string;
-  
-  // Navigation and electronics from Screenshot 2026-02-08 093851.png
-  kompas?: boolean;
-  log_speed?: boolean;
-  depth_gauge?: boolean;
-  navigation_lights?: boolean;
-  rudder_angle_indicator?: boolean;
-  gps?: string;
-  chart_plotter?: string;
-  fishfinder?: string;
-  refrigerator?: string;
-  
-  // Outside equipment from Screenshot 2026-02-08 093908.png
-  anchors_material?: string;
-  anchor_rod?: boolean;
-  sprayhood?: boolean;
-  cockpit_tent?: boolean;
-  tarpaulin?: string;
-  pulpit_bastion?: boolean;
-  swimming_platform?: boolean;
-  swimming_ladder?: boolean;
-  trailer?: string;
-  teak_deck?: boolean;
-  fenders_lines?: boolean;
-  cockpit_table?: boolean;
-  equipment_comments?: string;
-  
-  // Safety from Screenshot 2026-02-08 093928.png
-  lifebuoy?: boolean;
-  bilge_pump?: boolean;
-  fire_extinguisher?: boolean;
-  self_draining_cockpit?: boolean;
-  safety_comments?: string;
+  fuel_consumption?: string;
+  interior_type?: string;
+  dimensions?: string;
 }
+
+interface CalendarDay {
+  date: Date;
+  available: boolean;
+  isCurrentMonth: boolean;
+}
+
+// --- HELPER COMPONENTS ---
+
+// 1. The "Specs Strip" (L | B | D | Clearance | Year | Material)
+const QuickSpecItem = ({ label, value, unit }: { label: string; value?: string | number; unit?: string }) => {
+  if (!value) return null;
+  return (
+    <div className="flex flex-col items-center justify-center px-4 border-r border-gray-300 last:border-0">
+      <span className="text-gray-500 text-[10px] font-bold uppercase tracking-wider mb-1">{label}</span>
+      <span className="text-gray-900 font-semibold text-sm md:text-base whitespace-nowrap">
+        {value} {unit}
+      </span>
+    </div>
+  );
+};
+
+// 2. Clean Row for Details
+const DetailRow = ({ label, value, icon: Icon }: { label: string; value?: string | number | boolean | null; icon?: any }) => {
+  if (value === null || value === undefined || value === "") return null;
+  
+  return (
+    <div className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors px-2">
+      <div className="flex items-center gap-3 text-gray-600">
+        {Icon && <Icon className="w-4 h-4 text-slate-400" />}
+        <span className="font-medium text-sm">{label}</span>
+      </div>
+      <span className="text-gray-900 font-semibold text-sm text-right">{value}</span>
+    </div>
+  );
+};
+
+// 3. Section Header
+const SectionTitle = ({ children, icon: Icon }: { children: React.ReactNode, icon?: any }) => (
+  <h3 className="text-lg font-serif font-bold text-[#003566] mt-8 mb-4 border-b pb-2 border-gray-200 flex items-center gap-2">
+    {Icon && <Icon size={18} />}
+    {children}
+  </h3>
+);
 
 export default function YachtTerminalPage() {
   const { id } = useParams();
   const [yacht, setYacht] = useState<Yacht | null>(null);
-  const [bids, setBids] = useState([]);
-  const [bidAmount, setBidAmount] = useState<string>("");
+  const [bids, setBids] = useState<any[]>([]); // 
   const [activeImage, setActiveImage] = useState<string>("");
   const [loading, setLoading] = useState(true);
-  const [showAllPhotos, setShowAllPhotos] = useState(false);
-  const [showDocuments, setShowDocuments] = useState(false);
+  
+  // Action States
+  const [bidAmount, setBidAmount] = useState<string>("");
+  const [paymentMode, setPaymentMode] = useState<"test_sail" | "buy_now" | null>(null); // [cite: 20]
+  const [paymentStatus, setPaymentStatus] = useState<"idle" | "processing" | "success">("idle");
+  
+  // Booking/Calendar State
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedTime, setSelectedTime] = useState<string | null>(null); // [cite: 18]
+  const [availableSlots, setAvailableSlots] = useState<string[]>([]);
+  const [calendarDays, setCalendarDays] = useState<CalendarDay[]>([]);
+  const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
+  
+  const [bookingForm, setBookingForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    notes: ''
+  });
 
-  useEffect(() => {
-    fetchVesselData();
-  }, [id]);
-
+  // --- DATA FETCHING (Preserved) ---
   const fetchVesselData = async () => {
     try {
       const [yachtRes, historyRes] = await Promise.all([
         api.get(`/yachts/${id}`),
-        api.get(`/bids/${id}/history`),
+        api.get(`/bids/${id}/history`), // [cite: 37]
       ]);
       setYacht(yachtRes.data);
       setBids(historyRes.data);
 
-      if (!activeImage && yachtRes.data.main_image) {
-        setActiveImage(`${STORAGE_URL}${yachtRes.data.main_image}`);
+      if (!activeImage) {
+        const mainImg = yachtRes.data.main_image
+          ? `${STORAGE_URL}${yachtRes.data.main_image}` // [cite: 39]
+          : PLACEHOLDER_IMAGE;
+        setActiveImage(mainImg);
       }
       setLoading(false);
     } catch (error) {
       console.error("Vessel Retrieval Failed:", error);
+      toast.error("Kon gegevens niet laden");
     }
   };
 
-  const handleImageError = (e: SyntheticEvent<HTMLImageElement, Event>) => {
-    e.currentTarget.src = PLACEHOLDER_IMAGE;
+  useEffect(() => {
+    fetchVesselData();
+    const interval = setInterval(fetchVesselData, 10000); // [cite: 22]
+    return () => clearInterval(interval);
+  }, [id]);
+
+  useEffect(() => {
+    if (paymentMode === "test_sail") {
+      generateCalendarDays(); // [cite: 23]
+    }
+  }, [paymentMode, currentMonth]);
+
+  // --- CALENDAR LOGIC (Preserved) ---
+  const generateCalendarDays = async () => {
+    const days: CalendarDay[] = [];
+    const startDate = new Date(currentMonth);
+    startDate.setDate(1);
+    const firstDay = startDate.getDay();
+    const year = currentMonth.getFullYear();
+    const month = currentMonth.getMonth();
+    const daysInMonth = new Date(year, month + 1, 0).getDate(); // [cite: 27]
+    
+    for (let i = 0; i < firstDay; i++) {
+      const date = new Date(startDate);
+      date.setDate(date.getDate() - (firstDay - i));
+      days.push({ date, available: false, isCurrentMonth: false });
+    }
+    
+    for (let i = 1; i <= daysInMonth; i++) {
+      const date = new Date(year, month, i);
+      days.push({ date, available: false, isCurrentMonth: true }); // [cite: 30]
+    }
+    setCalendarDays(days);
+    
+    // Fetch real availability
+    try {
+        const res = await api.get(`/yachts/${id}/available-dates?month=${month + 1}&year=${year}`); // [cite: 33]
+        const availableDates = res.data.availableDates || [];
+        setCalendarDays(prev => prev.map(day => ({
+            ...day,
+            available: availableDates.includes(day.date.toISOString().split('T')[0])
+        })));
+    } catch (e) { console.error(e); }
   };
 
+  const fetchAvailableSlots = async (date: Date) => {
+    try {
+      const dateStr = date.toISOString().split('T')[0];
+      const res = await api.get(`/yachts/${id}/available-slots?date=${dateStr}`); // [cite: 59]
+      setAvailableSlots(res.data.timeSlots || []);
+      setSelectedTime(null);
+    } catch (e) {
+      toast.error("Kon tijdslots niet laden.");
+    }
+  };
+
+  const handleDateSelect = (date: Date, isAvailable: boolean) => {
+    if (!isAvailable) {
+        toast.error("Niet beschikbaar"); return; 
+    }
+    setSelectedDate(date);
+    fetchAvailableSlots(date); // [cite: 61]
+  };
+
+  // --- ACTIONS (Preserved) ---
   const placeBid = async () => {
     const amount = parseFloat(bidAmount);
     if (!yacht) return;
-
-    const currentPrice = yacht.current_bid
-      ? Number(yacht.current_bid)
-      : Number(yacht.price);
-
+    const currentPrice = yacht.current_bid ? Number(yacht.current_bid) : Number(yacht.price); // [cite: 43]
     if (amount <= currentPrice) {
       toast.error(`Bod moet hoger zijn dan €${currentPrice.toLocaleString()}`);
       return;
     }
-
     try {
-      await api.post("/bids/place", { yacht_id: yacht.id, amount });
+      await api.post("/bids/place", { yacht_id: yacht.id, amount }); // [cite: 45]
       toast.success("Bod succesvol geplaatst!");
       setBidAmount("");
       fetchVesselData();
     } catch (e) {
-      toast.error("Bod plaatsen mislukt. Controleer verbinding.");
+      toast.error("Bod plaatsen mislukt.");
     }
   };
 
-  const formatCheckbox = (value: boolean | undefined) => {
-    return value ? "✔" : "";
+  const handleBuyNow = async () => {
+    setPaymentStatus("processing");
+    try {
+      await api.post("/tasks", {
+        title: `URGENT: KOOP NU - ${yacht?.boat_name}`,
+        description: `Directe verkoop aanvraag. Prijs: €${yacht?.price}`,
+        priority: "High",
+        status: "To Do",
+        yacht_id: yacht?.id,
+      }); // [cite: 55]
+      setPaymentStatus("success");
+      setTimeout(() => { setPaymentMode(null); setPaymentStatus("idle"); }, 3000);
+    } catch (error) {
+      setPaymentStatus("idle");
+      toast.error("Fout bij aanvraag.");
+    }
+  };
+
+  const handleTestSailBooking = async () => {
+    if (!selectedDate || !selectedTime || !bookingForm.name || !bookingForm.email) {
+       toast.error("Vul alle velden in"); return;
+    }
+    setPaymentStatus("processing");
+    try {
+        const startDateTime = new Date(selectedDate);
+        const [hours, minutes] = selectedTime.split(':').map(Number);
+        startDateTime.setHours(hours, minutes, 0, 0); // [cite: 50]
+
+        await api.post(`/yachts/${yacht?.id}/book`, {
+            start_at: startDateTime.toISOString(),
+            name: bookingForm.name,
+            email: bookingForm.email,
+            phone: bookingForm.phone,
+            notes: bookingForm.notes
+        });
+        setPaymentStatus("success");
+        setTimeout(() => {
+            setPaymentMode(null); setPaymentStatus("idle"); setSelectedDate(null);
+        }, 3000);
+    } catch (e) {
+        setPaymentStatus("idle"); toast.error("Boeking mislukt");
+    }
+  };
+
+  const renderList = (text?: string) => { // [cite: 67]
+    if (!text) return <span className="text-slate-400 italic text-sm">Niet gespecificeerd.</span>;
+    return (
+      <ul className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2">
+        {text.split("\n").map((item, i) => (
+          <li key={i} className="flex items-start gap-2 text-sm text-gray-600">
+            <CheckSquare className="w-4 h-4 text-blue-400 mt-0.5 shrink-0" />
+            {item}
+          </li>
+        ))}
+      </ul>
+    );
   };
 
   if (loading || !yacht) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <Loader2 className="animate-spin text-blue-600" size={40} />
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+         <Loader2 className="animate-spin text-[#003566]" size={40} />
       </div>
     );
   }
 
+  // Derived Data
+  const isTrailerIncluded = yacht.trailer_included === true || yacht.trailer_included === 1; // [cite: 66]
+  const images = [
+      yacht.main_image ? `${STORAGE_URL}${yacht.main_image}` : PLACEHOLDER_IMAGE,
+      ...yacht.images.map(img => `${STORAGE_URL}${img.url}`)
+  ]; // [cite: 78]
+
   return (
-    <div className="min-h-screen bg-white text-gray-900">
+    <div className="min-h-screen bg-slate-50 font-sans text-slate-800 pb-20">
       <Toaster position="top-center" />
 
-      {/* TOP NAVIGATION */}
-      <div className="border-b border-gray-200 py-2">
-        <div className="max-w-7xl mx-auto px-4 flex justify-between items-center">
-          <Link
-            href="/nl/yachts"
-            className="flex items-center text-sm text-gray-600 hover:text-gray-900"
-          >
-            <ArrowLeft size={16} className="mr-1" />
-            Terug naar overzicht
-          </Link>
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-semibold bg-blue-600 text-white px-2 py-1 rounded">
-              1-YB-192
-            </span>
-            <button className="flex items-center text-sm text-gray-600 hover:text-gray-900">
-              <Printer size={16} className="mr-1" />
-              Print PDF
-            </button>
-            <button className="flex items-center text-sm text-gray-600 hover:text-gray-900">
-              <Camera size={16} className="mr-1" />
-              Foto's
-            </button>
-            <button className="flex items-center text-sm text-gray-600 hover:text-gray-900">
-              <Download size={16} className="mr-1" />
-              Documenten
-            </button>
-            <button className="flex items-center text-sm text-gray-600 hover:text-gray-900">
-              <Share2 size={16} className="mr-1" />
-            </button>
-          </div>
+      {/* --- TOP NAVIGATION --- */}
+      <div className="bg-[#003566] text-white py-3 sticky top-0 z-50 shadow-md">
+        <div className="container mx-auto px-4 flex items-center justify-between text-sm">
+            <div className="flex items-center gap-2 opacity-90">
+                <Link href="/" className="hover:underline">Home</Link>
+                <ChevronRight className="w-4 h-4" />
+                <Link href="/aanbod" className="hover:underline">Aanbod</Link>
+                <ChevronRight className="w-4 h-4" />
+                <span className="font-semibold truncate max-w-[200px]">{yacht.boat_name}</span>
+            </div>
+            <Link href="/aanbod" className="flex items-center gap-2 hover:text-gray-200 transition-colors">
+                <ArrowLeft className="w-4 h-4" />
+                Terug
+            </Link>
         </div>
       </div>
 
-      {/* BREADCRUMB */}
-      <div className="max-w-7xl mx-auto px-4 py-2">
-        <div className="flex items-center text-sm text-gray-600">
-          <Link href="/" className="flex items-center hover:text-blue-600">
-            <Home size={14} className="mr-1" />
-            Home
-          </Link>
-          <ChevronRight size={14} className="mx-2" />
-          <Link href="/nl/yachts" className="hover:text-blue-600">
-            Boot aanbod
-          </Link>
-          <ChevronRight size={14} className="mx-2" />
-          <span className="font-semibold">{yacht.boat_name}</span>
-        </div>
-      </div>
-
-      {/* MAIN CONTENT */}
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        {/* HEADER */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            {yacht.boat_name}
-          </h1>
-          <div className="flex justify-between items-center">
+      <div className="container mx-auto px-4 py-8">
+        
+        {/* --- HEADER SECTION --- */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-6 gap-4 border-b border-gray-200 pb-6">
             <div>
-              <div className="flex items-center gap-4">
-                <p className="text-2xl font-bold text-blue-600">
-                  € {yacht.price.toLocaleString("nl-NL")},-
-                </p>
-                <span className="text-sm bg-green-100 text-green-800 px-2 py-1 rounded">
-                  {yacht.vat_status || "Incl. BTW"}
-                </span>
-              </div>
-              <p className="text-sm text-gray-600 mt-1">
-                {yacht.year} • {yacht.make} {yacht.model} • {yacht.length}m
-              </p>
+                <div className="flex items-center gap-3 mb-2">
+                    <span className={cn(
+                        "text-xs font-bold px-3 py-1 uppercase tracking-wider rounded-sm",
+                        yacht.status === "For Sale" ? "bg-blue-100 text-[#003566]" : "bg-amber-100 text-amber-800"
+                    )}>
+                        {yacht.status}
+                    </span>
+                    <div className="flex items-center text-gray-500 text-sm gap-1">
+                        <MapPin className="w-4 h-4" />
+                        {yacht.location}
+                    </div>
+                    <span className="text-gray-400 text-xs">REF: {yacht.vessel_id || yacht.id}</span>
+                </div>
+                <h1 className="text-3xl md:text-5xl font-serif font-bold text-gray-900 leading-tight">
+                    {yacht.boat_name}
+                </h1>
+                <p className="text-lg text-gray-600 mt-1 font-serif italic">{yacht.make} {yacht.model}</p>
             </div>
+            
             <div className="text-right">
-              <p className="text-sm font-semibold text-gray-700">Reference code</p>
-              <p className="text-sm text-gray-600">{yacht.reference_code}</p>
+                <p className="text-3xl md:text-4xl font-bold text-[#003566]">
+                    € {(yacht.current_bid ? Number(yacht.current_bid) : Number(yacht.price)).toLocaleString("nl-NL")}
+                </p>
+                <p className="text-sm text-gray-500">{yacht.vat_status || "BTW n.t.b."}</p>
             </div>
-          </div>
         </div>
 
+        {/* --- MAIN GRID LAYOUT --- */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* LEFT COLUMN - SPECIFICATIONS */}
-          <div className="lg:col-span-2">
-            {/* IMAGE SECTION */}
-            <div className="mb-8">
-              <div className="relative h-96 bg-gray-200 rounded-lg overflow-hidden mb-4">
-                <img
-                  src={activeImage || PLACEHOLDER_IMAGE}
-                  onError={handleImageError}
-                  className="w-full h-full object-cover"
-                  alt={yacht.boat_name}
-                />
-              </div>
-              <button 
-                onClick={() => setShowAllPhotos(!showAllPhotos)}
-                className="text-blue-600 hover:text-blue-800 font-medium"
-              >
-                Show more photos
-              </button>
+            
+            {/* --- LEFT COLUMN (Gallery & Content) --- */}
+            <div className="lg:col-span-2 space-y-8">
+                
+                {/* GALLERY */}
+                <div className="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-100">
+                    <div className="relative aspect-[4/3] bg-gray-100 group">
+                        <img 
+                            src={activeImage || images[0]} 
+                            className="w-full h-full object-cover"
+                            alt={yacht.boat_name}
+                        />
+                    </div>
+                    {/* Thumbnails */}
+                    <div className="flex gap-2 p-4 overflow-x-auto bg-white border-t border-gray-100">
+                        {images.map((img, idx) => (
+                            <button
+                                key={idx}
+                                onClick={() => setActiveImage(img)}
+                                className={cn(
+                                    "w-20 h-20 shrink-0 border-2 rounded-md overflow-hidden transition-all",
+                                    activeImage === img ? "border-[#003566]" : "border-transparent opacity-70 hover:opacity-100"
+                                )}
+                            >
+                                <img src={img} className="w-full h-full object-cover" alt="thumb" />
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                {/* THE "SPECS STRIP" */}
+                <div className="bg-gray-100 rounded-lg p-4 flex flex-wrap justify-between md:justify-around gap-y-4 border border-gray-200 shadow-inner">
+                    <QuickSpecItem label="Lengte" value={yacht.length} unit="m" />
+                    <QuickSpecItem label="Breedte" value={yacht.beam} unit="m" />
+                    <QuickSpecItem label="Diepgang" value={yacht.draft} unit="m" />
+                    <QuickSpecItem label="Doorvaar" value={yacht.clearance} unit="m" />
+                    <QuickSpecItem label="Bouwjaar" value={yacht.year} unit="" />
+                    <QuickSpecItem label="Materiaal" value={yacht.construction_material} unit="" />
+                </div>
+
+                {/* DESCRIPTION */}
+                <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+                    <SectionTitle icon={FileText}>Notitie van de Kapitein</SectionTitle>
+                    <div className="prose prose-slate max-w-none text-gray-600 leading-relaxed whitespace-pre-line text-sm md:text-base">
+                        {yacht.description || "Specificaties in afwachting van maritieme certificering."}
+                    </div>
+                    
+                    {/* Badges */}
+                    <div className="flex gap-4 mt-6">
+                        {isTrailerIncluded && (
+                          <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-50 text-blue-700 text-xs font-bold uppercase border border-blue-100 rounded">
+                            <CheckSquare size={14} /> Trailer Inbegrepen
+                          </div>
+                        )}
+                        {yacht.vat_status && (
+                          <div className="inline-flex items-center gap-2 px-3 py-1 bg-slate-100 text-slate-600 text-xs font-bold uppercase border border-slate-200 rounded">
+                            <FileText size={14} /> {yacht.vat_status}
+                          </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* SPECIFICATIONS LISTS */}
+                <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+                    <SectionTitle icon={Waves}>Technisch Dossier</SectionTitle>
+                    
+                    <div className="grid md:grid-cols-2 gap-x-12 gap-y-8">
+                        {/* 1. Algemeen */}
+                        <div>
+                            <h4 className="font-bold text-[#003566] mb-3 flex items-center gap-2 text-sm uppercase tracking-wide">
+                                <Ship className="w-4 h-4" /> Romp & Algemeen
+                            </h4>
+                            <div className="bg-slate-50 rounded-md p-1 border border-slate-100">
+                                <DetailRow label="Werf" value={yacht.make} />
+                                <DetailRow label="Model" value={yacht.model} />
+                                <DetailRow label="Bouwjaar" value={yacht.year} />
+                                <DetailRow label="Rompvorm" value={yacht.hull_shape} />
+                                <DetailRow label="Rompkleur" value={yacht.hull_color} />
+                                <DetailRow label="Dekkleur" value={yacht.deck_color} />
+                                <DetailRow label="Waterverplaatsing" value={yacht.displacement} />
+                                <DetailRow label="Besturing" value={yacht.steering} />
+                            </div>
+                        </div>
+
+                        {/* 2. Afmetingen */}
+                        <div>
+                            <h4 className="font-bold text-[#003566] mb-3 flex items-center gap-2 text-sm uppercase tracking-wide">
+                                <Ruler className="w-4 h-4" /> Afmetingen
+                            </h4>
+                            <div className="bg-slate-50 rounded-md p-1 border border-slate-100">
+                                <DetailRow label="Lengte" value={`${yacht.length} m`} />
+                                <DetailRow label="Breedte" value={`${yacht.beam} m`} />
+                                <DetailRow label="Diepgang" value={`${yacht.draft} m`} />
+                                <DetailRow label="Doorvaarthoogte" value={`${yacht.clearance} m`} />
+                            </div>
+                        </div>
+
+                        {/* 3. Motor & Techniek */}
+                        <div>
+                            <h4 className="font-bold text-[#003566] mb-3 flex items-center gap-2 text-sm uppercase tracking-wide">
+                                <Zap className="w-4 h-4" /> Motorruimte
+                            </h4>
+                            <div className="bg-slate-50 rounded-md p-1 border border-slate-100">
+                                <DetailRow label="Merk" value={yacht.engine_brand} />
+                                <DetailRow label="Model" value={yacht.engine_model} />
+                                <DetailRow label="Vermogen" value={yacht.engine_power} />
+                                <DetailRow label="Uren" value={yacht.engine_hours} />
+                                <DetailRow label="Brandstof" value={yacht.fuel_type} />
+                                <DetailRow label="Type" value={yacht.engine_type} />
+                                <DetailRow label="Max Snelheid" value={yacht.max_speed} />
+                                <DetailRow label="Voltage" value={yacht.voltage} />
+                            </div>
+                        </div>
+
+                        {/* 4. Tankinhoud */}
+                        <div>
+                            <h4 className="font-bold text-[#003566] mb-3 flex items-center gap-2 text-sm uppercase tracking-wide">
+                                <Droplets className="w-4 h-4" /> Capaciteit
+                            </h4>
+                            <div className="bg-slate-50 rounded-md p-1 border border-slate-100">
+                                <DetailRow label="Brandstof" value={yacht.fuel_capacity} icon={Fuel} />
+                                <DetailRow label="Water" value={yacht.water_capacity || yacht.water_tank} icon={Droplets} />
+                                <DetailRow label="Verbruik" value={yacht.fuel_consumption} icon={Gauge} />
+                            </div>
+                        </div>
+
+                        {/* 5. Accommodatie */}
+                        <div>
+                            <h4 className="font-bold text-[#003566] mb-3 flex items-center gap-2 text-sm uppercase tracking-wide">
+                                <Bed className="w-4 h-4" /> Accommodatie
+                            </h4>
+                            <div className="bg-slate-50 rounded-md p-1 border border-slate-100">
+                                <DetailRow label="Hutten" value={yacht.cabins} />
+                                <DetailRow label="Slaapplaatsen" value={yacht.berths} />
+                                <DetailRow label="Toiletten" value={yacht.heads} />
+                                <DetailRow label="Interieur" value={yacht.interior_type} />
+                                <DetailRow label="Water Systeem" value={yacht.water_system} />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                {/* Equipment Sections (Using your text lists) */}
+                <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+                    <SectionTitle icon={Compass}>Uitrusting & Elektronica</SectionTitle>
+                    <div className="grid md:grid-cols-2 gap-8">
+                        <div>
+                            <h5 className="font-bold text-gray-700 mb-2 text-sm uppercase">Navigatie</h5>
+                            {renderList(yacht.navigation_electronics)}
+                        </div>
+                        <div>
+                            <h5 className="font-bold text-gray-700 mb-2 text-sm uppercase">Exterieur</h5>
+                            {renderList(yacht.exterior_equipment)}
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            {/* DOCUMENTS SECTION */}
-            <div className="mb-8">
-              <button 
-                onClick={() => setShowDocuments(!showDocuments)}
-                className="text-blue-600 hover:text-blue-800 font-medium"
-              >
-                Documents
-              </button>
-              {showDocuments && (
-                <div className="mt-2 p-4 bg-gray-50 rounded">
-                  <p className="font-medium">Boat specifications</p>
+            {/* --- RIGHT COLUMN (Sidebar with Action Modules) --- */}
+            <div className="space-y-6">
+                
+                {/* 1. Broker/Action Card (Merging functionality into Sidebar) */}
+                <div className="bg-white rounded-lg shadow-md border border-gray-100 overflow-hidden sticky top-24 z-30">
+                    <div className="bg-[#003566] text-white p-4 text-center">
+                        <h3 className="font-serif text-xl font-bold">Interesse?</h3>
+                    </div>
+                    <div className="p-6 flex flex-col items-center">
+                        <div className="w-20 h-20 rounded-full bg-gray-200 mb-4 overflow-hidden border-4 border-white shadow-sm">
+                            <img src="https://ui-avatars.com/api/?name=Schepen+Kring&background=003566&color=fff" alt="Broker" className="w-full h-full object-cover" />
+                        </div>
+                        <h4 className="text-lg font-bold text-gray-900">Schepenkring Makelaardij</h4>
+                        <p className="text-xs text-gray-500 mb-6 uppercase tracking-wider">Uw jachtmakelaar</p>
+
+                        <div className="w-full space-y-3">
+                            {/* DYNAMIC ACTION BUTTONS */}
+                            
+                            {/* Case A: Auction */}
+                            {yacht.status === "For Bid" ? (
+                                <div className="bg-slate-50 p-4 border rounded-lg w-full mb-2">
+                                    <p className="text-xs text-center text-gray-500 mb-1">HUIDIG BOD</p>
+                                    <p className="text-2xl font-bold text-center text-[#003566] mb-3">€ {Number(yacht.current_bid || yacht.price).toLocaleString()}</p>
+                                    <div className="flex gap-2">
+                                        <input 
+                                            type="number" 
+                                            value={bidAmount}
+                                            onChange={(e) => setBidAmount(e.target.value)}
+                                            placeholder="Bod..."
+                                            className="w-full border p-2 rounded text-sm"
+                                        />
+                                        <Button onClick={placeBid} className="bg-[#003566]"><Gavel size={16}/></Button>
+                                    </div>
+                                </div>
+                            ) : (
+                                /* Case B: Direct Sale */
+                                <Button 
+                                    onClick={() => setPaymentMode("buy_now")}
+                                    className="w-full bg-[#003566] hover:bg-[#00284d] text-white py-6 text-sm uppercase tracking-widest font-bold"
+                                >
+                                    Koop Direct
+                                </Button>
+                            )}
+
+                            {/* Booking Action */}
+                            <Button 
+                                onClick={() => setPaymentMode("test_sail")}
+                                variant="outline" 
+                                className="w-full border-gray-300 hover:bg-gray-50 text-gray-700 py-6"
+                            >
+                                <Calendar className="mr-2 h-4 w-4" />
+                                Proefvaart Boeken
+                            </Button>
+                        </div>
+                    </div>
+                    
+                    <div className="bg-gray-50 p-4 border-t border-gray-100 flex justify-between">
+                         <button className="flex items-center gap-2 text-xs font-bold text-gray-500 hover:text-[#003566]">
+                            <Phone className="w-3 h-3" /> BEL ONS
+                         </button>
+                         <button className="flex items-center gap-2 text-xs font-bold text-gray-500 hover:text-[#003566]" onClick={() => window.print()}>
+                            <Printer className="w-3 h-3" /> PRINT
+                         </button>
+                    </div>
                 </div>
-              )}
+
+                {/* 2. Transaction Log (If Bids Exist) */}
+                {bids.length > 0 && (
+                     <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
+                        <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2 text-sm uppercase">
+                            <History className="w-4 h-4" /> Biedingen
+                        </h4>
+                        <div className="space-y-2 max-h-40 overflow-y-auto">
+                            {bids.map((bid, i) => (
+                                <div key={i} className="flex justify-between text-xs py-1 border-b border-gray-50 last:border-0">
+                                    <span className="text-gray-500">{bid.user?.name || "Gebruiker"}</span>
+                                    <span className="font-bold text-[#003566]">€ {Number(bid.amount).toLocaleString()}</span>
+                                </div>
+                            ))}
+                        </div>
+                     </div>
+                )}
             </div>
-
-            {/* GENERAL SPECIFICATIONS */}
-            <div className="mb-8">
-              <h2 className="text-xl font-bold text-gray-900 mb-4 border-b pb-2">
-                General specifications
-              </h2>
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">Asking price</p>
-                    <p className="text-lg font-bold">€ {yacht.price.toLocaleString("nl-NL")},-</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">VAT status</p>
-                    <p className="text-lg">{yacht.vat_status || "Incl. BTW"}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">Categories</p>
-                    <p className="text-lg">Speedboats and sports boats</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">Brand / Model</p>
-                    <p className="text-lg">{yacht.make} {yacht.model}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">Year of construction</p>
-                    <p className="text-lg">{yacht.year}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">Motor</p>
-                    <p className="text-lg">{yacht.engine_power} pk {yacht.engine_brand} {yacht.engine_type}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">berth</p>
-                    <p className="text-lg">in verkoophaven Schepenkring Roermond</p>
-                  </div>
-                </div>
-
-                <div className="mt-6">
-                  <p className="text-sm font-medium text-gray-700 mb-2">Comments</p>
-                  <p className="text-gray-700">
-                    {yacht.description || "Quicksilver 645 Cruiser – Compacte en veelzijdige sportcruiser met een 150 pk Mercury buitenboordmotor en Harbeck wegtrailer, comfortabele kajuit voor twee, ruime cockpit met lounge/eetfaciliteiten, en uitstekende handling en veiligheidsvoorzieningen."}
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">Reference code</p>
-                    <p className="text-lg">{yacht.reference_code}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">Building material</p>
-                    <p className="text-lg">{yacht.construction_material}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">L x W x D approx.</p>
-                    <p className="text-lg">{yacht.length} m x {yacht.beam} m x {yacht.draft} m</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">Sleeps</p>
-                    <p className="text-lg">{yacht.berths}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* ENGINE AND ELECTRICS */}
-            <div className="mb-8">
-              <h2 className="text-xl font-bold text-gray-900 mb-4 border-b pb-2">
-                Engine and electrics
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Number of identical engines</p>
-                  <p className="text-lg">{yacht.number_of_identical_engines || "1"}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Start type</p>
-                  <p className="text-lg">{yacht.start_type || "Electric"}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Type</p>
-                  <p className="text-lg">{yacht.engine_type || "Outboard"}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Brand</p>
-                  <p className="text-lg">{yacht.engine_brand || "Mercury"}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Door Design</p>
-                  <p className="text-lg">{yacht.engine_model || "ME F150 XLEFI-4266"}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Serial Number</p>
-                  <p className="text-lg">{yacht.serial_number || "2B44366"}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Year of construction</p>
-                  <p className="text-lg">{yacht.engine_year || "2018"}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Amount of cilinders</p>
-                  <p className="text-lg">{yacht.amount_of_cylinders || "4"}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Power</p>
-                  <p className="text-lg">{yacht.engine_power || "150"} hp</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Hour meter</p>
-                  <p className="text-lg">{formatCheckbox(yacht.hour_meter)}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Running hours</p>
-                  <p className="text-lg">{yacht.running_hours || "80 (+/-)"}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Fuel</p>
-                  <p className="text-lg">{yacht.fuel_type || "Petrol Euro 95"}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Consumption</p>
-                  <p className="text-lg">{yacht.fuel_consumption || "7 liters/hour"}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Propulsion</p>
-                  <p className="text-lg">{yacht.propulsion || "Screw"}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Fuel tank quantity</p>
-                  <p className="text-lg">{formatCheckbox(yacht.fuel_tank_quantity)}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Max speed</p>
-                  <p className="text-lg">{yacht.max_speed || "65 km/h"}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Tachometer</p>
-                  <p className="text-lg">{formatCheckbox(yacht.tachometer)}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Battery</p>
-                  <p className="text-lg">
-                    {formatCheckbox(yacht.battery)} {yacht.battery_capacity && `Capacity: ${yacht.battery_capacity}`}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Dynamo</p>
-                  <p className="text-lg">{formatCheckbox(yacht.dynamo)}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Voltmeter</p>
-                  <p className="text-lg">{formatCheckbox(yacht.voltmeter)}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Voltage</p>
-                  <p className="text-lg">{yacht.voltage || "12 volt"}</p>
-                </div>
-                <div className="md:col-span-2">
-                  <p className="text-sm font-medium text-gray-700">Comments</p>
-                  <p className="text-lg">{yacht.engine_comments || "Motor with tracker"}</p>
-                </div>
-              </div>
-            </div>
-
-            {/* ACCOMMODATION */}
-            <div className="mb-8">
-              <h2 className="text-xl font-bold text-gray-900 mb-4 border-b pb-2">
-                Accommodation
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Open Cockpit (OK)</p>
-                  <p className="text-lg">{formatCheckbox(yacht.open_cockpit)}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Normal clearance height</p>
-                  <p className="text-lg">{yacht.clearance || "179.0"} m</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Draught</p>
-                  <p className="text-lg">{yacht.draft || "49 cm"}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Waterline length</p>
-                  <p className="text-lg">{yacht.waterline_length || "612 cm"}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Water displacement</p>
-                  <p className="text-lg">{yacht.water_displacement || "1060 kg"}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Control</p>
-                  <p className="text-lg">{yacht.control || "Steering wheel"}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Place control</p>
-                  <p className="text-lg">{yacht.control_place || "Outside"}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Trim flaps</p>
-                  <p className="text-lg">{formatCheckbox(yacht.trim_flaps)}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">cabins</p>
-                  <p className="text-lg">{yacht.cabins || "1"}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Sleeps</p>
-                  <p className="text-lg">{yacht.berths || "2 solid"}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Type of interior</p>
-                  <p className="text-lg">{yacht.interior_type || "Modern, light"}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Mattresses</p>
-                  <p className="text-lg">{formatCheckbox(yacht.mattresses)}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Water tank & material</p>
-                  <p className="text-lg">{yacht.water_tank || "45 liters Plastic"}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Water system</p>
-                  <p className="text-lg">{yacht.water_system || "Pressure system Electric pump"}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Number of showers</p>
-                  <p className="text-lg">{yacht.number_of_showers || "1"}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Radio CD player</p>
-                  <p className="text-lg">{yacht.radio_cd_player || "Fusion stereo system"}</p>
-                </div>
-              </div>
-            </div>
-
-            {/* NAVIGATION AND ELECTRONICS */}
-            <div className="mb-8">
-              <h2 className="text-xl font-bold text-gray-900 mb-4 border-b pb-2">
-                Navigation and electronics
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Kompas</p>
-                  <p className="text-lg">{formatCheckbox(yacht.kompas)}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Log/speed</p>
-                  <p className="text-lg">{formatCheckbox(yacht.log_speed)}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Depth gauge</p>
-                  <p className="text-lg">{formatCheckbox(yacht.depth_gauge)}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Navigation lights</p>
-                  <p className="text-lg">{formatCheckbox(yacht.navigation_lights)}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Rudder angle indicator</p>
-                  <p className="text-lg">{formatCheckbox(yacht.rudder_angle_indicator)}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">GPS</p>
-                  <p className="text-lg">{yacht.gps || "Simrad Evo 3"}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">chart plotter</p>
-                  <p className="text-lg">{yacht.chart_plotter || "Simrad Evo 3 with Europe map from Navionics"}</p>
-                </div>
-                <div className="md:col-span-2">
-                  <p className="text-sm font-medium text-gray-700">Fishfinder</p>
-                  <p className="text-lg">{yacht.fishfinder || "Simrad Evo 3"}</p>
-                </div>
-                <div className="md:col-span-2">
-                  <p className="text-sm font-medium text-gray-700">Radio CD player</p>
-                  <p className="text-lg">{yacht.radio_cd_player || "Fusion stereo system"}</p>
-                </div>
-                <div className="md:col-span-2">
-                  <p className="text-sm font-medium text-gray-700">Refrigerator & food</p>
-                  <p className="text-lg">{yacht.refrigerator || "Electric 12V cool box"}</p>
-                </div>
-              </div>
-            </div>
-
-            {/* OUTSIDE EQUIPMENT */}
-            <div className="mb-8">
-              <h2 className="text-xl font-bold text-gray-900 mb-4 border-b pb-2">
-                Outside equipment
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Anchors & Material</p>
-                  <p className="text-lg">{yacht.anchors_material || "Delta anchor 4kg"}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Anchor rod</p>
-                  <p className="text-lg">{formatCheckbox(yacht.anchor_rod)}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Sprayhood</p>
-                  <p className="text-lg">{formatCheckbox(yacht.sprayhood)}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Cockpit tent</p>
-                  <p className="text-lg">{formatCheckbox(yacht.cockpit_tent)}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Tarpaulin(s)</p>
-                  <p className="text-lg">{yacht.tarpaulin || "Winter tent and transport hood"}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Pulpit and bastion(s)</p>
-                  <p className="text-lg">{formatCheckbox(yacht.pulpit_bastion)}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Swimming platform</p>
-                  <p className="text-lg">{formatCheckbox(yacht.swimming_platform)}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Swimming ladder</p>
-                  <p className="text-lg">{formatCheckbox(yacht.swimming_ladder)}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Trailer</p>
-                  <p className="text-lg">{yacht.trailer || "Harbeck 2200 KG"}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Teak deck</p>
-                  <p className="text-lg">{formatCheckbox(yacht.teak_deck)}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Fenders, lines</p>
-                  <p className="text-lg">{formatCheckbox(yacht.fenders_lines)}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">cockpit table</p>
-                  <p className="text-lg">{formatCheckbox(yacht.cockpit_table)}</p>
-                </div>
-                <div className="md:col-span-2">
-                  <p className="text-sm font-medium text-gray-700">Comments</p>
-                  <p className="text-lg">{yacht.equipment_comments || "Water ski pole"}</p>
-                </div>
-              </div>
-            </div>
-
-            {/* SAFETY */}
-            <div className="mb-8">
-              <h2 className="text-xl font-bold text-gray-900 mb-4 border-b pb-2">
-                Safety
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Lifebuoy</p>
-                  <p className="text-lg">{formatCheckbox(yacht.lifebuoy)}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Bilge pump</p>
-                  <p className="text-lg">{formatCheckbox(yacht.bilge_pump)}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Fire extinguisher</p>
-                  <p className="text-lg">{formatCheckbox(yacht.fire_extinguisher)}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Self-draining cockpit</p>
-                  <p className="text-lg">{formatCheckbox(yacht.self_draining_cockpit)}</p>
-                </div>
-                <div className="md:col-span-2">
-                  <p className="text-sm font-medium text-gray-700">Comments</p>
-                  <p className="text-lg">{yacht.safety_comments || "1x windshield wiper"}</p>
-                </div>
-              </div>
-            </div>
-
-            {/* MEDIA SECTION */}
-            <div className="mb-8">
-              <h2 className="text-xl font-bold text-gray-900 mb-4 border-b pb-2">
-                Media of the Quicksilver 645 Cruiser
-              </h2>
-              <p className="text-gray-700">Photos and documents will be displayed here.</p>
-            </div>
-          </div>
-
-          {/* RIGHT COLUMN - CONTACT & INFO */}
-          <div className="lg:col-span-1">
-            {/* DEALER INFO */}
-            <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 mb-6">
-              <h3 className="text-lg font-bold text-gray-900 mb-4">
-                Makelaar - Schepenkring Roermond
-              </h3>
-              <div className="space-y-3">
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Phone number</p>
-                  <p className="text-lg">+31 (0) 475 315661</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Address</p>
-                  <p className="text-lg">Herteneweg 2, Roermond 6049 AA</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Email</p>
-                  <p className="text-lg">roermond@schepenkring.nl</p>
-                </div>
-                <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white mt-4">
-                  Route calculate route
-                </Button>
-              </div>
-            </div>
-
-            {/* ADDITIONAL SPECS */}
-            <div className="border border-gray-200 rounded-lg p-6 mb-6">
-              <h3 className="text-lg font-bold text-gray-900 mb-4">
-                More information about the Quicksilver 645 Cruiser
-              </h3>
-              <div className="space-y-4">
-                <div>
-                  <p className="text-sm font-medium text-gray-700">werf</p>
-                  <p className="text-lg">Quicksilver</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">CE</p>
-                  <p className="text-lg">C</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">CE max weight</p>
-                  <p className="text-lg">845 kg</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Hull shape</p>
-                  <p className="text-lg">V-bottom</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Hull color</p>
-                  <p className="text-lg">Black</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Deck and superstructure colour</p>
-                  <p className="text-lg">White</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Deck and superstructure construction</p>
-                  <p className="text-lg">Grp (Polyester) Anti-slip and teak</p>
-                </div>
-              </div>
-            </div>
-
-            {/* CONTACT FORM */}
-            <div className="border border-gray-200 rounded-lg p-6">
-              <h3 className="text-lg font-bold text-gray-900 mb-4">
-                More information about the Quicksilver 645 Cruiser
-              </h3>
-              <form className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Your first and last name*
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Phone number*
-                  </label>
-                  <input
-                    type="tel"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Email address*
-                  </label>
-                  <input
-                    type="email"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    I would like the following... *
-                  </label>
-                  <select className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option>Select an option</option>
-                    <option>More information</option>
-                    <option>Schedule a viewing</option>
-                    <option>Request a test sail</option>
-                    <option>Make an offer</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Your comment or question about the Quicksilver 645 Cruiser
-                  </label>
-                  <textarea
-                    rows={4}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white">
-                  Send
-                </Button>
-                <p className="text-xs text-gray-500 mt-2">* Required field</p>
-              </form>
-            </div>
-          </div>
         </div>
       </div>
 
-      {/* PRIVACY FOOTER */}
-      <div className="border-t border-gray-200 py-4">
-        <div className="max-w-7xl mx-auto px-4 text-center text-sm text-gray-600">
-          <p>Privacy - Terms</p>
-        </div>
-      </div>
+      {/* --- MODAL (Calendar/Booking) --- */}
+      <AnimatePresence>
+        {paymentMode && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              onClick={() => setPaymentMode(null)}
+            />
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="relative bg-white rounded-xl shadow-2xl p-6 w-full max-w-lg z-[101] max-h-[90vh] overflow-y-auto"
+            >
+                <div className="flex justify-between items-center mb-6 border-b pb-4">
+                    <h3 className="text-xl font-serif font-bold text-[#003566]">
+                        {paymentMode === "buy_now" ? "Directe Aankoop" : "Proefvaart Inplannen"}
+                    </h3>
+                    <button onClick={() => setPaymentMode(null)} className="text-gray-400 hover:text-gray-600">
+                        <X className="w-6 h-6" />
+                    </button>
+                </div>
+
+                {paymentStatus === "success" ? (
+                    <div className="text-center py-10">
+                        <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <CheckCircle2 size={32} />
+                        </div>
+                        <h3 className="text-lg font-bold text-[#003566]">Aanvraag Ontvangen!</h3>
+                        <p className="text-sm text-gray-500 mt-2">Wij nemen spoedig contact met u op.</p>
+                    </div>
+                ) : (
+                    <div className="space-y-6">
+                        {paymentMode === "test_sail" && (
+                            <>
+                                {/* Calendar Header */}
+                                <div className="flex justify-between items-center">
+                                    <button onClick={() => setCurrentMonth(new Date(currentMonth.setMonth(currentMonth.getMonth() - 1)))} className="p-1 hover:bg-gray-100 rounded">&larr;</button>
+                                    <span className="font-bold text-[#003566]">{DUTCH_MONTHS[currentMonth.getMonth()]} {currentMonth.getFullYear()}</span>
+                                    <button onClick={() => setCurrentMonth(new Date(currentMonth.setMonth(currentMonth.getMonth() + 1)))} className="p-1 hover:bg-gray-100 rounded">&rarr;</button>
+                                </div>
+                                
+                                {/* Days Grid */}
+                                <div className="grid grid-cols-7 gap-1 text-center mb-4">
+                                    {DUTCH_DAYS.map(d => <span key={d} className="text-[10px] text-gray-400 font-bold uppercase">{d}</span>)}
+                                    {calendarDays.map((day, i) => (
+                                        <button
+                                            key={i}
+                                            disabled={!day.available || !day.isCurrentMonth}
+                                            onClick={() => handleDateSelect(day.date, day.available)}
+                                            className={cn(
+                                                "aspect-square rounded flex flex-col items-center justify-center text-xs transition-colors relative",
+                                                day.date.toDateString() === selectedDate?.toDateString() ? "bg-[#003566] text-white" : 
+                                                day.available ? "bg-green-50 text-green-800 hover:bg-green-100" : "text-gray-300 cursor-not-allowed"
+                                            )}
+                                        >
+                                            <span className="font-bold">{day.date.getDate()}</span>
+                                            {day.available && <span className="w-1 h-1 bg-green-500 rounded-full absolute bottom-1" />}
+                                        </button>
+                                    ))}
+                                </div>
+
+                                {/* Time Slots */}
+                                {availableSlots.length > 0 && (
+                                    <div className="grid grid-cols-3 gap-2">
+                                        {availableSlots.map(time => (
+                                            <button 
+                                                key={time} 
+                                                onClick={() => setSelectedTime(time)}
+                                                className={cn(
+                                                    "py-2 text-xs border rounded transition-all",
+                                                    selectedTime === time ? "bg-[#003566] text-white border-[#003566]" : "hover:border-[#003566] text-gray-600"
+                                                )}
+                                            >
+                                                {time}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </>
+                        )}
+
+                        {/* Contact Form (Required for both modes) */}
+                        <div className="space-y-3 bg-gray-50 p-4 rounded-lg">
+                            <h4 className="text-xs font-bold uppercase text-gray-500">Uw gegevens</h4>
+                            <input 
+                                className="w-full border p-2 rounded text-sm" 
+                                placeholder="Naam" 
+                                value={bookingForm.name}
+                                onChange={e => setBookingForm({...bookingForm, name: e.target.value})}
+                            />
+                            <input 
+                                className="w-full border p-2 rounded text-sm" 
+                                placeholder="E-mail" 
+                                value={bookingForm.email}
+                                onChange={e => setBookingForm({...bookingForm, email: e.target.value})}
+                            />
+                            <input 
+                                className="w-full border p-2 rounded text-sm" 
+                                placeholder="Telefoon" 
+                                value={bookingForm.phone}
+                                onChange={e => setBookingForm({...bookingForm, phone: e.target.value})}
+                            />
+                            {paymentMode === "buy_now" && (
+                                <textarea
+                                    className="w-full border p-2 rounded text-sm"
+                                    placeholder="Opmerkingen / Vragen over aankoop"
+                                    rows={3}
+                                    value={bookingForm.notes}
+                                    onChange={e => setBookingForm({...bookingForm, notes: e.target.value})}
+                                />
+                            )}
+                        </div>
+
+                        <Button 
+                            onClick={paymentMode === "buy_now" ? handleBuyNow : handleTestSailBooking}
+                            disabled={paymentStatus === "processing"}
+                            className="w-full bg-[#003566] hover:bg-[#00284d] h-12 text-lg"
+                        >
+                            {paymentStatus === "processing" ? <Loader2 className="animate-spin" /> : "Bevestigen"}
+                        </Button>
+                    </div>
+                )}
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
