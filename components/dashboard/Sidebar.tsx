@@ -134,7 +134,7 @@ export function Sidebar({ onCollapse }: { onCollapse?: (collapsed: boolean) => v
     },
     { 
       title: "Assign Tasks", 
-      href: userRole === "Admin" ? "/dashboard/admin/assign-tasks" : "/dashboard/assign-tasks", 
+      href: userRole === "Admin" ? "/dashboard/admin/tasks" : "/dashboard/admin/tasks", 
       icon: Calendar, 
       roles: ["Admin", "Employee"],
       page_key: "assign_tasks"  // matches backend page_key
