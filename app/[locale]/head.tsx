@@ -7,8 +7,8 @@ export default function Head() {
       <meta name="mobile-web-app-capable" content="yes" />
       <meta name="apple-mobile-web-app-capable" content="yes" />
       <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-      <meta name="apple-mobile-web-app-title" content="Answer24" />
-      <link rel="apple-touch-icon" href="/icon-192.png" />
+      <meta name="apple-mobile-web-app-title" content="Schepen Kring" />
+      <link rel="apple-touch-icon" href="logo.png" />
       <link
         href="https://api.mapbox.com/mapbox-gl-js/v3.12.0/mapbox-gl.css"
         rel="stylesheet"
