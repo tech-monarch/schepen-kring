@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Menu, X, RefreshCw, LayoutDashboard, ArrowRight } from "lucide-react";
+import { Menu, X, RefreshCw, LayoutDashboard, ArrowRight, User } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import LanguageSwitcher from "./LanguageSwitcher";
 import { Link } from "@/i18n/navigation";
@@ -11,37 +11,122 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import ANSWER24LOGO from "@/public/schepenkring-logo.png";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+
+// Storage URL constant
+const STORAGE_URL = "https://schepen-kring.nl/storage/";
+// Hardcoded API URL
+const API_URL = "https://schepen-kring.nl/api";
+
+// User profile type
+interface UserProfile {
+  id: number;
+  name: string;
+  email: string;
+  userType: 'Admin' | 'Partner' | 'Employee' | string;
+  profile_image?: string;
+  phone_number?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+}
 
 export function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isImpersonating, setIsImpersonating] = useState(false);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [loadingProfile, setLoadingProfile] = useState(false);
 
   const t = useTranslations("Navigation");
   const currentPath = usePathname();
+
+  // Fetch user profile data
+  const fetchUserProfile = async () => {
+    try {
+      setLoadingProfile(true);
+      const token = localStorage.getItem("auth_token");
+      if (!token) {
+        console.log("No auth token found");
+        return;
+      }
+
+      const response = await fetch(`${API_URL}/profile`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setUserProfile(data);
+        // Update localStorage with fresh data
+        localStorage.setItem("user_data", JSON.stringify(data));
+      } else {
+        console.error("Failed to fetch profile");
+        // Fallback to localStorage data
+        const storedUser = localStorage.getItem("user_data");
+        if (storedUser) {
+          setUserProfile(JSON.parse(storedUser));
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching user profile:", error);
+      // Fallback to localStorage data
+      const storedUser = localStorage.getItem("user_data");
+      if (storedUser) {
+        setUserProfile(JSON.parse(storedUser));
+      }
+    } finally {
+      setLoadingProfile(false);
+    }
+  };
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handleScroll);
 
-    const token =
-      typeof window !== "undefined" ? localStorage.getItem("auth_token") : null;
-    const adminToken =
-      typeof window !== "undefined"
-        ? localStorage.getItem("admin_token")
-        : null;
+    const token = localStorage.getItem("auth_token");
+    const adminToken = localStorage.getItem("admin_token");
 
     setIsLoggedIn(!!token);
     setIsImpersonating(!!adminToken);
 
+    // Fetch user profile if logged in
+    if (token) {
+      fetchUserProfile();
+    } else {
+      setUserProfile(null);
+    }
+
     return () => window.removeEventListener("scroll", handleScroll);
   }, [currentPath]);
 
+  // Get dashboard link based on user type
+  const getDashboardLink = () => {
+    if (!userProfile) return "/dashboard";
+    
+    switch (userProfile.userType?.toLowerCase()) {
+      case 'admin':
+        return "/dashboard/admin";
+      case 'partner':
+        return "/dashboard/partner";
+      case 'employee':
+        return "/dashboard";
+      default:
+        return "/dashboard";
+    }
+  };
+
+  // Format user type for display
+  const formatUserType = (userType?: string) => {
+    if (!userType) return "";
+    return userType.charAt(0).toUpperCase() + userType.slice(1).toLowerCase();
+  };
+
   // --- LOGIC: HIDE NAVBAR ON HOMEPAGE IF LOGGED IN ---
-  // If we are on the homepage ('/' or local variants like '/en') and logged in, don't show the navbar.
-  // Note: currentPath in Next-intl often includes the locale (e.g., "/en").
-  // We check if it ends with / or is empty after locale.
   const isHomePage = currentPath === "/" || currentPath.endsWith("/");
   if (isLoggedIn && isHomePage) {
     return null;
@@ -122,20 +207,52 @@ export function Navbar() {
             <LanguageSwitcher />
           </div>
 
-          {/* {isLoggedIn ? (
-            <Link href="/nl/dashboard">
-              <button className="flex items-center gap-3 px-10 py-3.5 bg-[#003566] text-white text-[9px] font-sans font-bold uppercase tracking-[0.3em] hover:bg-[#001d3d] transition-all">
-                Portal
-                <ArrowRight size={12} className="group-hover:translate-x-1 transition-transform" />
-              </button>
-            </Link>
+          {isLoggedIn ? (
+            <div className="flex items-center gap-6">
+              {/* Dashboard Button */}
+              <Link href={getDashboardLink()}>
+                <button className="flex items-center gap-3 px-8 py-3 bg-[#003566] text-white text-[9px] font-sans font-bold uppercase tracking-[0.3em] hover:bg-[#001d3d] transition-all group">
+                  Dashboard
+                  <ArrowRight size={12} className="group-hover:translate-x-1 transition-transform" />
+                </button>
+              </Link>
+
+              {/* User Profile Section */}
+              <div className="flex items-center gap-4 group">
+                <div className="flex items-center gap-3">
+                  <Avatar className="h-10 w-10 border-2 border-slate-100 group-hover:border-[#003566] transition-all duration-300">
+                    <AvatarImage
+                      src={
+                        userProfile?.profile_image
+                          ? `${STORAGE_URL}${userProfile.profile_image}`
+                          : "/default-avatar.png" // Add a default avatar image or use initials
+                      }
+                      className="object-cover"
+                      alt={userProfile?.name || "User"}
+                    />
+                    <AvatarFallback className="bg-slate-100 text-[#003566] text-xs font-bold">
+                      {userProfile?.name?.substring(0, 2).toUpperCase() || "U"}
+                    </AvatarFallback>
+                  </Avatar>
+                  
+                  <div className="text-right">
+                    <p className="text-[11px] font-bold text-[#003566] leading-tight">
+                      {userProfile?.name || "User"}
+                    </p>
+                    <p className="text-[9px] text-slate-500 font-medium uppercase tracking-tight mt-1">
+                      {formatUserType(userProfile?.userType)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
           ) : (
             <Link href="/login">
               <button className="px-10 py-3.5 border border-[#003566] text-[#003566] text-[9px] font-sans font-bold uppercase tracking-[0.3em] hover:bg-[#003566] hover:text-white transition-all duration-500">
                 Employee Login
               </button>
             </Link>
-          )} */}
+          )}
         </div>
 
         <button
@@ -183,14 +300,61 @@ export function Navbar() {
               ))}
             </div>
 
-            {/* <div className="mt-auto flex flex-col gap-6">
-               <div className="py-8 border-t border-slate-100"><LanguageSwitcher /></div>
-               <Link href={isLoggedIn ? "/dashboard" : "/login"} onClick={() => setIsMobileMenuOpen(false)}>
-                <Button className="w-full bg-[#003566] text-white font-sans font-bold h-16 rounded-none uppercase tracking-[0.3em]">
-                  {isLoggedIn ? "Access Dashboard" : "Client Portal Login"}
-                </Button>
-              </Link>
-            </div> */}
+            <div className="mt-auto flex flex-col gap-6">
+              <div className="py-8 border-t border-slate-100">
+                <LanguageSwitcher />
+              </div>
+              
+              {isLoggedIn ? (
+                <div className="space-y-6">
+                  {/* User Profile in Mobile Menu */}
+                  <div className="flex items-center gap-4 p-4 bg-slate-50 rounded-lg">
+                    <Avatar className="h-16 w-16 border-2 border-white">
+                      <AvatarImage
+                        src={
+                          userProfile?.profile_image
+                            ? `${STORAGE_URL}${userProfile.profile_image}`
+                            : "/default-avatar.png"
+                        }
+                        className="object-cover"
+                        alt={userProfile?.name || "User"}
+                      />
+                      <AvatarFallback className="bg-[#003566] text-white text-lg font-bold">
+                        {userProfile?.name?.substring(0, 2).toUpperCase() || "U"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="text-lg font-bold text-[#003566]">
+                        {userProfile?.name || "User"}
+                      </p>
+                      <p className="text-sm text-slate-600">
+                        {userProfile?.email || "User Email"}
+                      </p>
+                      <p className="text-xs text-slate-500 mt-1 uppercase tracking-wider">
+                        {formatUserType(userProfile?.userType)}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Dashboard Button in Mobile Menu */}
+                  <Link 
+                    href={getDashboardLink()} 
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <Button className="w-full bg-[#003566] text-white font-sans font-bold h-16 rounded-none uppercase tracking-[0.3em] hover:bg-[#001d3d]">
+                      <LayoutDashboard size={20} className="mr-3" />
+                      Go to Dashboard
+                    </Button>
+                  </Link>
+                </div>
+              ) : (
+                <Link href="/login" onClick={() => setIsMobileMenuOpen(false)}>
+                  <Button className="w-full bg-[#003566] text-white font-sans font-bold h-16 rounded-none uppercase tracking-[0.3em]">
+                    Employee Login
+                  </Button>
+                </Link>
+              )}
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
