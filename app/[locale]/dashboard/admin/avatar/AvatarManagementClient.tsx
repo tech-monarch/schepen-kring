@@ -138,7 +138,7 @@ export default function AdminAvatarPage() {
                 Create and manage your AI avatars with ease
               </p>
             </div>
-            <Link href="/dashboard/admin/avatar/create">
+            <Link href="/nl/dashboard/admin/avatar/create">
               <button className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-medium rounded-xl hover:from-indigo-700 hover:to-violet-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
                 <Plus className="h-5 w-5 mr-2" />
                 Create Avatar
@@ -217,7 +217,7 @@ export default function AdminAvatarPage() {
                 : "Get started by creating your first avatar"}
             </p>
             {!searchTerm && filterPlan === "all" && (
-              <Link href="/dashboard/admin/avatar/create">
+              <Link href="/nl/dashboard/admin/avatar/create">
                 <button className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-medium rounded-xl hover:from-indigo-700 hover:to-violet-700 transition-all duration-200 shadow-lg hover:shadow-xl">
                   <Plus className="w-5 h-5 mr-2" />
                   Create Your First Avatar

@@ -1,14 +1,14 @@
-'use client';
-import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+"use client";
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-  CardFooter
-} from '@/components/ui/card';
+  CardFooter,
+} from "@/components/ui/card";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,7 +18,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+} from "@/components/ui/alert-dialog";
 import {
   Table,
   TableBody,
@@ -26,34 +26,53 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from "@/components/ui/table";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { PlusCircle, Edit, Trash2, FileText, FileImage, AlertCircle, Calendar, Eye, Search, MoreHorizontal } from 'lucide-react';
-import Image from 'next/image';
+} from "@/components/ui/select";
+import {
+  PlusCircle,
+  Edit,
+  Trash2,
+  FileText,
+  FileImage,
+  AlertCircle,
+  Calendar,
+  Eye,
+  Search,
+  MoreHorizontal,
+} from "lucide-react";
+import Image from "next/image";
 import { toast } from "react-toastify";
-import { Blog } from '@/types/blog.d';
+import { Blog } from "@/types/blog.d";
 import { deleteBlog, getAllBlogs } from "@/app/[locale]/actions/blog-utils";
 import { updateBlog } from "@/app/[locale]/actions/blog";
-import BlogSkeleton from '@/components/blog/BlogSkeleton';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
-import { Link } from '@/i18n/navigation';
+import BlogSkeleton from "@/components/blog/BlogSkeleton";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import { Link } from "@/i18n/navigation";
 
 const BlogManagement = () => {
   const [blogs, setBlogs] = useState<Blog[]>([]);
   const [filteredBlogs, setFilteredBlogs] = useState<Blog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'published' | 'draft'>('all');
-  const [viewMode, setViewMode] = useState<'table' | 'grid'>('grid');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<
+    "all" | "published" | "draft"
+  >("all");
+  const [viewMode, setViewMode] = useState<"table" | "grid">("grid");
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [blogToDelete, setBlogToDelete] = useState<string | null>(null);
 
@@ -64,7 +83,7 @@ const BlogManagement = () => {
         const blogData = await getAllBlogs();
         setBlogs(blogData.data);
       } catch (err) {
-        setError('Failed to fetch blogs.');
+        setError("Failed to fetch blogs.");
       } finally {
         setIsLoading(false);
       }
@@ -74,18 +93,20 @@ const BlogManagement = () => {
 
   useEffect(() => {
     let filtered = blogs;
-    
+
     if (searchTerm) {
-      filtered = filtered.filter(blog => 
-        blog.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (blog.excerpt && blog.excerpt.toLowerCase().includes(searchTerm.toLowerCase()))
+      filtered = filtered.filter(
+        (blog) =>
+          blog.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (blog.excerpt &&
+            blog.excerpt.toLowerCase().includes(searchTerm.toLowerCase())),
       );
     }
-    
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(blog => blog.status === statusFilter);
+
+    if (statusFilter !== "all") {
+      filtered = filtered.filter((blog) => blog.status === statusFilter);
     }
-    
+
     setFilteredBlogs(filtered);
   }, [blogs, searchTerm, statusFilter]);
 
@@ -96,82 +117,94 @@ const BlogManagement = () => {
 
   const handleDeleteConfirm = async () => {
     if (!blogToDelete) return;
-    
+
     try {
-      const token = localStorage.getItem('auth_token');
+      const token = localStorage.getItem("auth_token");
       if (!token) {
-        setError('Authentication required. Please log in again.');
+        setError("Authentication required. Please log in again.");
         return;
       }
       const result = await deleteBlog(blogToDelete, token);
-      
-      if (result && 'errors' in result && result.errors) {
-        console.error('Delete errors:', result.errors);
+
+      if (result && "errors" in result && result.errors) {
+        console.error("Delete errors:", result.errors);
         const errorMessages = (result.errors as any)._form || [];
-        setError(Array.isArray(errorMessages) ? errorMessages.join('\n') : 'An error occurred');
+        setError(
+          Array.isArray(errorMessages)
+            ? errorMessages.join("\n")
+            : "An error occurred",
+        );
         return;
       }
-      
+
       setBlogs(blogs.filter((blog) => blog.id !== blogToDelete));
       setIsDeleteDialogOpen(false);
       toast.success("Blog post deleted successfully");
     } catch (err) {
-      console.error('Error deleting blog post:', err);
-      setError('An unexpected error occurred while deleting the blog post.');
+      console.error("Error deleting blog post:", err);
+      setError("An unexpected error occurred while deleting the blog post.");
       toast.error("Failed to delete the blog post. Please try again.");
     }
   };
 
   const toggleStatus = async (blog: Blog) => {
-    const newStatus = blog.status === 'published' ? 'draft' : 'published';
-    
+    const newStatus = blog.status === "published" ? "draft" : "published";
+
     try {
-      const token = localStorage.getItem('auth_token');
+      const token = localStorage.getItem("auth_token");
       if (!token) {
-        setError('Authentication required. Please log in again.');
+        setError("Authentication required. Please log in again.");
         return;
       }
 
       const formData = new FormData();
-      formData.append('title', blog.title);
-      formData.append('slug', blog.slug || '');
-      formData.append('content', blog.content);
-      formData.append('excerpt', blog.excerpt || '');
-      formData.append('status', newStatus);
-      formData.append('_method', 'PATCH');
+      formData.append("title", blog.title);
+      formData.append("slug", blog.slug || "");
+      formData.append("content", blog.content);
+      formData.append("excerpt", blog.excerpt || "");
+      formData.append("status", newStatus);
+      formData.append("_method", "PATCH");
 
       const result = await updateBlog(blog.id, formData, token);
-      
+
       if (result.success && result.data) {
-        setBlogs(blogs.map((b) => (b.id === blog.id ? result.data as Blog : b)));
-        toast.success(`Blog ${newStatus === 'published' ? 'published' : 'unpublished'} successfully`);
+        setBlogs(
+          blogs.map((b) => (b.id === blog.id ? (result.data as Blog) : b)),
+        );
+        toast.success(
+          `Blog ${newStatus === "published" ? "published" : "unpublished"} successfully`,
+        );
       } else {
-        const errorMsg = result.errors || 'Failed to update blog status';
+        const errorMsg = result.errors || "Failed to update blog status";
         toast.error(errorMsg);
         setError(errorMsg);
       }
     } catch (err) {
-      console.error('Error updating blog status:', err);
-      toast.error('Failed to update blog status');
+      console.error("Error updating blog status:", err);
+      toast.error("Failed to update blog status");
     }
   };
 
-  if (isLoading) return <BlogSkeleton/>;
+  if (isLoading) return <BlogSkeleton />;
 
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="container mx-auto px-4 py-8">
-        <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialog
+          open={isDeleteDialogOpen}
+          onOpenChange={setIsDeleteDialogOpen}
+        >
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>Delete Blog Post</AlertDialogTitle>
               <AlertDialogDescription>
-                Are you sure you want to delete this blog post? This action cannot be undone.
+                Are you sure you want to delete this blog post? This action
+                cannot be undone.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction 
+              <AlertDialogAction
                 onClick={handleDeleteConfirm}
                 className="bg-red-600 hover:bg-red-700"
               >
@@ -182,7 +215,7 @@ const BlogManagement = () => {
         </AlertDialog>
 
         {error && (
-          <Alert className='mb-6 border-red-200 bg-red-50'>
+          <Alert className="mb-6 border-red-200 bg-red-50">
             <AlertCircle className="h-4 w-4 text-red-600" />
             <AlertTitle className="text-red-800">Error</AlertTitle>
             <AlertDescription className="text-red-700">
@@ -193,22 +226,32 @@ const BlogManagement = () => {
 
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-slate-900">Blog Management</h1>
-            <p className="text-slate-600 mt-1">Manage your blog posts and content</p>
+            <h1 className="text-3xl font-bold text-slate-900">
+              Blog Management
+            </h1>
+            <p className="text-slate-600 mt-1">
+              Manage your blog posts and content
+            </p>
           </div>
-          
+
           <div className="flex gap-4">
             <div className="bg-white rounded-lg px-4 py-2 border shadow-sm">
               <div className="text-sm text-slate-600">Total Posts</div>
-              <div className="text-2xl font-semibold text-slate-900">{blogs.length}</div>
+              <div className="text-2xl font-semibold text-slate-900">
+                {blogs.length}
+              </div>
             </div>
             <div className="bg-white rounded-lg px-4 py-2 border shadow-sm">
               <div className="text-sm text-slate-600">Published</div>
-              <div className="text-2xl font-semibold text-green-600">{blogs.filter(b => b.status === 'published').length}</div>
+              <div className="text-2xl font-semibold text-green-600">
+                {blogs.filter((b) => b.status === "published").length}
+              </div>
             </div>
             <div className="bg-white rounded-lg px-4 py-2 border shadow-sm">
               <div className="text-sm text-slate-600">Drafts</div>
-              <div className="text-2xl font-semibold text-amber-600">{blogs.filter(b => b.status === 'draft').length}</div>
+              <div className="text-2xl font-semibold text-amber-600">
+                {blogs.filter((b) => b.status === "draft").length}
+              </div>
             </div>
           </div>
         </div>
@@ -225,8 +268,13 @@ const BlogManagement = () => {
                   className="pl-10 w-full sm:w-80"
                 />
               </div>
-              
-              <Select value={statusFilter} onValueChange={(value: 'all' | 'published' | 'draft') => setStatusFilter(value)}>
+
+              <Select
+                value={statusFilter}
+                onValueChange={(value: "all" | "published" | "draft") =>
+                  setStatusFilter(value)
+                }
+              >
                 <SelectTrigger className="w-full sm:w-40">
                   <SelectValue placeholder="Filter by status" />
                 </SelectTrigger>
@@ -240,21 +288,21 @@ const BlogManagement = () => {
 
             <div className="flex gap-2">
               <Button
-                variant={viewMode === 'table' ? 'default' : 'outline'}
+                variant={viewMode === "table" ? "default" : "outline"}
                 size="sm"
-                onClick={() => setViewMode('table')}
+                onClick={() => setViewMode("table")}
               >
                 Table
               </Button>
               <Button
-                variant={viewMode === 'grid' ? 'default' : 'outline'}
+                variant={viewMode === "grid" ? "default" : "outline"}
                 size="sm"
-                onClick={() => setViewMode('grid')}
+                onClick={() => setViewMode("grid")}
               >
                 Grid
               </Button>
-              
-              <Link href="/dashboard/admin/blog/create" passHref>
+
+              <Link href="/nl/dashboard/admin/blog/create" passHref>
                 <Button asChild className="bg-blue-600 hover:bg-blue-700">
                   <b>
                     <PlusCircle className="h-4 w-4 mr-2" />
@@ -267,7 +315,7 @@ const BlogManagement = () => {
         </div>
 
         {filteredBlogs.length > 0 ? (
-          viewMode === 'table' ? (
+          viewMode === "table" ? (
             <div className="bg-white rounded-lg border shadow-sm">
               <Table>
                 <TableHeader>
@@ -300,16 +348,25 @@ const BlogManagement = () => {
                       </TableCell>
                       <TableCell>
                         <div>
-                          <div className="font-medium text-slate-900 line-clamp-1">{blog.title}</div>
-                          <div className="text-sm text-slate-500 line-clamp-1">{blog.excerpt}</div>
+                          <div className="font-medium text-slate-900 line-clamp-1">
+                            {blog.title}
+                          </div>
+                          <div className="text-sm text-slate-500 line-clamp-1">
+                            {blog.excerpt}
+                          </div>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge 
-                          variant={blog.status === 'published' ? 'default' : 'secondary'}
-                          className={`cursor-pointer ${blog.status === 'published' 
-                            ? 'bg-green-100 text-green-800 hover:bg-green-200' 
-                            : 'bg-amber-100 text-amber-800 hover:bg-amber-200'
+                        <Badge
+                          variant={
+                            blog.status === "published"
+                              ? "default"
+                              : "secondary"
+                          }
+                          className={`cursor-pointer ${
+                            blog.status === "published"
+                              ? "bg-green-100 text-green-800 hover:bg-green-200"
+                              : "bg-amber-100 text-amber-800 hover:bg-amber-200"
                           }`}
                           onClick={() => toggleStatus(blog)}
                         >
@@ -317,10 +374,12 @@ const BlogManagement = () => {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-sm text-slate-600">
-                        {new Date(blog.created_at || '').toLocaleDateString()}
+                        {new Date(blog.created_at || "").toLocaleDateString()}
                       </TableCell>
                       <TableCell className="text-sm text-slate-600">
-                        {blog.published_at ? new Date(blog.published_at).toLocaleDateString() : '-'}
+                        {blog.published_at
+                          ? new Date(blog.published_at).toLocaleDateString()
+                          : "-"}
                       </TableCell>
                       <TableCell>
                         <DropdownMenu>
@@ -330,7 +389,10 @@ const BlogManagement = () => {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <Link href={`/admin/blog/update/${blog.slug}`} passHref>
+                            <Link
+                              href={`/admin/blog/update/${blog.slug}`}
+                              passHref
+                            >
                               <DropdownMenuItem asChild>
                                 <a>
                                   <Edit className="h-4 w-4 mr-2" />
@@ -338,12 +400,16 @@ const BlogManagement = () => {
                                 </a>
                               </DropdownMenuItem>
                             </Link>
-                            <DropdownMenuItem onClick={() => toggleStatus(blog)}>
+                            <DropdownMenuItem
+                              onClick={() => toggleStatus(blog)}
+                            >
                               <Eye className="h-4 w-4 mr-2" />
-                              {blog.status === 'published' ? 'Unpublish' : 'Publish'}
+                              {blog.status === "published"
+                                ? "Unpublish"
+                                : "Publish"}
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem 
+                            <DropdownMenuItem
                               className="text-red-600"
                               onClick={() => handleDeleteClick(blog.id)}
                             >
@@ -361,7 +427,10 @@ const BlogManagement = () => {
           ) : (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredBlogs.map((blog) => (
-                <Card key={blog.id} className="hover:shadow-lg transition-shadow">
+                <Card
+                  key={blog.id}
+                  className="hover:shadow-lg transition-shadow"
+                >
                   <div className="relative aspect-[16/9] overflow-hidden rounded-t-lg">
                     {blog.blog_image ? (
                       <img
@@ -375,24 +444,27 @@ const BlogManagement = () => {
                         <FileImage className="h-12 w-12 text-slate-400" />
                       </div>
                     )}
-                    
+
                     <div className="absolute top-3 left-3">
-                      <Badge 
-                        variant={blog.status === 'published' ? 'default' : 'secondary'}
-                        className={`${blog.status === 'published' 
-                          ? 'bg-green-600 hover:bg-green-700' 
-                          : 'bg-amber-600 hover:bg-amber-700'
+                      <Badge
+                        variant={
+                          blog.status === "published" ? "default" : "secondary"
+                        }
+                        className={`${
+                          blog.status === "published"
+                            ? "bg-green-600 hover:bg-green-700"
+                            : "bg-amber-600 hover:bg-amber-700"
                         } text-white`}
                       >
                         {blog.status}
                       </Badge>
                     </div>
-                    
+
                     <div className="absolute top-3 right-3">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button 
-                            variant="secondary" 
+                          <Button
+                            variant="secondary"
                             size="icon"
                             className="h-8 w-8 bg-white/90 hover:bg-white"
                           >
@@ -400,7 +472,10 @@ const BlogManagement = () => {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <Link href={`/dashboard/admin/blog/update/${blog.slug}`} passHref>
+                          <Link
+                            href={`/dashboard/admin/blog/update/${blog.slug}`}
+                            passHref
+                          >
                             <DropdownMenuItem asChild>
                               <b>
                                 <Edit className="h-4 w-4 mr-2" />
@@ -410,10 +485,12 @@ const BlogManagement = () => {
                           </Link>
                           <DropdownMenuItem onClick={() => toggleStatus(blog)}>
                             <Eye className="h-4 w-4 mr-2" />
-                            {blog.status === 'published' ? 'Unpublish' : 'Publish'}
+                            {blog.status === "published"
+                              ? "Unpublish"
+                              : "Publish"}
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem 
+                          <DropdownMenuItem
                             className="text-red-600"
                             onClick={() => handleDeleteClick(blog.id)}
                           >
@@ -424,27 +501,37 @@ const BlogManagement = () => {
                       </DropdownMenu>
                     </div>
                   </div>
-                  
+
                   <CardHeader className="pb-3">
                     <CardTitle className="text-lg leading-tight line-clamp-2">
                       {blog.title}
                     </CardTitle>
                   </CardHeader>
-                  
+
                   <CardContent className="pt-0">
                     <p className="text-sm text-slate-600 line-clamp-3">
                       {blog.excerpt}
                     </p>
                   </CardContent>
-                  
+
                   <CardFooter className="pt-0 flex items-center justify-between text-xs text-slate-500">
                     <div className="flex items-center gap-1">
                       <Calendar className="h-3 w-3" />
-                      <span>{new Date(blog.created_at || '').toLocaleDateString()}</span>
+                      <span>
+                        {new Date(blog.created_at || "").toLocaleDateString()}
+                      </span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Link href={`/dashboard/admin/blog/update/${blog.slug}`} passHref>
-                        <Button asChild variant="outline" size="sm" className="h-7 px-2">
+                      <Link
+                        href={`/dashboard/admin/blog/update/${blog.slug}`}
+                        passHref
+                      >
+                        <Button
+                          asChild
+                          variant="outline"
+                          size="sm"
+                          className="h-7 px-2"
+                        >
                           <b>
                             <Edit className="h-3 w-3 mr-1" />
                             Edit
@@ -464,16 +551,17 @@ const BlogManagement = () => {
                 <FileText className="h-12 w-12 text-slate-400" />
               </div>
               <h3 className="text-xl font-semibold text-slate-900 mb-2">
-                {searchTerm || statusFilter !== 'all' ? 'No posts found' : 'No blog posts yet'}
+                {searchTerm || statusFilter !== "all"
+                  ? "No posts found"
+                  : "No blog posts yet"}
               </h3>
               <p className="text-slate-600 mb-6 max-w-md">
-                {searchTerm || statusFilter !== 'all' 
-                  ? 'Try adjusting your search terms or filters to find what you\'re looking for.'
-                  : 'Get started by creating your first blog post to share your thoughts and ideas.'
-                }
+                {searchTerm || statusFilter !== "all"
+                  ? "Try adjusting your search terms or filters to find what you're looking for."
+                  : "Get started by creating your first blog post to share your thoughts and ideas."}
               </p>
-              {(!searchTerm && statusFilter === 'all') && (
-                <Link href="/dashboard/admin/blog/create" passHref>
+              {!searchTerm && statusFilter === "all" && (
+                <Link href="/nl/dashboard/admin/blog/create" passHref>
                   <Button asChild className="bg-blue-600 hover:bg-blue-700">
                     <b>
                       <PlusCircle className="h-4 w-4 mr-2" />

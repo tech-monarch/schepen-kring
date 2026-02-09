@@ -239,7 +239,7 @@ const BlogManagement = () => {
             </h1>
             <p className="text-slate-600 mt-1">Manage your blog posts</p>
           </div>
-          <Link href="/dashboard/admin/blog/create" passHref>
+          <Link href="/nl/dashboard/admin/blog/create" passHref>
             <Button asChild className="bg-blue-600 hover:bg-blue-700">
               <b>
                 <PlusCircle className="h-4 w-4 mr-2" /> New Post
@@ -381,7 +381,7 @@ const BlogManagement = () => {
               <p className="text-slate-500 mb-6">
                 Start by creating your first blog post.
               </p>
-              <Link href="/dashboard/admin/blog/create" passHref>
+              <Link href="/nl/dashboard/admin/blog/create" passHref>
                 <Button asChild className="bg-blue-600 hover:bg-blue-700">
                   <b>
                     <PlusCircle className="h-4 w-4 mr-2" /> Create Post

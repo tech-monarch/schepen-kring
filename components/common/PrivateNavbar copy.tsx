@@ -180,7 +180,7 @@ export function PrivateNavbar() {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>
                   <Link
-                    href="/dashboard/account"
+                    href="/nl/dashboard/account"
                     className="flex items-center w-full"
                   >
                     <UserIcon className="mr-2 h-4 w-4" />
@@ -189,7 +189,7 @@ export function PrivateNavbar() {
                 </DropdownMenuItem>
                 <DropdownMenuItem>
                   <Link
-                    href="/dashboard/chat"
+                    href="/nl/dashboard/chat"
                     className="flex items-center w-full"
                   >
                     <MessageCircle className="mr-2 h-4 w-4" />
@@ -198,7 +198,7 @@ export function PrivateNavbar() {
                 </DropdownMenuItem>
                 <DropdownMenuItem>
                   <Link
-                    href="/dashboard/wallet"
+                    href="/nl/dashboard/wallet"
                     className="flex items-center w-full"
                   >
                     <Wallet className="mr-2 h-4 w-4" />
@@ -207,7 +207,7 @@ export function PrivateNavbar() {
                 </DropdownMenuItem>
                 <DropdownMenuItem>
                   <Link
-                    href="/dashboard/admin/widget"
+                    href="/nl/dashboard/admin/widget"
                     className="flex items-center w-full"
                   >
                     <Puzzle className="mr-2 h-4 w-4" />
@@ -282,7 +282,7 @@ export function PrivateNavbar() {
 
                 <div className="space-y-2">
                   <Link
-                    href="/dashboard/account"
+                    href="/nl/dashboard/account"
                     className="flex items-center py-2 text-gray-700 hover:text-blue-600"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
@@ -291,7 +291,7 @@ export function PrivateNavbar() {
                   </Link>
 
                   <Link
-                    href="/dashboard/chat"
+                    href="/nl/dashboard/chat"
                     className="flex items-center py-2 text-gray-700 hover:text-blue-600"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
@@ -300,7 +300,7 @@ export function PrivateNavbar() {
                   </Link>
 
                   <Link
-                    href="/dashboard/wallet"
+                    href="/nl/dashboard/wallet"
                     className="flex items-center py-2 text-gray-700 hover:text-blue-600"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
@@ -309,7 +309,7 @@ export function PrivateNavbar() {
                   </Link>
 
                   <Link
-                    href="/dashboard/admin/widget"
+                    href="/nl/dashboard/admin/widget"
                     className="flex items-center py-2 text-gray-700 hover:text-blue-600"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >

@@ -84,7 +84,7 @@ export function DashboardHeader() {
 
       {/* Brand Logo Section */}
       <div className="flex items-center gap-12">
-        <Link href="/dashboard" className="flex items-center group">
+        <Link href="/nl/dashboard" className="flex items-center group">
           <Image
             src={ANSWER24LOGO}
             alt="Schepenkring Logo"

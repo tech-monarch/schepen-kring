@@ -59,3 +59,24 @@ export interface Link {
     label:  string;
     active: boolean;
 }
+
+export interface Blog {
+  id: number;
+  title: string;
+  slug: string;
+  excerpt: string;
+  content: string;
+  author: string;
+  featured_image: string | null;
+  status: 'draft' | 'published';
+  views: number;
+  created_at: string;
+  updated_at: string;
+  published_at?: string; // For compatibility
+  blog_image?: string; // For compatibility
+  user?: {
+    id: number;
+    name: string;
+    email: string;
+  };
+}

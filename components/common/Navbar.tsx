@@ -25,8 +25,12 @@ export function Navbar() {
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handleScroll);
 
-    const token = typeof window !== "undefined" ? localStorage.getItem("auth_token") : null;
-    const adminToken = typeof window !== "undefined" ? localStorage.getItem("admin_token") : null;
+    const token =
+      typeof window !== "undefined" ? localStorage.getItem("auth_token") : null;
+    const adminToken =
+      typeof window !== "undefined"
+        ? localStorage.getItem("admin_token")
+        : null;
 
     setIsLoggedIn(!!token);
     setIsImpersonating(!!adminToken);
@@ -36,7 +40,7 @@ export function Navbar() {
 
   // --- LOGIC: HIDE NAVBAR ON HOMEPAGE IF LOGGED IN ---
   // If we are on the homepage ('/' or local variants like '/en') and logged in, don't show the navbar.
-  // Note: currentPath in Next-intl often includes the locale (e.g., "/en"). 
+  // Note: currentPath in Next-intl often includes the locale (e.g., "/en").
   // We check if it ends with / or is empty after locale.
   const isHomePage = currentPath === "/" || currentPath.endsWith("/");
   if (isLoggedIn && isHomePage) {
@@ -57,7 +61,7 @@ export function Navbar() {
         "fixed top-0 left-0 right-0 z-50 transition-all duration-700 px-8",
         isScrolled
           ? "h-20 bg-white border-b border-slate-100 shadow-sm"
-          : "h-28 bg-white border-b border-[#003566]/5", 
+          : "h-28 bg-white border-b border-[#003566]/5",
       )}
     >
       <AnimatePresence>
@@ -77,12 +81,16 @@ export function Navbar() {
         )}
       </AnimatePresence>
 
-      <div className={cn(
-        "max-w-[1500px] mx-auto flex items-center justify-between h-full transition-all",
-        isImpersonating && "mt-10"
-      )}>
-        
-        <Link href="/" className="relative z-10 transition-transform hover:scale-[1.02]">
+      <div
+        className={cn(
+          "max-w-[1500px] mx-auto flex items-center justify-between h-full transition-all",
+          isImpersonating && "mt-10",
+        )}
+      >
+        <Link
+          href="/"
+          className="relative z-10 transition-transform hover:scale-[1.02]"
+        >
           <Image
             src={ANSWER24LOGO}
             alt="Logo"
@@ -100,7 +108,7 @@ export function Navbar() {
               href={item.href}
               className={cn(
                 "text-[10px] font-sans font-black uppercase tracking-[0.4em] transition-all relative group",
-                "text-[#003566]/60 hover:text-[#003566]"
+                "text-[#003566]/60 hover:text-[#003566]",
               )}
             >
               {item.name}
@@ -115,7 +123,7 @@ export function Navbar() {
           </div>
 
           {/* {isLoggedIn ? (
-            <Link href="/dashboard">
+            <Link href="/nl/dashboard">
               <button className="flex items-center gap-3 px-10 py-3.5 bg-[#003566] text-white text-[9px] font-sans font-bold uppercase tracking-[0.3em] hover:bg-[#001d3d] transition-all">
                 Portal
                 <ArrowRight size={12} className="group-hover:translate-x-1 transition-transform" />
@@ -148,14 +156,22 @@ export function Navbar() {
           >
             <div className="flex justify-between items-center mb-24">
               <Image src={ANSWER24LOGO} alt="Logo" width={120} height={35} />
-              <button onClick={() => setIsMobileMenuOpen(false)} className="text-[#003566]">
+              <button
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="text-[#003566]"
+              >
                 <X size={35} strokeWidth={1} />
               </button>
             </div>
 
             <div className="flex flex-col gap-10">
               {navItems.map((item, i) => (
-                <motion.div key={item.name} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.1 }}>
+                <motion.div
+                  key={item.name}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.1 }}
+                >
                   <Link
                     href={item.href}
                     className="text-5xl font-serif italic text-[#003566] hover:opacity-60 transition-all block"
@@ -166,7 +182,7 @@ export function Navbar() {
                 </motion.div>
               ))}
             </div>
-            
+
             {/* <div className="mt-auto flex flex-col gap-6">
                <div className="py-8 border-t border-slate-100"><LanguageSwitcher /></div>
                <Link href={isLoggedIn ? "/dashboard" : "/login"} onClick={() => setIsMobileMenuOpen(false)}>

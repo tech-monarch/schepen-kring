@@ -183,7 +183,7 @@ export default function CleanDashboardContainer() {
           </h2>
 
           <div className="grid grid-cols-1 gap-4">
-            <Link href="/dashboard/yachts">
+            <Link href="/nl/dashboard/yachts">
               <div className="bg-[#003566] p-8 text-white group cursor-pointer relative overflow-hidden transition-transform hover:-translate-y-1">
                 <Ship className="absolute -right-4 -bottom-4 w-24 h-24 text-white/5 group-hover:scale-110 transition-transform" />
                 <p className="text-[10px] font-black uppercase tracking-[0.3em] mb-2 opacity-70">
@@ -196,7 +196,7 @@ export default function CleanDashboardContainer() {
               </div>
             </Link>
 
-            <Link href="/dashboard/fleet">
+            <Link href="/nl/dashboard/fleet">
               <div className="bg-white border border-slate-200 p-8 group cursor-pointer hover:border-blue-400 transition-all">
                 <Anchor className="text-[#003566] mb-4" size={28} />
                 <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mb-1">
@@ -211,7 +211,7 @@ export default function CleanDashboardContainer() {
               </div>
             </Link>
 
-            <Link href="/dashboard/fleet-management">
+            <Link href="/nl/dashboard/fleet-management">
               <div className="bg-slate-50 border border-slate-200 p-8 group cursor-pointer hover:bg-white hover:border-blue-400 transition-all">
                 <Settings
                   className="text-slate-400 group-hover:text-blue-600 mb-4 transition-colors"

@@ -4,10 +4,22 @@ import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { toast, Toaster } from "react-hot-toast";
 import {
-  Plus, Edit, Trash2, Eye, EyeOff, Calendar, User,
-  Search, Loader2, Image as ImageIcon,
-  ChevronLeft, ChevronRight, FileText, BarChart3,
-  Globe, Lock
+  Plus,
+  Edit,
+  Trash2,
+  Eye,
+  EyeOff,
+  Calendar,
+  User,
+  Search,
+  Loader2,
+  Image as ImageIcon,
+  ChevronLeft,
+  ChevronRight,
+  FileText,
+  BarChart3,
+  Globe,
+  Lock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -23,7 +35,7 @@ interface Blog {
   content: string;
   author: string;
   featured_image: string | null;
-  status: 'draft' | 'published';
+  status: "draft" | "published";
   views: number;
   user_id: number;
   created_at: string;
@@ -50,32 +62,38 @@ export default function AdminBlogPage() {
 
   const API_BASE = "https://schepen-kring.nl/api";
   const getHeaders = () => ({
-    headers: { 
-      Authorization: `Bearer ${localStorage.getItem("auth_token")}`, 
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
       Accept: "application/json",
     },
   });
 
-  const fetchBlogs = useCallback(async (page = 1) => {
-    setLoading(true);
-    try {
-      const params = new URLSearchParams({
-        page: page.toString(),
-        per_page: pagination.per_page.toString(),
-      });
+  const fetchBlogs = useCallback(
+    async (page = 1) => {
+      setLoading(true);
+      try {
+        const params = new URLSearchParams({
+          page: page.toString(),
+          per_page: pagination.per_page.toString(),
+        });
 
-      if (searchQuery) params.append('search', searchQuery);
-      if (statusFilter !== 'all') params.append('status', statusFilter);
+        if (searchQuery) params.append("search", searchQuery);
+        if (statusFilter !== "all") params.append("status", statusFilter);
 
-      const res = await axios.get(`${API_BASE}/blogs?${params}`, getHeaders());
-      setBlogs(res.data.data);
-      setPagination(res.data.meta);
-    } catch (err) {
-      toast.error("Failed to fetch blogs");
-    } finally {
-      setLoading(false);
-    }
-  }, [searchQuery, statusFilter, pagination.per_page]);
+        const res = await axios.get(
+          `${API_BASE}/blogs?${params}`,
+          getHeaders(),
+        );
+        setBlogs(res.data.data);
+        setPagination(res.data.meta);
+      } catch (err) {
+        toast.error("Failed to fetch blogs");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [searchQuery, statusFilter, pagination.per_page],
+  );
 
   useEffect(() => {
     fetchBlogs();
@@ -83,7 +101,7 @@ export default function AdminBlogPage() {
 
   const handleDelete = async (id: number) => {
     if (!confirm("Are you sure you want to delete this blog?")) return;
-    
+
     try {
       await axios.delete(`${API_BASE}/blogs/${id}`, getHeaders());
       toast.success("Blog deleted successfully");
@@ -93,14 +111,19 @@ export default function AdminBlogPage() {
     }
   };
 
-  const handleStatusChange = async (blog: Blog, newStatus: 'draft' | 'published') => {
+  const handleStatusChange = async (
+    blog: Blog,
+    newStatus: "draft" | "published",
+  ) => {
     try {
       await axios.put(
         `${API_BASE}/blogs/${blog.id}`,
         { status: newStatus },
-        getHeaders()
+        getHeaders(),
       );
-      toast.success(`Blog ${newStatus === 'published' ? 'published' : 'moved to drafts'}`);
+      toast.success(
+        `Blog ${newStatus === "published" ? "published" : "moved to drafts"}`,
+      );
       fetchBlogs();
     } catch (err) {
       toast.error("Failed to update blog status");
@@ -108,10 +131,10 @@ export default function AdminBlogPage() {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
     });
   };
 
@@ -122,12 +145,14 @@ export default function AdminBlogPage() {
       {/* HEADER */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-slate-100 pb-10">
         <div>
-          <h1 className="text-4xl font-serif italic text-[#003566]">Blog Command</h1>
+          <h1 className="text-4xl font-serif italic text-[#003566]">
+            Blog Command
+          </h1>
           <p className="text-[10px] uppercase tracking-[0.4em] text-blue-600 font-black mt-2">
             Content Publishing & Management
           </p>
         </div>
-        <Link href="/dashboard/admin/blog/create">
+        <Link href="/nl/dashboard/admin/blog/create">
           <Button className="bg-[#003566] text-white rounded-none uppercase text-[10px] tracking-widest font-black px-8 h-12">
             <Plus className="mr-2 w-4 h-4" /> New Article
           </Button>
@@ -145,10 +170,10 @@ export default function AdminBlogPage() {
               className="bg-white border border-slate-200 pl-10 pr-4 py-3 text-[10px] font-bold tracking-widest uppercase outline-none focus:border-blue-400 w-64"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && fetchBlogs()}
+              onKeyPress={(e) => e.key === "Enter" && fetchBlogs()}
             />
           </div>
-          
+
           <select
             className="bg-white border border-slate-200 px-4 py-3 text-[10px] font-bold tracking-widest uppercase outline-none focus:border-blue-400"
             value={statusFilter}
@@ -161,7 +186,9 @@ export default function AdminBlogPage() {
         </div>
 
         <div className="flex items-center gap-4 text-[10px] font-black uppercase tracking-widest text-slate-400">
-          <span>Showing {blogs.length} of {pagination.total} articles</span>
+          <span>
+            Showing {blogs.length} of {pagination.total} articles
+          </span>
         </div>
       </div>
 
@@ -178,7 +205,9 @@ export default function AdminBlogPage() {
               No blogs found
             </p>
             <p className="text-[8px] text-slate-300 mt-2">
-              {searchQuery ? "Try a different search term" : "Create your first blog post"}
+              {searchQuery
+                ? "Try a different search term"
+                : "Create your first blog post"}
             </p>
           </div>
         ) : (
@@ -201,7 +230,7 @@ export default function AdminBlogPage() {
                     </div>
                   </div>
                 )}
-                
+
                 <div className={blog.featured_image ? "lg:w-2/3" : "w-full"}>
                   <div className="flex justify-between items-start mb-4">
                     <div>
@@ -223,12 +252,14 @@ export default function AdminBlogPage() {
                         </span>
                       </div>
                     </div>
-                    <div className={cn(
-                      "px-3 py-1 text-[8px] font-black uppercase tracking-widest",
-                      blog.status === 'published'
-                        ? "bg-green-100 text-green-700"
-                        : "bg-yellow-100 text-yellow-700"
-                    )}>
+                    <div
+                      className={cn(
+                        "px-3 py-1 text-[8px] font-black uppercase tracking-widest",
+                        blog.status === "published"
+                          ? "bg-green-100 text-green-700"
+                          : "bg-yellow-100 text-yellow-700",
+                      )}
+                    >
                       {blog.status.toUpperCase()}
                     </div>
                   </div>
@@ -245,18 +276,24 @@ export default function AdminBlogPage() {
                         <Edit size={14} /> Edit
                       </button>
                     </Link>
-                    
+
                     <button
-                      onClick={() => handleStatusChange(
-                        blog,
-                        blog.status === 'published' ? 'draft' : 'published'
-                      )}
+                      onClick={() =>
+                        handleStatusChange(
+                          blog,
+                          blog.status === "published" ? "draft" : "published",
+                        )
+                      }
                       className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-amber-600"
                     >
-                      {blog.status === 'published' ? <EyeOff size={14} /> : <Eye size={14} />}
-                      {blog.status === 'published' ? 'Unpublish' : 'Publish'}
+                      {blog.status === "published" ? (
+                        <EyeOff size={14} />
+                      ) : (
+                        <Eye size={14} />
+                      )}
+                      {blog.status === "published" ? "Unpublish" : "Publish"}
                     </button>
-                    
+
                     <button
                       onClick={() => handleDelete(blog.id)}
                       className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-red-400"
@@ -282,11 +319,11 @@ export default function AdminBlogPage() {
           >
             <ChevronLeft size={14} /> Prev
           </Button>
-          
+
           <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
             Page {pagination.current_page} of {pagination.last_page}
           </div>
-          
+
           <Button
             onClick={() => fetchBlogs(pagination.current_page + 1)}
             disabled={pagination.current_page === pagination.last_page}
