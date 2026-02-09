@@ -12,6 +12,8 @@ import {
   Check,
   CheckCheck,
   Trash2,
+  BellOff,
+  BellRing,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useRouter } from "@/i18n/navigation";
@@ -32,6 +34,7 @@ import ANSWER24LOGO from "@/public/schepenkring-logo.png";
 // Import your default profile picture
 import DEFAULT_PFP from "@/components/dashboard/pfp.webp";
 import ReturnToAdmin from "./ReturnToAdmin";
+import { Switch } from "@/components/ui/switch"; // Assuming you have a Switch component
 
 // Storage URL constant
 const STORAGE_URL = "https://schepen-kring.nl/storage/";
@@ -65,10 +68,10 @@ export function DashboardHeader() {
     userType: string;
     profile_image?: string;
   } | null>(null);
-  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
 
   const currentPath = usePathname();
   const router = useRouter();
@@ -79,10 +82,18 @@ export function DashboardHeader() {
     if (storedUser) {
       setUser(JSON.parse(storedUser));
     }
+    
+    // Load notification preference from localStorage
+    const notificationPref = localStorage.getItem("notifications_enabled");
+    if (notificationPref !== null) {
+      setNotificationsEnabled(notificationPref === "true");
+    }
   }, []);
 
   // Fetch notifications
   const fetchNotifications = async () => {
+    if (!notificationsEnabled) return; // Skip if notifications are disabled
+    
     try {
       setLoading(true);
       const token = localStorage.getItem("auth_token");
@@ -92,7 +103,6 @@ export function DashboardHeader() {
       }
 
       console.log("Fetching notifications from:", `${API_URL}/notifications`);
-      console.log("Token (first 20 chars):", token.substring(0, 20) + "...");
       
       const response = await fetch(`${API_URL}/notifications`, {
         headers: {
@@ -103,7 +113,6 @@ export function DashboardHeader() {
 
       console.log("Response status:", response.status);
       
-      // Get response as text first to see what's returned
       const responseText = await response.text();
       console.log("Response text (first 500 chars):", responseText.substring(0, 500));
       
@@ -115,7 +124,6 @@ export function DashboardHeader() {
           setUnreadCount(data.meta?.unread_count || 0);
         } catch (jsonError) {
           console.error("Failed to parse as JSON:", jsonError);
-          // Set empty state
           setNotifications([]);
           setUnreadCount(0);
         }
@@ -134,6 +142,8 @@ export function DashboardHeader() {
 
   // Fetch unread count separately
   const fetchUnreadCount = async () => {
+    if (!notificationsEnabled) return; // Skip if notifications are disabled
+    
     try {
       const token = localStorage.getItem("auth_token");
       if (!token) {
@@ -141,20 +151,15 @@ export function DashboardHeader() {
         return;
       }
 
-      console.log("Fetching unread count from:", `${API_URL}/notifications/unread-count`);
-      
       const response = await fetch(`${API_URL}/notifications/unread-count`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Accept': 'application/json',
         },
       });
-
-      console.log("Unread count response status:", response.status);
       
       if (response.ok) {
         const text = await response.text();
-        console.log("Unread count response:", text);
         try {
           const data = JSON.parse(text);
           setUnreadCount(data.count || 0);
@@ -167,24 +172,47 @@ export function DashboardHeader() {
     }
   };
 
+  // Toggle notifications
+  const toggleNotifications = async () => {
+    const newState = !notificationsEnabled;
+    setNotificationsEnabled(newState);
+    localStorage.setItem("notifications_enabled", newState.toString());
+    
+    if (newState) {
+      // If enabling notifications, fetch them
+      fetchNotifications();
+      fetchUnreadCount();
+      toast.success("Notifications enabled");
+    } else {
+      // If disabling, clear notifications
+      setNotifications([]);
+      setUnreadCount(0);
+      toast.success("Notifications disabled");
+    }
+  };
+
   // Fetch data on mount and setup polling
   useEffect(() => {
-    fetchNotifications();
-    fetchUnreadCount();
+    if (notificationsEnabled) {
+      fetchNotifications();
+      fetchUnreadCount();
+    }
 
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handleScroll);
 
-    // Poll for new notifications every 30 seconds
+    // Poll for new notifications every 30 seconds only if enabled
     const interval = setInterval(() => {
-      fetchUnreadCount();
+      if (notificationsEnabled) {
+        fetchUnreadCount();
+      }
     }, 30000);
 
     return () => {
       window.removeEventListener("scroll", handleScroll);
       clearInterval(interval);
     };
-  }, []);
+  }, [notificationsEnabled]);
 
   // Mark notification as read
   const markAsRead = async (notificationId: number) => {
@@ -194,8 +222,6 @@ export function DashboardHeader() {
         toast.error("No authentication token found");
         return;
       }
-
-      console.log("Marking notification as read:", notificationId);
       
       const response = await fetch(`${API_URL}/notifications/${notificationId}/read`, {
         method: 'POST',
@@ -204,11 +230,8 @@ export function DashboardHeader() {
           'Accept': 'application/json',
         },
       });
-
-      console.log("Mark as read response status:", response.status);
       
       if (response.ok) {
-        // Update local state
         setNotifications(prev => 
           prev.map(notif => 
             notif.id === notificationId 
@@ -237,8 +260,6 @@ export function DashboardHeader() {
         toast.error("No authentication token found");
         return;
       }
-
-      console.log("Marking all notifications as read");
       
       const response = await fetch(`${API_URL}/notifications/read-all`, {
         method: 'POST',
@@ -247,8 +268,6 @@ export function DashboardHeader() {
           'Accept': 'application/json',
         },
       });
-
-      console.log("Mark all as read response status:", response.status);
       
       if (response.ok) {
         setNotifications(prev => 
@@ -279,8 +298,6 @@ export function DashboardHeader() {
         toast.error("No authentication token found");
         return;
       }
-
-      console.log("Deleting notification:", notificationId);
       
       const response = await fetch(`${API_URL}/notifications/${notificationId}`, {
         method: 'DELETE',
@@ -288,8 +305,6 @@ export function DashboardHeader() {
           'Authorization': `Bearer ${token}`,
         },
       });
-
-      console.log("Delete notification response status:", response.status);
       
       if (response.ok) {
         setNotifications(prev => prev.filter(notif => notif.id !== notificationId));
@@ -317,10 +332,6 @@ export function DashboardHeader() {
     localStorage.removeItem("task_cache");
     router.push("/");
   };
-
-  const managementItems = [
-    { title: "Fleet Management", href: "/yachts", icon: Anchor },
-  ];
 
   // Format notification time
   const formatTime = (dateString: string) => {
@@ -383,41 +394,28 @@ export function DashboardHeader() {
         </div>
       </div>
 
-      {/* Navigation */}
+      {/* Navigation - Fleet Management Link Removed */}
       <nav className="hidden lg:flex items-center gap-3">
-        {managementItems.map((item) => (
-          <Link
-            key={item.title}
-            href={item.href}
-            className={cn(
-              "px-6 py-2.5 flex items-center gap-3 text-[10px] font-bold uppercase tracking-[0.2em] transition-all rounded-sm",
-              currentPath === item.href
-                ? "text-white bg-[#003566]"
-                : "text-slate-500 hover:text-[#003566] hover:bg-slate-50",
-            )}
-          >
-            <item.icon
-              size={14}
-              strokeWidth={currentPath === item.href ? 3 : 2}
-            />
-            {item.title}
-          </Link>
-        ))}
+        {/* Navigation links removed as requested */}
       </nav>
 
       {/* User Actions */}
       <div className="flex items-center gap-8">
         <ReturnToAdmin />
         
-        {/* Updated Notifications Dropdown */}
+        {/* Updated Notifications Dropdown with Toggle */}
         <DropdownMenu onOpenChange={(open) => {
-          if (open) {
+          if (open && notificationsEnabled) {
             fetchNotifications(); // Refresh when dropdown opens
           }
         }}>
           <DropdownMenuTrigger className="relative text-slate-400 hover:text-[#003566] transition-colors outline-none">
-            <Bell size={20} strokeWidth={1.5} />
-            {unreadCount > 0 && (
+            {notificationsEnabled ? (
+              <Bell size={20} strokeWidth={1.5} />
+            ) : (
+              <BellOff size={20} strokeWidth={1.5} className="text-slate-300" />
+            )}
+            {notificationsEnabled && unreadCount > 0 && (
               <span className="absolute -top-1 -right-1 min-w-5 h-5 bg-red-500 rounded-full border-2 border-white flex items-center justify-center">
                 <span className="text-[10px] font-bold text-white px-1">
                   {unreadCount > 99 ? '99+' : unreadCount}
@@ -433,18 +431,55 @@ export function DashboardHeader() {
               <h3 className="text-[10px] font-black uppercase tracking-widest text-[#003566]">
                 Notifications
               </h3>
-              {notifications.length > 0 && (
-                <button
-                  onClick={markAllAsRead}
-                  className="text-[9px] font-bold uppercase tracking-widest text-blue-600 hover:text-blue-700 transition-colors"
-                >
-                  Mark all as read
-                </button>
-              )}
+              <div className="flex items-center gap-4">
+                {/* Notification Toggle */}
+                <div className="flex items-center gap-2">
+                  <span className="text-[8px] font-bold uppercase tracking-widest text-slate-500">
+                    {notificationsEnabled ? 'ON' : 'OFF'}
+                  </span>
+                  <button
+                    onClick={toggleNotifications}
+                    className={`relative inline-flex h-5 w-10 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                      notificationsEnabled ? 'bg-blue-600' : 'bg-slate-300'
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                        notificationsEnabled ? 'translate-x-5' : 'translate-x-0.5'
+                      }`}
+                    />
+                  </button>
+                </div>
+                
+                {notificationsEnabled && notifications.length > 0 && (
+                  <button
+                    onClick={markAllAsRead}
+                    className="text-[9px] font-bold uppercase tracking-widest text-blue-600 hover:text-blue-700 transition-colors"
+                  >
+                    Mark all as read
+                  </button>
+                )}
+              </div>
             </div>
             
             <div className="max-h-[400px] overflow-y-auto">
-              {loading ? (
+              {!notificationsEnabled ? (
+                <div className="p-8 text-center">
+                  <BellOff size={32} className="text-slate-300 mx-auto mb-3" />
+                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter mb-2">
+                    Notifications Disabled
+                  </p>
+                  <p className="text-[8px] text-slate-400 mb-4">
+                    You won't receive new notifications until enabled
+                  </p>
+                  <button
+                    onClick={toggleNotifications}
+                    className="text-[8px] font-bold uppercase tracking-widest bg-blue-600 text-white px-4 py-2 hover:bg-blue-700 transition-colors"
+                  >
+                    Enable Notifications
+                  </button>
+                </div>
+              ) : loading ? (
                 <div className="p-8 text-center">
                   <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#003566] mx-auto"></div>
                   <p className="text-[9px] text-slate-500 mt-2">Loading notifications...</p>
@@ -520,21 +555,11 @@ export function DashboardHeader() {
                 </div>
               )}
             </div>
-            
-            <DropdownMenuSeparator className="m-0 bg-slate-100" />
-            {/* <button 
-              onClick={() => router.push('/nl/dashboard/activity-logs')}
-              className="w-full py-3 text-[9px] font-black uppercase tracking-[0.2em] text-blue-600 hover:bg-blue-50 transition-colors text-center"
-            >
-              View All Activity Logs
-            </button> */}
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {/* User Menu */}
-        <DropdownMenu
-          onOpenChange={(open) => !open && setShowLogoutConfirm(false)}
-        >
+        {/* User Menu - Without Logout Confirmation */}
+        <DropdownMenu>
           <DropdownMenuTrigger className="flex items-center gap-4 outline-none group">
             <div className="hidden text-right lg:block">
               <p className="text-[10px] font-bold text-[#003566] uppercase tracking-wider leading-none">
@@ -569,86 +594,32 @@ export function DashboardHeader() {
             align="end"
             className="w-72 bg-white border border-slate-200 text-[#003566] rounded-none p-2 shadow-xl overflow-hidden"
           >
-            <AnimatePresence mode="wait">
-              {!showLogoutConfirm ? (
-                <motion.div
-                  key="menu"
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 10 }}
-                >
-                  <DropdownMenuLabel className="flex flex-col px-3 py-2">
-                    <span className="text-[9px] uppercase tracking-[0.2em] text-slate-400 font-bold">
-                      User Identity
-                    </span>
-                    <span className="text-[11px] font-medium lowercase text-[#003566] mt-1 truncate">
-                      {user?.email || "Authenticated Session"}
-                    </span>
-                  </DropdownMenuLabel>
+            <DropdownMenuLabel className="flex flex-col px-3 py-2">
+              <span className="text-[9px] uppercase tracking-[0.2em] text-slate-400 font-bold">
+                User Identity
+              </span>
+              <span className="text-[11px] font-medium lowercase text-[#003566] mt-1 truncate">
+                {user?.email || "Authenticated Session"}
+              </span>
+            </DropdownMenuLabel>
 
-                  <DropdownMenuSeparator className="bg-slate-100" />
+            <DropdownMenuSeparator className="bg-slate-100" />
 
-                  <DropdownMenuItem
-                    onSelect={() => router.push("/dashboard/account")}
-                    className="hover:bg-slate-50 cursor-pointer gap-3 text-[10px] font-bold uppercase tracking-widest py-3 px-3"
-                  >
-                    <Settings size={14} /> Account Settings
-                  </DropdownMenuItem>
+            <DropdownMenuItem
+              onSelect={() => router.push("/dashboard/account")}
+              className="hover:bg-slate-50 cursor-pointer gap-3 text-[10px] font-bold uppercase tracking-widest py-3 px-3"
+            >
+              <Settings size={14} /> Account Settings
+            </DropdownMenuItem>
 
-                  <DropdownMenuItem
-                    onSelect={() => router.push("/nl/dashboard/activity-logs")}
-                    className="hover:bg-slate-50 cursor-pointer gap-3 text-[10px] font-bold uppercase tracking-widest py-3 px-3"
-                  >
-                    <Bell size={14} /> Activity Logs
-                  </DropdownMenuItem>
+            <DropdownMenuSeparator className="bg-slate-100" />
 
-                  <DropdownMenuSeparator className="bg-slate-100" />
-
-                  <DropdownMenuItem
-                    onSelect={(e) => {
-                      e.preventDefault();
-                      setShowLogoutConfirm(true);
-                    }}
-                    className="text-red-500 hover:bg-red-50 cursor-pointer gap-3 text-[10px] font-bold uppercase tracking-widest py-3 px-3"
-                  >
-                    <LogOut size={14} /> Logout
-                  </DropdownMenuItem>
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="confirm"
-                  initial={{ opacity: 0, x: 10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -10 }}
-                  className="p-4 flex flex-col items-center text-center"
-                >
-                  <div className="w-10 h-10 bg-red-50 rounded-full flex items-center justify-center mb-3">
-                    <AlertTriangle className="text-red-500 w-5 h-5" />
-                  </div>
-                  <h3 className="text-[11px] font-black uppercase tracking-widest text-[#003566] mb-1">
-                    Confirm Logout?
-                  </h3>
-                  <p className="text-[9px] text-slate-400 uppercase tracking-tighter mb-4">
-                    Your current session will be terminated.
-                  </p>
-
-                  <div className="flex w-full gap-2">
-                    <button
-                      onClick={() => setShowLogoutConfirm(false)}
-                      className="flex-1 py-2 text-[9px] font-bold uppercase tracking-widest border border-slate-200 hover:bg-slate-50 transition-colors"
-                    >
-                      Stay
-                    </button>
-                    <button
-                      onClick={handleLogout}
-                      className="flex-1 py-2 text-[9px] font-bold uppercase tracking-widest bg-red-500 text-white hover:bg-red-600 transition-colors"
-                    >
-                      Logout
-                    </button>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+            <DropdownMenuItem
+              onSelect={handleLogout}
+              className="text-red-500 hover:bg-red-50 cursor-pointer gap-3 text-[10px] font-bold uppercase tracking-widest py-3 px-3"
+            >
+              <LogOut size={14} /> Logout
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
