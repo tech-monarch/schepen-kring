@@ -522,12 +522,12 @@ export function DashboardHeader() {
             </div>
             
             <DropdownMenuSeparator className="m-0 bg-slate-100" />
-            <button 
+            {/* <button 
               onClick={() => router.push('/nl/dashboard/activity-logs')}
               className="w-full py-3 text-[9px] font-black uppercase tracking-[0.2em] text-blue-600 hover:bg-blue-50 transition-colors text-center"
             >
               View All Activity Logs
-            </button>
+            </button> */}
           </DropdownMenuContent>
         </DropdownMenu>
 
