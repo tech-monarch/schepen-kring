@@ -153,13 +153,13 @@ export function Sidebar({ onCollapse }: { onCollapse?: (collapsed: boolean) => v
       roles: ["Admin", "Employee"],
       page_key: "manage_yachts"  // matches backend page_key
     },
-    { 
-      title: "Biddings", 
-      href: userRole === "Admin" ? "/dashboard/admin/biddings" : "/dashboard/biddings", 
-      icon: Gavel, 
-      roles: ["Admin", "Employee"],
-      page_key: "biddings"  // matches backend page_key
-    },
+    // { 
+    //   title: "Biddings", 
+    //   href: userRole === "Admin" ? "/dashboard/admin/biddings" : "/dashboard/biddings", 
+    //   icon: Gavel, 
+    //   roles: ["Admin", "Employee"],
+    //   page_key: "biddings"  // matches backend page_key
+    // },
     { 
       title: "Blog", 
       href: userRole === "Admin" ? "/dashboard/admin/blog" : "/dashboard/blog", 
