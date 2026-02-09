@@ -459,19 +459,27 @@ export default function OnboardingYachtSetup() {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4">
                   <div className="flex items-center space-x-2">
                     <input type="checkbox" id="air_conditioning" name="air_conditioning" className="w-4 h-4" />
-                    <Label htmlFor="air_conditioning" className="!text-[8px] !font-normal !text-slate-600">A/C</Label>
+                    <label htmlFor="air_conditioning" className="text-[8px] text-slate-600 cursor-pointer">
+                      A/C
+                    </label>
                   </div>
                   <div className="flex items-center space-x-2">
                     <input type="checkbox" id="autopilot" name="autopilot" className="w-4 h-4" />
-                    <Label htmlFor="autopilot" className="!text-[8px] !font-normal !text-slate-600">Autopilot</Label>
+                    <label htmlFor="autopilot" className="text-[8px] text-slate-600 cursor-pointer">
+                      Autopilot
+                    </label>
                   </div>
                   <div className="flex items-center space-x-2">
                     <input type="checkbox" id="gps" name="gps" className="w-4 h-4" />
-                    <Label htmlFor="gps" className="!text-[8px] !font-normal !text-slate-600">GPS</Label>
+                    <label htmlFor="gps" className="text-[8px] text-slate-600 cursor-pointer">
+                      GPS
+                    </label>
                   </div>
                   <div className="flex items-center space-x-2">
                     <input type="checkbox" id="generator" name="generator" className="w-4 h-4" />
-                    <Label htmlFor="generator" className="!text-[8px] !font-normal !text-slate-600">Generator</Label>
+                    <label htmlFor="generator" className="text-[8px] text-slate-600 cursor-pointer">
+                      Generator
+                    </label>
                   </div>
                 </div>
               </div>
@@ -597,7 +605,7 @@ export default function OnboardingYachtSetup() {
   );
 }
 
-// Updated Label component to accept htmlFor
+// Helpers
 function Label({ children, htmlFor }: { children: React.ReactNode; htmlFor?: string }) {
   return (
     <label
