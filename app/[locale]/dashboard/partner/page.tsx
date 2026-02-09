@@ -93,7 +93,7 @@ export default function PartnerFleetManagementPage() {
   const fetchFleet = async () => {
     try {
       setLoading(true);
-      const res = await api.get("/yachts"); // Keep same endpoint
+      const res = await api.get("/my-yachts"); // Keep same endpoint
       setFleet(res.data || []);
       
       // Calculate stats
