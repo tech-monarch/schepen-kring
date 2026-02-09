@@ -28,15 +28,11 @@ import {
   User,
   Mail,
   Phone,
-  ChevronDown,
-  ChevronUp,
-  Settings,
-  Shield,
-  Radio,
-  Volume2,
-  Camera,
-  Download,
   Printer,
+  Download,
+  Camera,
+  ChevronRight,
+  Home,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
@@ -78,39 +74,55 @@ interface Yacht {
   beam?: string;
   draft?: string;
   
-  // Engine and propulsion
+  // From screenshots
+  ce_category?: string;
+  ce_max_weight?: string;
+  deck_superstructure_color?: string;
+  deck_superstructure_construction?: string;
+  open_cockpit?: boolean;
+  waterline_length?: string;
+  water_displacement?: string;
+  control?: string;
+  control_place?: string;
+  trim_flaps?: boolean;
+  
+  // Engine and propulsion from Screenshot 2026-02-08 093802.png
+  number_of_identical_engines?: string;
+  start_type?: string;
+  engine_type?: string;
   engine_brand?: string;
   engine_model?: string;
+  serial_number?: string;
+  engine_year?: string;
+  amount_of_cylinders?: string;
   engine_power?: string;
-  engine_hours?: string;
-  engine_type?: string;
-  max_speed?: string;
+  hour_meter?: boolean;
+  running_hours?: string;
   fuel_type?: string;
-  fuel_capacity?: string;
-  voltage?: string;
   fuel_consumption?: string;
-  engine_quantity?: string;
-  starting_type?: string;
-  cylinders?: string;
   propulsion?: string;
+  fuel_tank_quantity?: boolean;
+  max_speed?: string;
   tachometer?: boolean;
   battery?: boolean;
   battery_capacity?: string;
   dynamo?: boolean;
   voltmeter?: boolean;
+  voltage?: string;
+  engine_comments?: string;
   
-  // Accommodation
+  // Accommodation from Screenshot 2026-02-08 093746.png
   cabins?: number;
   berths?: string;
-  heads?: number;
-  water_tank?: string;
-  water_capacity?: string;
-  water_system?: string;
   interior_type?: string;
   mattresses?: boolean;
-  shower?: boolean;
+  water_tank?: string;
+  water_tank_material?: string;
+  water_system?: string;
+  number_of_showers?: string;
+  radio_cd_player?: string;
   
-  // Navigation and electronics
+  // Navigation and electronics from Screenshot 2026-02-08 093851.png
   kompas?: boolean;
   log_speed?: boolean;
   depth_gauge?: boolean;
@@ -118,48 +130,30 @@ interface Yacht {
   rudder_angle_indicator?: boolean;
   gps?: string;
   chart_plotter?: string;
-  radio_cd_player?: string;
   fishfinder?: string;
   refrigerator?: string;
   
-  // Outside equipment
-  anchor?: string;
+  // Outside equipment from Screenshot 2026-02-08 093908.png
+  anchors_material?: string;
   anchor_rod?: boolean;
   sprayhood?: boolean;
   cockpit_tent?: boolean;
   tarpaulin?: string;
-  pulpit?: boolean;
+  pulpit_bastion?: boolean;
   swimming_platform?: boolean;
   swimming_ladder?: boolean;
-  trailer_included?: boolean;
-  trailer_details?: string;
+  trailer?: string;
   teak_deck?: boolean;
   fenders_lines?: boolean;
   cockpit_table?: boolean;
-  water_ski_pole?: boolean;
+  equipment_comments?: string;
   
-  // Safety
+  // Safety from Screenshot 2026-02-08 093928.png
   lifebuoy?: boolean;
   bilge_pump?: boolean;
   fire_extinguisher?: boolean;
   self_draining_cockpit?: boolean;
   safety_comments?: string;
-  
-  // Additional fields from screenshots
-  ce_category?: string;
-  ce_max_weight?: string;
-  deck_superstructure_color?: string;
-  deck_superstructure_construction?: string;
-  open_cockpit?: boolean;
-  control_place?: string;
-  trim_flaps?: boolean;
-  waterline_length?: string;
-  water_tank_material?: string;
-  propeller_type?: string;
-  hour_meter?: boolean;
-  running_hours?: string;
-  serial_number?: string;
-  engine_year?: string;
 }
 
 export default function YachtTerminalPage() {
@@ -169,19 +163,11 @@ export default function YachtTerminalPage() {
   const [bidAmount, setBidAmount] = useState<string>("");
   const [activeImage, setActiveImage] = useState<string>("");
   const [loading, setLoading] = useState(true);
-  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
-    general: true,
-    engine: false,
-    accommodation: false,
-    navigation: false,
-    equipment: false,
-    safety: false,
-  });
+  const [showAllPhotos, setShowAllPhotos] = useState(false);
+  const [showDocuments, setShowDocuments] = useState(false);
 
   useEffect(() => {
     fetchVesselData();
-    const interval = setInterval(fetchVesselData, 10000);
-    return () => clearInterval(interval);
   }, [id]);
 
   const fetchVesselData = async () => {
@@ -193,23 +179,13 @@ export default function YachtTerminalPage() {
       setYacht(yachtRes.data);
       setBids(historyRes.data);
 
-      if (!activeImage) {
-        const mainImg = yachtRes.data.main_image
-          ? `${STORAGE_URL}${yachtRes.data.main_image}`
-          : PLACEHOLDER_IMAGE;
-        setActiveImage(mainImg);
+      if (!activeImage && yachtRes.data.main_image) {
+        setActiveImage(`${STORAGE_URL}${yachtRes.data.main_image}`);
       }
       setLoading(false);
     } catch (error) {
       console.error("Vessel Retrieval Failed:", error);
     }
-  };
-
-  const toggleSection = (section: string) => {
-    setExpandedSections(prev => ({
-      ...prev,
-      [section]: !prev[section]
-    }));
   };
 
   const handleImageError = (e: SyntheticEvent<HTMLImageElement, Event>) => {
@@ -239,530 +215,656 @@ export default function YachtTerminalPage() {
     }
   };
 
+  const formatCheckbox = (value: boolean | undefined) => {
+    return value ? "✔" : "";
+  };
+
   if (loading || !yacht) {
     return (
-      <div className="h-screen flex flex-col items-center justify-center bg-white">
-        <Loader2 className="animate-spin text-[#003566]" size={40} />
-        <p className="mt-4 text-[10px] font-black uppercase tracking-[0.4em] text-slate-400">
-          Manifest synchroniseren...
-        </p>
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <Loader2 className="animate-spin text-blue-600" size={40} />
       </div>
     );
   }
 
-  const renderCheckbox = (value: boolean | undefined) => {
-    return value ? (
-      <span className="text-green-600 font-bold">✔</span>
-    ) : (
-      <span className="text-gray-300">□</span>
-    );
-  };
-
-  const formatValue = (value: any) => {
-    if (value === undefined || value === null) return "";
-    if (typeof value === "boolean") return value ? "Ja" : "Nee";
-    return value.toString();
-  };
-
   return (
-    <div className="min-h-screen bg-white text-[#003566] selection:bg-blue-100">
+    <div className="min-h-screen bg-white text-gray-900">
       <Toaster position="top-center" />
 
-      {/* NAVIGATION HEADER */}
-      <header className="sticky top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-200 h-16 flex items-center px-6 justify-between">
-        <div className="flex items-center gap-4">
+      {/* TOP NAVIGATION */}
+      <div className="border-b border-gray-200 py-2">
+        <div className="max-w-7xl mx-auto px-4 flex justify-between items-center">
           <Link
             href="/nl/yachts"
-            className="flex items-center gap-2 text-sm text-slate-600 hover:text-[#003566] transition-colors"
+            className="flex items-center text-sm text-gray-600 hover:text-gray-900"
           >
-            <ArrowLeft size={16} /> Terug naar overzicht
+            <ArrowLeft size={16} className="mr-1" />
+            Terug naar overzicht
           </Link>
-          <span className="text-xs font-bold uppercase tracking-widest bg-[#003566] text-white px-3 py-1 rounded">
-            1-YB-192
-          </span>
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-semibold bg-blue-600 text-white px-2 py-1 rounded">
+              1-YB-192
+            </span>
+            <button className="flex items-center text-sm text-gray-600 hover:text-gray-900">
+              <Printer size={16} className="mr-1" />
+              Print PDF
+            </button>
+            <button className="flex items-center text-sm text-gray-600 hover:text-gray-900">
+              <Camera size={16} className="mr-1" />
+              Foto's
+            </button>
+            <button className="flex items-center text-sm text-gray-600 hover:text-gray-900">
+              <Download size={16} className="mr-1" />
+              Documenten
+            </button>
+            <button className="flex items-center text-sm text-gray-600 hover:text-gray-900">
+              <Share2 size={16} className="mr-1" />
+            </button>
+          </div>
         </div>
-        <div className="flex items-center gap-4">
-          <span className="text-xs font-medium text-slate-600 hidden md:block">
-            REF: {yacht.vessel_id || yacht.id}
-          </span>
-          <button className="flex items-center gap-2 px-3 py-1.5 border border-slate-300 rounded hover:bg-slate-50">
-            <Printer size={14} />
-            <span className="text-xs">Print PDF</span>
-          </button>
-          <button className="flex items-center gap-2 px-3 py-1.5 border border-slate-300 rounded hover:bg-slate-50">
-            <Download size={14} />
-            <span className="text-xs">Documenten</span>
-          </button>
-          <button className="flex items-center gap-2 px-3 py-1.5 border border-slate-300 rounded hover:bg-slate-50">
-            <Share2 size={14} />
-          </button>
+      </div>
+
+      {/* BREADCRUMB */}
+      <div className="max-w-7xl mx-auto px-4 py-2">
+        <div className="flex items-center text-sm text-gray-600">
+          <Link href="/" className="flex items-center hover:text-blue-600">
+            <Home size={14} className="mr-1" />
+            Home
+          </Link>
+          <ChevronRight size={14} className="mx-2" />
+          <Link href="/nl/yachts" className="hover:text-blue-600">
+            Boot aanbod
+          </Link>
+          <ChevronRight size={14} className="mx-2" />
+          <span className="font-semibold">{yacht.boat_name}</span>
         </div>
-      </header>
+      </div>
 
-      <main className="max-w-7xl mx-auto px-4 py-6">
-        {/* BREADCRUMB */}
-        <nav className="mb-6">
-          <ol className="flex items-center gap-2 text-sm text-slate-600">
-            <li>
-              <Link href="/" className="hover:text-[#003566]">Home</Link>
-            </li>
-            <li>›</li>
-            <li>
-              <Link href="/nl/yachts" className="hover:text-[#003566]">Boot aanbod</Link>
-            </li>
-            <li>›</li>
-            <li className="font-semibold text-[#003566]">{yacht.boat_name}</li>
-          </ol>
-        </nav>
-
-        {/* MAIN CONTENT */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* LEFT COLUMN - MAIN INFO */}
-          <div className="lg:col-span-2">
-            {/* TITLE & PRICE */}
-            <div className="mb-6">
-              <h1 className="text-3xl font-bold text-[#003566] mb-2">
-                {yacht.boat_name}
-              </h1>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-lg font-semibold text-[#003566]">
-                    € {yacht.price.toLocaleString("nl-NL")},-
-                  </p>
-                  <p className="text-sm text-slate-600">
-                    {yacht.year} • {yacht.make} {yacht.model} • {yacht.length}m
-                  </p>
-                </div>
-                <span className="bg-green-100 text-green-800 text-xs font-semibold px-3 py-1 rounded-full">
+      {/* MAIN CONTENT */}
+      <div className="max-w-7xl mx-auto px-4 py-6">
+        {/* HEADER */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            {yacht.boat_name}
+          </h1>
+          <div className="flex justify-between items-center">
+            <div>
+              <div className="flex items-center gap-4">
+                <p className="text-2xl font-bold text-blue-600">
+                  € {yacht.price.toLocaleString("nl-NL")},-
+                </p>
+                <span className="text-sm bg-green-100 text-green-800 px-2 py-1 rounded">
                   {yacht.vat_status || "Incl. BTW"}
                 </span>
               </div>
+              <p className="text-sm text-gray-600 mt-1">
+                {yacht.year} • {yacht.make} {yacht.model} • {yacht.length}m
+              </p>
             </div>
+            <div className="text-right">
+              <p className="text-sm font-semibold text-gray-700">Reference code</p>
+              <p className="text-sm text-gray-600">{yacht.reference_code}</p>
+            </div>
+          </div>
+        </div>
 
-            {/* MAIN IMAGE */}
-            <div className="mb-6">
-              <div className="relative h-96 bg-slate-100 rounded-lg overflow-hidden">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* LEFT COLUMN - SPECIFICATIONS */}
+          <div className="lg:col-span-2">
+            {/* IMAGE SECTION */}
+            <div className="mb-8">
+              <div className="relative h-96 bg-gray-200 rounded-lg overflow-hidden mb-4">
                 <img
-                  src={activeImage}
+                  src={activeImage || PLACEHOLDER_IMAGE}
                   onError={handleImageError}
                   className="w-full h-full object-cover"
                   alt={yacht.boat_name}
                 />
               </div>
-              {/* IMAGE THUMBNAILS */}
-              <div className="flex gap-2 mt-2 overflow-x-auto py-2">
-                {[yacht.main_image, ...yacht.images.map(img => img.url)]
-                  .filter(Boolean)
-                  .map((img, index) => (
-                    <button
-                      key={index}
-                      onClick={() => setActiveImage(`${STORAGE_URL}${img}`)}
-                      className="flex-shrink-0 w-20 h-20 rounded border-2 border-transparent hover:border-[#003566] overflow-hidden"
-                    >
-                      <img
-                        src={`${STORAGE_URL}${img}`}
-                        className="w-full h-full object-cover"
-                        alt={`Thumbnail ${index + 1}`}
-                      />
-                    </button>
-                  ))}
-              </div>
+              <button 
+                onClick={() => setShowAllPhotos(!showAllPhotos)}
+                className="text-blue-600 hover:text-blue-800 font-medium"
+              >
+                Show more photos
+              </button>
             </div>
 
-            {/* DESCRIPTION */}
+            {/* DOCUMENTS SECTION */}
             <div className="mb-8">
-              <h2 className="text-xl font-bold text-[#003566] mb-4">Beschrijving</h2>
-              <p className="text-slate-700 leading-relaxed">
-                {yacht.description || "Quicksilver 645 Cruiser – Compacte en veelzijdige sportcruiser met een 150 pk Mercury buitenboordmotor en Harbeck wegtrailer, comfortabele kajuit voor twee, ruime cockpit met lounge/eetfaciliteiten, en uitstekende handling en veiligheidsvoorzieningen."}
-              </p>
+              <button 
+                onClick={() => setShowDocuments(!showDocuments)}
+                className="text-blue-600 hover:text-blue-800 font-medium"
+              >
+                Documents
+              </button>
+              {showDocuments && (
+                <div className="mt-2 p-4 bg-gray-50 rounded">
+                  <p className="font-medium">Boat specifications</p>
+                </div>
+              )}
             </div>
 
-            {/* SPECIFICATION SECTIONS */}
-            <div className="space-y-6">
-              {/* GENERAL SPECIFICATIONS */}
-              <div className="border border-slate-200 rounded-lg overflow-hidden">
-                <button
-                  onClick={() => toggleSection("general")}
-                  className="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100"
-                >
-                  <h3 className="text-lg font-semibold text-[#003566]">Algemene specificaties</h3>
-                  {expandedSections.general ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-                </button>
-                <AnimatePresence>
-                  {expandedSections.general && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      exit={{ opacity: 0, height: 0 }}
-                      className="p-4 border-t border-slate-200"
-                    >
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <SpecRow label="Merk / Model" value={`${yacht.make} ${yacht.model}`} />
-                        <SpecRow label="Bouwjaar" value={yacht.year} />
-                        <SpecRow label="Motor" value={`${yacht.engine_power} pk ${yacht.engine_brand} ${yacht.engine_type}`} />
-                        <SpecRow label="Ligplaats" value={yacht.location} />
-                        <SpecRow label="Referentiecode" value={yacht.reference_code} />
-                        <SpecRow label="Bouwstof" value={yacht.construction_material} />
-                        <SpecRow label="L x B x D" value={`${yacht.length}m x ${yacht.beam}m x ${yacht.draft}m`} />
-                        <SpecRow label="Slaapplaatsen" value={yacht.berths} />
-                        <SpecRow label="CE categorie" value={yacht.ce_category} />
-                        <SpecRow label="CE max gewicht" value={yacht.ce_max_weight} />
-                        <SpecRow label="Rompvorm" value={yacht.hull_shape} />
-                        <SpecRow label="Rompskleur" value={yacht.hull_color} />
-                        <SpecRow label="Dekkleur" value={yacht.deck_color} />
-                        <SpecRow label="Dekconstructie" value={yacht.deck_superstructure_construction} />
-                        <SpecRow label="Open Cockpit" value={formatValue(yacht.open_cockpit)} />
-                        <SpecRow label="Vrije hoogte" value={yacht.clearance} />
-                        <SpecRow label="Diepgang" value={yacht.draft} />
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
+            {/* GENERAL SPECIFICATIONS */}
+            <div className="mb-8">
+              <h2 className="text-xl font-bold text-gray-900 mb-4 border-b pb-2">
+                General specifications
+              </h2>
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm font-medium text-gray-700">Asking price</p>
+                    <p className="text-lg font-bold">€ {yacht.price.toLocaleString("nl-NL")},-</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-700">VAT status</p>
+                    <p className="text-lg">{yacht.vat_status || "Incl. BTW"}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-700">Categories</p>
+                    <p className="text-lg">Speedboats and sports boats</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-700">Brand / Model</p>
+                    <p className="text-lg">{yacht.make} {yacht.model}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-700">Year of construction</p>
+                    <p className="text-lg">{yacht.year}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-700">Motor</p>
+                    <p className="text-lg">{yacht.engine_power} pk {yacht.engine_brand} {yacht.engine_type}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-700">berth</p>
+                    <p className="text-lg">in verkoophaven Schepenkring Roermond</p>
+                  </div>
+                </div>
 
-              {/* PROPULSION */}
-              <div className="border border-slate-200 rounded-lg overflow-hidden">
-                <button
-                  onClick={() => toggleSection("engine")}
-                  className="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100"
-                >
-                  <h3 className="text-lg font-semibold text-[#003566]">Motor en aandrijving</h3>
-                  {expandedSections.engine ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-                </button>
-                <AnimatePresence>
-                  {expandedSections.engine && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      exit={{ opacity: 0, height: 0 }}
-                      className="p-4 border-t border-slate-200"
-                    >
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <SpecRow label="Aantal motoren" value={yacht.engine_quantity} />
-                        <SpecRow label="Starttype" value={yacht.starting_type} />
-                        <SpecRow label="Type" value={yacht.engine_type} />
-                        <SpecRow label="Merk" value={yacht.engine_brand} />
-                        <SpecRow label="Model" value={yacht.engine_model} />
-                        <SpecRow label="Serienummer" value={yacht.serial_number} />
-                        <SpecRow label="Bouwjaar" value={yacht.engine_year} />
-                        <SpecRow label="Aantal cilinders" value={yacht.cylinders} />
-                        <SpecRow label="Vermogen" value={yacht.engine_power} />
-                        <SpecRow label="Urenmeter" value={formatValue(yacht.hour_meter)} />
-                        <SpecRow label="Gedraaide uren" value={yacht.running_hours} />
-                        <SpecRow label="Brandstof" value={yacht.fuel_type} />
-                        <SpecRow label="Verbruik" value={yacht.fuel_consumption} />
-                        <SpecRow label="Aandrijving" value={yacht.propulsion} />
-                        <SpecRow label="Brandstoftank capaciteit" value={yacht.fuel_capacity} />
-                        <SpecRow label="Max snelheid" value={yacht.max_speed} />
-                        <SpecRow label="Toerenteller" value={formatValue(yacht.tachometer)} />
-                        <SpecRow label="Accu" value={formatValue(yacht.battery)} />
-                        <SpecRow label="Accu capaciteit" value={yacht.battery_capacity} />
-                        <SpecRow label="Dynamo" value={formatValue(yacht.dynamo)} />
-                        <SpecRow label="Voltmeter" value={formatValue(yacht.voltmeter)} />
-                        <SpecRow label="Spanning" value={yacht.voltage} />
-                        <div className="md:col-span-2">
-                          <SpecRow label="Opmerkingen" value="Motor met tracker" />
-                        </div>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
+                <div className="mt-6">
+                  <p className="text-sm font-medium text-gray-700 mb-2">Comments</p>
+                  <p className="text-gray-700">
+                    {yacht.description || "Quicksilver 645 Cruiser – Compacte en veelzijdige sportcruiser met een 150 pk Mercury buitenboordmotor en Harbeck wegtrailer, comfortabele kajuit voor twee, ruime cockpit met lounge/eetfaciliteiten, en uitstekende handling en veiligheidsvoorzieningen."}
+                  </p>
+                </div>
 
-              {/* ACCOMMODATION */}
-              <div className="border border-slate-200 rounded-lg overflow-hidden">
-                <button
-                  onClick={() => toggleSection("accommodation")}
-                  className="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100"
-                >
-                  <h3 className="text-lg font-semibold text-[#003566]">Accommodatie</h3>
-                  {expandedSections.accommodation ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-                </button>
-                <AnimatePresence>
-                  {expandedSections.accommodation && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      exit={{ opacity: 0, height: 0 }}
-                      className="p-4 border-t border-slate-200"
-                    >
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <SpecRow label="Open Cockpit" value={formatValue(yacht.open_cockpit)} />
-                        <SpecRow label="Vrije hoogte" value={yacht.clearance} />
-                        <SpecRow label="Diepgang" value={yacht.draft} />
-                        <SpecRow label="Waterlijn lengte" value={yacht.waterline_length} />
-                        <SpecRow label="Waterverplaatsing" value={yacht.displacement} />
-                        <SpecRow label="Besturing" value={yacht.steering} />
-                        <SpecRow label="Plaats besturing" value={yacht.control_place} />
-                        <SpecRow label="Trim flaps" value={formatValue(yacht.trim_flaps)} />
-                        <SpecRow label="Kajuiten" value={yacht.cabins} />
-                        <SpecRow label="Slaapplaatsen" value={yacht.berths} />
-                        <SpecRow label="Interieurtype" value={yacht.interior_type} />
-                        <SpecRow label="Matrassen" value={formatValue(yacht.mattresses)} />
-                        <SpecRow label="Watertank" value={yacht.water_tank} />
-                        <SpecRow label="Watertank materiaal" value={yacht.water_tank_material} />
-                        <SpecRow label="Watersysteem" value={yacht.water_system} />
-                        <SpecRow label="Aantal douches" value={formatValue(yacht.shower)} />
-                        <SpecRow label="Radio CD speler" value={yacht.radio_cd_player} />
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+                  <div>
+                    <p className="text-sm font-medium text-gray-700">Reference code</p>
+                    <p className="text-lg">{yacht.reference_code}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-700">Building material</p>
+                    <p className="text-lg">{yacht.construction_material}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-700">L x W x D approx.</p>
+                    <p className="text-lg">{yacht.length} m x {yacht.beam} m x {yacht.draft} m</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-700">Sleeps</p>
+                    <p className="text-lg">{yacht.berths}</p>
+                  </div>
+                </div>
               </div>
+            </div>
 
-              {/* NAVIGATION & ELECTRONICS */}
-              <div className="border border-slate-200 rounded-lg overflow-hidden">
-                <button
-                  onClick={() => toggleSection("navigation")}
-                  className="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100"
-                >
-                  <h3 className="text-lg font-semibold text-[#003566]">Navigatie en elektronica</h3>
-                  {expandedSections.navigation ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-                </button>
-                <AnimatePresence>
-                  {expandedSections.navigation && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      exit={{ opacity: 0, height: 0 }}
-                      className="p-4 border-t border-slate-200"
-                    >
-                      <div className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <SpecRow label="Kompas" value={formatValue(yacht.kompas)} />
-                          <SpecRow label="Log/snelheid" value={formatValue(yacht.log_speed)} />
-                          <SpecRow label="Dieptemeter" value={formatValue(yacht.depth_gauge)} />
-                          <SpecRow label="Navigatieverlichting" value={formatValue(yacht.navigation_lights)} />
-                          <SpecRow label="Roerhoek indicator" value={formatValue(yacht.rudder_angle_indicator)} />
-                          <SpecRow label="GPS" value={yacht.gps} />
-                          <SpecRow label="Kaartplotter" value={yacht.chart_plotter} />
-                        </div>
-                        <div className="pt-4 border-t border-slate-200">
-                          <h4 className="font-semibold text-slate-700 mb-2">Visdieptemeter</h4>
-                          <SpecRow label="Simrad Evo 3" value="" />
-                        </div>
-                        <div className="pt-4 border-t border-slate-200">
-                          <h4 className="font-semibold text-slate-700 mb-2">Buitenboordapparatuur</h4>
-                          <SpecRow label="Fishfinder" value={yacht.fishfinder} />
-                        </div>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+            {/* ENGINE AND ELECTRICS */}
+            <div className="mb-8">
+              <h2 className="text-xl font-bold text-gray-900 mb-4 border-b pb-2">
+                Engine and electrics
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Number of identical engines</p>
+                  <p className="text-lg">{yacht.number_of_identical_engines || "1"}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Start type</p>
+                  <p className="text-lg">{yacht.start_type || "Electric"}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Type</p>
+                  <p className="text-lg">{yacht.engine_type || "Outboard"}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Brand</p>
+                  <p className="text-lg">{yacht.engine_brand || "Mercury"}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Door Design</p>
+                  <p className="text-lg">{yacht.engine_model || "ME F150 XLEFI-4266"}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Serial Number</p>
+                  <p className="text-lg">{yacht.serial_number || "2B44366"}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Year of construction</p>
+                  <p className="text-lg">{yacht.engine_year || "2018"}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Amount of cilinders</p>
+                  <p className="text-lg">{yacht.amount_of_cylinders || "4"}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Power</p>
+                  <p className="text-lg">{yacht.engine_power || "150"} hp</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Hour meter</p>
+                  <p className="text-lg">{formatCheckbox(yacht.hour_meter)}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Running hours</p>
+                  <p className="text-lg">{yacht.running_hours || "80 (+/-)"}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Fuel</p>
+                  <p className="text-lg">{yacht.fuel_type || "Petrol Euro 95"}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Consumption</p>
+                  <p className="text-lg">{yacht.fuel_consumption || "7 liters/hour"}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Propulsion</p>
+                  <p className="text-lg">{yacht.propulsion || "Screw"}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Fuel tank quantity</p>
+                  <p className="text-lg">{formatCheckbox(yacht.fuel_tank_quantity)}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Max speed</p>
+                  <p className="text-lg">{yacht.max_speed || "65 km/h"}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Tachometer</p>
+                  <p className="text-lg">{formatCheckbox(yacht.tachometer)}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Battery</p>
+                  <p className="text-lg">
+                    {formatCheckbox(yacht.battery)} {yacht.battery_capacity && `Capacity: ${yacht.battery_capacity}`}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Dynamo</p>
+                  <p className="text-lg">{formatCheckbox(yacht.dynamo)}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Voltmeter</p>
+                  <p className="text-lg">{formatCheckbox(yacht.voltmeter)}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Voltage</p>
+                  <p className="text-lg">{yacht.voltage || "12 volt"}</p>
+                </div>
+                <div className="md:col-span-2">
+                  <p className="text-sm font-medium text-gray-700">Comments</p>
+                  <p className="text-lg">{yacht.engine_comments || "Motor with tracker"}</p>
+                </div>
               </div>
+            </div>
 
-              {/* OUTSIDE EQUIPMENT */}
-              <div className="border border-slate-200 rounded-lg overflow-hidden">
-                <button
-                  onClick={() => toggleSection("equipment")}
-                  className="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100"
-                >
-                  <h3 className="text-lg font-semibold text-[#003566]">Buitenboord uitrusting</h3>
-                  {expandedSections.equipment ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-                </button>
-                <AnimatePresence>
-                  {expandedSections.equipment && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      exit={{ opacity: 0, height: 0 }}
-                      className="p-4 border-t border-slate-200"
-                    >
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <SpecRow label="Anker" value={yacht.anchor} />
-                        <SpecRow label="Ankerstok" value={renderCheckbox(yacht.anchor_rod)} />
-                        <SpecRow label="Sprayhood" value={renderCheckbox(yacht.sprayhood)} />
-                        <SpecRow label="Cockpittent" value={renderCheckbox(yacht.cockpit_tent)} />
-                        <SpecRow label="Zeilen" value={yacht.tarpaulin} />
-                        <SpecRow label="Pulpit" value={renderCheckbox(yacht.pulpit)} />
-                        <SpecRow label="Zwemplatform" value={renderCheckbox(yacht.swimming_platform)} />
-                        <SpecRow label="Zwemladder" value={renderCheckbox(yacht.swimming_ladder)} />
-                        <SpecRow label="Trailer" value={yacht.trailer_details} />
-                        <SpecRow label="Teakdek" value={renderCheckbox(yacht.teak_deck)} />
-                        <SpecRow label="Fenders, lijnen" value={renderCheckbox(yacht.fenders_lines)} />
-                        <SpecRow label="Cockpittafel" value={renderCheckbox(yacht.cockpit_table)} />
-                        <div className="md:col-span-2">
-                          <SpecRow label="Opmerkingen" value="Water ski pole" />
-                        </div>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+            {/* ACCOMMODATION */}
+            <div className="mb-8">
+              <h2 className="text-xl font-bold text-gray-900 mb-4 border-b pb-2">
+                Accommodation
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Open Cockpit (OK)</p>
+                  <p className="text-lg">{formatCheckbox(yacht.open_cockpit)}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Normal clearance height</p>
+                  <p className="text-lg">{yacht.clearance || "179.0"} m</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Draught</p>
+                  <p className="text-lg">{yacht.draft || "49 cm"}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Waterline length</p>
+                  <p className="text-lg">{yacht.waterline_length || "612 cm"}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Water displacement</p>
+                  <p className="text-lg">{yacht.water_displacement || "1060 kg"}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Control</p>
+                  <p className="text-lg">{yacht.control || "Steering wheel"}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Place control</p>
+                  <p className="text-lg">{yacht.control_place || "Outside"}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Trim flaps</p>
+                  <p className="text-lg">{formatCheckbox(yacht.trim_flaps)}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">cabins</p>
+                  <p className="text-lg">{yacht.cabins || "1"}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Sleeps</p>
+                  <p className="text-lg">{yacht.berths || "2 solid"}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Type of interior</p>
+                  <p className="text-lg">{yacht.interior_type || "Modern, light"}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Mattresses</p>
+                  <p className="text-lg">{formatCheckbox(yacht.mattresses)}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Water tank & material</p>
+                  <p className="text-lg">{yacht.water_tank || "45 liters Plastic"}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Water system</p>
+                  <p className="text-lg">{yacht.water_system || "Pressure system Electric pump"}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Number of showers</p>
+                  <p className="text-lg">{yacht.number_of_showers || "1"}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Radio CD player</p>
+                  <p className="text-lg">{yacht.radio_cd_player || "Fusion stereo system"}</p>
+                </div>
               </div>
+            </div>
 
-              {/* SAFETY */}
-              <div className="border border-slate-200 rounded-lg overflow-hidden">
-                <button
-                  onClick={() => toggleSection("safety")}
-                  className="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100"
-                >
-                  <h3 className="text-lg font-semibold text-[#003566]">Veiligheid</h3>
-                  {expandedSections.safety ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-                </button>
-                <AnimatePresence>
-                  {expandedSections.safety && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      exit={{ opacity: 0, height: 0 }}
-                      className="p-4 border-t border-slate-200"
-                    >
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <SpecRow label="Reddingsboei" value={renderCheckbox(yacht.lifebuoy)} />
-                        <SpecRow label="Bilgepomp" value={renderCheckbox(yacht.bilge_pump)} />
-                        <SpecRow label="Brandblusser" value={renderCheckbox(yacht.fire_extinguisher)} />
-                        <SpecRow label="Zelflozend cockpit" value={renderCheckbox(yacht.self_draining_cockpit)} />
-                        <div className="md:col-span-2">
-                          <SpecRow label="Opmerkingen" value="1x ruitenwisser" />
-                        </div>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+            {/* NAVIGATION AND ELECTRONICS */}
+            <div className="mb-8">
+              <h2 className="text-xl font-bold text-gray-900 mb-4 border-b pb-2">
+                Navigation and electronics
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Kompas</p>
+                  <p className="text-lg">{formatCheckbox(yacht.kompas)}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Log/speed</p>
+                  <p className="text-lg">{formatCheckbox(yacht.log_speed)}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Depth gauge</p>
+                  <p className="text-lg">{formatCheckbox(yacht.depth_gauge)}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Navigation lights</p>
+                  <p className="text-lg">{formatCheckbox(yacht.navigation_lights)}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Rudder angle indicator</p>
+                  <p className="text-lg">{formatCheckbox(yacht.rudder_angle_indicator)}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">GPS</p>
+                  <p className="text-lg">{yacht.gps || "Simrad Evo 3"}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">chart plotter</p>
+                  <p className="text-lg">{yacht.chart_plotter || "Simrad Evo 3 with Europe map from Navionics"}</p>
+                </div>
+                <div className="md:col-span-2">
+                  <p className="text-sm font-medium text-gray-700">Fishfinder</p>
+                  <p className="text-lg">{yacht.fishfinder || "Simrad Evo 3"}</p>
+                </div>
+                <div className="md:col-span-2">
+                  <p className="text-sm font-medium text-gray-700">Radio CD player</p>
+                  <p className="text-lg">{yacht.radio_cd_player || "Fusion stereo system"}</p>
+                </div>
+                <div className="md:col-span-2">
+                  <p className="text-sm font-medium text-gray-700">Refrigerator & food</p>
+                  <p className="text-lg">{yacht.refrigerator || "Electric 12V cool box"}</p>
+                </div>
               </div>
+            </div>
+
+            {/* OUTSIDE EQUIPMENT */}
+            <div className="mb-8">
+              <h2 className="text-xl font-bold text-gray-900 mb-4 border-b pb-2">
+                Outside equipment
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Anchors & Material</p>
+                  <p className="text-lg">{yacht.anchors_material || "Delta anchor 4kg"}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Anchor rod</p>
+                  <p className="text-lg">{formatCheckbox(yacht.anchor_rod)}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Sprayhood</p>
+                  <p className="text-lg">{formatCheckbox(yacht.sprayhood)}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Cockpit tent</p>
+                  <p className="text-lg">{formatCheckbox(yacht.cockpit_tent)}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Tarpaulin(s)</p>
+                  <p className="text-lg">{yacht.tarpaulin || "Winter tent and transport hood"}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Pulpit and bastion(s)</p>
+                  <p className="text-lg">{formatCheckbox(yacht.pulpit_bastion)}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Swimming platform</p>
+                  <p className="text-lg">{formatCheckbox(yacht.swimming_platform)}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Swimming ladder</p>
+                  <p className="text-lg">{formatCheckbox(yacht.swimming_ladder)}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Trailer</p>
+                  <p className="text-lg">{yacht.trailer || "Harbeck 2200 KG"}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Teak deck</p>
+                  <p className="text-lg">{formatCheckbox(yacht.teak_deck)}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Fenders, lines</p>
+                  <p className="text-lg">{formatCheckbox(yacht.fenders_lines)}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">cockpit table</p>
+                  <p className="text-lg">{formatCheckbox(yacht.cockpit_table)}</p>
+                </div>
+                <div className="md:col-span-2">
+                  <p className="text-sm font-medium text-gray-700">Comments</p>
+                  <p className="text-lg">{yacht.equipment_comments || "Water ski pole"}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* SAFETY */}
+            <div className="mb-8">
+              <h2 className="text-xl font-bold text-gray-900 mb-4 border-b pb-2">
+                Safety
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Lifebuoy</p>
+                  <p className="text-lg">{formatCheckbox(yacht.lifebuoy)}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Bilge pump</p>
+                  <p className="text-lg">{formatCheckbox(yacht.bilge_pump)}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Fire extinguisher</p>
+                  <p className="text-lg">{formatCheckbox(yacht.fire_extinguisher)}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Self-draining cockpit</p>
+                  <p className="text-lg">{formatCheckbox(yacht.self_draining_cockpit)}</p>
+                </div>
+                <div className="md:col-span-2">
+                  <p className="text-sm font-medium text-gray-700">Comments</p>
+                  <p className="text-lg">{yacht.safety_comments || "1x windshield wiper"}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* MEDIA SECTION */}
+            <div className="mb-8">
+              <h2 className="text-xl font-bold text-gray-900 mb-4 border-b pb-2">
+                Media of the Quicksilver 645 Cruiser
+              </h2>
+              <p className="text-gray-700">Photos and documents will be displayed here.</p>
             </div>
           </div>
 
-          {/* RIGHT COLUMN - ACTIONS & CONTACT */}
+          {/* RIGHT COLUMN - CONTACT & INFO */}
           <div className="lg:col-span-1">
-            {/* BIDDING SECTION */}
-            <div className="bg-slate-50 border border-slate-200 rounded-lg p-6 mb-6">
-              <h3 className="text-lg font-semibold text-[#003566] mb-4">Bieden</h3>
-              <div className="mb-4">
-                <p className="text-sm text-slate-600 mb-1">Huidig hoogste bod</p>
-                <p className="text-2xl font-bold text-[#003566]">
-                  € {yacht.current_bid ? Number(yacht.current_bid).toLocaleString() : yacht.price.toLocaleString()}
-                </p>
-              </div>
+            {/* DEALER INFO */}
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 mb-6">
+              <h3 className="text-lg font-bold text-gray-900 mb-4">
+                Makelaar - Schepenkring Roermond
+              </h3>
               <div className="space-y-3">
-                <input
-                  type="number"
-                  value={bidAmount}
-                  onChange={(e) => setBidAmount(e.target.value)}
-                  placeholder="Voer uw bod in (€)"
-                  className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#003566]"
-                />
-                <Button
-                  onClick={placeBid}
-                  className="w-full bg-[#003566] hover:bg-blue-900 text-white py-3"
-                >
-                  <Gavel size={18} className="mr-2" />
-                  Plaats bod
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Phone number</p>
+                  <p className="text-lg">+31 (0) 475 315661</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Address</p>
+                  <p className="text-lg">Herteneweg 2, Roermond 6049 AA</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Email</p>
+                  <p className="text-lg">roermond@schepenkring.nl</p>
+                </div>
+                <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white mt-4">
+                  Route calculate route
                 </Button>
               </div>
             </div>
 
-            {/* DIRECT PURCHASE */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-6">
-              <h3 className="text-lg font-semibold text-[#003566] mb-4">Direct kopen</h3>
-              <div className="mb-4">
-                <p className="text-sm text-slate-600 mb-1">Vraagprijs</p>
-                <p className="text-3xl font-bold text-[#003566]">
-                  € {yacht.price.toLocaleString()},-
-                </p>
-                <p className="text-sm text-slate-500 mt-1">{yacht.vat_status || "Incl. BTW"}</p>
+            {/* ADDITIONAL SPECS */}
+            <div className="border border-gray-200 rounded-lg p-6 mb-6">
+              <h3 className="text-lg font-bold text-gray-900 mb-4">
+                More information about the Quicksilver 645 Cruiser
+              </h3>
+              <div className="space-y-4">
+                <div>
+                  <p className="text-sm font-medium text-gray-700">werf</p>
+                  <p className="text-lg">Quicksilver</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">CE</p>
+                  <p className="text-lg">C</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">CE max weight</p>
+                  <p className="text-lg">845 kg</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Hull shape</p>
+                  <p className="text-lg">V-bottom</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Hull color</p>
+                  <p className="text-lg">Black</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Deck and superstructure colour</p>
+                  <p className="text-lg">White</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Deck and superstructure construction</p>
+                  <p className="text-lg">Grp (Polyester) Anti-slip and teak</p>
+                </div>
               </div>
-              <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3">
-                Direct kopen
-              </Button>
-            </div>
-
-            {/* TEST SAIL */}
-            <div className="border border-slate-200 rounded-lg p-6 mb-6">
-              <h3 className="text-lg font-semibold text-[#003566] mb-4">Proefvaart</h3>
-              <p className="text-sm text-slate-600 mb-4">
-                Boek een proefvaart om de boot te ervaren.
-              </p>
-              <Button variant="outline" className="w-full border-[#003566] text-[#003566] hover:bg-blue-50 py-3">
-                <Calendar size={18} className="mr-2" />
-                Proefvaart boeken
-              </Button>
             </div>
 
             {/* CONTACT FORM */}
-            <div className="border border-slate-200 rounded-lg p-6">
-              <h3 className="text-lg font-semibold text-[#003566] mb-4">Meer informatie</h3>
+            <div className="border border-gray-200 rounded-lg p-6">
+              <h3 className="text-lg font-bold text-gray-900 mb-4">
+                More information about the Quicksilver 645 Cruiser
+              </h3>
               <form className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Uw voor- en achternaam *
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Your first and last name*
                   </label>
                   <input
                     type="text"
-                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#003566]"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Telefoonnummer *
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Phone number*
                   </label>
                   <input
                     type="tel"
-                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#003566]"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    E-mailadres *
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Email address*
                   </label>
                   <input
                     type="email"
-                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#003566]"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Ik wil graag...
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    I would like the following... *
                   </label>
-                  <select className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#003566]">
-                    <option>Meer informatie ontvangen</option>
-                    <option>Een bezichtiging plannen</option>
-                    <option>Een proefvaart boeken</option>
-                    <option>Direct een bod uitbrengen</option>
+                  <select className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option>Select an option</option>
+                    <option>More information</option>
+                    <option>Schedule a viewing</option>
+                    <option>Request a test sail</option>
+                    <option>Make an offer</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Uw vraag of opmerking
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Your comment or question about the Quicksilver 645 Cruiser
                   </label>
                   <textarea
-                    rows={3}
-                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#003566]"
+                    rows={4}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
-                <Button type="submit" className="w-full bg-[#003566] hover:bg-blue-900 text-white py-3">
-                  Versturen
+                <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white">
+                  Send
                 </Button>
+                <p className="text-xs text-gray-500 mt-2">* Required field</p>
               </form>
-            </div>
-
-            {/* DEALER INFO */}
-            <div className="mt-6 p-4 bg-slate-50 rounded-lg">
-              <h4 className="font-semibold text-[#003566] mb-2">Makelaar - Schepenkring Roermond</h4>
-              <p className="text-sm text-slate-600">Herteneweg 2, Roermond 6049 AA</p>
-              <p className="text-sm text-slate-600">+31 (0) 475 315661</p>
-              <p className="text-sm text-slate-600">roermond@schepenkring.nl</p>
-              <Button variant="outline" size="sm" className="mt-3 w-full">
-                Route berekenen
-              </Button>
             </div>
           </div>
         </div>
-      </main>
-    </div>
-  );
-}
+      </div>
 
-function SpecRow({ label, value }: { label: string; value?: any }) {
-  if (value === undefined || value === null || value === "") return null;
-  
-  return (
-    <div className="flex justify-between items-center py-2 border-b border-slate-100">
-      <span className="text-sm text-slate-600">{label}</span>
-      <span className="text-sm font-medium text-[#003566]">{value}</span>
+      {/* PRIVACY FOOTER */}
+      <div className="border-t border-gray-200 py-4">
+        <div className="max-w-7xl mx-auto px-4 text-center text-sm text-gray-600">
+          <p>Privacy - Terms</p>
+        </div>
+      </div>
     </div>
   );
 }
