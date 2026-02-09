@@ -35,6 +35,8 @@ import ReturnToAdmin from "./ReturnToAdmin";
 
 // Storage URL constant
 const STORAGE_URL = "https://schepen-kring.nl/storage/";
+// Hardcoded API URL
+const API_URL = "https://schepen-kring.nl/api";
 
 // Notification type
 interface Notification {
@@ -80,87 +82,85 @@ export function DashboardHeader() {
   }, []);
 
   // Fetch notifications
-  // const fetchNotifications = async () => {
-  //   try {
-  //     const token = localStorage.getItem("auth_token");
-  //     if (!token) return;
-
-  //     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/notifications`, {
-  //       headers: {
-  //         'Authorization': `Bearer ${token}`,
-  //         'Content-Type': 'application/json',
-  //       },
-  //     });
-
-  //     if (response.ok) {
-  //       const data = await response.json();
-  //       setNotifications(data.data || []);
-  //       setUnreadCount(data.meta?.unread_count || 0);
-  //     }
-  //   } catch (error) {
-  //     console.error("Error fetching notifications:", error);
-  //   }
-  // };
-
   const fetchNotifications = async () => {
     try {
-        const token = localStorage.getItem("auth_token");
-        if (!token) {
-            console.log("No auth token found");
-            return;
-        }
+      setLoading(true);
+      const token = localStorage.getItem("auth_token");
+      if (!token) {
+        console.log("No auth token found");
+        return;
+      }
 
-        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://schepen-kring.nl/api';
-        console.log("API URL:", API_URL);
-        console.log("Token exists:", !!token);
-        
-        const response = await fetch(`${API_URL}/notifications`, {
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Accept': 'application/json',
-            },
-        });
+      console.log("Fetching notifications from:", `${API_URL}/notifications`);
+      console.log("Token (first 20 chars):", token.substring(0, 20) + "...");
+      
+      const response = await fetch(`${API_URL}/notifications`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
+        },
+      });
 
-        console.log("Response status:", response.status);
-        
-        // Get response as text first to see what's returned
-        const responseText = await response.text();
-        console.log("Response text (first 500 chars):", responseText.substring(0, 500));
-        
-        // Try to parse as JSON
+      console.log("Response status:", response.status);
+      
+      // Get response as text first to see what's returned
+      const responseText = await response.text();
+      console.log("Response text (first 500 chars):", responseText.substring(0, 500));
+      
+      if (response.ok) {
         try {
-            const data = JSON.parse(responseText);
-            console.log("Parsed data:", data);
-            setNotifications(data.data || []);
-            setUnreadCount(data.meta?.unread_count || 0);
+          const data = JSON.parse(responseText);
+          console.log("Notifications data received:", data);
+          setNotifications(data.data || []);
+          setUnreadCount(data.meta?.unread_count || 0);
         } catch (jsonError) {
-            console.error("Failed to parse as JSON:", jsonError);
-            // Set empty state
-            setNotifications([]);
-            setUnreadCount(0);
+          console.error("Failed to parse as JSON:", jsonError);
+          // Set empty state
+          setNotifications([]);
+          setUnreadCount(0);
         }
+      } else {
+        console.error("Notifications API error:", responseText);
+        toast.error("Failed to load notifications");
+      }
     } catch (error) {
-        console.error("Error fetching notifications:", error);
-        setNotifications([]);
-        setUnreadCount(0);
+      console.error("Error fetching notifications:", error);
+      setNotifications([]);
+      setUnreadCount(0);
+    } finally {
+      setLoading(false);
     }
-};
+  };
 
   // Fetch unread count separately
   const fetchUnreadCount = async () => {
     try {
       const token = localStorage.getItem("auth_token");
-      if (!token) return;
+      if (!token) {
+        console.log("No auth token found for unread count");
+        return;
+      }
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/notifications/unread-count`, {
+      console.log("Fetching unread count from:", `${API_URL}/notifications/unread-count`);
+      
+      const response = await fetch(`${API_URL}/notifications/unread-count`, {
         headers: {
           'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
         },
       });
 
+      console.log("Unread count response status:", response.status);
+      
       if (response.ok) {
-        const data = await response.json();
-        setUnreadCount(data.count || 0);
+        const text = await response.text();
+        console.log("Unread count response:", text);
+        try {
+          const data = JSON.parse(text);
+          setUnreadCount(data.count || 0);
+        } catch (e) {
+          console.error("Failed to parse unread count:", e);
+        }
       }
     } catch (error) {
       console.error("Error fetching unread count:", error);
@@ -190,14 +190,23 @@ export function DashboardHeader() {
   const markAsRead = async (notificationId: number) => {
     try {
       const token = localStorage.getItem("auth_token");
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/notifications/${notificationId}/read`, {
+      if (!token) {
+        toast.error("No authentication token found");
+        return;
+      }
+
+      console.log("Marking notification as read:", notificationId);
+      
+      const response = await fetch(`${API_URL}/notifications/${notificationId}/read`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
       });
 
+      console.log("Mark as read response status:", response.status);
+      
       if (response.ok) {
         // Update local state
         setNotifications(prev => 
@@ -209,6 +218,10 @@ export function DashboardHeader() {
         );
         setUnreadCount(prev => Math.max(0, prev - 1));
         toast.success('Notification marked as read');
+      } else {
+        const text = await response.text();
+        console.error("Mark as read error:", text);
+        toast.error('Failed to mark as read');
       }
     } catch (error) {
       console.error("Error marking notification as read:", error);
@@ -220,14 +233,23 @@ export function DashboardHeader() {
   const markAllAsRead = async () => {
     try {
       const token = localStorage.getItem("auth_token");
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/notifications/read-all`, {
+      if (!token) {
+        toast.error("No authentication token found");
+        return;
+      }
+
+      console.log("Marking all notifications as read");
+      
+      const response = await fetch(`${API_URL}/notifications/read-all`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
       });
 
+      console.log("Mark all as read response status:", response.status);
+      
       if (response.ok) {
         setNotifications(prev => 
           prev.map(notif => ({ 
@@ -238,6 +260,10 @@ export function DashboardHeader() {
         );
         setUnreadCount(0);
         toast.success('All notifications marked as read');
+      } else {
+        const text = await response.text();
+        console.error("Mark all as read error:", text);
+        toast.error('Failed to mark all as read');
       }
     } catch (error) {
       console.error("Error marking all as read:", error);
@@ -249,13 +275,22 @@ export function DashboardHeader() {
   const deleteNotification = async (notificationId: number) => {
     try {
       const token = localStorage.getItem("auth_token");
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/notifications/${notificationId}`, {
+      if (!token) {
+        toast.error("No authentication token found");
+        return;
+      }
+
+      console.log("Deleting notification:", notificationId);
+      
+      const response = await fetch(`${API_URL}/notifications/${notificationId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
         },
       });
 
+      console.log("Delete notification response status:", response.status);
+      
       if (response.ok) {
         setNotifications(prev => prev.filter(notif => notif.id !== notificationId));
         setUnreadCount(prev => {
@@ -263,6 +298,10 @@ export function DashboardHeader() {
           return notification?.read ? prev : Math.max(0, prev - 1);
         });
         toast.success('Notification deleted');
+      } else {
+        const text = await response.text();
+        console.error("Delete notification error:", text);
+        toast.error('Failed to delete notification');
       }
     } catch (error) {
       console.error("Error deleting notification:", error);
@@ -408,6 +447,7 @@ export function DashboardHeader() {
               {loading ? (
                 <div className="p-8 text-center">
                   <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#003566] mx-auto"></div>
+                  <p className="text-[9px] text-slate-500 mt-2">Loading notifications...</p>
                 </div>
               ) : notifications.length === 0 ? (
                 <div className="p-8 text-center">
@@ -415,6 +455,12 @@ export function DashboardHeader() {
                   <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">
                     No notifications yet
                   </p>
+                  <button 
+                    onClick={fetchNotifications}
+                    className="mt-2 text-[8px] font-bold uppercase tracking-widest text-blue-600 hover:text-blue-700"
+                  >
+                    Refresh
+                  </button>
                 </div>
               ) : (
                 <div className="divide-y divide-slate-100">
@@ -485,7 +531,7 @@ export function DashboardHeader() {
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {/* User Menu (Unchanged) */}
+        {/* User Menu */}
         <DropdownMenu
           onOpenChange={(open) => !open && setShowLogoutConfirm(false)}
         >

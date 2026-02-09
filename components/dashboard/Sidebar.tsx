@@ -168,6 +168,13 @@ export function Sidebar({ onCollapse }: { onCollapse?: (collapsed: boolean) => v
       page_key: "blog"  // matches backend page_key
     },
     { 
+      title: "Logs", 
+      href: userRole === "Admin" ? "/dashboard/admin/logs" : "/dashboard/logs", 
+      icon: FileText, 
+      roles: ["Admin"],
+      page_key: "logs"  // matches backend page_key
+    },
+    { 
       title: "My Boats", 
       href: "/dashboard/partner/boats", 
       icon: Ship, 
