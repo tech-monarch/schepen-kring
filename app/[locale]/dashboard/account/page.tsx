@@ -15,7 +15,8 @@ import {
   Globe,
   Lock,
   Eye,
-  EyeOff
+  EyeOff,
+  Search
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { motion } from "framer-motion";
@@ -27,102 +28,17 @@ import { Sidebar } from "@/components/dashboard/Sidebar";
 const API_BASE = "https://schepen-kring.nl/api";
 const STORAGE_URL = "https://schepen-kring.nl/storage/";
 
-// Google Maps Autocomplete Component
-const GoogleMapsAutocomplete = ({ 
-  value, 
-  onChange, 
-  onPlaceSelect 
-}: { 
-  value: string; 
-  onChange: (value: string) => void; 
-  onPlaceSelect: (place: any) => void;
-}) => {
-  const inputRef = useRef<HTMLInputElement>(null);
-  const autocompleteRef = useRef<google.maps.places.Autocomplete>();
+// Define Google Maps types locally if needed
+declare global {
+  interface Window {
+    google: any;
+  }
+}
 
-  useEffect(() => {
-    if (!window.google) {
-      // Load Google Maps script if not already loaded
-      const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places`;
-      script.async = true;
-      script.onload = initAutocomplete;
-      document.head.appendChild(script);
-    } else {
-      initAutocomplete();
-    }
-
-    function initAutocomplete() {
-      if (inputRef.current && window.google) {
-        autocompleteRef.current = new google.maps.places.Autocomplete(inputRef.current, {
-          types: ['address'],
-          componentRestrictions: { country: 'nl' }, // Netherlands
-          fields: ['address_components', 'formatted_address']
-        });
-
-        autocompleteRef.current.addListener('place_changed', () => {
-          const place = autocompleteRef.current?.getPlace();
-          if (place && place.formatted_address) {
-            onChange(place.formatted_address);
-            
-            // Extract address components
-            const addressComponents: any = {};
-            place.address_components?.forEach(component => {
-              const componentType = component.types[0];
-              switch (componentType) {
-                case 'street_number':
-                  addressComponents.streetNumber = component.long_name;
-                  break;
-                case 'route':
-                  addressComponents.streetName = component.long_name;
-                  break;
-                case 'locality':
-                  addressComponents.city = component.long_name;
-                  break;
-                case 'administrative_area_level_1':
-                  addressComponents.state = component.long_name;
-                  break;
-                case 'postal_code':
-                  addressComponents.zipCode = component.long_name;
-                  break;
-                case 'country':
-                  addressComponents.country = component.long_name;
-                  break;
-              }
-            });
-
-            onPlaceSelect({
-              address: place.formatted_address,
-              city: addressComponents.city,
-              state: addressComponents.state,
-              zipCode: addressComponents.zipCode,
-              country: addressComponents.country,
-              streetNumber: addressComponents.streetNumber,
-              streetName: addressComponents.streetName
-            });
-          }
-        });
-      }
-    }
-
-    return () => {
-      if (autocompleteRef.current) {
-        google.maps.event.clearInstanceListeners(autocompleteRef.current);
-      }
-    };
-  }, []);
-
-  return (
-    <input
-      ref={inputRef}
-      type="text"
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className="w-full bg-transparent border-b border-slate-200 py-2 text-sm font-bold text-[#003566] outline-none focus:border-[#003566]"
-      placeholder="Start typing your address..."
-    />
-  );
-};
+interface AddressSuggestion {
+  description: string;
+  place_id: string;
+}
 
 export default function ProfileSettingsPage() {
   const t = useTranslations("Dashboard");
@@ -131,6 +47,8 @@ export default function ProfileSettingsPage() {
   const [user, setUser] = useState<any>(null);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const addressInputRef = useRef<HTMLInputElement>(null);
+  const autocompleteRef = useRef<any>(null);
 
   // Main form state
   const [formData, setFormData] = useState({
@@ -156,8 +74,61 @@ export default function ProfileSettingsPage() {
     confirm: false
   });
 
+  // Address autocomplete
+  const [addressSuggestions, setAddressSuggestions] = useState<AddressSuggestion[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [isSearchingAddress, setIsSearchingAddress] = useState(false);
+
   useEffect(() => {
     fetchProfile();
+  }, []);
+
+  // Initialize Google Maps Autocomplete when component mounts
+  useEffect(() => {
+    if (!addressInputRef.current || !process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY) return;
+
+    const loadGoogleMaps = () => {
+      if (window.google && window.google.maps) {
+        initAutocomplete();
+        return;
+      }
+
+      const script = document.createElement('script');
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places`;
+      script.async = true;
+      script.defer = true;
+      document.head.appendChild(script);
+      
+      script.onload = () => {
+        initAutocomplete();
+      };
+    };
+
+    const initAutocomplete = () => {
+      if (window.google && window.google.maps && addressInputRef.current) {
+        autocompleteRef.current = new window.google.maps.places.Autocomplete(
+          addressInputRef.current,
+          {
+            types: ['address'],
+            componentRestrictions: { country: 'nl' },
+            fields: ['address_components', 'formatted_address', 'geometry']
+          }
+        );
+
+        autocompleteRef.current.addListener('place_changed', () => {
+          const place = autocompleteRef.current.getPlace();
+          handlePlaceSelect(place);
+        });
+      }
+    };
+
+    loadGoogleMaps();
+
+    return () => {
+      if (autocompleteRef.current) {
+        window.google.maps.event.clearInstanceListeners(autocompleteRef.current);
+      }
+    };
   }, []);
 
   const fetchProfile = async () => {
@@ -194,6 +165,82 @@ export default function ProfileSettingsPage() {
       setFormData({ ...formData, profile_image: file });
       setPreviewUrl(URL.createObjectURL(file));
     }
+  };
+
+  // Manual address search using Google Places API
+  const searchAddress = async (query: string) => {
+    if (!query || query.length < 3) {
+      setAddressSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+
+    setIsSearchingAddress(true);
+    try {
+      const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+      const response = await fetch(
+        `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(query)}&components=country:nl&key=${apiKey}`
+      );
+      const data = await response.json();
+      
+      if (data.predictions) {
+        setAddressSuggestions(data.predictions);
+        setShowSuggestions(true);
+      }
+    } catch (error) {
+      console.error('Address search error:', error);
+    } finally {
+      setIsSearchingAddress(false);
+    }
+  };
+
+  // Get place details when an address is selected
+  const handleAddressSelect = async (placeId: string) => {
+    try {
+      const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+      const response = await fetch(
+        `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=address_components,formatted_address&key=${apiKey}`
+      );
+      const data = await response.json();
+      
+      if (data.result) {
+        handlePlaceSelect(data.result);
+        setShowSuggestions(false);
+      }
+    } catch (error) {
+      console.error('Place details error:', error);
+    }
+  };
+
+  const handlePlaceSelect = (place: any) => {
+    if (!place) return;
+
+    const addressComponents: any = {};
+    const formattedAddress = place.formatted_address || "";
+    
+    place.address_components?.forEach((component: any) => {
+      const types = component.types;
+      if (types.includes('street_number')) {
+        addressComponents.streetNumber = component.long_name;
+      } else if (types.includes('route')) {
+        addressComponents.streetName = component.long_name;
+      } else if (types.includes('locality')) {
+        addressComponents.city = component.long_name;
+      } else if (types.includes('administrative_area_level_1')) {
+        addressComponents.state = component.long_name;
+      } else if (types.includes('postal_code')) {
+        addressComponents.zipCode = component.long_name;
+      } else if (types.includes('country')) {
+        addressComponents.country = component.long_name;
+      }
+    });
+
+    setFormData(prev => ({
+      ...prev,
+      address: formattedAddress,
+      city: addressComponents.city || prev.city,
+      state: addressComponents.state || prev.state,
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -265,15 +312,6 @@ export default function ProfileSettingsPage() {
     }
   };
 
-  const handlePlaceSelect = (place: any) => {
-    setFormData(prev => ({
-      ...prev,
-      address: place.address || prev.address,
-      city: place.city || prev.city,
-      state: place.state || prev.state,
-    }));
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
@@ -317,7 +355,7 @@ export default function ProfileSettingsPage() {
                     <button
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
-                      className="absolute bottom-[-12px] right-[-12px] bg-[#003566] text-white p-3 rounded-full shadow-xl hover:scale-110 transition-transform z-10"
+                      className="absolute -bottom-3 -right-3 bg-[#003566] text-white p-3 rounded-full shadow-xl hover:scale-110 transition-transform z-10"
                     >
                       <Camera size={18} />
                     </button>
@@ -390,18 +428,54 @@ export default function ProfileSettingsPage() {
                   </div>
                 </div>
 
-                {/* House Address with Google Maps Autocomplete */}
+                {/* House Address with Google Maps */}
                 <div className="space-y-2">
                   <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-2">
                     <MapPin size={12} /> House Address
                   </label>
-                  <GoogleMapsAutocomplete
-                    value={formData.address}
-                    onChange={(value) => setFormData({ ...formData, address: value })}
-                    onPlaceSelect={handlePlaceSelect}
-                  />
+                  <div className="relative">
+                    <input
+                      ref={addressInputRef}
+                      type="text"
+                      value={formData.address}
+                      onChange={(e) => {
+                        setFormData({ ...formData, address: e.target.value });
+                        searchAddress(e.target.value);
+                      }}
+                      onFocus={() => {
+                        if (formData.address.length >= 3) {
+                          searchAddress(formData.address);
+                        }
+                      }}
+                      className="w-full bg-transparent border-b border-slate-200 py-2 text-sm font-bold text-[#003566] outline-none focus:border-[#003566] pr-10"
+                      placeholder="Start typing your address..."
+                    />
+                    {isSearchingAddress && (
+                      <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                        <Loader2 className="w-4 h-4 animate-spin text-slate-400" />
+                      </div>
+                    )}
+                    
+                    {showSuggestions && addressSuggestions.length > 0 && (
+                      <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 shadow-lg max-h-60 overflow-y-auto">
+                        {addressSuggestions.map((suggestion) => (
+                          <button
+                            key={suggestion.place_id}
+                            type="button"
+                            className="w-full text-left px-4 py-3 hover:bg-slate-50 text-sm text-slate-700 border-b border-slate-100 last:border-b-0"
+                            onClick={() => handleAddressSelect(suggestion.place_id)}
+                          >
+                            <div className="flex items-center gap-2">
+                              <Search size={12} className="text-slate-400" />
+                              {suggestion.description}
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                   <p className="text-[8px] text-slate-400 mt-1">
-                    Start typing your address and select from Google Maps suggestions
+                    Start typing your address and select from suggestions
                   </p>
                 </div>
 
