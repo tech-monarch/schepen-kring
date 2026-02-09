@@ -39,31 +39,31 @@ import { Button } from "@/components/ui/button";
 import { toast, Toaster } from "react-hot-toast";
 
 // --- CONSTANTS ---
-const STORAGE_URL = "https://schepen-kring.nl/storage/"; // [cite: 5]
+const STORAGE_URL = "https://schepen-kring.nl/storage/";
 const PLACEHOLDER_IMAGE = "https://images.unsplash.com/photo-1569263979104-865ab7cd8d13?auto=format&fit=crop&w=1200&q=80";
-const DUTCH_DAYS = ['Zo', 'Ma', 'Di', 'Wo', 'Do', 'Vr', 'Za']; // [cite: 13]
-const DUTCH_MONTHS = ['Januari', 'Februari', 'Maart', 'April', 'Mei', 'Juni', 'Juli', 'Augustus', 'September', 'Oktober', 'November', 'December']; // [cite: 14]
+const DUTCH_DAYS = ['Zo', 'Ma', 'Di', 'Wo', 'Do', 'Vr', 'Za'];
+const DUTCH_MONTHS = ['Januari', 'Februari', 'Maart', 'April', 'Mei', 'Juni', 'Juli', 'Augustus', 'September', 'Oktober', 'November', 'December'];
 
-// --- INTERFACES (Strictly matching your provided file) ---
+// --- INTERFACES ---
 interface Yacht {
   id: number;
-  vessel_id: string; // 
+  vessel_id: string;
   boat_name: string;
   price: number;
   current_bid: number | null;
-  status: "For Sale" | "For Bid" | "Sold" | "Draft"; // [cite: 7]
+  status: "For Sale" | "For Bid" | "Sold" | "Draft";
   year: number;
   length: string;
   make: string;
   model: string;
   location: string;
-  description: string; // [cite: 8]
+  description: string;
   main_image: string;
   images: { id: number; url: string; category: string }[];
   
   // Technical Fields
   vat_status?: string;
-  reference_code?: string; // [cite: 9]
+  reference_code?: string;
   construction_material?: string;
   hull_shape?: string;
   hull_color?: string;
@@ -73,7 +73,7 @@ interface Yacht {
   steering?: string;
 
   // Engine
-  engine_brand?: string; // [cite: 10]
+  engine_brand?: string;
   engine_model?: string;
   engine_power?: string;
   engine_hours?: string;
@@ -81,7 +81,7 @@ interface Yacht {
   max_speed?: string;
   fuel_type?: string;
   fuel_capacity?: string;
-  voltage?: string; // [cite: 11]
+  voltage?: string;
   
   // Accommodation
   cabins?: number;
@@ -92,7 +92,7 @@ interface Yacht {
   
   // Equipment
   navigation_electronics?: string;
-  exterior_equipment?: string; // [cite: 12]
+  exterior_equipment?: string;
   trailer_included?: boolean | number;
   beam?: string;
   draft?: string;
@@ -110,7 +110,7 @@ interface CalendarDay {
 
 // --- HELPER COMPONENTS ---
 
-// 1. The "Specs Strip" (L | B | D | Clearance | Year | Material)
+// 1. The "Specs Strip"
 const QuickSpecItem = ({ label, value, unit }: { label: string; value?: string | number; unit?: string }) => {
   if (!value) return null;
   return (
@@ -146,21 +146,80 @@ const SectionTitle = ({ children, icon: Icon }: { children: React.ReactNode, ico
   </h3>
 );
 
+// 4. Bidding Module
+const BiddingModule = ({ yacht, bidAmount, setBidAmount, placeBid }: any) => (
+  <div className="bg-slate-50 p-4 border rounded-lg w-full mt-4">
+    <div className="flex justify-between items-center mb-2">
+      <p className="text-xs font-bold uppercase tracking-wider text-gray-500">Huidig Bod</p>
+      <span className="text-[10px] font-bold uppercase text-[#003566] bg-blue-100 px-2 py-0.5 rounded-full">Veiling</span>
+    </div>
+    <p className="text-3xl font-bold text-[#003566] mb-4">
+      € {Number(yacht.current_bid || yacht.price).toLocaleString("nl-NL")}
+    </p>
+    <div className="flex gap-2">
+      <input
+        type="number"
+        value={bidAmount}
+        onChange={(e) => setBidAmount(e.target.value)}
+        placeholder="Uw bod..."
+        className="flex-1 border border-gray-300 p-2 rounded-md text-sm focus:outline-none focus:border-[#003566]"
+      />
+      <Button onClick={placeBid} className="bg-[#003566] hover:bg-[#00284d]">
+        <Gavel size={16} className="mr-2" /> Bied
+      </Button>
+    </div>
+    <p className="text-xs text-gray-500 mt-2">Minimaal bod: € {(Number(yacht.current_bid || yacht.price) + 100).toLocaleString()}</p>
+  </div>
+);
+
+// 5. Broker Info Card
+const BrokerInfoCard = ({ setPaymentMode }: any) => (
+    <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+        <div className="flex items-center gap-4 mb-4">
+            <div className="w-16 h-16 rounded-full bg-gray-200 overflow-hidden border-2 border-white shadow-sm">
+                <img src="https://ui-avatars.com/api/?name=Schepen+Kring&background=003566&color=fff" alt="Broker" className="w-full h-full object-cover" />
+            </div>
+            <div>
+                <h4 className="text-lg font-bold text-gray-900">Schepenkring Makelaardij</h4>
+                <p className="text-xs text-gray-500 uppercase tracking-wider">Uw jachtmakelaar</p>
+            </div>
+        </div>
+        <div className="space-y-3">
+            <Button
+                onClick={() => setPaymentMode("test_sail")}
+                className="w-full bg-[#003566] hover:bg-[#00284d] text-white py-6 text-sm uppercase tracking-widest font-bold"
+            >
+                <Calendar className="mr-2 h-4 w-4" />
+                Plan een Bezichtiging
+            </Button>
+            <Button variant="outline" className="w-full border-gray-300 hover:bg-gray-50 text-gray-700">
+                <Phone className="mr-2 h-4 w-4" />
+                +31 (0)88 123 4567
+            </Button>
+            <Button variant="outline" className="w-full border-gray-300 hover:bg-gray-50 text-gray-700">
+                <Mail className="mr-2 h-4 w-4" />
+                Stuur e-mail
+            </Button>
+        </div>
+    </div>
+);
+
+
 export default function YachtTerminalPage() {
   const { id } = useParams();
   const [yacht, setYacht] = useState<Yacht | null>(null);
-  const [bids, setBids] = useState<any[]>([]); // 
+  const [bids, setBids] = useState<any[]>([]);
   const [activeImage, setActiveImage] = useState<string>("");
   const [loading, setLoading] = useState(true);
   
   // Action States
   const [bidAmount, setBidAmount] = useState<string>("");
-  const [paymentMode, setPaymentMode] = useState<"test_sail" | "buy_now" | null>(null); // [cite: 20]
+  const [paymentMode, setPaymentMode] = useState<"test_sail" | "buy_now" | null>(null);
   const [paymentStatus, setPaymentStatus] = useState<"idle" | "processing" | "success">("idle");
   
   // Booking/Calendar State
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [selectedTime, setSelectedTime] = useState<string | null>(null); // [cite: 18]
+  const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [availableSlots, setAvailableSlots] = useState<string[]>([]);
   const [calendarDays, setCalendarDays] = useState<CalendarDay[]>([]);
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
@@ -172,19 +231,19 @@ export default function YachtTerminalPage() {
     notes: ''
   });
 
-  // --- DATA FETCHING (Preserved) ---
+  // --- DATA FETCHING ---
   const fetchVesselData = async () => {
     try {
       const [yachtRes, historyRes] = await Promise.all([
         api.get(`/yachts/${id}`),
-        api.get(`/bids/${id}/history`), // [cite: 37]
+        api.get(`/bids/${id}/history`),
       ]);
       setYacht(yachtRes.data);
       setBids(historyRes.data);
 
       if (!activeImage) {
         const mainImg = yachtRes.data.main_image
-          ? `${STORAGE_URL}${yachtRes.data.main_image}` // [cite: 39]
+          ? `${STORAGE_URL}${yachtRes.data.main_image}`
           : PLACEHOLDER_IMAGE;
         setActiveImage(mainImg);
       }
@@ -197,17 +256,17 @@ export default function YachtTerminalPage() {
 
   useEffect(() => {
     fetchVesselData();
-    const interval = setInterval(fetchVesselData, 10000); // [cite: 22]
+    const interval = setInterval(fetchVesselData, 10000);
     return () => clearInterval(interval);
   }, [id]);
 
   useEffect(() => {
     if (paymentMode === "test_sail") {
-      generateCalendarDays(); // [cite: 23]
+      generateCalendarDays();
     }
   }, [paymentMode, currentMonth]);
 
-  // --- CALENDAR LOGIC (Preserved) ---
+  // --- CALENDAR LOGIC ---
   const generateCalendarDays = async () => {
     const days: CalendarDay[] = [];
     const startDate = new Date(currentMonth);
@@ -215,7 +274,7 @@ export default function YachtTerminalPage() {
     const firstDay = startDate.getDay();
     const year = currentMonth.getFullYear();
     const month = currentMonth.getMonth();
-    const daysInMonth = new Date(year, month + 1, 0).getDate(); // [cite: 27]
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
     
     for (let i = 0; i < firstDay; i++) {
       const date = new Date(startDate);
@@ -225,13 +284,13 @@ export default function YachtTerminalPage() {
     
     for (let i = 1; i <= daysInMonth; i++) {
       const date = new Date(year, month, i);
-      days.push({ date, available: false, isCurrentMonth: true }); // [cite: 30]
+      days.push({ date, available: false, isCurrentMonth: true });
     }
     setCalendarDays(days);
     
     // Fetch real availability
     try {
-        const res = await api.get(`/yachts/${id}/available-dates?month=${month + 1}&year=${year}`); // [cite: 33]
+        const res = await api.get(`/yachts/${id}/available-dates?month=${month + 1}&year=${year}`);
         const availableDates = res.data.availableDates || [];
         setCalendarDays(prev => prev.map(day => ({
             ...day,
@@ -243,7 +302,7 @@ export default function YachtTerminalPage() {
   const fetchAvailableSlots = async (date: Date) => {
     try {
       const dateStr = date.toISOString().split('T')[0];
-      const res = await api.get(`/yachts/${id}/available-slots?date=${dateStr}`); // [cite: 59]
+      const res = await api.get(`/yachts/${id}/available-slots?date=${dateStr}`);
       setAvailableSlots(res.data.timeSlots || []);
       setSelectedTime(null);
     } catch (e) {
@@ -256,20 +315,20 @@ export default function YachtTerminalPage() {
         toast.error("Niet beschikbaar"); return; 
     }
     setSelectedDate(date);
-    fetchAvailableSlots(date); // [cite: 61]
+    fetchAvailableSlots(date);
   };
 
-  // --- ACTIONS (Preserved) ---
+  // --- ACTIONS ---
   const placeBid = async () => {
     const amount = parseFloat(bidAmount);
     if (!yacht) return;
-    const currentPrice = yacht.current_bid ? Number(yacht.current_bid) : Number(yacht.price); // [cite: 43]
+    const currentPrice = yacht.current_bid ? Number(yacht.current_bid) : Number(yacht.price);
     if (amount <= currentPrice) {
       toast.error(`Bod moet hoger zijn dan €${currentPrice.toLocaleString()}`);
       return;
     }
     try {
-      await api.post("/bids/place", { yacht_id: yacht.id, amount }); // [cite: 45]
+      await api.post("/bids/place", { yacht_id: yacht.id, amount });
       toast.success("Bod succesvol geplaatst!");
       setBidAmount("");
       fetchVesselData();
@@ -287,7 +346,7 @@ export default function YachtTerminalPage() {
         priority: "High",
         status: "To Do",
         yacht_id: yacht?.id,
-      }); // [cite: 55]
+      });
       setPaymentStatus("success");
       setTimeout(() => { setPaymentMode(null); setPaymentStatus("idle"); }, 3000);
     } catch (error) {
@@ -304,7 +363,7 @@ export default function YachtTerminalPage() {
     try {
         const startDateTime = new Date(selectedDate);
         const [hours, minutes] = selectedTime.split(':').map(Number);
-        startDateTime.setHours(hours, minutes, 0, 0); // [cite: 50]
+        startDateTime.setHours(hours, minutes, 0, 0);
 
         await api.post(`/yachts/${yacht?.id}/book`, {
             start_at: startDateTime.toISOString(),
@@ -322,7 +381,7 @@ export default function YachtTerminalPage() {
     }
   };
 
-  const renderList = (text?: string) => { // [cite: 67]
+  const renderList = (text?: string) => {
     if (!text) return <span className="text-slate-400 italic text-sm">Niet gespecificeerd.</span>;
     return (
       <ul className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2">
@@ -345,11 +404,11 @@ export default function YachtTerminalPage() {
   }
 
   // Derived Data
-  const isTrailerIncluded = yacht.trailer_included === true || yacht.trailer_included === 1; // [cite: 66]
+  const isTrailerIncluded = yacht.trailer_included === true || yacht.trailer_included === 1;
   const images = [
       yacht.main_image ? `${STORAGE_URL}${yacht.main_image}` : PLACEHOLDER_IMAGE,
       ...yacht.images.map(img => `${STORAGE_URL}${img.url}`)
-  ]; // [cite: 78]
+  ];
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-slate-800 pb-20">
@@ -374,43 +433,11 @@ export default function YachtTerminalPage() {
 
       <div className="container mx-auto px-4 py-8">
         
-        {/* --- HEADER SECTION --- */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-6 gap-4 border-b border-gray-200 pb-6">
-            <div>
-                <div className="flex items-center gap-3 mb-2">
-                    <span className={cn(
-                        "text-xs font-bold px-3 py-1 uppercase tracking-wider rounded-sm",
-                        yacht.status === "For Sale" ? "bg-blue-100 text-[#003566]" : "bg-amber-100 text-amber-800"
-                    )}>
-                        {yacht.status}
-                    </span>
-                    <div className="flex items-center text-gray-500 text-sm gap-1">
-                        <MapPin className="w-4 h-4" />
-                        {yacht.location}
-                    </div>
-                    <span className="text-gray-400 text-xs">REF: {yacht.vessel_id || yacht.id}</span>
-                </div>
-                <h1 className="text-3xl md:text-5xl font-serif font-bold text-gray-900 leading-tight">
-                    {yacht.boat_name}
-                </h1>
-                <p className="text-lg text-gray-600 mt-1 font-serif italic">{yacht.make} {yacht.model}</p>
-            </div>
+        {/* --- HERO SECTION (Original Layout) --- */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
             
-            <div className="text-right">
-                <p className="text-3xl md:text-4xl font-bold text-[#003566]">
-                    € {(yacht.current_bid ? Number(yacht.current_bid) : Number(yacht.price)).toLocaleString("nl-NL")}
-                </p>
-                <p className="text-sm text-gray-500">{yacht.vat_status || "BTW n.t.b."}</p>
-            </div>
-        </div>
-
-        {/* --- MAIN GRID LAYOUT --- */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            
-            {/* --- LEFT COLUMN (Gallery & Content) --- */}
-            <div className="lg:col-span-2 space-y-8">
-                
-                {/* GALLERY */}
+            {/* --- LEFT COLUMN (Gallery) --- */}
+            <div className="lg:col-span-2">
                 <div className="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-100">
                     <div className="relative aspect-[4/3] bg-gray-100 group">
                         <img 
@@ -435,9 +462,9 @@ export default function YachtTerminalPage() {
                         ))}
                     </div>
                 </div>
-
-                {/* THE "SPECS STRIP" */}
-                <div className="bg-gray-100 rounded-lg p-4 flex flex-wrap justify-between md:justify-around gap-y-4 border border-gray-200 shadow-inner">
+                
+                {/* THE "SPECS STRIP" (Below Gallery) */}
+                <div className="bg-gray-100 rounded-lg p-4 flex flex-wrap justify-between md:justify-around gap-y-4 border border-gray-200 shadow-inner mt-4">
                     <QuickSpecItem label="Lengte" value={yacht.length} unit="m" />
                     <QuickSpecItem label="Breedte" value={yacht.beam} unit="m" />
                     <QuickSpecItem label="Diepgang" value={yacht.draft} unit="m" />
@@ -445,7 +472,73 @@ export default function YachtTerminalPage() {
                     <QuickSpecItem label="Bouwjaar" value={yacht.year} unit="" />
                     <QuickSpecItem label="Materiaal" value={yacht.construction_material} unit="" />
                 </div>
+            </div>
 
+            {/* --- RIGHT COLUMN (Details, Bidding, Broker) --- */}
+            <div className="space-y-6">
+                <div>
+                    <div className="flex items-center gap-3 mb-2">
+                        <span className={cn(
+                            "text-xs font-bold px-3 py-1 uppercase tracking-wider rounded-sm",
+                            yacht.status === "For Sale" ? "bg-blue-100 text-[#003566]" : "bg-amber-100 text-amber-800"
+                        )}>
+                            {yacht.status}
+                        </span>
+                        <div className="flex items-center text-gray-500 text-sm gap-1">
+                            <MapPin className="w-4 h-4" />
+                            {yacht.location}
+                        </div>
+                    </div>
+                    <h1 className="text-3xl font-serif font-bold text-gray-900 leading-tight">
+                        {yacht.boat_name}
+                    </h1>
+                    <p className="text-lg text-gray-600 mt-1 font-serif italic">{yacht.make} {yacht.model}</p>
+                    
+                    <div className="mt-4">
+                        <p className="text-3xl font-bold text-[#003566]">
+                            € {(yacht.current_bid ? Number(yacht.current_bid) : Number(yacht.price)).toLocaleString("nl-NL")}
+                        </p>
+                        <p className="text-sm text-gray-500">{yacht.vat_status || "BTW n.t.b."}</p>
+                    </div>
+                </div>
+
+                {/* BIDDING MODULE */}
+                {yacht.status === "For Bid" && (
+                    <BiddingModule 
+                        yacht={yacht} 
+                        bidAmount={bidAmount} 
+                        setBidAmount={setBidAmount} 
+                        placeBid={placeBid} 
+                    />
+                )}
+
+                {/* BROKER INFO & ACTIONS */}
+                <BrokerInfoCard setPaymentMode={setPaymentMode} />
+                
+                {/* BID HISTORY */}
+                {bids.length > 0 && (
+                     <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
+                        <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2 text-sm uppercase">
+                            <History className="w-4 h-4" /> Biedingen
+                        </h4>
+                        <div className="space-y-2 max-h-40 overflow-y-auto">
+                            {bids.map((bid, i) => (
+                                <div key={i} className="flex justify-between text-xs py-1 border-b border-gray-50 last:border-0">
+                                    <span className="text-gray-500">{bid.user?.name || "Gebruiker"}</span>
+                                    <span className="font-bold text-[#003566]">€ {Number(bid.amount).toLocaleString()}</span>
+                                </div>
+                            ))}
+                        </div>
+                     </div>
+                )}
+            </div>
+        </div>
+
+        {/* --- MAIN CONTENT GRID --- */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            {/* --- LEFT COLUMN (Description & Specs) --- */}
+            <div className="lg:col-span-2 space-y-8">
                 {/* DESCRIPTION */}
                 <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
                     <SectionTitle icon={FileText}>Notitie van de Kapitein</SectionTitle>
@@ -564,88 +657,9 @@ export default function YachtTerminalPage() {
                 </div>
             </div>
 
-            {/* --- RIGHT COLUMN (Sidebar with Action Modules) --- */}
+            {/* --- RIGHT COLUMN (Sidebar - empty now as content is moved up) --- */}
             <div className="space-y-6">
-                
-                {/* 1. Broker/Action Card (Merging functionality into Sidebar) */}
-                <div className="bg-white rounded-lg shadow-md border border-gray-100 overflow-hidden sticky top-24 z-30">
-                    <div className="bg-[#003566] text-white p-4 text-center">
-                        <h3 className="font-serif text-xl font-bold">Interesse?</h3>
-                    </div>
-                    <div className="p-6 flex flex-col items-center">
-                        <div className="w-20 h-20 rounded-full bg-gray-200 mb-4 overflow-hidden border-4 border-white shadow-sm">
-                            <img src="https://ui-avatars.com/api/?name=Schepen+Kring&background=003566&color=fff" alt="Broker" className="w-full h-full object-cover" />
-                        </div>
-                        <h4 className="text-lg font-bold text-gray-900">Schepenkring Makelaardij</h4>
-                        <p className="text-xs text-gray-500 mb-6 uppercase tracking-wider">Uw jachtmakelaar</p>
-
-                        <div className="w-full space-y-3">
-                            {/* DYNAMIC ACTION BUTTONS */}
-                            
-                            {/* Case A: Auction */}
-                            {yacht.status === "For Bid" ? (
-                                <div className="bg-slate-50 p-4 border rounded-lg w-full mb-2">
-                                    <p className="text-xs text-center text-gray-500 mb-1">HUIDIG BOD</p>
-                                    <p className="text-2xl font-bold text-center text-[#003566] mb-3">€ {Number(yacht.current_bid || yacht.price).toLocaleString()}</p>
-                                    <div className="flex gap-2">
-                                        <input 
-                                            type="number" 
-                                            value={bidAmount}
-                                            onChange={(e) => setBidAmount(e.target.value)}
-                                            placeholder="Bod..."
-                                            className="w-full border p-2 rounded text-sm"
-                                        />
-                                        <Button onClick={placeBid} className="bg-[#003566]"><Gavel size={16}/></Button>
-                                    </div>
-                                </div>
-                            ) : (
-                                /* Case B: Direct Sale */
-                                <Button 
-                                    onClick={() => setPaymentMode("buy_now")}
-                                    className="w-full bg-[#003566] hover:bg-[#00284d] text-white py-6 text-sm uppercase tracking-widest font-bold"
-                                >
-                                    Koop Direct
-                                </Button>
-                            )}
-
-                            {/* Booking Action */}
-                            <Button 
-                                onClick={() => setPaymentMode("test_sail")}
-                                variant="outline" 
-                                className="w-full border-gray-300 hover:bg-gray-50 text-gray-700 py-6"
-                            >
-                                <Calendar className="mr-2 h-4 w-4" />
-                                Proefvaart Boeken
-                            </Button>
-                        </div>
-                    </div>
-                    
-                    <div className="bg-gray-50 p-4 border-t border-gray-100 flex justify-between">
-                         <button className="flex items-center gap-2 text-xs font-bold text-gray-500 hover:text-[#003566]">
-                            <Phone className="w-3 h-3" /> BEL ONS
-                         </button>
-                         <button className="flex items-center gap-2 text-xs font-bold text-gray-500 hover:text-[#003566]" onClick={() => window.print()}>
-                            <Printer className="w-3 h-3" /> PRINT
-                         </button>
-                    </div>
-                </div>
-
-                {/* 2. Transaction Log (If Bids Exist) */}
-                {bids.length > 0 && (
-                     <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
-                        <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2 text-sm uppercase">
-                            <History className="w-4 h-4" /> Biedingen
-                        </h4>
-                        <div className="space-y-2 max-h-40 overflow-y-auto">
-                            {bids.map((bid, i) => (
-                                <div key={i} className="flex justify-between text-xs py-1 border-b border-gray-50 last:border-0">
-                                    <span className="text-gray-500">{bid.user?.name || "Gebruiker"}</span>
-                                    <span className="font-bold text-[#003566]">€ {Number(bid.amount).toLocaleString()}</span>
-                                </div>
-                            ))}
-                        </div>
-                     </div>
-                )}
+                {/* Content moved to Hero Section Right Column */}
             </div>
         </div>
       </div>
