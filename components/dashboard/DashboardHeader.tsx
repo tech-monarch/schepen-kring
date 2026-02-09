@@ -9,6 +9,9 @@ import {
   ChevronDown,
   Search,
   AlertTriangle,
+  Check,
+  CheckCheck,
+  Trash2,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useRouter } from "@/i18n/navigation";
@@ -23,7 +26,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Toaster } from "react-hot-toast";
+import { Toaster, toast } from "react-hot-toast";
 import Image from "next/image";
 import ANSWER24LOGO from "@/public/schepenkring-logo.png";
 // Import your default profile picture
@@ -32,6 +35,25 @@ import ReturnToAdmin from "./ReturnToAdmin";
 
 // Storage URL constant
 const STORAGE_URL = "https://schepen-kring.nl/storage/";
+
+// Notification type
+interface Notification {
+  id: number;
+  notification: {
+    id: number;
+    type: 'info' | 'warning' | 'success' | 'error' | 'system';
+    title: string;
+    message: string;
+    data: any;
+    created_at: string;
+  };
+  read: boolean;
+  read_at: string | null;
+  pivot: {
+    read: boolean;
+    read_at: string | null;
+  };
+}
 
 export function DashboardHeader() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -42,21 +64,167 @@ export function DashboardHeader() {
     profile_image?: string;
   } | null>(null);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [loading, setLoading] = useState(false);
 
   const currentPath = usePathname();
   const router = useRouter();
 
+  // Fetch user data
   useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 20);
-    window.addEventListener("scroll", handleScroll);
-
     const storedUser = localStorage.getItem("user_data");
     if (storedUser) {
       setUser(JSON.parse(storedUser));
     }
-
-    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  // Fetch notifications
+  const fetchNotifications = async () => {
+    try {
+      const token = localStorage.getItem("auth_token");
+      if (!token) return;
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/notifications`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setNotifications(data.data || []);
+        setUnreadCount(data.meta?.unread_count || 0);
+      }
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
+    }
+  };
+
+  // Fetch unread count separately
+  const fetchUnreadCount = async () => {
+    try {
+      const token = localStorage.getItem("auth_token");
+      if (!token) return;
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/notifications/unread-count`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setUnreadCount(data.count || 0);
+      }
+    } catch (error) {
+      console.error("Error fetching unread count:", error);
+    }
+  };
+
+  // Fetch data on mount and setup polling
+  useEffect(() => {
+    fetchNotifications();
+    fetchUnreadCount();
+
+    const handleScroll = () => setIsScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", handleScroll);
+
+    // Poll for new notifications every 30 seconds
+    const interval = setInterval(() => {
+      fetchUnreadCount();
+    }, 30000);
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      clearInterval(interval);
+    };
+  }, []);
+
+  // Mark notification as read
+  const markAsRead = async (notificationId: number) => {
+    try {
+      const token = localStorage.getItem("auth_token");
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/notifications/${notificationId}/read`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        // Update local state
+        setNotifications(prev => 
+          prev.map(notif => 
+            notif.id === notificationId 
+              ? { ...notif, read: true, read_at: new Date().toISOString() }
+              : notif
+          )
+        );
+        setUnreadCount(prev => Math.max(0, prev - 1));
+        toast.success('Notification marked as read');
+      }
+    } catch (error) {
+      console.error("Error marking notification as read:", error);
+      toast.error('Failed to mark as read');
+    }
+  };
+
+  // Mark all as read
+  const markAllAsRead = async () => {
+    try {
+      const token = localStorage.getItem("auth_token");
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/notifications/read-all`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        setNotifications(prev => 
+          prev.map(notif => ({ 
+            ...notif, 
+            read: true, 
+            read_at: new Date().toISOString() 
+          }))
+        );
+        setUnreadCount(0);
+        toast.success('All notifications marked as read');
+      }
+    } catch (error) {
+      console.error("Error marking all as read:", error);
+      toast.error('Failed to mark all as read');
+    }
+  };
+
+  // Delete notification
+  const deleteNotification = async (notificationId: number) => {
+    try {
+      const token = localStorage.getItem("auth_token");
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/notifications/${notificationId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        setNotifications(prev => prev.filter(notif => notif.id !== notificationId));
+        setUnreadCount(prev => {
+          const notification = notifications.find(n => n.id === notificationId);
+          return notification?.read ? prev : Math.max(0, prev - 1);
+        });
+        toast.success('Notification deleted');
+      }
+    } catch (error) {
+      console.error("Error deleting notification:", error);
+      toast.error('Failed to delete notification');
+    }
+  };
 
   const handleLogout = () => {
     localStorage.removeItem("auth_token");
@@ -70,6 +238,33 @@ export function DashboardHeader() {
   const managementItems = [
     { title: "Fleet Management", href: "/yachts", icon: Anchor },
   ];
+
+  // Format notification time
+  const formatTime = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return date.toLocaleDateString();
+  };
+
+  // Get notification icon based on type
+  const getNotificationIcon = (type: string) => {
+    switch(type) {
+      case 'success': return '✅';
+      case 'warning': return '⚠️';
+      case 'error': return '❌';
+      case 'system': return '⚙️';
+      default: return 'ℹ️';
+    }
+  };
 
   return (
     <motion.header
@@ -130,35 +325,123 @@ export function DashboardHeader() {
       {/* User Actions */}
       <div className="flex items-center gap-8">
         <ReturnToAdmin />
-        {/* Notifications Dropdown */}
-        <DropdownMenu>
+        
+        {/* Updated Notifications Dropdown */}
+        <DropdownMenu onOpenChange={(open) => {
+          if (open) {
+            fetchNotifications(); // Refresh when dropdown opens
+          }
+        }}>
           <DropdownMenuTrigger className="relative text-slate-400 hover:text-[#003566] transition-colors outline-none">
             <Bell size={20} strokeWidth={1.5} />
-            <span className="absolute top-0 right-0 w-2 h-2 bg-blue-500 rounded-full border-2 border-white"></span>
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 min-w-5 h-5 bg-red-500 rounded-full border-2 border-white flex items-center justify-center">
+                <span className="text-[10px] font-bold text-white px-1">
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              </span>
+            )}
           </DropdownMenuTrigger>
           <DropdownMenuContent
             align="end"
-            className="w-80 bg-white border border-slate-200 rounded-none shadow-xl p-0 overflow-hidden"
+            className="w-96 bg-white border border-slate-200 rounded-none shadow-xl p-0 overflow-hidden max-h-[500px]"
           >
-            <div className="p-4 border-b border-slate-100 bg-slate-50/50">
+            <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
               <h3 className="text-[10px] font-black uppercase tracking-widest text-[#003566]">
-                Communications & Alerts
+                Notifications
               </h3>
+              {notifications.length > 0 && (
+                <button
+                  onClick={markAllAsRead}
+                  className="text-[9px] font-bold uppercase tracking-widest text-blue-600 hover:text-blue-700 transition-colors"
+                >
+                  Mark all as read
+                </button>
+              )}
             </div>
-            <div className="max-h-[300px] overflow-y-auto">
-              <div className="p-8 text-center">
-                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">
-                  No new directives
-                </p>
-              </div>
+            
+            <div className="max-h-[400px] overflow-y-auto">
+              {loading ? (
+                <div className="p-8 text-center">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#003566] mx-auto"></div>
+                </div>
+              ) : notifications.length === 0 ? (
+                <div className="p-8 text-center">
+                  <Bell size={24} className="text-slate-300 mx-auto mb-3" />
+                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">
+                    No notifications yet
+                  </p>
+                </div>
+              ) : (
+                <div className="divide-y divide-slate-100">
+                  {notifications.map((notification) => (
+                    <div
+                      key={notification.id}
+                      className={cn(
+                        "p-4 hover:bg-slate-50 transition-colors relative group",
+                        !notification.read && "bg-blue-50/50"
+                      )}
+                    >
+                      <div className="flex gap-3">
+                        <div className="flex-shrink-0 w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center">
+                          <span className="text-xs">
+                            {getNotificationIcon(notification.notification.type)}
+                          </span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex justify-between items-start mb-1">
+                            <h4 className="text-[11px] font-bold text-[#003566] truncate">
+                              {notification.notification.title}
+                            </h4>
+                            <span className="text-[8px] text-slate-400 font-medium whitespace-nowrap ml-2">
+                              {formatTime(notification.notification.created_at)}
+                            </span>
+                          </div>
+                          <p className="text-[10px] text-slate-600 mb-2">
+                            {notification.notification.message}
+                          </p>
+                          <div className="flex items-center gap-2">
+                            {!notification.read ? (
+                              <button
+                                onClick={() => markAsRead(notification.id)}
+                                className="text-[9px] font-bold uppercase tracking-widest text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                              >
+                                <Check size={10} />
+                                Mark as read
+                              </button>
+                            ) : (
+                              <span className="text-[9px] text-green-600 font-bold uppercase tracking-widest flex items-center gap-1">
+                                <CheckCheck size={10} />
+                                Read
+                              </span>
+                            )}
+                            <button
+                              onClick={() => deleteNotification(notification.id)}
+                              className="text-[9px] font-bold uppercase tracking-widest text-red-600 hover:text-red-700 flex items-center gap-1 ml-auto"
+                            >
+                              <Trash2 size={10} />
+                              Delete
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
+            
             <DropdownMenuSeparator className="m-0 bg-slate-100" />
-            <button className="w-full py-3 text-[9px] font-black uppercase tracking-[0.2em] text-blue-600 hover:bg-blue-50 transition-colors">
-              View All Notifications
+            <button 
+              onClick={() => router.push('/nl/dashboard/activity-logs')}
+              className="w-full py-3 text-[9px] font-black uppercase tracking-[0.2em] text-blue-600 hover:bg-blue-50 transition-colors text-center"
+            >
+              View All Activity Logs
             </button>
           </DropdownMenuContent>
         </DropdownMenu>
 
+        {/* User Menu (Unchanged) */}
         <DropdownMenu
           onOpenChange={(open) => !open && setShowLogoutConfirm(false)}
         >
@@ -172,7 +455,6 @@ export function DashboardHeader() {
               </p>
             </div>
 
-            {/* UPDATED AVATAR LOGIC */}
             <Avatar className="h-10 w-10 border-2 border-slate-100 group-hover:border-[#003566] transition-all duration-300">
               <AvatarImage
                 src={
@@ -221,6 +503,13 @@ export function DashboardHeader() {
                     className="hover:bg-slate-50 cursor-pointer gap-3 text-[10px] font-bold uppercase tracking-widest py-3 px-3"
                   >
                     <Settings size={14} /> Account Settings
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem
+                    onSelect={() => router.push("/nl/dashboard/activity-logs")}
+                    className="hover:bg-slate-50 cursor-pointer gap-3 text-[10px] font-bold uppercase tracking-widest py-3 px-3"
+                  >
+                    <Bell size={14} /> Activity Logs
                   </DropdownMenuItem>
 
                   <DropdownMenuSeparator className="bg-slate-100" />
