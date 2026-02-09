@@ -47,10 +47,26 @@ interface PaginationMeta {
   total: number;
 }
 
+interface ActivityStats {
+  daily_stats: Array<{ date: string; total_actions: number; unique_users: number }>;
+  top_actions: Array<{ action: string; count: number }>;
+  top_users: Array<{ user_id: number; count: number; user: any }>;
+  activity_by_type: Array<{ log_type: string; count: number }>;
+  recent_activity: Array<any>;
+  summary: {
+    total_logs: number;
+    total_users: number;
+    today_logs: number;
+    yesterday_logs: number;
+  };
+}
+
 export default function ActivityLogsPage() {
   const router = useRouter();
   const [logs, setLogs] = useState<ActivityLog[]>([]);
   const [loading, setLoading] = useState(true);
+  const [statsLoading, setStatsLoading] = useState(false);
+  const [stats, setStats] = useState<ActivityStats | null>(null);
   const [search, setSearch] = useState("");
   const [filters, setFilters] = useState({
     log_type: "",
@@ -67,6 +83,9 @@ export default function ActivityLogsPage() {
   });
   const [sortField, setSortField] = useState<string>("created_at");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+
+  // Hardcoded API URL
+  const API_URL = "https://schepen-kring.nl/api";
 
   const fetchLogs = async (page = 1) => {
     try {
@@ -87,25 +106,33 @@ export default function ActivityLogsPage() {
         ...(filters.action && { action: filters.action }),
         ...(filters.user_id && { user_id: filters.user_id }),
         ...(filters.date_from && { date_from: filters.date_from }),
-        ...(filters.date_to && { date_from: filters.date_to }),
+        ...(filters.date_to && { date_to: filters.date_to }), // Fixed: was "date_from"
       });
 
+      console.log("Fetching logs from:", `${API_URL}/activity-logs?${params}`);
+      
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/activity-logs?${params}`,
+        `${API_URL}/activity-logs?${params}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
+            'Accept': 'application/json',
           },
         }
       );
 
       if (response.ok) {
         const data = await response.json();
+        console.log("Logs data received:", data);
         setLogs(data.data || []);
         setPagination(data.meta || pagination);
       } else if (response.status === 401) {
         toast.error("Session expired. Please login again.");
         router.push("/login");
+      } else {
+        const text = await response.text();
+        console.error("Error response:", text);
+        toast.error("Failed to load activity logs");
       }
     } catch (error) {
       console.error("Error fetching activity logs:", error);
@@ -115,75 +142,57 @@ export default function ActivityLogsPage() {
     }
   };
 
-const fetchStats = async () => {
+  const fetchStats = async () => {
     try {
-        const token = localStorage.getItem("auth_token");
-        if (!token) return;
+      setStatsLoading(true);
+      const token = localStorage.getItem("auth_token");
+      if (!token) {
+        console.log("No token found, skipping stats fetch");
+        return;
+      }
 
-        console.log("Fetching stats from:", `${process.env.NEXT_PUBLIC_API_URL}/activity-logs/stats`);
-        
-        const response = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/activity-logs/stats`,
-            {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    'Accept': 'application/json',
-                },
-            }
-        );
-
-        console.log("Stats response status:", response.status);
-        
-        // Check if response is HTML instead of JSON
-        const contentType = response.headers.get('content-type');
-        if (contentType && contentType.includes('text/html')) {
-            const text = await response.text();
-            console.error("Stats endpoint returned HTML instead of JSON");
-            console.error("First 200 chars:", text.substring(0, 200));
-            
-            // Return mock stats for now
-            return {
-                daily_stats: [],
-                top_actions: [],
-                top_users: [],
-                activity_by_type: [],
-                recent_activity: [],
-                summary: {
-                    total_logs: 0,
-                    total_users: 0,
-                    today_logs: 0,
-                    yesterday_logs: 0,
-                }
-            };
+      console.log("Fetching stats from:", `${API_URL}/activity-logs/stats`);
+      console.log("Using token (first 20 chars):", token.substring(0, 20) + "...");
+      
+      const response = await fetch(
+        `${API_URL}/activity-logs/stats`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+          },
         }
+      );
 
-        if (!response.ok) {
-            console.error("Stats HTTP error:", response.status);
-            throw new Error(`HTTP ${response.status}`);
+      console.log("Stats response status:", response.status);
+      console.log("Stats response headers:", Object.fromEntries(response.headers.entries()));
+
+      // First get the response as text to see what we're getting
+      const responseText = await response.text();
+      console.log("Stats response text (first 500 chars):", responseText.substring(0, 500));
+
+      if (response.ok) {
+        try {
+          const data = JSON.parse(responseText);
+          console.log("Stats parsed successfully:", data);
+          setStats(data);
+        } catch (parseError) {
+          console.error("Failed to parse JSON:", parseError);
+          console.error("Raw response:", responseText);
+          toast.error("Failed to parse stats data");
         }
-
-        const data = await response.json();
-        console.log("Stats data:", data);
-        return data;
+      } else {
+        console.error("Stats API error:", responseText);
+        toast.error("Failed to load activity stats");
+      }
     } catch (error) {
-        console.error("Error fetching stats:", error);
-        
-        // Return mock stats on error
-        return {
-            daily_stats: [],
-            top_actions: [],
-            top_users: [],
-            activity_by_type: [],
-            recent_activity: [],
-            summary: {
-                total_logs: 0,
-                total_users: 0,
-                today_logs: 0,
-                yesterday_logs: 0,
-            }
-        };
+      console.error("Error fetching stats:", error);
+      // Don't show toast for stats failure as it's secondary
+    } finally {
+      setStatsLoading(false);
     }
-};
+  };
 
   useEffect(() => {
     fetchLogs();
@@ -322,6 +331,11 @@ const fetchStats = async () => {
     setSearch("");
   };
 
+  // Apply filters with debounce
+  const applyFilters = () => {
+    fetchLogs(1);
+  };
+
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Header */}
@@ -343,11 +357,15 @@ const fetchStats = async () => {
                 Export CSV
               </button>
               <button
-                onClick={() => fetchLogs()}
-                className="px-4 py-2 text-xs font-bold uppercase tracking-widest bg-[#003566] text-white hover:bg-[#002855] transition-colors flex items-center gap-2"
+                onClick={() => {
+                  fetchLogs();
+                  fetchStats();
+                }}
+                disabled={loading || statsLoading}
+                className="px-4 py-2 text-xs font-bold uppercase tracking-widest bg-[#003566] text-white hover:bg-[#002855] transition-colors flex items-center gap-2 disabled:opacity-50"
               >
-                <RefreshCw size={14} />
-                Refresh
+                <RefreshCw size={14} className={loading || statsLoading ? "animate-spin" : ""} />
+                {loading || statsLoading ? "Refreshing..." : "Refresh"}
               </button>
             </div>
           </div>
@@ -367,6 +385,7 @@ const fetchStats = async () => {
                   placeholder="Search logs..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && applyFilters()}
                   className="w-full pl-10 pr-4 py-2 text-sm border border-slate-200 focus:border-[#003566] focus:outline-none"
                 />
               </div>
@@ -433,10 +452,11 @@ const fetchStats = async () => {
               Clear all filters
             </button>
             <button
-              onClick={() => fetchLogs()}
-              className="px-4 py-2 text-xs font-bold uppercase tracking-widest bg-[#003566] text-white hover:bg-[#002855] transition-colors"
+              onClick={applyFilters}
+              disabled={loading}
+              className="px-4 py-2 text-xs font-bold uppercase tracking-widest bg-[#003566] text-white hover:bg-[#002855] transition-colors disabled:opacity-50"
             >
-              Apply Filters
+              {loading ? "Applying..." : "Apply Filters"}
             </button>
           </div>
         </div>
@@ -661,47 +681,70 @@ const fetchStats = async () => {
         </div>
 
         {/* Stats Card */}
-        <div className="mt-6 grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-white border border-slate-200 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-600">Total Logs</p>
-                <p className="text-2xl font-bold text-[#003566]">{pagination.total}</p>
-              </div>
-              <Activity className="text-slate-400" size={24} />
-            </div>
+        <div className="mt-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-bold text-[#003566]">Activity Statistics</h2>
+            <button
+              onClick={fetchStats}
+              disabled={statsLoading}
+              className="text-xs font-bold uppercase tracking-widest text-[#003566] hover:text-[#002855] flex items-center gap-2"
+            >
+              <RefreshCw size={12} className={statsLoading ? "animate-spin" : ""} />
+              {statsLoading ? "Refreshing..." : "Refresh Stats"}
+            </button>
           </div>
-          <div className="bg-white border border-slate-200 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-600">This Page</p>
-                <p className="text-2xl font-bold text-[#003566]">{logs.length}</p>
-              </div>
-              <Eye className="text-slate-400" size={24} />
+          
+          {statsLoading ? (
+            <div className="bg-white border border-slate-200 p-6 text-center">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#003566] mx-auto"></div>
+              <p className="text-slate-500 text-sm mt-2">Loading statistics...</p>
             </div>
-          </div>
-          <div className="bg-white border border-slate-200 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-600">API Calls</p>
-                <p className="text-2xl font-bold text-[#003566]">
-                  {logs.filter(log => log.log_type === "api_call").length}
-                </p>
+          ) : stats ? (
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="bg-white border border-slate-200 p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-slate-600">Total Logs</p>
+                    <p className="text-2xl font-bold text-[#003566]">{stats.summary.total_logs}</p>
+                  </div>
+                  <Activity className="text-slate-400" size={24} />
+                </div>
               </div>
-              <Activity className="text-slate-400" size={24} />
-            </div>
-          </div>
-          <div className="bg-white border border-slate-200 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-600">User Actions</p>
-                <p className="text-2xl font-bold text-[#003566]">
-                  {logs.filter(log => log.log_type === "user_action").length}
-                </p>
+              <div className="bg-white border border-slate-200 p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-slate-600">Today's Logs</p>
+                    <p className="text-2xl font-bold text-[#003566]">{stats.summary.today_logs}</p>
+                  </div>
+                  <Calendar className="text-slate-400" size={24} />
+                </div>
               </div>
-              <User className="text-slate-400" size={24} />
+              <div className="bg-white border border-slate-200 p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-slate-600">Yesterday's Logs</p>
+                    <p className="text-2xl font-bold text-[#003566]">{stats.summary.yesterday_logs}</p>
+                  </div>
+                  <Calendar className="text-slate-400" size={24} />
+                </div>
+              </div>
+              <div className="bg-white border border-slate-200 p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-slate-600">Unique Users</p>
+                    <p className="text-2xl font-bold text-[#003566]">{stats.summary.total_users}</p>
+                  </div>
+                  <User className="text-slate-400" size={24} />
+                </div>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="bg-white border border-slate-200 p-6 text-center">
+              <Activity className="text-slate-300 mx-auto mb-3" size={48} />
+              <h3 className="text-lg font-medium text-slate-700 mb-2">No statistics available</h3>
+              <p className="text-slate-500">Click "Refresh Stats" to load statistics.</p>
+            </div>
+          )}
         </div>
       </div>
     </div>
