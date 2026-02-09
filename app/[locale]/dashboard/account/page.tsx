@@ -453,9 +453,9 @@ export default function ProfileSettingsPage() {
                       </div>
                     )}
                   </div>
-                  <p className="text-[8px] text-slate-400 mt-1 flex items-center gap-1">
+                  {/* <p className="text-[8px] text-slate-400 mt-1 flex items-center gap-1">
                     <Map size={8} /> Powered by OpenStreetMap (free, no API key required)
-                  </p>
+                  </p> */}
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
