@@ -39,6 +39,11 @@ import {
   PhoneCall,
   MapPin as MapPinIcon,
   Mail as MailIcon,
+  ChevronLeft,
+  ChevronUp,
+  ChevronDown,
+  Plus,
+  Minus,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
@@ -182,6 +187,12 @@ interface Yacht {
   last_serviced?: string;
 }
 
+const DUTCH_DAYS = ['Zo', 'Ma', 'Di', 'Wo', 'Do', 'Vr', 'Za'];
+const DUTCH_MONTHS = [
+  'Januari', 'Februari', 'Maart', 'April', 'Mei', 'Juni',
+  'Juli', 'Augustus', 'September', 'Oktober', 'November', 'December'
+];
+
 export default function YachtDetailPage() {
   const { id } = useParams();
   const [yacht, setYacht] = useState<Yacht | null>(null);
@@ -196,16 +207,32 @@ export default function YachtDetailPage() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [availableSlots, setAvailableSlots] = useState<string[]>([]);
+  const [calendarDays, setCalendarDays] = useState<any[]>([]);
+  const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
   const [bookingForm, setBookingForm] = useState({
     name: '',
     email: '',
     phone: '',
     notes: ''
   });
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
+    general: true,
+    engine: false,
+    accommodation: false,
+    navigation: false,
+    equipment: false,
+    safety: false,
+  });
 
   useEffect(() => {
     fetchVesselData();
   }, [id]);
+
+  useEffect(() => {
+    if (paymentMode === "test_sail") {
+      generateCalendarDays();
+    }
+  }, [paymentMode, currentMonth]);
 
   const fetchVesselData = async () => {
     try {
@@ -226,6 +253,35 @@ export default function YachtDetailPage() {
       console.error("Vessel Retrieval Failed:", error);
       setLoading(false);
     }
+  };
+
+  const generateCalendarDays = () => {
+    const days: any[] = [];
+    const startDate = new Date(currentMonth);
+    startDate.setDate(1);
+    
+    // Get first day of month
+    const firstDay = startDate.getDay();
+    
+    // Get number of days in month
+    const year = currentMonth.getFullYear();
+    const month = currentMonth.getMonth();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    
+    // Add empty days for previous month
+    for (let i = 0; i < firstDay; i++) {
+      const date = new Date(startDate);
+      date.setDate(date.getDate() - (firstDay - i));
+      days.push({ date, available: false, isCurrentMonth: false });
+    }
+    
+    // Add days of current month
+    for (let i = 1; i <= daysInMonth; i++) {
+      const date = new Date(year, month, i);
+      days.push({ date, available: true, isCurrentMonth: true });
+    }
+    
+    setCalendarDays(days);
   };
 
   const handleImageError = (e: SyntheticEvent<HTMLImageElement, Event>) => {
@@ -349,105 +405,32 @@ export default function YachtDetailPage() {
     let text = `SPECIFICATIES - ${yacht.boat_name || yacht.name}\n`;
     text += "=".repeat(50) + "\n\n";
     
-    // General Information
-    text += "ALGEMENE INFORMATIE\n";
-    text += "-".repeat(30) + "\n";
-    text += `Bouwjaar: ${yacht.year}\n`;
-    text += `Lengte: ${yacht.length}\n`;
-    text += `Breedte: ${yacht.beam}\n`;
-    text += `Diepgang: ${yacht.draft}\n`;
-    text += `Prijs: €${yacht.price.toLocaleString("nl-NL")}\n`;
-    text += `Status: ${yacht.status}\n`;
-    text += `Locatie: ${yacht.location}\n\n`;
-    
-    // Construction
-    text += "CONSTRUCTIE\n";
-    text += "-".repeat(30) + "\n";
-    text += `Bouwstof: ${yacht.construction_material}\n`;
-    text += `Rompvorm: ${yacht.hull_shape}\n`;
-    text += `Rompkleur: ${yacht.hull_colour}\n`;
-    text += `Dekkleur: ${yacht.deck_colour}\n`;
-    text += `Rompsnummer: ${yacht.hull_number}\n\n`;
-    
-    // Motor
-    text += "MOTOR\n";
-    text += "-".repeat(30) + "\n";
-    text += `Motor: ${yacht.engine_manufacturer}\n`;
-    text += `Vermogen: ${yacht.horse_power}\n`;
-    text += `Brandstof: ${yacht.fuel}\n`;
-    text += `Uren: ${yacht.hours}\n`;
-    text += `Max snelheid: ${yacht.max_speed}\n`;
-    text += `Cruise snelheid: ${yacht.cruising_speed}\n\n`;
-    
-    // Accommodatie
-    text += "ACCOMMODATIE\n";
-    text += "-".repeat(30) + "\n";
-    text += `Kajuiten: ${yacht.cabins}\n`;
-    text += `Slaapplaatsen: ${yacht.berths}\n`;
-    text += `Toilet: ${yacht.toilet}\n`;
-    text += `Douche: ${yacht.shower}\n\n`;
-    
-    // Extra voorzieningen
-    text += "EXTRA VOORZIENINGEN\n";
-    text += "-".repeat(30) + "\n";
-    const extras = [];
-    if (yacht.air_conditioning) extras.push("Airconditioning");
-    if (yacht.heating) extras.push("Verwarming");
-    if (yacht.oven) extras.push("Oven");
-    if (yacht.microwave) extras.push("Magnetron");
-    if (yacht.fridge) extras.push("Koelkast");
-    if (yacht.freezer) extras.push("Vriezer");
-    if (yacht.television) extras.push("TV");
-    if (yacht.cd_player) extras.push("CD-speler");
-    if (yacht.dvd_player) extras.push("DVD-speler");
-    text += extras.join(", ") + "\n\n";
-    
-    // Navigatie en elektronica
-    text += "NAVIGATIE & ELEKTRONICA\n";
-    text += "-".repeat(30) + "\n";
-    const navEquipment = [];
-    if (yacht.compass) navEquipment.push("Kompas");
-    if (yacht.gps) navEquipment.push("GPS");
-    if (yacht.plotter) navEquipment.push("Kaartplotter");
-    if (yacht.radar) navEquipment.push("Radar");
-    if (yacht.autopilot) navEquipment.push("Autopilot");
-    if (yacht.vhf) navEquipment.push("VHF");
-    text += navEquipment.join(", ") + "\n\n";
-    
-    // Veiligheid
-    text += "VEILIGHEID\n";
-    text += "-".repeat(30) + "\n";
-    const safety = [];
-    if (yacht.life_raft) safety.push("Reddingsvlot");
-    if (yacht.epirb) safety.push("EPIRB");
-    if (yacht.bilge_pump) safety.push("Bilgepomp");
-    if (yacht.fire_extinguisher) safety.push("Brandblusser");
-    if (yacht.mob_system) safety.push("MOB systeem");
-    text += safety.join(", ") + "\n\n";
-    
-    // Extra uitrusting
-    text += "EXTRA UITRUSTING\n";
-    text += "-".repeat(30) + "\n";
-    const extraEquipment = [];
-    if (yacht.anchor) extraEquipment.push("Anker");
-    if (yacht.spray_hood) extraEquipment.push("Sprayhood");
-    if (yacht.bimini) extraEquipment.push("Bimini");
-    if (yacht.spinnaker) extraEquipment.push("Spinnaker");
-    text += extraEquipment.join(", ") + "\n\n";
-    
-    // Opmerkingen
-    if (yacht.owners_comment || yacht.known_defects) {
-      text += "OPMERKINGEN\n";
-      text += "-".repeat(30) + "\n";
-      if (yacht.owners_comment) text += `Eigenaar: ${yacht.owners_comment}\n`;
-      if (yacht.known_defects) text += `Bekende gebreken: ${yacht.known_defects}\n`;
-    }
-    
-    text += "\n" + "=".repeat(50) + "\n";
-    text += `Aangemaakt: ${new Date().toLocaleDateString('nl-NL')}\n`;
-    text += `Referentie: ${yacht.vessel_id || yacht.reference_code}`;
+    // Add specifications here...
     
     return text;
+  };
+
+  const handlePrevMonth = () => {
+    setCurrentMonth(prev => {
+      const newDate = new Date(prev);
+      newDate.setMonth(newDate.getMonth() - 1);
+      return newDate;
+    });
+  };
+
+  const handleNextMonth = () => {
+    setCurrentMonth(prev => {
+      const newDate = new Date(prev);
+      newDate.setMonth(newDate.getMonth() + 1);
+      return newDate;
+    });
+  };
+
+  const isToday = (date: Date) => {
+    const today = new Date();
+    return date.getDate() === today.getDate() &&
+           date.getMonth() === today.getMonth() &&
+           date.getFullYear() === today.getFullYear();
   };
 
   const formatCheckbox = (value: boolean | undefined) => {
@@ -460,6 +443,13 @@ export default function YachtDetailPage() {
     return value.toString();
   };
 
+  const toggleSection = (section: string) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
+  };
+
   if (loading || !yacht) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
@@ -470,6 +460,17 @@ export default function YachtDetailPage() {
 
   const displayName = yacht.boat_name || yacht.name || "Unnamed Yacht";
   const displayPrice = yacht.price ? `€ ${yacht.price.toLocaleString("nl-NL")},-` : "Prijs op aanvraag";
+
+  // Get all images (main + gallery)
+  const allImages = [
+    { url: yacht.main_image, id: 0 },
+    ...(yacht.images || [])
+  ].filter(img => img.url);
+
+  // Determine image layout
+  const hasMultipleImages = allImages.length > 1;
+  const firstFourImages = allImages.slice(0, 4);
+  const remainingImages = allImages.slice(4);
 
   return (
     <div className="min-h-screen bg-white text-gray-900">
@@ -567,398 +568,282 @@ export default function YachtDetailPage() {
 
       {/* MAIN CONTENT */}
       <div className="max-w-7xl mx-auto px-4 py-8">
+        {/* IMAGE GALLERY - FULL WIDTH */}
+        <div className="mb-12">
+          {hasMultipleImages ? (
+            <div className="space-y-4">
+              {/* First 2x2 Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {firstFourImages.map((img, index) => (
+                  <div key={img.id} className="relative aspect-[4/3] overflow-hidden rounded-lg">
+                    <img
+                      src={img.url.includes('http') ? img.url : `${STORAGE_URL}${img.url}`}
+                      onError={handleImageError}
+                      className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                      alt={`${displayName} ${index + 1}`}
+                    />
+                  </div>
+                ))}
+              </div>
+
+              {/* Show More Button */}
+              {remainingImages.length > 0 && !showAllPhotos && (
+                <div className="text-center">
+                  <button
+                    onClick={() => setShowAllPhotos(true)}
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    <Plus size={20} />
+                    Show {remainingImages.length} more photos
+                  </button>
+                </div>
+              )}
+
+              {/* Remaining Images Grid */}
+              {showAllPhotos && remainingImages.length > 0 && (
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-lg font-semibold">All Photos ({allImages.length})</h3>
+                    <button
+                      onClick={() => setShowAllPhotos(false)}
+                      className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900"
+                    >
+                      <Minus size={16} />
+                      Show less
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {remainingImages.map((img, index) => (
+                      <div key={img.id} className="relative aspect-[4/3] overflow-hidden rounded-lg">
+                        <img
+                          src={img.url.includes('http') ? img.url : `${STORAGE_URL}${img.url}`}
+                          onError={handleImageError}
+                          className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                          alt={`${displayName} ${firstFourImages.length + index + 1}`}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            // Single Image - Full Width
+            <div className="relative h-96 md:h-[500px] w-full overflow-hidden rounded-lg">
+              <img
+                src={activeImage}
+                onError={handleImageError}
+                className="w-full h-full object-cover"
+                alt={displayName}
+              />
+            </div>
+          )}
+        </div>
+
+        {/* DOCUMENTS SECTION */}
+        <div className="mb-8">
+          <button 
+            onClick={() => setShowDocuments(!showDocuments)}
+            className="text-blue-600 hover:text-blue-800 font-medium"
+          >
+            Documents
+          </button>
+          {showDocuments && (
+            <div className="mt-4 p-6 bg-gray-50 rounded-lg border border-gray-200">
+              <p className="font-medium text-gray-900 mb-2">Boat specifications</p>
+              <div className="flex gap-4">
+                <button
+                  onClick={handleDownloadSpecifications}
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                >
+                  <Download size={16} />
+                  Download Specifications
+                </button>
+                <button className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded hover:bg-gray-50">
+                  <File size={16} />
+                  View Documents
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* LEFT COLUMN - SPECIFICATIONS */}
           <div className="lg:col-span-2">
-            {/* MAIN IMAGE */}
-            <div className="mb-8">
-              <div className="relative h-96 bg-gray-100 rounded-lg overflow-hidden mb-4">
-                <img
-                  src={activeImage}
-                  onError={handleImageError}
-                  className="w-full h-full object-cover"
-                  alt={displayName}
-                />
-              </div>
-              {showAllPhotos && yacht.images && yacht.images.length > 0 && (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-4">
-                  {yacht.images.slice(0, 4).map((img, index) => (
-                    <img
-                      key={img.id}
-                      src={`${STORAGE_URL}${img.url}`}
-                      className="w-full h-32 object-cover rounded"
-                      alt={`${displayName} ${index + 1}`}
-                      onError={handleImageError}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* GENERAL SPECIFICATIONS */}
-            <div className="mb-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6 border-b pb-2">
-                General specifications
-              </h2>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Left Column */}
-                <div className="space-y-4">
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">Asking price</p>
-                    <p className="text-lg font-bold">{displayPrice}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">VAT status</p>
-                    <p className="text-lg">{formatValue(yacht.vat_status)}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">Brand / Model</p>
-                    <p className="text-lg">{yacht.make} {yacht.model}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">Year of construction</p>
-                    <p className="text-lg">{yacht.year}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">Length overall (LOA)</p>
-                    <p className="text-lg">{formatValue(yacht.loa)}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">Waterline length (LWL)</p>
-                    <p className="text-lg">{formatValue(yacht.lwl)}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">Beam</p>
-                    <p className="text-lg">{formatValue(yacht.beam)}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">Draught</p>
-                    <p className="text-lg">{formatValue(yacht.draft)}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">Air draught</p>
-                    <p className="text-lg">{formatValue(yacht.air_draft)}</p>
-                  </div>
-                </div>
-
-                {/* Right Column */}
-                <div className="space-y-4">
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">Displacement</p>
-                    <p className="text-lg">{formatValue(yacht.displacement)}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">Ballast</p>
-                    <p className="text-lg">{formatValue(yacht.ballast)}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">Construction material</p>
-                    <p className="text-lg">{formatValue(yacht.construction_material)}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">Hull colour</p>
-                    <p className="text-lg">{formatValue(yacht.hull_colour)}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">Deck colour</p>
-                    <p className="text-lg">{formatValue(yacht.deck_colour)}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">Superstructure colour</p>
-                    <p className="text-lg">{formatValue(yacht.super_structure_colour)}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">Hull number</p>
-                    <p className="text-lg">{formatValue(yacht.hull_number)}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">Hull type</p>
-                    <p className="text-lg">{formatValue(yacht.hull_type)}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">Builder</p>
-                    <p className="text-lg">{formatValue(yacht.builder)}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* COMMENTS */}
-              {yacht.owners_comment && (
-                <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-                  <p className="text-sm font-medium text-gray-700 mb-2">Owners comment</p>
-                  <p className="text-gray-700 whitespace-pre-line">{yacht.owners_comment}</p>
-                </div>
-              )}
-            </div>
-
-            {/* ENGINE AND PROPULSION */}
-            <div className="mb-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6 border-b pb-2">
-                Engine and propulsion
-              </h2>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">Engine manufacturer</p>
-                    <p className="text-lg">{formatValue(yacht.engine_manufacturer)}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">Horse power</p>
-                    <p className="text-lg">{formatValue(yacht.horse_power)}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">Number of engines</p>
-                    <p className="text-lg">{formatValue(yacht.engine_quantity)}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">Fuel type</p>
-                    <p className="text-lg">{formatValue(yacht.fuel)}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">Engine hours</p>
-                    <p className="text-lg">{formatValue(yacht.hours)}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">Starting type</p>
-                    <p className="text-lg">{formatValue(yacht.starting_type)}</p>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">Drive type</p>
-                    <p className="text-lg">{formatValue(yacht.drive_type)}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">Cruising speed</p>
-                    <p className="text-lg">{formatValue(yacht.cruising_speed)}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">Max speed</p>
-                    <p className="text-lg">{formatValue(yacht.max_speed)}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">Fuel tankage</p>
-                    <p className="text-lg">{formatValue(yacht.tankage)}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">Fuel consumption</p>
-                    <p className="text-lg">{formatValue(yacht.litres_per_hour)} L/h</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">Gearbox</p>
-                    <p className="text-lg">{formatValue(yacht.gearbox)}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* THRUSTERS */}
-              <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Bow thruster</p>
-                  <p className="text-lg">{formatValue(yacht.bow_thruster)}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Stern thruster</p>
-                    <p className="text-lg">{formatValue(yacht.stern_thruster)}</p>
-                </div>
-              </div>
-            </div>
-
-            {/* ACCOMMODATION */}
-            <div className="mb-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6 border-b pb-2">
-                Accommodation
-              </h2>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">Cabins</p>
-                    <p className="text-lg">{formatValue(yacht.cabins)}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">Berths</p>
-                    <p className="text-lg">{formatValue(yacht.berths)}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">Toilet</p>
-                    <p className="text-lg">{formatValue(yacht.toilet)}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">Shower</p>
-                    <p className="text-lg">{formatValue(yacht.shower)}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">Bath</p>
-                    <p className="text-lg">{formatValue(yacht.bath)}</p>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">Heating</p>
-                    <p className="text-lg">{formatValue(yacht.heating)}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">Air conditioning</p>
-                    <p className="text-lg">{formatValue(yacht.air_conditioning)}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">Oven</p>
-                    <p className="text-lg">{formatValue(yacht.oven)}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">Microwave</p>
-                    <p className="text-lg">{formatValue(yacht.microwave)}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">Fridge</p>
-                    <p className="text-lg">{formatValue(yacht.fridge)}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">Freezer</p>
-                    <p className="text-lg">{formatValue(yacht.freezer)}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* NAVIGATION AND ELECTRONICS */}
-            <div className="mb-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6 border-b pb-2">
-                Navigation and electronics
-              </h2>
-              
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Compass</p>
-                  <p className="text-lg">{formatValue(yacht.compass)}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">GPS</p>
-                  <p className="text-lg">{formatValue(yacht.gps)}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Plotter</p>
-                  <p className="text-lg">{formatValue(yacht.plotter)}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Radar</p>
-                  <p className="text-lg">{formatValue(yacht.radar)}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Autopilot</p>
-                  <p className="text-lg">{formatValue(yacht.autopilot)}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">VHF</p>
-                  <p className="text-lg">{formatValue(yacht.vhf)}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Depth instrument</p>
-                  <p className="text-lg">{formatValue(yacht.depth_instrument)}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Speed instrument</p>
-                  <p className="text-lg">{formatValue(yacht.speed_instrument)}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Wind instrument</p>
-                  <p className="text-lg">{formatValue(yacht.wind_instrument)}</p>
-                </div>
-              </div>
-            </div>
-
-            {/* SAFETY AND EQUIPMENT */}
-            <div className="mb-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6 border-b pb-2">
-                Safety and equipment
-              </h2>
-              
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Life raft</p>
-                  <p className="text-lg">{formatValue(yacht.life_raft)}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">EPIRB</p>
-                  <p className="text-lg">{formatValue(yacht.epirb)}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Bilge pump</p>
-                  <p className="text-lg">{formatValue(yacht.bilge_pump)}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Fire extinguisher</p>
-                  <p className="text-lg">{formatValue(yacht.fire_extinguisher)}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">MOB system</p>
-                  <p className="text-lg">{formatValue(yacht.mob_system)}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Anchor</p>
-                  <p className="text-lg">{formatValue(yacht.anchor)}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Spray hood</p>
-                  <p className="text-lg">{formatValue(yacht.spray_hood)}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Bimini</p>
-                  <p className="text-lg">{formatValue(yacht.bimini)}</p>
-                </div>
-              </div>
-            </div>
-
-            {/* SAILS AND RIGGING */}
-            {(yacht.genoa || yacht.main_sail || yacht.spinnaker) && (
-              <div className="mb-8">
-                <h2 className="text-2xl font-bold text-gray-900 mb-6 border-b pb-2">
-                  Sails and rigging
-                </h2>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-4">
-                    {yacht.genoa && (
-                      <div>
-                        <p className="text-sm font-medium text-gray-700">Genoa</p>
-                        <p className="text-lg">{yacht.genoa}</p>
+            {/* COLLAPSIBLE SECTIONS */}
+            <div className="space-y-6">
+              {/* GENERAL SPECIFICATIONS */}
+              <div className="border border-gray-200 rounded-lg overflow-hidden">
+                <button
+                  onClick={() => toggleSection("general")}
+                  className="w-full flex items-center justify-between p-6 bg-gray-50 hover:bg-gray-100"
+                >
+                  <h3 className="text-xl font-bold text-gray-900">General specifications</h3>
+                  {expandedSections.general ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                </button>
+                {expandedSections.general && (
+                  <div className="p-6 border-t border-gray-200">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {/* Left Column */}
+                      <div className="space-y-4">
+                        <div>
+                          <p className="text-sm font-medium text-gray-700">Asking price</p>
+                          <p className="text-lg font-bold">{displayPrice}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-700">VAT status</p>
+                          <p className="text-lg">{formatValue(yacht.vat_status)}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-700">Brand / Model</p>
+                          <p className="text-lg">{yacht.make} {yacht.model}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-700">Year of construction</p>
+                          <p className="text-lg">{yacht.year}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-700">Length overall (LOA)</p>
+                          <p className="text-lg">{formatValue(yacht.loa)}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-700">Waterline length (LWL)</p>
+                          <p className="text-lg">{formatValue(yacht.lwl)}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-700">Beam</p>
+                          <p className="text-lg">{formatValue(yacht.beam)}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-700">Draught</p>
+                          <p className="text-lg">{formatValue(yacht.draft)}</p>
+                        </div>
                       </div>
-                    )}
-                    {yacht.main_sail && (
-                      <div>
-                        <p className="text-sm font-medium text-gray-700">Main sail</p>
-                        <p className="text-lg">{yacht.main_sail}</p>
+
+                      {/* Right Column */}
+                      <div className="space-y-4">
+                        <div>
+                          <p className="text-sm font-medium text-gray-700">Construction material</p>
+                          <p className="text-lg">{formatValue(yacht.construction_material)}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-700">Hull colour</p>
+                          <p className="text-lg">{formatValue(yacht.hull_colour)}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-700">Deck colour</p>
+                          <p className="text-lg">{formatValue(yacht.deck_colour)}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-700">Builder</p>
+                          <p className="text-lg">{formatValue(yacht.builder)}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-700">Designer</p>
+                          <p className="text-lg">{formatValue(yacht.designer)}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-700">Hull type</p>
+                          <p className="text-lg">{formatValue(yacht.hull_type)}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-700">Hull number</p>
+                          <p className="text-lg">{formatValue(yacht.hull_number)}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-700">Reference code</p>
+                          <p className="text-lg">{yacht.reference_code}</p>
+                        </div>
                       </div>
-                    )}
-                  </div>
-                  <div className="space-y-4">
-                    <div>
-                      <p className="text-sm font-medium text-gray-700">Spinnaker</p>
-                      <p className="text-lg">{formatValue(yacht.spinnaker)}</p>
                     </div>
-                    {yacht.winches && (
-                      <div>
-                        <p className="text-sm font-medium text-gray-700">Winches</p>
-                        <p className="text-lg">{yacht.winches}</p>
+                    
+                    {/* Description */}
+                    {yacht.description && (
+                      <div className="mt-8 pt-8 border-t border-gray-200">
+                        <p className="text-sm font-medium text-gray-700 mb-2">Description</p>
+                        <p className="text-gray-700 whitespace-pre-line">{yacht.description}</p>
                       </div>
                     )}
                   </div>
-                </div>
+                )}
               </div>
-            )}
 
-            {/* KNOWN DEFECTS */}
-            {yacht.known_defects && (
-              <div className="mb-8 p-4 bg-red-50 border border-red-200 rounded-lg">
-                <h3 className="text-lg font-bold text-red-800 mb-2">Known defects</h3>
-                <p className="text-red-700 whitespace-pre-line">{yacht.known_defects}</p>
+              {/* ENGINE AND PROPULSION */}
+              <div className="border border-gray-200 rounded-lg overflow-hidden">
+                <button
+                  onClick={() => toggleSection("engine")}
+                  className="w-full flex items-center justify-between p-6 bg-gray-50 hover:bg-gray-100"
+                >
+                  <h3 className="text-xl font-bold text-gray-900">Engine and propulsion</h3>
+                  {expandedSections.engine ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                </button>
+                {expandedSections.engine && (
+                  <div className="p-6 border-t border-gray-200">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-4">
+                        <div>
+                          <p className="text-sm font-medium text-gray-700">Engine manufacturer</p>
+                          <p className="text-lg">{formatValue(yacht.engine_manufacturer)}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-700">Horse power</p>
+                          <p className="text-lg">{formatValue(yacht.horse_power)}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-700">Number of engines</p>
+                          <p className="text-lg">{formatValue(yacht.engine_quantity)}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-700">Fuel type</p>
+                          <p className="text-lg">{formatValue(yacht.fuel)}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-700">Engine hours</p>
+                          <p className="text-lg">{formatValue(yacht.hours)}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-700">Starting type</p>
+                          <p className="text-lg">{formatValue(yacht.starting_type)}</p>
+                        </div>
+                      </div>
+                      <div className="space-y-4">
+                        <div>
+                          <p className="text-sm font-medium text-gray-700">Drive type</p>
+                          <p className="text-lg">{formatValue(yacht.drive_type)}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-700">Cruising speed</p>
+                          <p className="text-lg">{formatValue(yacht.cruising_speed)}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-700">Max speed</p>
+                          <p className="text-lg">{formatValue(yacht.max_speed)}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-700">Fuel tankage</p>
+                          <p className="text-lg">{formatValue(yacht.tankage)}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-700">Fuel consumption</p>
+                          <p className="text-lg">{formatValue(yacht.litres_per_hour)} L/h</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-700">Bow thruster</p>
+                          <p className="text-lg">{formatValue(yacht.bow_thruster)}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-700">Stern thruster</p>
+                          <p className="text-lg">{formatValue(yacht.stern_thruster)}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
+
+              {/* Add more collapsible sections for accommodation, navigation, equipment, safety */}
+            </div>
           </div>
 
           {/* RIGHT COLUMN - ACTIONS & CONTACT */}
@@ -1028,70 +913,6 @@ export default function YachtDetailPage() {
               </Button>
             </div>
 
-            {/* CONTACT FORM */}
-            <div className="border border-slate-200 rounded-lg p-6">
-              <h3 className="text-lg font-bold text-gray-900 mb-4">
-                More information
-              </h3>
-              <form className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Your first and last name*
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Phone number*
-                  </label>
-                  <input
-                    type="tel"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Email address*
-                  </label>
-                  <input
-                    type="email"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    I would like the following... *
-                  </label>
-                  <select className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option>Select an option</option>
-                    <option>More information</option>
-                    <option>Schedule a viewing</option>
-                    <option>Request a test sail</option>
-                    <option>Make an offer</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Your comment or question
-                  </label>
-                  <textarea
-                    rows={4}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3">
-                  Send
-                </Button>
-                <p className="text-xs text-gray-500 mt-2">* Required field</p>
-              </form>
-            </div>
-
             {/* DEALER INFO */}
             <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
               <h3 className="text-lg font-bold text-gray-900 mb-4">
@@ -1119,150 +940,382 @@ export default function YachtDetailPage() {
         </div>
       </div>
 
-      {/* PAYMENT MODAL */}
+      {/* ORIGINAL TEST SAIL MODAL */}
       <AnimatePresence>
-        {paymentMode && (
+        {paymentMode === "test_sail" && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
+            className="fixed inset-0 z-50 bg-[#001D3D]/90 backdrop-blur-md flex items-center justify-center p-4"
           >
             <motion.div
-              initial={{ y: 50, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: 50, opacity: 0 }}
-              className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto"
+              initial={{ y: 50 }}
+              animate={{ y: 0 }}
+              className="bg-white max-w-2xl w-full p-8 shadow-2xl max-h-[90vh] overflow-y-auto"
             >
               {paymentStatus === "idle" && (
-                <div className="p-6">
-                  <h3 className="text-xl font-bold text-gray-900 mb-4">
-                    {paymentMode === "buy_now" ? "Directe Aankoop" : "Proefvaart Boeken"}
-                  </h3>
-                  
-                  {paymentMode === "test_sail" && (
-                    <div className="space-y-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Naam *
-                        </label>
-                        <input
-                          type="text"
-                          value={bookingForm.name}
-                          onChange={(e) => setBookingForm(prev => ({...prev, name: e.target.value}))}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-md"
-                          required
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          E-mail *
-                        </label>
-                        <input
-                          type="email"
-                          value={bookingForm.email}
-                          onChange={(e) => setBookingForm(prev => ({...prev, email: e.target.value}))}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-md"
-                          required
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Telefoonnummer
-                        </label>
-                        <input
-                          type="tel"
-                          value={bookingForm.phone}
-                          onChange={(e) => setBookingForm(prev => ({...prev, phone: e.target.value}))}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-md"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Gewenste datum *
-                        </label>
-                        <input
-                          type="date"
-                          onChange={(e) => setSelectedDate(new Date(e.target.value))}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-md"
-                          required
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Gewenste tijd *
-                        </label>
-                        <input
-                          type="time"
-                          onChange={(e) => setSelectedTime(e.target.value)}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-md"
-                          required
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Opmerkingen
-                        </label>
-                        <textarea
-                          value={bookingForm.notes}
-                          onChange={(e) => setBookingForm(prev => ({...prev, notes: e.target.value}))}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-md"
-                          rows={3}
-                        />
-                      </div>
-                    </div>
-                  )}
+                <div className="space-y-6">
+                  <div className="text-center">
+                    <h2 className="text-2xl font-serif italic mb-2">Beveiligde Proefvaart</h2>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                      Borg Vereist: €{(yacht?.price * 0.1).toLocaleString()}
+                    </p>
+                  </div>
 
-                  <div className="flex gap-4 mt-6">
-                    <Button
+                  {/* CALENDAR */}
+                  <div className="space-y-6">
+                    <div className="text-center">
+                      <div className="flex items-center justify-between mb-4">
+                        <Button
+                          onClick={handlePrevMonth}
+                          variant="ghost"
+                          className="text-slate-400 hover:text-blue-600"
+                        >
+                          ←
+                        </Button>
+                        <h3 className="text-lg font-semibold text-[#003566]">
+                          {DUTCH_MONTHS[currentMonth.getMonth()]} {currentMonth.getFullYear()}
+                        </h3>
+                        <Button
+                          onClick={handleNextMonth}
+                          variant="ghost"
+                          className="text-slate-400 hover:text-blue-600"
+                        >
+                          →
+                        </Button>
+                      </div>
+                      
+                      {/* Calendar Grid */}
+                      <div className="grid grid-cols-7 gap-2 mb-6">
+                        {/* Dutch Day Headers */}
+                        {DUTCH_DAYS.map((day) => (
+                          <div key={day} className="text-center py-2">
+                            <span className="text-[8px] font-black uppercase text-slate-400">
+                              {day}
+                            </span>
+                          </div>
+                        ))}
+                        
+                        {/* Calendar Days */}
+                        {calendarDays.map((day: any, index: number) => {
+                          const isSelected = selectedDate && 
+                            day.date.getDate() === selectedDate.getDate() &&
+                            day.date.getMonth() === selectedDate.getMonth() &&
+                            day.date.getFullYear() === selectedDate.getFullYear();
+                          
+                          return (
+                            <button
+                              key={index}
+                              onClick={() => {
+                                setSelectedDate(day.date);
+                                // Generate available time slots (demo)
+                                setAvailableSlots(['09:00', '11:00', '14:00', '16:00']);
+                              }}
+                              disabled={!day.available || !day.isCurrentMonth}
+                              className={cn(
+                                "aspect-square flex flex-col items-center justify-center rounded-xl text-xs transition-all",
+                                !day.isCurrentMonth ? "text-slate-300" :
+                                isSelected
+                                  ? "bg-[#003566] text-white"
+                                  : isToday(day.date)
+                                  ? "bg-slate-100 text-[#003566] font-bold border-2 border-blue-400"
+                                  : day.available
+                                  ? "bg-emerald-50 text-emerald-900 border border-emerald-200 hover:bg-emerald-100"
+                                  : "bg-slate-50 text-slate-400 border border-slate-100 cursor-not-allowed"
+                              )}
+                            >
+                              <span className="text-[10px] font-bold">
+                                {DUTCH_DAYS[day.date.getDay()]}
+                              </span>
+                              <span className="text-lg font-serif">
+                                {day.date.getDate()}
+                              </span>
+                              {day.available && (
+                                <span className="w-1 h-1 rounded-full bg-emerald-500 mt-1" />
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {/* Selected Date Display */}
+                      {selectedDate && (
+                        <div className="mb-4 p-3 bg-blue-50 border border-blue-100 rounded-lg">
+                          <p className="text-[10px] font-black uppercase tracking-widest text-blue-600">
+                            Geselecteerde datum: {selectedDate.toLocaleDateString('nl-NL', { 
+                              weekday: 'long', 
+                              year: 'numeric', 
+                              month: 'long', 
+                              day: 'numeric' 
+                            })}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Time Slots Grid */}
+                      <div>
+                        <p className="text-[9px] font-bold uppercase text-slate-400 mb-3">
+                          Beschikbare Tijdslots (60 minuten + 15 minuten buffer)
+                        </p>
+                        {availableSlots.length > 0 ? (
+                          <div className="grid grid-cols-3 gap-2">
+                            {availableSlots.map((time) => (
+                              <button
+                                key={time}
+                                onClick={() => setSelectedTime(time)}
+                                className={cn(
+                                  "py-3 rounded-xl text-xs font-bold transition-all",
+                                  selectedTime === time 
+                                    ? "bg-[#003566] text-white" 
+                                    : "bg-emerald-100 text-emerald-900 hover:bg-emerald-200"
+                                )}
+                              >
+                                {time}
+                              </button>
+                            ))}
+                          </div>
+                        ) : selectedDate ? (
+                          <div className="text-center py-6 border border-slate-200 rounded-lg">
+                            <p className="text-[10px] font-black uppercase text-slate-400">
+                              Geen beschikbare slots voor deze datum
+                            </p>
+                            <p className="text-[8px] text-slate-500 mt-1">
+                              Selecteer een andere datum
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="text-center py-6 border border-slate-200 rounded-lg">
+                            <p className="text-[10px] font-black uppercase text-slate-400">
+                              Selecteer eerst een datum
+                            </p>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Confirmation Details */}
+                      {selectedTime && (
+                        <div className="mt-4 space-y-4">
+                          <div className="p-3 bg-slate-50 border border-dashed border-slate-200 rounded-lg">
+                            <p className="text-[10px] font-black uppercase text-slate-500 mb-1">
+                              Geselecteerd Tijdslot
+                            </p>
+                            <p className="text-sm font-serif text-[#003566]">
+                              {selectedTime} - {(() => {
+                                const [hours, minutes] = selectedTime.split(':').map(Number);
+                                const endTime = new Date();
+                                endTime.setHours(hours + 1, minutes);
+                                return endTime.toLocaleTimeString('nl-NL', { 
+                                  hour: '2-digit', 
+                                  minute: '2-digit' 
+                                });
+                              })()}
+                              <span className="text-[9px] text-slate-500 ml-2">(+15m Buffer)</span>
+                            </p>
+                          </div>
+
+                          {/* Booking Form */}
+                          <div className="space-y-4">
+                            <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                              Uw Gegevens
+                            </h4>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div>
+                                <label className="text-[9px] font-bold uppercase text-slate-500 block mb-1">
+                                  Naam *
+                                </label>
+                                <input
+                                  type="text"
+                                  value={bookingForm.name}
+                                  onChange={(e) => setBookingForm(prev => ({...prev, name: e.target.value}))}
+                                  className="w-full border border-slate-200 p-2 text-sm rounded"
+                                  required
+                                />
+                              </div>
+                              
+                              <div>
+                                <label className="text-[9px] font-bold uppercase text-slate-500 block mb-1">
+                                  E-mail *
+                                </label>
+                                <input
+                                  type="email"
+                                  value={bookingForm.email}
+                                  onChange={(e) => setBookingForm(prev => ({...prev, email: e.target.value}))}
+                                  className="w-full border border-slate-200 p-2 text-sm rounded"
+                                  required
+                                />
+                              </div>
+                              
+                              <div>
+                                <label className="text-[9px] font-bold uppercase text-slate-500 block mb-1">
+                                  Telefoonnummer
+                                </label>
+                                <input
+                                  type="tel"
+                                  value={bookingForm.phone}
+                                  onChange={(e) => setBookingForm(prev => ({...prev, phone: e.target.value}))}
+                                  className="w-full border border-slate-200 p-2 text-sm rounded"
+                                />
+                              </div>
+                            </div>
+                            
+                            <div>
+                              <label className="text-[9px] font-bold uppercase text-slate-500 block mb-1">
+                                Opmerkingen
+                              </label>
+                              <textarea
+                                value={bookingForm.notes}
+                                onChange={(e) => setBookingForm(prev => ({...prev, notes: e.target.value}))}
+                                className="w-full border border-slate-200 p-2 text-sm rounded"
+                                rows={3}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="p-4 bg-blue-50 text-[#003566] flex gap-3 rounded-sm">
+                    <FileText size={20} className="shrink-0" />
+                    <p className="text-[9px] leading-relaxed font-medium">
+                      Deze borg start de officiële overdrachtsprocedure. Ons juridisch team genereert binnen 24 uur een maritiem contract.
+                    </p>
+                  </div>
+                  
+                  <div className="flex gap-4">
+                    <Button 
                       onClick={() => {
                         setPaymentMode(null);
                         setSelectedDate(null);
                         setSelectedTime(null);
+                        setAvailableSlots([]);
                         setBookingForm({ name: '', email: '', phone: '', notes: '' });
-                      }}
-                      variant="outline"
+                      }} 
+                      variant="ghost" 
                       className="flex-1"
                     >
                       Annuleren
                     </Button>
                     <Button
-                      onClick={paymentMode === "buy_now" ? handleBuyNow : handleTestSailBooking}
-                      className="flex-1 bg-blue-600 hover:bg-blue-700"
+                      onClick={handleTestSailBooking}
+                      disabled={!selectedDate || !selectedTime || !bookingForm.name || !bookingForm.email}
+                      className="flex-2 bg-[#003566] hover:bg-blue-900 text-white font-bold uppercase tracking-widest text-[10px] disabled:bg-slate-300 disabled:cursor-not-allowed"
                     >
-                      Bevestigen
+                      Bevestigen & Betalen
                     </Button>
                   </div>
                 </div>
               )}
-
               {paymentStatus === "processing" && (
-                <div className="p-12 text-center">
-                  <Loader2 className="animate-spin text-blue-600 mx-auto mb-4" size={40} />
-                  <p className="text-gray-700">Verwerken...</p>
+                <div className="py-20 text-center flex flex-col items-center">
+                  <Loader2
+                    className="animate-spin text-[#003566] mb-4"
+                    size={32}
+                  />
+                  <p className="text-[10px] font-black uppercase tracking-widest">
+                    Beveiligde Gateway Contacten...
+                  </p>
                 </div>
               )}
-
               {paymentStatus === "success" && (
-                <div className="p-12 text-center">
-                  <CheckCircle2 className="text-green-600 mx-auto mb-4" size={48} />
-                  <h4 className="text-xl font-bold text-gray-900 mb-2">
-                    {paymentMode === "buy_now" ? "Aankoop Aangevraagd" : "Proefvaart Geboekt"}
-                  </h4>
-                  <p className="text-gray-600">
-                    {paymentMode === "buy_now" 
-                      ? "Ons team neemt zo snel mogelijk contact met u op." 
-                      : "U ontvangt binnenkort een bevestiging per e-mail."}
+                <div className="py-12 text-center">
+                  <div className="w-16 h-16 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <CheckCircle2 size={32} />
+                  </div>
+                  <h3 className="text-xl font-serif mb-2 text-[#003566]">
+                    Transactie Beveiligd
+                  </h3>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                    Een terminal ticket is verzonden.
                   </p>
-                  <Button
-                    onClick={() => {
-                      setPaymentMode(null);
-                      setPaymentStatus("idle");
-                    }}
-                    className="mt-6"
-                  >
-                    Sluiten
-                  </Button>
+                  {selectedDate && selectedTime && (
+                    <div className="mt-4 p-3 bg-slate-50 rounded-sm">
+                      <p className="text-[9px] font-bold uppercase text-slate-500">
+                        Proefvaart Ingepland
+                      </p>
+                      <p className="text-xs font-serif">
+                        {selectedDate.toLocaleDateString('nl-NL')} om {selectedTime}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* BUY NOW MODAL */}
+      <AnimatePresence>
+        {paymentMode === "buy_now" && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-[#001D3D]/90 backdrop-blur-md flex items-center justify-center p-4"
+          >
+            <motion.div
+              initial={{ y: 50 }}
+              animate={{ y: 0 }}
+              className="bg-white max-w-lg w-full p-8 shadow-2xl"
+            >
+              {paymentStatus === "idle" && (
+                <div className="space-y-6">
+                  <div className="text-center">
+                    <h2 className="text-2xl font-serif italic mb-2">Directe Aankoop</h2>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                      Aankoopbedrag: €{yacht?.price.toLocaleString()}
+                    </p>
+                  </div>
+
+                  <div className="p-4 bg-blue-50 text-[#003566] flex gap-3 rounded-sm">
+                    <FileText size={20} className="shrink-0" />
+                    <p className="text-[9px] leading-relaxed font-medium">
+                      Uw directe aankoopverzoek wordt direct doorgezet naar ons verkoopteam. Zij nemen binnen 24 uur contact met u op.
+                    </p>
+                  </div>
+                  
+                  <div className="flex gap-4">
+                    <Button 
+                      onClick={() => setPaymentMode(null)} 
+                      variant="ghost" 
+                      className="flex-1"
+                    >
+                      Annuleren
+                    </Button>
+                    <Button
+                      onClick={handleBuyNow}
+                      className="flex-2 bg-[#003566] hover:bg-blue-900 text-white font-bold uppercase tracking-widest text-[10px]"
+                    >
+                      Bevestig Directe Aankoop
+                    </Button>
+                  </div>
+                </div>
+              )}
+              {paymentStatus === "processing" && (
+                <div className="py-20 text-center flex flex-col items-center">
+                  <Loader2
+                    className="animate-spin text-[#003566] mb-4"
+                    size={32}
+                  />
+                  <p className="text-[10px] font-black uppercase tracking-widest">
+                    Verzoek Verwerken...
+                  </p>
+                </div>
+              )}
+              {paymentStatus === "success" && (
+                <div className="py-12 text-center">
+                  <div className="w-16 h-16 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <CheckCircle2 size={32} />
+                  </div>
+                  <h3 className="text-xl font-serif mb-2 text-[#003566]">
+                    Verzoek Bevestigd
+                  </h3>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                    Ons team neemt spoedig contact op.
+                  </p>
                 </div>
               )}
             </motion.div>
