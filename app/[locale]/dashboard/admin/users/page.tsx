@@ -17,6 +17,7 @@ type UserCategory = "Employee" | "Admin" | "Partner" | "Customer";
 type PermissionValue = 0 | 1 | 2;
 
 interface PagePermission {
+  id: number;
   page_key: string;
   page_name: string;
   description?: string;
@@ -43,9 +44,9 @@ export default function RoleManagementPage() {
     name: "",
     email: "",
     password: "",
-    role: "Employee",
-    access_level: "Limited",
-    status: "Active",
+    role: "Employee" as UserCategory,
+    access_level: "Limited" as "Limited" | "Full",
+    status: "Active" as "Active" | "Inactive" | "Pending",
   });
 
   const API_BASE = "https://schepen-kring.nl/api";
@@ -174,7 +175,7 @@ export default function RoleManagementPage() {
               page_key: pageKey,
               page_name: page.page_name,
               permission_value: value
-            });
+            } as UserPagePermission);
           }
         }
         
@@ -215,7 +216,7 @@ export default function RoleManagementPage() {
         const userPerms = prev[userId] || [];
         const resetPerms = userPerms.map(perm => ({
           ...perm,
-          permission_value: 0
+          permission_value: 0 as PermissionValue
         }));
         return { ...prev, [userId]: resetPerms };
       });
@@ -247,6 +248,7 @@ export default function RoleManagementPage() {
     return (
       <div className="flex items-center gap-2">
         <button
+          type="button"
           onClick={() => updateUserPermission(userId, page.page_key, 1)}
           className={cn(
             "px-3 py-2 text-[9px] font-bold uppercase tracking-widest border transition-all",
@@ -260,6 +262,7 @@ export default function RoleManagementPage() {
         </button>
         
         <button
+          type="button"
           onClick={() => updateUserPermission(userId, page.page_key, 2)}
           className={cn(
             "px-3 py-2 text-[9px] font-bold uppercase tracking-widest border transition-all",
@@ -273,6 +276,7 @@ export default function RoleManagementPage() {
         </button>
         
         <button
+          type="button"
           onClick={() => updateUserPermission(userId, page.page_key, 0)}
           className={cn(
             "px-3 py-2 text-[9px] font-bold uppercase tracking-widest border transition-all",
@@ -300,11 +304,16 @@ export default function RoleManagementPage() {
         </div>
         <div className="flex gap-4">
           <input 
-            type="text" placeholder="SEARCH MANIFEST..." 
+            type="text" 
+            placeholder="SEARCH MANIFEST..." 
             className="bg-white border border-slate-200 px-4 py-3 text-[10px] font-bold tracking-widest uppercase outline-none focus:border-blue-400 w-64"
-            value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
+            value={searchQuery} 
+            onChange={(e) => setSearchQuery(e.target.value)}
           />
-          <Button onClick={() => setIsModalOpen(true)} className="bg-[#003566] text-white rounded-none uppercase text-[10px] tracking-widest font-black px-8 h-12">
+          <Button 
+            onClick={() => setIsModalOpen(true)} 
+            className="bg-[#003566] text-white rounded-none uppercase text-[10px] tracking-widest font-black px-8 h-12"
+          >
             <UserPlus className="mr-2 w-4 h-4" /> Provision New
           </Button>
         </div>
@@ -335,111 +344,137 @@ export default function RoleManagementPage() {
       <div className="grid grid-cols-1 gap-6 pb-20">
         {loading ? (
           <Loader2 className="animate-spin mx-auto mt-20 text-slate-200" size={48} />
-        ) : filteredUsers.map((user) => (
-          <motion.div layout key={user.id} className="bg-white border border-slate-200 p-8 hover:shadow-lg transition-all">
-            <div className="flex flex-col lg:flex-row gap-10">
-              <div className="lg:w-1/3 space-y-6">
-                <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 bg-slate-50 border border-slate-200 flex items-center justify-center text-[#003566]">
-                    {user.profile_image ? <img src={user.profile_image} className="w-full h-full object-cover" /> : <UserCheck size={32} />}
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-serif italic text-[#003566]">{user.name}</h3>
-                    <p className="text-[10px] text-blue-600 font-black uppercase tracking-widest">{user.access_level} CLEARANCE</p>
-                  </div>
-                </div>
-                <div className="space-y-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                  <div className="flex items-center gap-2"><Mail size={14} /> {user.email}</div>
-                  {user.phone_number && <div className="flex items-center gap-2"><Phone size={14} /> {user.phone_number}</div>}
-                </div>
-                <div className="flex gap-4 pt-4 border-t border-slate-50">
-                  <button onClick={() => impersonateUser(user.id)} className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-emerald-600">
-                    <LogIn size={14} /> Assume Identity
-                  </button>
-                  <button onClick={() => { if(confirm("Terminate Access?")) handleDeleteUser(user.id) }} className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-red-400">
-                    <Trash2 size={14} /> Terminate
-                  </button>
-                </div>
-              </div>
-
-              {/* PERMISSION SIMULATOR - Only for Employees */}
-              {user.role === "Employee" && (
-                <div className="lg:w-2/3 lg:border-l border-slate-100 lg:pl-10">
-                  <div className="flex justify-between items-center mb-6">
-                    <div>
-                      <p className="text-[8px] font-black uppercase text-slate-400 tracking-[0.3em]">Page Access Control</p>
-                      <p className="text-[7px] text-slate-400 mt-1">
-                        0=Default | 1=Show | 2=Hide
-                      </p>
+        ) : filteredUsers.length === 0 ? (
+          <div className="text-center py-20 text-slate-400">
+            <p className="text-[10px] font-bold uppercase tracking-widest">No users found</p>
+          </div>
+        ) : (
+          filteredUsers.map((user) => (
+            <motion.div layout key={user.id} className="bg-white border border-slate-200 p-8 hover:shadow-lg transition-all">
+              <div className="flex flex-col lg:flex-row gap-10">
+                <div className="lg:w-1/3 space-y-6">
+                  <div className="flex items-center gap-4">
+                    <div className="w-16 h-16 bg-slate-50 border border-slate-200 flex items-center justify-center text-[#003566]">
+                      {user.profile_image ? (
+                        <img 
+                          src={user.profile_image} 
+                          alt={user.name} 
+                          className="w-full h-full object-cover" 
+                        />
+                      ) : (
+                        <UserCheck size={32} />
+                      )}
                     </div>
+                    <div>
+                      <h3 className="text-xl font-serif italic text-[#003566]">{user.name}</h3>
+                      <p className="text-[10px] text-blue-600 font-black uppercase tracking-widest">{user.access_level} CLEARANCE</p>
+                    </div>
+                  </div>
+                  <div className="space-y-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                    <div className="flex items-center gap-2"><Mail size={14} /> {user.email}</div>
+                    {user.phone_number && (
+                      <div className="flex items-center gap-2"><Phone size={14} /> {user.phone_number}</div>
+                    )}
+                  </div>
+                  <div className="flex gap-4 pt-4 border-t border-slate-50">
                     <button 
-                      onClick={() => resetUserPermissions(user.id)}
-                      className="flex items-center gap-2 text-[8px] font-black uppercase tracking-widest text-amber-600 hover:text-amber-700"
+                      onClick={() => impersonateUser(user.id)} 
+                      className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-emerald-600"
                     >
-                      <RefreshCw size={12} /> Reset All to Default
+                      <LogIn size={14} /> Assume Identity
+                    </button>
+                    <button 
+                      onClick={() => { 
+                        if(confirm("Terminate Access?")) handleDeleteUser(user.id) 
+                      }} 
+                      className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-red-400"
+                    >
+                      <Trash2 size={14} /> Terminate
                     </button>
                   </div>
-                  
-                  <div className="space-y-4">
-                    {pagePermissions.map((page) => (
-                      <div key={page.page_key} className="flex items-center justify-between border-b border-slate-100 pb-4">
-                        <div>
-                          <p className="text-[10px] font-bold uppercase text-[#003566]">{page.page_name}</p>
-                          <p className="text-[8px] text-slate-400 mt-1">{page.description}</p>
-                        </div>
-                        <div className="flex items-center gap-6">
-                          <div className="text-center">
-                            <div className={cn(
-                              "w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold",
-                              getPermissionValue(user.id, page.page_key) === 0 
-                                ? "bg-blue-100 text-blue-600" 
-                                : "bg-slate-100 text-slate-400"
-                            )}>
-                              0
-                            </div>
-                            <p className="text-[7px] text-slate-400 mt-1">Default</p>
-                          </div>
-                          
-                          <div className="text-center">
-                            <div className={cn(
-                              "w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold",
-                              getPermissionValue(user.id, page.page_key) === 1 
-                                ? "bg-green-100 text-green-600" 
-                                : "bg-slate-100 text-slate-400"
-                            )}>
-                              1
-                            </div>
-                            <p className="text-[7px] text-slate-400 mt-1">Show</p>
-                          </div>
-                          
-                          <div className="text-center">
-                            <div className={cn(
-                              "w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold",
-                              getPermissionValue(user.id, page.page_key) === 2 
-                                ? "bg-red-100 text-red-600" 
-                                : "bg-slate-100 text-slate-400"
-                            )}>
-                              2
-                            </div>
-                            <p className="text-[7px] text-slate-400 mt-1">Hide</p>
-                          </div>
-                          
-                          <PermissionToggle userId={user.id} page={page} />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
                 </div>
-              )}
-            </div>
-          </motion.div>
-        ))}
+
+                {/* PERMISSION SIMULATOR - Only for Employees */}
+                {user.role === "Employee" && pagePermissions.length > 0 && (
+                  <div className="lg:w-2/3 lg:border-l border-slate-100 lg:pl-10">
+                    <div className="flex justify-between items-center mb-6">
+                      <div>
+                        <p className="text-[8px] font-black uppercase text-slate-400 tracking-[0.3em]">Page Access Control</p>
+                        <p className="text-[7px] text-slate-400 mt-1">
+                          0=Default | 1=Show | 2=Hide
+                        </p>
+                      </div>
+                      <button 
+                        onClick={() => resetUserPermissions(user.id)}
+                        className="flex items-center gap-2 text-[8px] font-black uppercase tracking-widest text-amber-600 hover:text-amber-700"
+                      >
+                        <RefreshCw size={12} /> Reset All to Default
+                      </button>
+                    </div>
+                    
+                    <div className="space-y-4">
+                      {pagePermissions.map((page) => (
+                        <div key={page.id} className="flex items-center justify-between border-b border-slate-100 pb-4">
+                          <div>
+                            <p className="text-[10px] font-bold uppercase text-[#003566]">{page.page_name}</p>
+                            {page.description && (
+                              <p className="text-[8px] text-slate-400 mt-1">{page.description}</p>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-6">
+                            <div className="text-center">
+                              <div className={cn(
+                                "w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold",
+                                getPermissionValue(user.id, page.page_key) === 0 
+                                  ? "bg-blue-100 text-blue-600" 
+                                  : "bg-slate-100 text-slate-400"
+                              )}>
+                                0
+                              </div>
+                              <p className="text-[7px] text-slate-400 mt-1">Default</p>
+                            </div>
+                            
+                            <div className="text-center">
+                              <div className={cn(
+                                "w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold",
+                                getPermissionValue(user.id, page.page_key) === 1 
+                                  ? "bg-green-100 text-green-600" 
+                                  : "bg-slate-100 text-slate-400"
+                              )}>
+                                1
+                              </div>
+                              <p className="text-[7px] text-slate-400 mt-1">Show</p>
+                            </div>
+                            
+                            <div className="text-center">
+                              <div className={cn(
+                                "w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold",
+                                getPermissionValue(user.id, page.page_key) === 2 
+                                  ? "bg-red-100 text-red-600" 
+                                  : "bg-slate-100 text-slate-400"
+                              )}>
+                                2
+                              </div>
+                              <p className="text-[7px] text-slate-400 mt-1">Hide</p>
+                            </div>
+                            
+                            <PermissionToggle userId={user.id} page={page} />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          ))
+        )}
       </div>
 
       {/* ENROLLMENT MODAL */}
       <AnimatePresence>
         {isModalOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+          <div className="fixed inset-0 flex items-center justify-center p-6 z-50">
             <motion.div 
               initial={{ opacity: 0 }} 
               animate={{ opacity: 1 }} 
@@ -453,7 +488,12 @@ export default function RoleManagementPage() {
               exit={{ scale: 0.95, opacity: 0 }} 
               className="bg-white w-full max-w-xl p-10 shadow-2xl relative z-10 border border-slate-200 rounded-none"
             >
-              <button onClick={() => setIsModalOpen(false)} className="absolute right-6 top-6 text-slate-400 hover:text-slate-600"><X size={20} /></button>
+              <button 
+                onClick={() => setIsModalOpen(false)} 
+                className="absolute right-6 top-6 text-slate-400 hover:text-slate-600"
+              >
+                <X size={20} />
+              </button>
               <div className="mb-8">
                 <h2 className="text-2xl font-serif italic text-[#003566]">Personnel Enrollment</h2>
                 <p className="text-[9px] font-black uppercase tracking-widest text-blue-600">Establish new system identity</p>
@@ -463,24 +503,51 @@ export default function RoleManagementPage() {
                 <div className="grid grid-cols-2 gap-6">
                   <div className="space-y-1">
                     <label className="text-[8px] font-black uppercase tracking-widest text-slate-400">Full Name</label>
-                    <input required className="w-full border-b border-slate-200 py-2 text-[10px] font-bold uppercase outline-none focus:border-blue-400" value={newUser.name} onChange={(e) => setNewUser({...newUser, name: e.target.value})} />
+                    <input 
+                      required 
+                      className="w-full border-b border-slate-200 py-2 text-[10px] font-bold uppercase outline-none focus:border-blue-400" 
+                      value={newUser.name} 
+                      onChange={(e) => setNewUser({...newUser, name: e.target.value})} 
+                    />
                   </div>
                   <div className="space-y-1">
                     <label className="text-[8px] font-black uppercase tracking-widest text-slate-400">Email Address</label>
-                    <input required type="email" className="w-full border-b border-slate-200 py-2 text-[10px] font-bold uppercase outline-none focus:border-blue-400" value={newUser.email} onChange={(e) => setNewUser({...newUser, email: e.target.value})} />
+                    <input 
+                      required 
+                      type="email" 
+                      className="w-full border-b border-slate-200 py-2 text-[10px] font-bold uppercase outline-none focus:border-blue-400" 
+                      value={newUser.email} 
+                      onChange={(e) => setNewUser({...newUser, email: e.target.value})} 
+                    />
                   </div>
                 </div>
 
                 <div className="space-y-1 relative">
                   <label className="text-[8px] font-black uppercase tracking-widest text-slate-400">System Password</label>
-                  <input required type={showPassword ? "text" : "password"} className="w-full border-b border-slate-200 py-2 text-[10px] font-bold uppercase outline-none focus:border-blue-400" value={newUser.password} onChange={(e) => setNewUser({...newUser, password: e.target.value})} />
-                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-0 bottom-2 text-slate-400">{showPassword ? <EyeOff size={14} /> : <Eye size={14} />}</button>
+                  <input 
+                    required 
+                    type={showPassword ? "text" : "password"} 
+                    className="w-full border-b border-slate-200 py-2 text-[10px] font-bold uppercase outline-none focus:border-blue-400" 
+                    value={newUser.password} 
+                    onChange={(e) => setNewUser({...newUser, password: e.target.value})} 
+                  />
+                  <button 
+                    type="button" 
+                    onClick={() => setShowPassword(!showPassword)} 
+                    className="absolute right-0 bottom-2 text-slate-400"
+                  >
+                    {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+                  </button>
                 </div>
 
                 <div className="grid grid-cols-3 gap-6 pt-4">
                   <div className="space-y-1">
                     <label className="text-[8px] font-black uppercase tracking-widest text-slate-400">Assignment</label>
-                    <select className="w-full border-b border-slate-200 py-2 text-[10px] font-bold uppercase outline-none" onChange={(e) => setNewUser({...newUser, role: e.target.value})}>
+                    <select 
+                      className="w-full border-b border-slate-200 py-2 text-[10px] font-bold uppercase outline-none" 
+                      value={newUser.role}
+                      onChange={(e) => setNewUser({...newUser, role: e.target.value as UserCategory})}
+                    >
                       <option value="Employee">Employee</option>
                       <option value="Admin">Admin</option>
                       <option value="Partner">Partner</option>
@@ -489,14 +556,22 @@ export default function RoleManagementPage() {
                   </div>
                   <div className="space-y-1">
                     <label className="text-[8px] font-black uppercase tracking-widest text-slate-400">Clearance</label>
-                    <select className="w-full border-b border-slate-200 py-2 text-[10px] font-bold uppercase outline-none" onChange={(e) => setNewUser({...newUser, access_level: e.target.value})}>
+                    <select 
+                      className="w-full border-b border-slate-200 py-2 text-[10px] font-bold uppercase outline-none" 
+                      value={newUser.access_level}
+                      onChange={(e) => setNewUser({...newUser, access_level: e.target.value as "Limited" | "Full"})}
+                    >
                       <option value="Limited">Limited</option>
                       <option value="Full">Full</option>
                     </select>
                   </div>
                   <div className="space-y-1">
                     <label className="text-[8px] font-black uppercase tracking-widest text-slate-400">Account Status</label>
-                    <select className="w-full border-b border-slate-200 py-2 text-[10px] font-bold uppercase outline-none" value={newUser.status} onChange={(e) => setNewUser({...newUser, status: e.target.value})}>
+                    <select 
+                      className="w-full border-b border-slate-200 py-2 text-[10px] font-bold uppercase outline-none" 
+                      value={newUser.status} 
+                      onChange={(e) => setNewUser({...newUser, status: e.target.value as "Active" | "Inactive" | "Pending"})}
+                    >
                       <option value="Active">Active</option>
                       <option value="Inactive">Inactive</option>
                       <option value="Pending">Pending</option>
@@ -504,7 +579,12 @@ export default function RoleManagementPage() {
                   </div>
                 </div>
 
-                <Button type="submit" className="w-full bg-[#003566] text-white rounded-none h-14 uppercase text-[10px] tracking-widest font-black shadow-lg">Finalize Enrollment</Button>
+                <Button 
+                  type="submit" 
+                  className="w-full bg-[#003566] text-white rounded-none h-14 uppercase text-[10px] tracking-widest font-black shadow-lg"
+                >
+                  Finalize Enrollment
+                </Button>
               </form>
             </motion.div>
           </div>
