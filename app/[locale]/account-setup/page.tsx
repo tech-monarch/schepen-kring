@@ -20,7 +20,7 @@ import {
   Zap,
   Bed,
   Save,
-  ArrowRight, // Changed ArrowLeft to ArrowRight for forward momentum
+  ArrowRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -43,7 +43,6 @@ export default function OnboardingYachtSetup() {
   const router = useRouter();
 
   // --- FORM STATE ---
-  // Note: No "selectedYacht" state needed since this is always new
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<any>(null);
 
@@ -58,6 +57,7 @@ export default function OnboardingYachtSetup() {
     Interior: [],
     "Engine Room": [],
     Bridge: [],
+    General: [],
   });
 
   // --- HANDLERS ---
@@ -129,25 +129,84 @@ export default function OnboardingYachtSetup() {
     setErrors(null);
     const formData = new FormData(e.currentTarget);
 
+    // Handle main image
     if (mainFile) formData.set("main_image", mainFile);
-    
-    // Checkbox handling
-    if (!formData.has("trailer_included")) {
-      formData.append("trailer_included", "0");
-    } else {
-      formData.set("trailer_included", "1");
-    }
 
-    // Force Status to "Draft" or "For Sale" initially? 
-    // Let's default to what the user selected, or force "For Sale" since they are onboarding.
-    
+    // Set default boolean values to false
+    const booleanFields = [
+      "allow_bidding",
+      "flybridge",
+      "oven",
+      "microwave",
+      "fridge",
+      "freezer",
+      "air_conditioning",
+      "navigation_lights",
+      "compass",
+      "depth_instrument",
+      "wind_instrument",
+      "autopilot",
+      "gps",
+      "vhf",
+      "plotter",
+      "speed_instrument",
+      "radar",
+      "life_raft",
+      "epirb",
+      "bilge_pump",
+      "fire_extinguisher",
+      "mob_system",
+      "spinnaker",
+      "battery",
+      "battery_charger",
+      "generator",
+      "inverter",
+      "television",
+      "cd_player",
+      "dvd_player",
+      "anchor",
+      "spray_hood",
+      "bimini"
+    ];
+
+    // Set all boolean fields to false by default
+    booleanFields.forEach(field => {
+      if (!formData.has(field)) {
+        formData.append(field, "0");
+      } else {
+        // Convert checkbox value to boolean
+        const value = formData.get(field);
+        formData.set(field, value === "on" ? "1" : "0");
+      }
+    });
+
     // Cleanup empty numeric fields
     const numericFields = [
-      "cabins", "heads", "price", "year", "engine_hours", "engine_power", "berths"
+      "price", "year", "hours", "horse_power", "berths",
+      "cabins", "loa", "beam", "draft"
     ];
+    
     numericFields.forEach((field) => {
       const val = formData.get(field);
-      if (!val || val === "") formData.set(field, "");
+      if (!val || val === "" || val === "undefined") {
+        formData.set(field, "");
+      }
+    });
+
+    // Handle text fields that should be null if empty
+    const textFields = [
+      "owners_comment", "reg_details", "known_defects", "ballast",
+      "engine_quantity", "tankage", "litres_per_hour", "gearbox",
+      "cylinders", "propeller_type", "engine_location", "cooling_system",
+      "genoa", "tri_sail", "storm_jib", "main_sail", "winches",
+      "toilet", "shower", "bath", "heating"
+    ];
+
+    textFields.forEach((field) => {
+      const val = formData.get(field);
+      if (!val || val === "" || val === "undefined") {
+        formData.delete(field); // Remove empty text fields
+      }
     });
 
     try {
@@ -157,7 +216,7 @@ export default function OnboardingYachtSetup() {
 
       // 2. Upload Gallery Images
       for (const cat of Object.keys(galleryState)) {
-        const newFiles = galleryState[cat]; // All files are new in onboarding
+        const newFiles = galleryState[cat];
         if (newFiles.length > 0) {
           const gData = new FormData();
           newFiles.forEach((file) => gData.append("images[]", file));
@@ -168,14 +227,13 @@ export default function OnboardingYachtSetup() {
 
       toast.success("Vessel Registered! Welcome Aboard.");
       
-      // 3. COMPLETE ONBOARDING -> Redirect to Main Dashboard
+      // 3. Redirect to Main Dashboard
       router.push("/nl/dashboard/partner"); 
       
     } catch (err: any) {
       if (err.response?.status === 422) {
         setErrors(err.response.data.errors);
         toast.error("Please fix validation errors");
-        // Scroll to top to see errors
         window.scrollTo({ top: 0, behavior: "smooth" });
       } else {
         console.error(err);
@@ -190,7 +248,7 @@ export default function OnboardingYachtSetup() {
     <div className="min-h-screen bg-[#F8FAFC] pb-20 ">
       <Toaster position="top-right" />
 
-      {/* HEADER - Updated for Onboarding Context */}
+      {/* HEADER */}
       <div className="bg-[#003566] text-white p-8 sticky top-20 z-40 shadow-xl flex justify-between items-center">
         <div>
           <h1 className="text-2xl lg:text-3xl font-serif italic">
@@ -200,7 +258,6 @@ export default function OnboardingYachtSetup() {
             Partner Onboarding • Step 2 of 2
           </p>
         </div>
-        {/* Removed Back Button, added Step Indicator maybe? */}
         <div className="hidden md:block text-right opacity-50">
            <p className="text-[10px] uppercase font-bold tracking-widest">Final Step</p>
         </div>
@@ -276,24 +333,24 @@ export default function OnboardingYachtSetup() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               <div className="space-y-2">
-                <Label>Vessel Name</Label>
-                <Input name="name" placeholder="e.g. M/Y NOBILITY" required />
+                <Label>Vessel Name *</Label>
+                <Input name="boat_name" placeholder="e.g. M/Y NOBILITY" required />
               </div>
               <div className="space-y-2">
                 <Label>Price (€)</Label>
-                <Input name="price" type="number" placeholder="1500000" required />
+                <Input name="price" type="number" placeholder="1500000" />
               </div>
               <div className="space-y-2">
                 <Label>Year Built</Label>
-                <Input name="year" type="number" placeholder="2024" required />
+                <Input name="year" type="number" placeholder="2024" />
               </div>
               <div className="space-y-2">
-                <Label>Length (m)</Label>
-                <Input name="length" placeholder="45.5" required />
+                <Label>Length Overall (m)</Label>
+                <Input name="loa" placeholder="45.5" />
               </div>
               <div className="space-y-2">
-                <Label>Location</Label>
-                <Input name="location" placeholder="e.g. Monaco" />
+                <Label>Beam (m)</Label>
+                <Input name="beam" placeholder="8.5" />
               </div>
               <div className="space-y-2">
                 <Label>Status</Label>
@@ -314,26 +371,26 @@ export default function OnboardingYachtSetup() {
               <Waves size={18} /> Technical Dossier
             </h3>
 
-            {/* General & Hull */}
+            {/* Hull & Dimensions */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
               <div className="space-y-6">
                 <SectionHeader icon={<Ship size={14} />} title="Hull & Dimensions" />
                 <div className="grid grid-cols-2 gap-6">
                   <div className="space-y-1">
-                    <Label>Hull Shape</Label>
-                    <Input name="hull_shape" placeholder="e.g. V-Bottom" />
-                  </div>
-                  <div className="space-y-1">
-                    <Label>Material</Label>
-                    <Input name="construction_material" placeholder="e.g. GRP" />
-                  </div>
-                  <div className="space-y-1">
-                    <Label>Beam (m)</Label>
-                    <Input name="beam" placeholder="e.g. 8.5m" />
-                  </div>
-                  <div className="space-y-1">
                     <Label>Draft (m)</Label>
                     <Input name="draft" placeholder="e.g. 2.1m" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label>Hull Type</Label>
+                    <Input name="hull_type" placeholder="e.g. V-Bottom" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label>Hull Construction</Label>
+                    <Input name="hull_construction" placeholder="e.g. GRP" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label>Designer</Label>
+                    <Input name="designer" placeholder="e.g. Naval Architect" />
                   </div>
                 </div>
               </div>
@@ -343,20 +400,20 @@ export default function OnboardingYachtSetup() {
                 <SectionHeader icon={<Zap size={14} />} title="Engine" />
                 <div className="bg-slate-50 p-6 border border-slate-100 grid grid-cols-2 gap-6">
                   <div className="space-y-1">
-                    <Label>Engine Brand</Label>
-                    <Input name="engine_brand" placeholder="e.g. CAT" className="bg-white" />
+                    <Label>Engine Manufacturer</Label>
+                    <Input name="engine_manufacturer" placeholder="e.g. CAT" className="bg-white" />
                   </div>
                   <div className="space-y-1">
                     <Label>Power (HP)</Label>
-                    <Input name="engine_power" placeholder="e.g. 2x 1500HP" className="bg-white" />
+                    <Input name="horse_power" placeholder="e.g. 1500" className="bg-white" />
                   </div>
                   <div className="space-y-1">
                     <Label>Engine Hours</Label>
-                    <Input name="engine_hours" placeholder="e.g. 450" className="bg-white" />
+                    <Input name="hours" placeholder="e.g. 450" className="bg-white" />
                   </div>
                   <div className="space-y-1">
                     <Label>Fuel Type</Label>
-                    <Input name="fuel_type" placeholder="Diesel" className="bg-white" />
+                    <Input name="fuel" placeholder="Diesel" className="bg-white" />
                   </div>
                 </div>
               </div>
@@ -375,18 +432,47 @@ export default function OnboardingYachtSetup() {
                   <Input name="berths" placeholder="6" />
                 </div>
                 <div className="space-y-1">
-                  <Label>Heads</Label>
-                  <Input name="heads" type="number" placeholder="2" />
+                  <Label>Toilets</Label>
+                  <Input name="toilet" placeholder="2" />
                 </div>
-                 <div className="space-y-1">
-                  <Label>VAT Status</Label>
-                  <select
-                    name="vat_status"
-                    className="w-full border-b border-slate-200 py-2.5 text-xs font-bold text-[#003566] bg-transparent outline-none"
-                  >
-                    <option value="VAT Included">VAT Included</option>
-                    <option value="VAT Excluded">VAT Excluded</option>
-                  </select>
+                <div className="space-y-1">
+                  <Label>Showers</Label>
+                  <Input name="shower" placeholder="2" />
+                </div>
+              </div>
+            </div>
+
+            {/* Owner's Comments */}
+            <div className="space-y-6">
+              <SectionHeader icon={<Box size={14} />} title="Additional Details" />
+              <div className="space-y-4">
+                <div>
+                  <Label>Owner's Comments</Label>
+                  <textarea
+                    name="owners_comment"
+                    className="w-full h-32 bg-slate-50 border border-slate-200 p-4 text-xs text-[#003566] font-medium outline-none focus:border-blue-600 transition-all resize-none"
+                    placeholder="Any additional comments about the vessel..."
+                  />
+                </div>
+                
+                {/* Quick Equipment Checkboxes */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4">
+                  <div className="flex items-center space-x-2">
+                    <input type="checkbox" id="air_conditioning" name="air_conditioning" className="w-4 h-4" />
+                    <Label htmlFor="air_conditioning" className="!text-[8px] !font-normal !text-slate-600">A/C</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <input type="checkbox" id="autopilot" name="autopilot" className="w-4 h-4" />
+                    <Label htmlFor="autopilot" className="!text-[8px] !font-normal !text-slate-600">Autopilot</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <input type="checkbox" id="gps" name="gps" className="w-4 h-4" />
+                    <Label htmlFor="gps" className="!text-[8px] !font-normal !text-slate-600">GPS</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <input type="checkbox" id="generator" name="generator" className="w-4 h-4" />
+                    <Label htmlFor="generator" className="!text-[8px] !font-normal !text-slate-600">Generator</Label>
+                  </div>
                 </div>
               </div>
             </div>
@@ -490,7 +576,6 @@ export default function OnboardingYachtSetup() {
             </div>
            ))}
 
-
           {/* SUBMIT BUTTON */}
           <div className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-slate-200 p-6 flex justify-end items-center z-50">
             <Button
@@ -512,12 +597,15 @@ export default function OnboardingYachtSetup() {
   );
 }
 
-// Helpers
-function Label({ children }: { children: React.ReactNode }) {
+// Updated Label component to accept htmlFor
+function Label({ children, htmlFor }: { children: React.ReactNode; htmlFor?: string }) {
   return (
-    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 pl-0.5">
+    <label
+      htmlFor={htmlFor}
+      className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 pl-0.5 block cursor-pointer"
+    >
       {children}
-    </p>
+    </label>
   );
 }
 
