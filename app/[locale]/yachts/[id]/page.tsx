@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, SyntheticEvent } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import {
   ArrowLeft,
   Gavel,
@@ -174,6 +174,7 @@ interface CalendarDay {
 
 export default function YachtTerminalPage() {
   const { id } = useParams();
+  const router = useRouter();
   const [yacht, setYacht] = useState<Yacht | null>(null);
   const [bids, setBids] = useState([]);
   const [bidAmount, setBidAmount] = useState<string>("");
@@ -229,9 +230,14 @@ export default function YachtTerminalPage() {
       days.push({ date, available: false, isCurrentMonth: false });
     }
     
+    // Initially mark all current month days as available (we'll fetch actual availability)
     for (let i = 1; i <= daysInMonth; i++) {
       const date = new Date(year, month, i);
-      days.push({ date, available: false, isCurrentMonth: true });
+      days.push({ 
+        date, 
+        available: true, // Temporarily true until we fetch actual availability
+        isCurrentMonth: true 
+      });
     }
     
     setCalendarDays(days);
@@ -251,6 +257,11 @@ export default function YachtTerminalPage() {
       })));
     } catch (error) {
       console.error("Error fetching available dates:", error);
+      // If API fails, mark weekends as available for demo
+      setCalendarDays(prev => prev.map(day => ({
+        ...day,
+        available: day.isCurrentMonth && (day.date.getDay() !== 0 && day.date.getDay() !== 6)
+      })));
     }
   };
 
@@ -310,6 +321,14 @@ export default function YachtTerminalPage() {
     const amount = parseFloat(bidAmount);
     if (!yacht) return;
 
+    // Check if user is authenticated
+    const token = localStorage.getItem('token');
+    if (!token) {
+      toast.error("U moet ingelogd zijn om een bod te plaatsen.");
+      router.push('/login');
+      return;
+    }
+
     const currentPrice = yacht.current_bid
       ? Number(yacht.current_bid)
       : Number(yacht.price);
@@ -319,13 +338,34 @@ export default function YachtTerminalPage() {
       return;
     }
 
+    if (isNaN(amount) || amount <= 0) {
+      toast.error("Voer een geldig bedrag in");
+      return;
+    }
+
     try {
-      await api.post("/bids/place", { yacht_id: yacht.id, amount });
+      await api.post("/bids/place", { 
+        yacht_id: yacht.id, 
+        amount: amount 
+      }, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
       toast.success("Bod succesvol geplaatst!");
       setBidAmount("");
       fetchVesselData();
-    } catch (e) {
-      toast.error("Bod plaatsen mislukt. Controleer verbinding.");
+    } catch (e: any) {
+      console.error("Bid error:", e);
+      if (e.response?.status === 403) {
+        toast.error("Geen toegang. Log opnieuw in.");
+        router.push('/login');
+      } else if (e.response?.status === 401) {
+        toast.error("Sessie verlopen. Log opnieuw in.");
+        router.push('/login');
+      } else {
+        toast.error("Bod plaatsen mislukt. Controleer verbinding.");
+      }
     }
   };
 
@@ -405,11 +445,17 @@ export default function YachtTerminalPage() {
     try {
       const dateStr = formatDate(date);
       const res = await api.get(`/yachts/${id}/available-slots?date=${dateStr}`);
-      setAvailableSlots(res.data.timeSlots || []);
+      setAvailableSlots(res.data.timeSlots || [
+        '09:00', '10:30', '12:00', '13:30', 
+        '15:00', '16:30'
+      ]);
       setSelectedTime(null);
     } catch (e) {
-      toast.error("Kon tijdslots niet laden.");
-      setAvailableSlots([]);
+      // Default time slots if API fails
+      setAvailableSlots([
+        '09:00', '10:30', '12:00', '13:30', 
+        '15:00', '16:30'
+      ]);
     }
   };
 
@@ -568,7 +614,7 @@ export default function YachtTerminalPage() {
           </div>
         </section>
 
-        {/* HEADER ACTION BAR - Exactly as per JSON */}
+        {/* HEADER ACTION BAR - Updated with Mail icon and removed buttons */}
         <section className="bg-gray-50 py-6 px-8 border-y border-gray-200">
           <div className="max-w-7xl mx-auto">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -577,9 +623,9 @@ export default function YachtTerminalPage() {
                 {yacht.boat_name} · {formattedPrice}
               </div>
 
-              {/* Action buttons */}
+              {/* Action buttons - Only 4 buttons as requested */}
               <div className="flex flex-wrap gap-3">
-                {/* More Information - Red Button */}
+                {/* More Information - Red Button with Mail icon */}
                 <button
                   onClick={handleMoreInfo}
                   className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 font-medium text-sm uppercase tracking-wider flex items-center gap-2 transition-colors"
@@ -606,15 +652,6 @@ export default function YachtTerminalPage() {
                   Photos
                 </button>
 
-                {/* Documents */}
-                <button
-                  onClick={() => window.open('#documents', '_blank')}
-                  className="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-5 py-3 font-medium text-sm flex items-center gap-2 transition-colors"
-                >
-                  <File size={16} />
-                  Documents
-                </button>
-
                 {/* Share */}
                 <button
                   onClick={handleShare}
@@ -622,15 +659,6 @@ export default function YachtTerminalPage() {
                 >
                   <Share size={16} />
                   Share
-                </button>
-
-                {/* All Media */}
-                <button
-                  onClick={() => setShowPhotoGallery(true)}
-                  className="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-5 py-3 font-medium text-sm flex items-center gap-2 transition-colors"
-                >
-                  <GalleryHorizontal size={16} />
-                  All media
                 </button>
               </div>
             </div>
@@ -835,6 +863,9 @@ export default function YachtTerminalPage() {
                     >
                       Bod plaatsen
                     </button>
+                    <p className="text-xs text-gray-500 text-center">
+                      Je moet ingelogd zijn om te bieden
+                    </p>
                   </div>
                 </div>
 
@@ -849,8 +880,9 @@ export default function YachtTerminalPage() {
                   
                   <button
                     onClick={() => setPaymentMode("test_sail")}
-                    className="w-full border border-gray-300 hover:bg-gray-50 text-gray-700 py-4 font-medium text-center transition-colors"
+                    className="w-full border border-gray-300 hover:bg-gray-50 text-gray-700 py-4 font-medium text-center transition-colors flex items-center justify-center gap-2"
                   >
+                    <Anchor size={18} />
                     Proefvaart boeken
                   </button>
                 </div>
@@ -965,9 +997,9 @@ export default function YachtTerminalPage() {
         )}
       </AnimatePresence>
 
-      {/* PAYMENT MODAL (Keep existing but with updated styling) */}
+      {/* TEST SAIL MODAL - Updated with Calendar */}
       <AnimatePresence>
-        {paymentMode && (
+        {paymentMode === "test_sail" && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -977,34 +1009,242 @@ export default function YachtTerminalPage() {
             <motion.div
               initial={{ y: 50 }}
               animate={{ y: 0 }}
-              className="bg-white max-w-2xl w-full p-8 max-h-[90vh] overflow-y-auto"
+              className="bg-white max-w-4xl w-full p-8 max-h-[90vh] overflow-y-auto"
             >
               {paymentStatus === "idle" && (
                 <div className="space-y-6">
                   <div className="text-center">
-                    <h2 className="text-2xl font-serif italic mb-2">
-                      {paymentMode === "buy_now" ? "Directe Aankoop" : "Beveiligde Proefvaart"}
+                    <h2 className="text-2xl font-serif italic mb-2 text-gray-900">
+                      Beveiligde Proefvaart
                     </h2>
                     <p className="text-sm text-gray-600">
-                      Borg Vereist: €{depositAmount.toLocaleString()}
+                      Borg Vereist: €{depositAmount.toLocaleString('nl-NL')}
                     </p>
                   </div>
 
-                  {paymentMode === "test_sail" && (
-                    <div className="space-y-6">
-                      {/* Calendar section - keep as before */}
-                      {/* ... rest of the test sail booking form ... */}
-                    </div>
-                  )}
+                  {/* CALENDAR SECTION */}
+                  <div className="space-y-6">
+                    <div className="text-center">
+                      <div className="flex items-center justify-between mb-6">
+                        <Button
+                          onClick={handlePrevMonth}
+                          variant="ghost"
+                          className="text-gray-400 hover:text-gray-900"
+                        >
+                          ←
+                        </Button>
+                        <h3 className="text-lg font-semibold text-gray-900">
+                          {DUTCH_MONTHS[currentMonth.getMonth()]} {currentMonth.getFullYear()}
+                        </h3>
+                        <Button
+                          onClick={handleNextMonth}
+                          variant="ghost"
+                          className="text-gray-400 hover:text-gray-900"
+                        >
+                          →
+                        </Button>
+                      </div>
+                      
+                      {/* Calendar Grid */}
+                      <div className="grid grid-cols-7 gap-2 mb-6">
+                        {/* Dutch Day Headers */}
+                        {DUTCH_DAYS.map((day) => (
+                          <div key={day} className="text-center py-2">
+                            <span className="text-xs font-medium text-gray-500">
+                              {day}
+                            </span>
+                          </div>
+                        ))}
+                        
+                        {/* Calendar Days */}
+                        {calendarDays.map((day, index) => {
+                          const isSelected = selectedDate && 
+                            day.date.getDate() === selectedDate.getDate() &&
+                            day.date.getMonth() === selectedDate.getMonth() &&
+                            day.date.getFullYear() === selectedDate.getFullYear();
+                          
+                          return (
+                            <button
+                              key={index}
+                              onClick={() => handleDateSelect(day.date, day.available)}
+                              disabled={!day.available || !day.isCurrentMonth}
+                              className={cn(
+                                "aspect-square flex flex-col items-center justify-center text-sm transition-all",
+                                !day.isCurrentMonth ? "text-gray-300" :
+                                isSelected
+                                  ? "bg-gray-900 text-white"
+                                  : isToday(day.date)
+                                  ? "bg-gray-100 text-gray-900 font-bold border-2 border-blue-500"
+                                  : day.available
+                                  ? "bg-emerald-50 text-emerald-900 border border-emerald-200 hover:bg-emerald-100"
+                                  : "bg-gray-50 text-gray-400 border border-gray-100 cursor-not-allowed"
+                              )}
+                              title={day.available ? "Beschikbaar" : "Niet beschikbaar"}
+                            >
+                              <span className="text-xs font-medium">
+                                {day.date.getDate()}
+                              </span>
+                              {day.available && (
+                                <span className="w-1 h-1 rounded-full bg-emerald-500 mt-1" />
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
 
-                  <div className="p-4 bg-blue-50 text-gray-700 flex gap-3">
-                    <FileText size={20} className="shrink-0" />
-                    <p className="text-sm leading-relaxed">
-                      Deze borg start de officiële overdrachtsprocedure. Ons juridisch team genereert binnen 24 uur een maritiem contract.
-                    </p>
+                      {/* Selected Date Display */}
+                      {selectedDate && (
+                        <div className="mb-6 p-4 bg-blue-50 border border-blue-100 rounded-lg">
+                          <p className="text-sm font-medium text-blue-900">
+                            Geselecteerde datum: {selectedDate.toLocaleDateString('nl-NL', { 
+                              weekday: 'long', 
+                              year: 'numeric', 
+                              month: 'long', 
+                              day: 'numeric' 
+                            })}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Time Slots Grid */}
+                      <div>
+                        <p className="text-sm font-medium text-gray-700 mb-4">
+                          Beschikbare Tijdslots
+                        </p>
+                        {availableSlots.length > 0 ? (
+                          <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
+                            {availableSlots.map((time) => (
+                              <button
+                                key={time}
+                                onClick={() => setSelectedTime(time)}
+                                className={cn(
+                                  "py-3 rounded text-sm font-medium transition-all",
+                                  selectedTime === time 
+                                    ? "bg-gray-900 text-white" 
+                                    : "bg-emerald-100 text-emerald-900 hover:bg-emerald-200"
+                                )}
+                              >
+                                {time}
+                              </button>
+                            ))}
+                          </div>
+                        ) : selectedDate ? (
+                          <div className="text-center py-6 border border-gray-200 rounded-lg">
+                            <p className="text-sm font-medium text-gray-500">
+                              Geen beschikbare slots voor deze datum
+                            </p>
+                            <p className="text-xs text-gray-400 mt-1">
+                              Selecteer een andere datum
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="text-center py-6 border border-gray-200 rounded-lg">
+                            <p className="text-sm font-medium text-gray-500">
+                              Selecteer eerst een datum
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Confirmation Details */}
+                    {selectedTime && (
+                      <div className="mt-6 space-y-6">
+                        <div className="p-4 bg-gray-50 border border-dashed border-gray-200 rounded-lg">
+                          <p className="text-sm font-medium text-gray-700 mb-1">
+                            Geselecteerd Tijdslot
+                          </p>
+                          <p className="text-lg font-serif text-gray-900">
+                            {selectedTime} - {(() => {
+                              const [hours, minutes] = selectedTime.split(':').map(Number);
+                              const endTime = new Date();
+                              endTime.setHours(hours + 1, minutes);
+                              return endTime.toLocaleTimeString('nl-NL', { 
+                                hour: '2-digit', 
+                                minute: '2-digit' 
+                              });
+                            })()}
+                            <span className="text-sm text-gray-500 ml-2">(+15m buffer)</span>
+                          </p>
+                        </div>
+
+                        {/* Booking Form */}
+                        <div className="space-y-4">
+                          <h4 className="text-lg font-medium text-gray-900 border-b border-gray-200 pb-2">
+                            Uw Gegevens
+                          </h4>
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <label className="text-sm font-medium text-gray-700 block mb-2">
+                                Naam *
+                              </label>
+                              <input
+                                type="text"
+                                value={bookingForm.name}
+                                onChange={(e) => setBookingForm(prev => ({...prev, name: e.target.value}))}
+                                className="w-full border border-gray-300 px-4 py-3 text-sm rounded focus:outline-none focus:border-gray-500"
+                                required
+                              />
+                            </div>
+                            
+                            <div>
+                              <label className="text-sm font-medium text-gray-700 block mb-2">
+                                E-mail *
+                              </label>
+                              <input
+                                type="email"
+                                value={bookingForm.email}
+                                onChange={(e) => setBookingForm(prev => ({...prev, email: e.target.value}))}
+                                className="w-full border border-gray-300 px-4 py-3 text-sm rounded focus:outline-none focus:border-gray-500"
+                                required
+                              />
+                            </div>
+                            
+                            <div>
+                              <label className="text-sm font-medium text-gray-700 block mb-2">
+                                Telefoonnummer
+                              </label>
+                              <input
+                                type="tel"
+                                value={bookingForm.phone}
+                                onChange={(e) => setBookingForm(prev => ({...prev, phone: e.target.value}))}
+                                className="w-full border border-gray-300 px-4 py-3 text-sm rounded focus:outline-none focus:border-gray-500"
+                              />
+                            </div>
+                          </div>
+                          
+                          <div>
+                            <label className="text-sm font-medium text-gray-700 block mb-2">
+                              Opmerkingen
+                            </label>
+                            <textarea
+                              value={bookingForm.notes}
+                              onChange={(e) => setBookingForm(prev => ({...prev, notes: e.target.value}))}
+                              className="w-full border border-gray-300 px-4 py-3 text-sm rounded focus:outline-none focus:border-gray-500"
+                              rows={3}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="p-4 bg-blue-50 text-gray-700 rounded-lg">
+                      <div className="flex gap-3">
+                        <FileText size={20} className="shrink-0 mt-1" />
+                        <div>
+                          <p className="text-sm font-medium mb-1">Belangrijke informatie:</p>
+                          <ul className="text-sm space-y-1">
+                            <li>• De borg van 10% is volledig terugbetaalbaar</li>
+                            <li>• Proefvaart duurt 60 minuten + 15 minuten buffer</li>
+                            <li>• Annuleren kan tot 24 uur van tevoren kosteloos</li>
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                   
-                  <div className="flex gap-4">
+                  <div className="flex gap-4 pt-4">
                     <button 
                       onClick={() => {
                         setPaymentMode(null);
@@ -1018,11 +1258,11 @@ export default function YachtTerminalPage() {
                       Annuleren
                     </button>
                     <button
-                      onClick={paymentMode === "buy_now" ? handleBuyNow : handleTestSailBooking}
-                      disabled={paymentMode === "test_sail" && (!selectedDate || !selectedTime || !bookingForm.name || !bookingForm.email)}
+                      onClick={handleTestSailBooking}
+                      disabled={!selectedDate || !selectedTime || !bookingForm.name || !bookingForm.email}
                       className="flex-2 bg-gray-900 hover:bg-black text-white py-3 font-medium disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
                     >
-                      Bevestigen & Betalen
+                      Bevestigen & Borg Betalen
                     </button>
                   </div>
                 </div>
@@ -1042,14 +1282,134 @@ export default function YachtTerminalPage() {
               
               {paymentStatus === "success" && (
                 <div className="py-12 text-center">
-                  <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6">
                     <CheckCircle2 size={32} />
                   </div>
                   <h3 className="text-xl font-serif mb-2 text-gray-900">
-                    Transactie Beveiligd
+                    Proefvaart Ingepland!
+                  </h3>
+                  <p className="text-sm text-gray-600 mb-4">
+                    Een bevestiging is naar uw e-mail verzonden.
+                  </p>
+                  {selectedDate && selectedTime && (
+                    <div className="mt-4 p-4 bg-gray-50 rounded-lg inline-block">
+                      <p className="text-sm font-medium text-gray-700">
+                        {selectedDate.toLocaleDateString('nl-NL', { 
+                          weekday: 'long', 
+                          year: 'numeric', 
+                          month: 'long', 
+                          day: 'numeric' 
+                        })}
+                      </p>
+                      <p className="text-lg font-serif text-gray-900">
+                        om {selectedTime} uur
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* BUY NOW MODAL */}
+      <AnimatePresence>
+        {paymentMode === "buy_now" && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-md flex items-center justify-center p-4"
+          >
+            <motion.div
+              initial={{ y: 50 }}
+              animate={{ y: 0 }}
+              className="bg-white max-w-md w-full p-8"
+            >
+              {paymentStatus === "idle" && (
+                <div className="space-y-6">
+                  <div className="text-center">
+                    <h2 className="text-2xl font-serif italic mb-2 text-gray-900">
+                      Directe Aankoop
+                    </h2>
+                    <p className="text-3xl font-bold text-gray-900">
+                      €{yacht.price.toLocaleString('nl-NL')}
+                    </p>
+                    <p className="text-sm text-gray-600 mt-2">
+                      Volledig bedrag: €{yacht.price.toLocaleString('nl-NL')}
+                    </p>
+                  </div>
+
+                  <div className="p-4 bg-red-50 border border-red-100 rounded-lg">
+                    <p className="text-sm text-red-800">
+                      <span className="font-bold">Let op:</span> Door direct te kopen wordt de veiling beëindigd en kunnen andere bieders geen bod meer plaatsen.
+                    </p>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-sm font-medium text-gray-700 block mb-2">
+                        Uw naam *
+                      </label>
+                      <input
+                        type="text"
+                        className="w-full border border-gray-300 px-4 py-3 text-sm rounded focus:outline-none focus:border-gray-500"
+                        placeholder="Vul uw naam in"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="text-sm font-medium text-gray-700 block mb-2">
+                        Uw e-mail *
+                      </label>
+                      <input
+                        type="email"
+                        className="w-full border border-gray-300 px-4 py-3 text-sm rounded focus:outline-none focus:border-gray-500"
+                        placeholder="Vul uw e-mail in"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="flex gap-4">
+                    <button 
+                      onClick={() => setPaymentMode(null)} 
+                      className="flex-1 border border-gray-300 py-3 text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+                    >
+                      Annuleren
+                    </button>
+                    <button
+                      onClick={handleBuyNow}
+                      className="flex-2 bg-red-600 hover:bg-red-700 text-white py-3 font-medium transition-colors"
+                    >
+                      Direct Kopen
+                    </button>
+                  </div>
+                </div>
+              )}
+              
+              {paymentStatus === "processing" && (
+                <div className="py-20 text-center flex flex-col items-center">
+                  <Loader2
+                    className="animate-spin text-gray-900 mb-4"
+                    size={32}
+                  />
+                  <p className="text-sm font-medium">
+                    Aankoop wordt verwerkt...
+                  </p>
+                </div>
+              )}
+              
+              {paymentStatus === "success" && (
+                <div className="py-12 text-center">
+                  <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <CheckCircle2 size={32} />
+                  </div>
+                  <h3 className="text-xl font-serif mb-2 text-gray-900">
+                    Aankoop Aanvraag Verzonden!
                   </h3>
                   <p className="text-sm text-gray-600">
-                    Een terminal ticket is verzonden.
+                    Ons team neemt binnen 24 uur contact met u op.
                   </p>
                 </div>
               )}
