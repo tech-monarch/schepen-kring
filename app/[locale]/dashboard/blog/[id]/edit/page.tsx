@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
 import axios from "axios";
 import { toast, Toaster } from "react-hot-toast";
 import {
@@ -9,11 +10,13 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 
-export default function CreateBlogPage() {
+export default function EditBlogPage() {
+  const params = useParams();
+  const blogId = params.id;
   const [loading, setLoading] = useState(false);
+  const [fetching, setFetching] = useState(true);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const router = useRouter();
 
@@ -36,6 +39,44 @@ export default function CreateBlogPage() {
     },
   });
 
+  const getJsonHeaders = () => ({
+    headers: { 
+      Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+      Accept: "application/json",
+    },
+  });
+
+  useEffect(() => {
+    if (blogId) {
+      fetchBlog();
+    }
+  }, [blogId]);
+
+  const fetchBlog = async () => {
+    try {
+      const res = await axios.get(`${API_BASE}/blogs/${blogId}`, getJsonHeaders());
+      const blog = res.data.data;
+      
+      setFormData({
+        title: blog.title,
+        excerpt: blog.excerpt || "",
+        content: blog.content,
+        author: blog.author || "",
+        status: blog.status,
+        featured_image: null,
+      });
+      
+      if (blog.featured_image) {
+        setImagePreview(`${API_BASE}/storage/${blog.featured_image}`);
+      }
+    } catch (err) {
+      toast.error("Failed to fetch blog");
+      router.push("/dashboard/admin/blog");
+    } finally {
+      setFetching(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -47,19 +88,20 @@ export default function CreateBlogPage() {
       formDataToSend.append('content', formData.content);
       formDataToSend.append('author', formData.author);
       formDataToSend.append('status', formData.status);
+      formDataToSend.append('_method', 'PUT'); // Laravel method spoofing
       
       if (formData.featured_image) {
         formDataToSend.append('featured_image', formData.featured_image);
       }
 
-      await axios.post(`${API_BASE}/blogs`, formDataToSend, getHeaders());
+      await axios.post(`${API_BASE}/blogs/${blogId}`, formDataToSend, getHeaders());
       
-      toast.success("Blog created successfully");
+      toast.success("Blog updated successfully");
       router.push("/dashboard/admin/blog");
       
     } catch (err: any) {
-      console.error("Error creating blog:", err);
-      toast.error(err.response?.data?.message || "Failed to create blog");
+      console.error("Error updating blog:", err);
+      toast.error(err.response?.data?.message || "Failed to update blog");
     } finally {
       setLoading(false);
     }
@@ -73,6 +115,19 @@ export default function CreateBlogPage() {
     }
   };
 
+  if (fetching) {
+    return (
+      <div className="p-6 max-w-4xl mx-auto min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-[10px] font-black uppercase tracking-widest text-slate-400">
+            Loading blog...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6 max-w-4xl mx-auto min-h-screen">
       <Toaster position="top-right" />
@@ -83,9 +138,9 @@ export default function CreateBlogPage() {
           <Link href="/dashboard/admin/blog" className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-600 mb-4">
             <ArrowLeft size={14} /> BACK TO BLOGS
           </Link>
-          <h1 className="text-4xl font-serif italic text-[#003566]">Create New Article</h1>
+          <h1 className="text-4xl font-serif italic text-[#003566]">Edit Article</h1>
           <p className="text-[10px] uppercase tracking-[0.4em] text-blue-600 font-black mt-2">
-            Craft & Publish New Content
+            Update Existing Content
           </p>
         </div>
       </div>
@@ -249,12 +304,12 @@ export default function CreateBlogPage() {
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                PUBLISHING...
+                UPDATING...
               </span>
             ) : (
               <span className="flex items-center gap-3">
                 <Save size={20} />
-                {formData.status === "published" ? "PUBLISH ARTICLE" : "SAVE AS DRAFT"}
+                UPDATE ARTICLE
               </span>
             )}
           </Button>

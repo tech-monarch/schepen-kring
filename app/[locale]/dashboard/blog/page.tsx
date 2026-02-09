@@ -5,18 +5,15 @@ import axios from "axios";
 import { toast, Toaster } from "react-hot-toast";
 import {
   Plus, Edit, Trash2, Eye, EyeOff, Calendar, User,
-  Search, Loader2, Image as ImageIcon, X, Check,
-  ChevronLeft, ChevronRight, Filter, FileText,
-  BarChart3, Upload, Save, Globe, Lock
+  Search, Loader2, Image as ImageIcon,
+  ChevronLeft, ChevronRight, FileText, BarChart3,
+  Globe, Lock
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { motion, AnimatePresence } from "framer-motion";
-import dynamic from 'next/dynamic';
-import 'react-quill/dist/quill.snow.css';
-
-// Dynamically import ReactQuill to avoid SSR issues
-const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
+import { motion } from "framer-motion";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 interface Blog {
   id: number;
@@ -41,8 +38,6 @@ interface Blog {
 export default function AdminBlogPage() {
   const [blogs, setBlogs] = useState<Blog[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedBlog, setSelectedBlog] = useState<Blog | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [pagination, setPagination] = useState({
@@ -51,26 +46,13 @@ export default function AdminBlogPage() {
     per_page: 10,
     total: 0,
   });
-  const [sortField, setSortField] = useState("created_at");
-  const [sortOrder, setSortOrder] = useState("desc");
-
-  // Form state
-  const [formData, setFormData] = useState({
-    title: "",
-    excerpt: "",
-    content: "",
-    author: "",
-    status: "draft" as "draft" | "published",
-    featured_image: null as File | null,
-  });
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const router = useRouter();
 
   const API_BASE = "https://schepen-kring.nl/api";
   const getHeaders = () => ({
     headers: { 
       Authorization: `Bearer ${localStorage.getItem("auth_token")}`, 
       Accept: "application/json",
-      'Content-Type': 'multipart/form-data',
     },
   });
 
@@ -80,8 +62,6 @@ export default function AdminBlogPage() {
       const params = new URLSearchParams({
         page: page.toString(),
         per_page: pagination.per_page.toString(),
-        sort: sortField,
-        order: sortOrder,
       });
 
       if (searchQuery) params.append('search', searchQuery);
@@ -95,46 +75,11 @@ export default function AdminBlogPage() {
     } finally {
       setLoading(false);
     }
-  }, [searchQuery, statusFilter, sortField, sortOrder, pagination.per_page]);
+  }, [searchQuery, statusFilter, pagination.per_page]);
 
   useEffect(() => {
     fetchBlogs();
   }, [fetchBlogs]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const formDataToSend = new FormData();
-      formDataToSend.append('title', formData.title);
-      formDataToSend.append('excerpt', formData.excerpt);
-      formDataToSend.append('content', formData.content);
-      formDataToSend.append('author', formData.author);
-      formDataToSend.append('status', formData.status);
-      if (formData.featured_image) {
-        formDataToSend.append('featured_image', formData.featured_image);
-      }
-
-      if (selectedBlog) {
-        // Update existing blog
-        await axios.post(
-          `${API_BASE}/blogs/${selectedBlog.id}?_method=PUT`,
-          formDataToSend,
-          getHeaders()
-        );
-        toast.success("Blog updated successfully");
-      } else {
-        // Create new blog
-        await axios.post(`${API_BASE}/blogs`, formDataToSend, getHeaders());
-        toast.success("Blog created successfully");
-      }
-
-      setIsModalOpen(false);
-      resetForm();
-      fetchBlogs();
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to save blog");
-    }
-  };
 
   const handleDelete = async (id: number) => {
     if (!confirm("Are you sure you want to delete this blog?")) return;
@@ -148,47 +93,12 @@ export default function AdminBlogPage() {
     }
   };
 
-  const handleEdit = (blog: Blog) => {
-    setSelectedBlog(blog);
-    setFormData({
-      title: blog.title,
-      excerpt: blog.excerpt || "",
-      content: blog.content,
-      author: blog.author || "",
-      status: blog.status,
-      featured_image: null,
-    });
-    setImagePreview(blog.featured_image ? `${API_BASE}/storage/${blog.featured_image}` : null);
-    setIsModalOpen(true);
-  };
-
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setFormData({ ...formData, featured_image: file });
-      setImagePreview(URL.createObjectURL(file));
-    }
-  };
-
-  const resetForm = () => {
-    setSelectedBlog(null);
-    setFormData({
-      title: "",
-      excerpt: "",
-      content: "",
-      author: "",
-      status: "draft",
-      featured_image: null,
-    });
-    setImagePreview(null);
-  };
-
   const handleStatusChange = async (blog: Blog, newStatus: 'draft' | 'published') => {
     try {
       await axios.put(
         `${API_BASE}/blogs/${blog.id}`,
         { status: newStatus },
-        { headers: { Authorization: `Bearer ${localStorage.getItem("auth_token")}`, Accept: "application/json" } }
+        getHeaders()
       );
       toast.success(`Blog ${newStatus === 'published' ? 'published' : 'moved to drafts'}`);
       fetchBlogs();
@@ -217,15 +127,11 @@ export default function AdminBlogPage() {
             Content Publishing & Management
           </p>
         </div>
-        <Button
-          onClick={() => {
-            resetForm();
-            setIsModalOpen(true);
-          }}
-          className="bg-[#003566] text-white rounded-none uppercase text-[10px] tracking-widest font-black px-8 h-12"
-        >
-          <Plus className="mr-2 w-4 h-4" /> New Article
-        </Button>
+        <Link href="/dashboard/admin/blog/create">
+          <Button className="bg-[#003566] text-white rounded-none uppercase text-[10px] tracking-widest font-black px-8 h-12">
+            <Plus className="mr-2 w-4 h-4" /> New Article
+          </Button>
+        </Link>
       </div>
 
       {/* FILTERS & SEARCH */}
@@ -251,16 +157,6 @@ export default function AdminBlogPage() {
             <option value="all">ALL STATUS</option>
             <option value="draft">DRAFTS</option>
             <option value="published">PUBLISHED</option>
-          </select>
-
-          <select
-            className="bg-white border border-slate-200 px-4 py-3 text-[10px] font-bold tracking-widest uppercase outline-none focus:border-blue-400"
-            value={sortField}
-            onChange={(e) => setSortField(e.target.value)}
-          >
-            <option value="created_at">SORT BY DATE</option>
-            <option value="title">SORT BY TITLE</option>
-            <option value="views">SORT BY VIEWS</option>
           </select>
         </div>
 
@@ -344,12 +240,11 @@ export default function AdminBlogPage() {
                   )}
 
                   <div className="flex flex-wrap gap-4 pt-4 border-t border-slate-100">
-                    <button
-                      onClick={() => handleEdit(blog)}
-                      className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-blue-600"
-                    >
-                      <Edit size={14} /> Edit
-                    </button>
+                    <Link href={`/dashboard/admin/blog/${blog.id}/edit`}>
+                      <button className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-blue-600">
+                        <Edit size={14} /> Edit
+                      </button>
+                    </Link>
                     
                     <button
                       onClick={() => handleStatusChange(
@@ -363,11 +258,7 @@ export default function AdminBlogPage() {
                     </button>
                     
                     <button
-                      onClick={() => {
-                        if (confirm("Delete this blog permanently?")) {
-                          handleDelete(blog.id);
-                        }
-                      }}
+                      onClick={() => handleDelete(blog.id)}
                       className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-red-400"
                     >
                       <Trash2 size={14} /> Delete
@@ -406,205 +297,6 @@ export default function AdminBlogPage() {
           </Button>
         </div>
       )}
-
-      {/* BLOG EDITOR MODAL */}
-      <AnimatePresence>
-        {isModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
-              onClick={() => setIsModalOpen(false)}
-            />
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white w-full max-w-4xl p-8 shadow-2xl relative z-10 border border-slate-200 rounded-none max-h-[90vh] overflow-y-auto"
-            >
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="absolute right-6 top-6 text-slate-400 hover:text-slate-600"
-              >
-                <X size={20} />
-              </button>
-              
-              <div className="mb-8">
-                <h2 className="text-2xl font-serif italic text-[#003566]">
-                  {selectedBlog ? "Edit Article" : "Create New Article"}
-                </h2>
-                <p className="text-[9px] font-black uppercase tracking-widest text-blue-600">
-                  {selectedBlog ? "Update your blog post" : "Craft a new blog post"}
-                </p>
-              </div>
-
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <div className="space-y-1">
-                    <label className="text-[8px] font-black uppercase tracking-widest text-slate-400">
-                      Title *
-                    </label>
-                    <input
-                      required
-                      className="w-full border-b border-slate-200 py-2 text-[10px] font-bold uppercase outline-none focus:border-blue-400"
-                      value={formData.title}
-                      onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                      placeholder="ENTER ARTICLE TITLE"
-                    />
-                  </div>
-                  
-                  <div className="space-y-1">
-                    <label className="text-[8px] font-black uppercase tracking-widest text-slate-400">
-                      Author
-                    </label>
-                    <input
-                      className="w-full border-b border-slate-200 py-2 text-[10px] font-bold uppercase outline-none focus:border-blue-400"
-                      value={formData.author}
-                      onChange={(e) => setFormData({ ...formData, author: e.target.value })}
-                      placeholder="AUTHOR NAME (OPTIONAL)"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-[8px] font-black uppercase tracking-widest text-slate-400">
-                    Excerpt (Short Description)
-                  </label>
-                  <textarea
-                    rows={3}
-                    className="w-full border border-slate-200 p-3 text-[10px] font-bold uppercase outline-none focus:border-blue-400 resize-none"
-                    value={formData.excerpt}
-                    onChange={(e) => setFormData({ ...formData, excerpt: e.target.value })}
-                    placeholder="BRIEF DESCRIPTION OF THE ARTICLE"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-[8px] font-black uppercase tracking-widest text-slate-400">
-                    Featured Image
-                  </label>
-                  <div className="flex items-center gap-4">
-                    <label className="flex items-center gap-2 px-4 py-3 border border-slate-200 text-[10px] font-bold uppercase tracking-widest cursor-pointer hover:bg-slate-50 transition-all">
-                      <ImageIcon size={14} />
-                      {imagePreview ? "CHANGE IMAGE" : "UPLOAD IMAGE"}
-                      <input
-                        type="file"
-                        className="hidden"
-                        accept="image/*"
-                        onChange={handleImageChange}
-                      />
-                    </label>
-                    
-                    {imagePreview && (
-                      <div className="relative w-32 h-32 border border-slate-200">
-                        <img
-                          src={imagePreview}
-                          alt="Preview"
-                          className="w-full h-full object-cover"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setImagePreview(null);
-                            setFormData({ ...formData, featured_image: null });
-                          }}
-                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1"
-                        >
-                          <X size={12} />
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-[8px] font-black uppercase tracking-widest text-slate-400">
-                    Content *
-                  </label>
-                  <div className="border border-slate-200">
-                    <ReactQuill
-                      theme="snow"
-                      value={formData.content}
-                      onChange={(value) => setFormData({ ...formData, content: value })}
-                      className="h-64"
-                      placeholder="Write your article content here..."
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-4">
-                  <div className="space-y-1">
-                    <label className="text-[8px] font-black uppercase tracking-widest text-slate-400">
-                      Publication Status
-                    </label>
-                    <div className="flex gap-4">
-                      <button
-                        type="button"
-                        onClick={() => setFormData({ ...formData, status: "draft" })}
-                        className={cn(
-                          "flex-1 flex items-center justify-center gap-2 px-4 py-3 border text-[10px] font-black uppercase tracking-widest transition-all",
-                          formData.status === "draft"
-                            ? "bg-blue-100 text-blue-700 border-blue-300"
-                            : "bg-white text-slate-400 border-slate-200 hover:bg-slate-50"
-                        )}
-                      >
-                        <Lock size={14} /> Save as Draft
-                      </button>
-                      
-                      <button
-                        type="button"
-                        onClick={() => setFormData({ ...formData, status: "published" })}
-                        className={cn(
-                          "flex-1 flex items-center justify-center gap-2 px-4 py-3 border text-[10px] font-black uppercase tracking-widest transition-all",
-                          formData.status === "published"
-                            ? "bg-green-100 text-green-700 border-green-300"
-                            : "bg-white text-slate-400 border-slate-200 hover:bg-slate-50"
-                        )}
-                      >
-                        <Globe size={14} /> Publish Now
-                      </button>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-1">
-                    <label className="text-[8px] font-black uppercase tracking-widest text-slate-400">
-                      Current Status
-                    </label>
-                    <div className={cn(
-                      "px-4 py-3 border text-[10px] font-black uppercase tracking-widest",
-                      formData.status === "published"
-                        ? "bg-green-100 text-green-700 border-green-300"
-                        : "bg-blue-100 text-blue-700 border-blue-300"
-                    )}>
-                      {formData.status.toUpperCase()}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex gap-4 pt-6">
-                  <Button
-                    type="submit"
-                    className="flex-1 bg-[#003566] text-white rounded-none h-14 uppercase text-[10px] tracking-widest font-black"
-                  >
-                    <Save className="mr-2 w-4 h-4" />
-                    {selectedBlog ? "UPDATE ARTICLE" : "PUBLISH ARTICLE"}
-                  </Button>
-                  
-                  <Button
-                    type="button"
-                    onClick={() => setIsModalOpen(false)}
-                    className="flex-1 bg-slate-100 text-slate-600 rounded-none h-14 uppercase text-[10px] tracking-widest font-black"
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </form>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }
