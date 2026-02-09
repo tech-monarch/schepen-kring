@@ -115,27 +115,75 @@ export default function ActivityLogsPage() {
     }
   };
 
-  const fetchStats = async () => {
+const fetchStats = async () => {
     try {
-      const token = localStorage.getItem("auth_token");
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/activity-logs/stats`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+        const token = localStorage.getItem("auth_token");
+        if (!token) return;
 
-      if (response.ok) {
+        console.log("Fetching stats from:", `${process.env.NEXT_PUBLIC_API_URL}/activity-logs/stats`);
+        
+        const response = await fetch(
+            `${process.env.NEXT_PUBLIC_API_URL}/activity-logs/stats`,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Accept': 'application/json',
+                },
+            }
+        );
+
+        console.log("Stats response status:", response.status);
+        
+        // Check if response is HTML instead of JSON
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('text/html')) {
+            const text = await response.text();
+            console.error("Stats endpoint returned HTML instead of JSON");
+            console.error("First 200 chars:", text.substring(0, 200));
+            
+            // Return mock stats for now
+            return {
+                daily_stats: [],
+                top_actions: [],
+                top_users: [],
+                activity_by_type: [],
+                recent_activity: [],
+                summary: {
+                    total_logs: 0,
+                    total_users: 0,
+                    today_logs: 0,
+                    yesterday_logs: 0,
+                }
+            };
+        }
+
+        if (!response.ok) {
+            console.error("Stats HTTP error:", response.status);
+            throw new Error(`HTTP ${response.status}`);
+        }
+
         const data = await response.json();
-        // You can display stats in a sidebar or modal
-        console.log("Stats:", data);
-      }
+        console.log("Stats data:", data);
+        return data;
     } catch (error) {
-      console.error("Error fetching stats:", error);
+        console.error("Error fetching stats:", error);
+        
+        // Return mock stats on error
+        return {
+            daily_stats: [],
+            top_actions: [],
+            top_users: [],
+            activity_by_type: [],
+            recent_activity: [],
+            summary: {
+                total_logs: 0,
+                total_users: 0,
+                today_logs: 0,
+                yesterday_logs: 0,
+            }
+        };
     }
-  };
+};
 
   useEffect(() => {
     fetchLogs();
