@@ -175,7 +175,7 @@ export function Sidebar({ onCollapse }: { onCollapse?: (collapsed: boolean) => v
       page_key: "partner_boats"  // Special page for partners
     },
     { 
-      title: "Settings", 
+      title: "Account Settings", 
       href: "/dashboard/account", 
       icon: Settings, 
       roles: ["Admin", "Employee", "Partner", "Customer"],
