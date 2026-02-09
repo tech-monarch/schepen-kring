@@ -87,44 +87,48 @@ export default function AdminDashboardHome() {
     return () => clearInterval(interval);
   }, [fetchDashboardData]);
 
-  const stats = [
-    {
-      label: "Active Bids",
-      value: data.activeBidsCount,
-      change: "Live",
-      icon: TrendingUp,
-      color: "text-blue-600",
-      borderColor: "hover:border-blue-500/50",
-      bg: "bg-blue-50/30",
-    },
-    {
-      label: "Pending Manifest",
-      value: data.pendingTasks,
-      change: "Tasks",
-      icon: Clock,
-      color: "text-amber-600",
-      borderColor: "hover:border-amber-500/50",
-      bg: "bg-amber-50/30",
-    },
-    {
-      label: "Fleet in Intake",
-      value: data.fleetIntake,
-      change: "Unit",
-      icon: AlertCircle,
-      color: "text-rose-600",
-      borderColor: "hover:border-rose-500/50",
-      bg: "bg-rose-50/30",
-    },
-    {
-      label: "Completed Sales",
-      value: data.totalSales,
-      change: "Total",
-      icon: CheckCircle2,
-      color: "text-emerald-600",
-      borderColor: "hover:border-emerald-500/50",
-      bg: "bg-emerald-50/30",
-    },
-  ];
+ const stats = [
+  {
+    label: "Active Bids",
+    value: data.activeBidsCount,
+    change: "Live",
+    icon: TrendingUp,
+    color: "text-blue-600",
+    borderColor: "hover:border-blue-500/50",
+    bg: "bg-blue-50/30",
+    link: "/dashboard/admin/bids",
+  },
+  {
+    label: "Pending Manifest",
+    value: data.pendingTasks,
+    change: "Tasks",
+    icon: Clock,
+    color: "text-amber-600",
+    borderColor: "hover:border-amber-500/50",
+    bg: "bg-amber-50/30",
+    link: "/dashboard/admin/tasks",
+  },
+  {
+    label: "Fleet in Intake",
+    value: data.fleetIntake,
+    change: "Unit",
+    icon: AlertCircle,
+    color: "text-rose-600",
+    borderColor: "hover:border-rose-500/50",
+    bg: "bg-rose-50/30",
+    link: "/dashboard/admin/yachts",
+  },
+  {
+    label: "Completed Sales",
+    value: data.totalSales,
+    change: "Total",
+    icon: CheckCircle2,
+    color: "text-emerald-600",
+    borderColor: "hover:border-emerald-500/50",
+    bg: "bg-emerald-50/30",
+    link: "/dashboard/admin/yachts",
+  },
+];
 
   return (
     <div className="space-y-10">
@@ -153,6 +157,7 @@ export default function AdminDashboardHome() {
       {/* Stats Grid with Fully Colored Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat, i) => (
+          <Link href={stat.link} key={stat.label} passHref>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -204,6 +209,7 @@ export default function AdminDashboardHome() {
             {/* Hover Shine Effect */}
             <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/5 to-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
           </motion.div>
+          </Link>
         ))}
       </div>
 
