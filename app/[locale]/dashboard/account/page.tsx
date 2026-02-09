@@ -91,6 +91,13 @@ export default function ProfileSettingsPage() {
 
   useEffect(() => {
     fetchProfile();
+    
+    // Cleanup debounce timer on unmount
+    return () => {
+      if (debounceTimer) {
+        clearTimeout(debounceTimer);
+      }
+    };
   }, []);
 
   const fetchProfile = async () => {
@@ -276,11 +283,6 @@ export default function ProfileSettingsPage() {
       setIsSubmitting(false);
     }
   };
-
-  // Also update the backend to handle the new fields
-  // Add these fields to your ProfileController update method validation:
-  // 'postcode' => 'nullable|string|max:20',
-  // 'country' => 'nullable|string|max:100',
 
   if (loading) {
     return (
