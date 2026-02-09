@@ -291,7 +291,7 @@ export default function PartnerFleetManagementPage() {
   return (
     <div className="min-h-screen bg-[#F8FAFC] p-6 lg:p-12 -top-20">
       <Toaster position="top-right" />
-                    <Sidebar onCollapse={setIsSidebarCollapsed} />
+                    {/* <Sidebar onCollapse={setIsSidebarCollapsed} /> */}
 
       {/* HEADER */}
       <div className="mb-12">
