@@ -80,27 +80,71 @@ export function DashboardHeader() {
   }, []);
 
   // Fetch notifications
+  // const fetchNotifications = async () => {
+  //   try {
+  //     const token = localStorage.getItem("auth_token");
+  //     if (!token) return;
+
+  //     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/notifications`, {
+  //       headers: {
+  //         'Authorization': `Bearer ${token}`,
+  //         'Content-Type': 'application/json',
+  //       },
+  //     });
+
+  //     if (response.ok) {
+  //       const data = await response.json();
+  //       setNotifications(data.data || []);
+  //       setUnreadCount(data.meta?.unread_count || 0);
+  //     }
+  //   } catch (error) {
+  //     console.error("Error fetching notifications:", error);
+  //   }
+  // };
+
   const fetchNotifications = async () => {
     try {
-      const token = localStorage.getItem("auth_token");
-      if (!token) return;
+        const token = localStorage.getItem("auth_token");
+        if (!token) {
+            console.log("No auth token found");
+            return;
+        }
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/notifications`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
+        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://schepen-kring.nl/api';
+        console.log("API URL:", API_URL);
+        console.log("Token exists:", !!token);
+        
+        const response = await fetch(`${API_URL}/notifications`, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Accept': 'application/json',
+            },
+        });
 
-      if (response.ok) {
-        const data = await response.json();
-        setNotifications(data.data || []);
-        setUnreadCount(data.meta?.unread_count || 0);
-      }
+        console.log("Response status:", response.status);
+        
+        // Get response as text first to see what's returned
+        const responseText = await response.text();
+        console.log("Response text (first 500 chars):", responseText.substring(0, 500));
+        
+        // Try to parse as JSON
+        try {
+            const data = JSON.parse(responseText);
+            console.log("Parsed data:", data);
+            setNotifications(data.data || []);
+            setUnreadCount(data.meta?.unread_count || 0);
+        } catch (jsonError) {
+            console.error("Failed to parse as JSON:", jsonError);
+            // Set empty state
+            setNotifications([]);
+            setUnreadCount(0);
+        }
     } catch (error) {
-      console.error("Error fetching notifications:", error);
+        console.error("Error fetching notifications:", error);
+        setNotifications([]);
+        setUnreadCount(0);
     }
-  };
+};
 
   // Fetch unread count separately
   const fetchUnreadCount = async () => {
