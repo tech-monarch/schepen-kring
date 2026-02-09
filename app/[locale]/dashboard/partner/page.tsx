@@ -29,6 +29,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { toast, Toaster } from "react-hot-toast";
 import { cn } from "@/lib/utils";
+import {Sidebar} from "@/components/dashboard/Sidebar";
 
 const STORAGE_URL = "https://schepen-kring.nl/storage/";
 const PLACEHOLDER_IMAGE =
@@ -78,6 +79,7 @@ export default function PartnerFleetManagementPage() {
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('boat_name');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [userRole, setUserRole] = useState<string | null>(null);
   const [stats, setStats] = useState({
     total: 0,
     forSale: 0,
@@ -88,6 +90,7 @@ export default function PartnerFleetManagementPage() {
     inactive: 0,
   });
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   // Fetch partner's fleet
   const fetchFleet = async () => {
@@ -288,6 +291,7 @@ export default function PartnerFleetManagementPage() {
   return (
     <div className="min-h-screen bg-[#F8FAFC] p-6 lg:p-12 -top-20">
       <Toaster position="top-right" />
+                    <Sidebar onCollapse={setIsSidebarCollapsed} />
 
       {/* HEADER */}
       <div className="mb-12">
