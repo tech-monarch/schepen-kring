@@ -12,7 +12,10 @@ import {
   Phone,
   MapPin,
   Building2,
-  Globe
+  Globe,
+  Lock,
+  Eye,
+  EyeOff
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { motion } from "framer-motion";
@@ -24,6 +27,103 @@ import { Sidebar } from "@/components/dashboard/Sidebar";
 const API_BASE = "https://schepen-kring.nl/api";
 const STORAGE_URL = "https://schepen-kring.nl/storage/";
 
+// Google Maps Autocomplete Component
+const GoogleMapsAutocomplete = ({ 
+  value, 
+  onChange, 
+  onPlaceSelect 
+}: { 
+  value: string; 
+  onChange: (value: string) => void; 
+  onPlaceSelect: (place: any) => void;
+}) => {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const autocompleteRef = useRef<google.maps.places.Autocomplete>();
+
+  useEffect(() => {
+    if (!window.google) {
+      // Load Google Maps script if not already loaded
+      const script = document.createElement('script');
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places`;
+      script.async = true;
+      script.onload = initAutocomplete;
+      document.head.appendChild(script);
+    } else {
+      initAutocomplete();
+    }
+
+    function initAutocomplete() {
+      if (inputRef.current && window.google) {
+        autocompleteRef.current = new google.maps.places.Autocomplete(inputRef.current, {
+          types: ['address'],
+          componentRestrictions: { country: 'nl' }, // Netherlands
+          fields: ['address_components', 'formatted_address']
+        });
+
+        autocompleteRef.current.addListener('place_changed', () => {
+          const place = autocompleteRef.current?.getPlace();
+          if (place && place.formatted_address) {
+            onChange(place.formatted_address);
+            
+            // Extract address components
+            const addressComponents: any = {};
+            place.address_components?.forEach(component => {
+              const componentType = component.types[0];
+              switch (componentType) {
+                case 'street_number':
+                  addressComponents.streetNumber = component.long_name;
+                  break;
+                case 'route':
+                  addressComponents.streetName = component.long_name;
+                  break;
+                case 'locality':
+                  addressComponents.city = component.long_name;
+                  break;
+                case 'administrative_area_level_1':
+                  addressComponents.state = component.long_name;
+                  break;
+                case 'postal_code':
+                  addressComponents.zipCode = component.long_name;
+                  break;
+                case 'country':
+                  addressComponents.country = component.long_name;
+                  break;
+              }
+            });
+
+            onPlaceSelect({
+              address: place.formatted_address,
+              city: addressComponents.city,
+              state: addressComponents.state,
+              zipCode: addressComponents.zipCode,
+              country: addressComponents.country,
+              streetNumber: addressComponents.streetNumber,
+              streetName: addressComponents.streetName
+            });
+          }
+        });
+      }
+    }
+
+    return () => {
+      if (autocompleteRef.current) {
+        google.maps.event.clearInstanceListeners(autocompleteRef.current);
+      }
+    };
+  }, []);
+
+  return (
+    <input
+      ref={inputRef}
+      type="text"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="w-full bg-transparent border-b border-slate-200 py-2 text-sm font-bold text-[#003566] outline-none focus:border-[#003566]"
+      placeholder="Start typing your address..."
+    />
+  );
+};
+
 export default function ProfileSettingsPage() {
   const t = useTranslations("Dashboard");
   const [loading, setLoading] = useState(true);
@@ -32,7 +132,7 @@ export default function ProfileSettingsPage() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // 1. UPDATED FORM STATE
+  // Main form state
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -44,11 +144,22 @@ export default function ProfileSettingsPage() {
   });
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
+  // Password form state
+  const [passwordData, setPasswordData] = useState({
+    current_password: "",
+    new_password: "",
+    new_password_confirmation: "",
+  });
+  const [showPasswords, setShowPasswords] = useState({
+    current: false,
+    new: false,
+    confirm: false
+  });
+
   useEffect(() => {
     fetchProfile();
   }, []);
 
-  // 2. UPDATED FETCH LOGIC
   const fetchProfile = async () => {
     try {
       const token = localStorage.getItem("auth_token");
@@ -85,7 +196,6 @@ export default function ProfileSettingsPage() {
     }
   };
 
-  // 3. UPDATED SUBMIT LOGIC
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -121,6 +231,47 @@ export default function ProfileSettingsPage() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handlePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    // Validate password match
+    if (passwordData.new_password !== passwordData.new_password_confirmation) {
+      toast.error("New passwords do not match");
+      setIsSubmitting(false);
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("auth_token");
+      await axios.post(`${API_BASE}/profile/change-password`, passwordData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      toast.success("Password changed successfully");
+      setPasswordData({
+        current_password: "",
+        new_password: "",
+        new_password_confirmation: "",
+      });
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Password change failed");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handlePlaceSelect = (place: any) => {
+    setFormData(prev => ({
+      ...prev,
+      address: place.address || prev.address,
+      city: place.city || prev.city,
+      state: place.state || prev.state,
+    }));
   };
 
   if (loading) {
@@ -239,17 +390,19 @@ export default function ProfileSettingsPage() {
                   </div>
                 </div>
 
-                {/* House Address */}
+                {/* House Address with Google Maps Autocomplete */}
                 <div className="space-y-2">
                   <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-2">
                     <MapPin size={12} /> House Address
                   </label>
-                  <input
-                    type="text"
+                  <GoogleMapsAutocomplete
                     value={formData.address}
-                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                    className="w-full bg-transparent border-b border-slate-200 py-2 text-sm font-bold text-[#003566] outline-none focus:border-[#003566]"
+                    onChange={(value) => setFormData({ ...formData, address: value })}
+                    onPlaceSelect={handlePlaceSelect}
                   />
+                  <p className="text-[8px] text-slate-400 mt-1">
+                    Start typing your address and select from Google Maps suggestions
+                  </p>
                 </div>
 
                 {/* State/Region */}
@@ -263,6 +416,96 @@ export default function ProfileSettingsPage() {
                     onChange={(e) => setFormData({ ...formData, state: e.target.value })}
                     className="w-full bg-transparent border-b border-slate-200 py-2 text-sm font-bold text-[#003566] outline-none focus:border-[#003566]"
                   />
+                </div>
+
+                {/* PASSWORD CHANGE SECTION */}
+                <div className="mt-12 pt-12 border-t border-slate-100">
+                  <h3 className="text-sm font-black uppercase tracking-[0.3em] text-[#003566] mb-6 flex items-center gap-2">
+                    <Shield size={14} /> Change Password
+                  </h3>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    {/* Current Password */}
+                    <div className="space-y-2">
+                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-2">
+                        <Lock size={12} /> Current Password
+                      </label>
+                      <div className="relative">
+                        <input
+                          type={showPasswords.current ? "text" : "password"}
+                          value={passwordData.current_password}
+                          onChange={(e) => setPasswordData({ ...passwordData, current_password: e.target.value })}
+                          className="w-full bg-transparent border-b border-slate-200 py-2 text-sm font-bold text-[#003566] outline-none focus:border-[#003566] pr-10"
+                          placeholder="Enter current password"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPasswords({...showPasswords, current: !showPasswords.current})}
+                          className="absolute right-2 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-[#003566]"
+                        >
+                          {showPasswords.current ? <EyeOff size={14} /> : <Eye size={14} />}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* New Password */}
+                    <div className="space-y-2">
+                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-2">
+                        <Lock size={12} /> New Password
+                      </label>
+                      <div className="relative">
+                        <input
+                          type={showPasswords.new ? "text" : "password"}
+                          value={passwordData.new_password}
+                          onChange={(e) => setPasswordData({ ...passwordData, new_password: e.target.value })}
+                          className="w-full bg-transparent border-b border-slate-200 py-2 text-sm font-bold text-[#003566] outline-none focus:border-[#003566] pr-10"
+                          placeholder="Enter new password"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPasswords({...showPasswords, new: !showPasswords.new})}
+                          className="absolute right-2 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-[#003566]"
+                        >
+                          {showPasswords.new ? <EyeOff size={14} /> : <Eye size={14} />}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Confirm New Password */}
+                    <div className="space-y-2">
+                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-2">
+                        <Lock size={12} /> Confirm New Password
+                      </label>
+                      <div className="relative">
+                        <input
+                          type={showPasswords.confirm ? "text" : "password"}
+                          value={passwordData.new_password_confirmation}
+                          onChange={(e) => setPasswordData({ ...passwordData, new_password_confirmation: e.target.value })}
+                          className="w-full bg-transparent border-b border-slate-200 py-2 text-sm font-bold text-[#003566] outline-none focus:border-[#003566] pr-10"
+                          placeholder="Confirm new password"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPasswords({...showPasswords, confirm: !showPasswords.confirm})}
+                          className="absolute right-2 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-[#003566]"
+                        >
+                          {showPasswords.confirm ? <EyeOff size={14} /> : <Eye size={14} />}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-8 flex justify-end">
+                    <button
+                      type="button"
+                      onClick={handlePasswordChange}
+                      disabled={isSubmitting}
+                      className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white hover:opacity-90 h-14 px-12 text-[10px] font-black uppercase tracking-[0.4em] transition-all shadow-lg disabled:opacity-50 flex items-center gap-3"
+                    >
+                      {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Shield size={14} />}
+                      Update Password
+                    </button>
+                  </div>
                 </div>
 
                 <div className="mt-16 flex justify-end">
