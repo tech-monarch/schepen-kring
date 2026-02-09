@@ -34,7 +34,6 @@ import {
   Share,
   GalleryHorizontal,
   ChevronRight,
-  Envelope,
   Maximize2,
   X,
 } from "lucide-react";
@@ -585,7 +584,7 @@ export default function YachtTerminalPage() {
                   onClick={handleMoreInfo}
                   className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 font-medium text-sm uppercase tracking-wider flex items-center gap-2 transition-colors"
                 >
-                  <Envelope size={16} />
+                  <Mail size={16} />
                   More information
                 </button>
 
