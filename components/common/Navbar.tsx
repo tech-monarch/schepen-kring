@@ -13,22 +13,24 @@ import Image from "next/image";
 import ANSWER24LOGO from "@/public/schepenkring-logo.png";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-// Storage URL constant
+// Storage URL constant - Fixed to match your actual storage structure
 const STORAGE_URL = "https://schepen-kring.nl/storage/";
 // Hardcoded API URL
 const API_URL = "https://schepen-kring.nl/api";
 
-// User profile type
+// User profile type based on localStorage structure
 interface UserProfile {
   id: number;
   name: string;
   email: string;
-  userType: 'Admin' | 'Partner' | 'Employee' | string;
+  role: string; // Changed from userType to role to match your localStorage
   profile_image?: string;
-  phone_number?: string;
-  address?: string;
-  city?: string;
-  state?: string;
+  phone_number?: string | null;
+  address?: string | null;
+  city?: string | null;
+  state?: string | null;
+  status?: string;
+  access_level?: string;
 }
 
 export function Navbar() {
@@ -42,7 +44,35 @@ export function Navbar() {
   const t = useTranslations("Navigation");
   const currentPath = usePathname();
 
-  // Fetch user profile data
+  // Parse and get user data from localStorage
+  const getUserFromLocalStorage = (): UserProfile | null => {
+    try {
+      const storedUser = localStorage.getItem("user_data");
+      if (!storedUser) return null;
+      
+      const parsedUser = JSON.parse(storedUser);
+      
+      // Transform the localStorage data to match our UserProfile interface
+      return {
+        id: parsedUser.id,
+        name: parsedUser.name,
+        email: parsedUser.email,
+        role: parsedUser.role || parsedUser.userType || "User", // Handle both 'role' and 'userType'
+        profile_image: parsedUser.profile_image,
+        phone_number: parsedUser.phone_number,
+        address: parsedUser.address,
+        city: parsedUser.city,
+        state: parsedUser.state,
+        status: parsedUser.status,
+        access_level: parsedUser.access_level
+      };
+    } catch (error) {
+      console.error("Error parsing user data from localStorage:", error);
+      return null;
+    }
+  };
+
+  // Fetch user profile data from API
   const fetchUserProfile = async () => {
     try {
       setLoadingProfile(true);
@@ -61,23 +91,36 @@ export function Navbar() {
 
       if (response.ok) {
         const data = await response.json();
-        setUserProfile(data);
-        // Update localStorage with fresh data
+        // Transform API data to match our interface
+        const formattedData: UserProfile = {
+          id: data.id,
+          name: data.name,
+          email: data.email,
+          role: data.role || data.userType || "User",
+          profile_image: data.profile_image,
+          phone_number: data.phone_number,
+          address: data.address,
+          city: data.city,
+          state: data.state,
+          status: data.status,
+          access_level: data.access_level
+        };
+        setUserProfile(formattedData);
         localStorage.setItem("user_data", JSON.stringify(data));
       } else {
         console.error("Failed to fetch profile");
         // Fallback to localStorage data
-        const storedUser = localStorage.getItem("user_data");
-        if (storedUser) {
-          setUserProfile(JSON.parse(storedUser));
+        const localUser = getUserFromLocalStorage();
+        if (localUser) {
+          setUserProfile(localUser);
         }
       }
     } catch (error) {
       console.error("Error fetching user profile:", error);
       // Fallback to localStorage data
-      const storedUser = localStorage.getItem("user_data");
-      if (storedUser) {
-        setUserProfile(JSON.parse(storedUser));
+      const localUser = getUserFromLocalStorage();
+      if (localUser) {
+        setUserProfile(localUser);
       }
     } finally {
       setLoadingProfile(false);
@@ -94,7 +137,13 @@ export function Navbar() {
     setIsLoggedIn(!!token);
     setIsImpersonating(!!adminToken);
 
-    // Fetch user profile if logged in
+    // Get user data immediately from localStorage
+    const localUser = getUserFromLocalStorage();
+    if (localUser) {
+      setUserProfile(localUser);
+    }
+
+    // Then fetch fresh data from API if logged in
     if (token) {
       fetchUserProfile();
     } else {
@@ -104,26 +153,52 @@ export function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [currentPath]);
 
-  // Get dashboard link based on user type
+  // Get dashboard link based on user role
   const getDashboardLink = () => {
     if (!userProfile) return "/dashboard";
     
-    switch (userProfile.userType?.toLowerCase()) {
+    switch (userProfile.role?.toLowerCase()) {
       case 'admin':
         return "/dashboard/admin";
       case 'partner':
         return "/dashboard/partner";
       case 'employee':
-        return "/dashboard";
+      case 'user':
       default:
         return "/dashboard";
     }
   };
 
-  // Format user type for display
-  const formatUserType = (userType?: string) => {
-    if (!userType) return "";
-    return userType.charAt(0).toUpperCase() + userType.slice(1).toLowerCase();
+  // Format user role for display
+  const formatUserRole = (role?: string) => {
+    if (!role) return "User";
+    return role.charAt(0).toUpperCase() + role.slice(1).toLowerCase();
+  };
+
+  // Construct profile image URL
+  const getProfileImageUrl = (profileImage?: string) => {
+    if (!profileImage) return null;
+    
+    // Remove any leading slashes
+    const cleanPath = profileImage.replace(/^\//, '');
+    
+    // Try different URL patterns
+    const urlPatterns = [
+      `${STORAGE_URL}${cleanPath}`,
+      `${STORAGE_URL.replace(/\/$/, '')}/${cleanPath}`,
+    ];
+    
+    return urlPatterns[0];
+  };
+
+  // Get user initials for avatar fallback
+  const getUserInitials = () => {
+    if (!userProfile?.name) return "U";
+    const names = userProfile.name.split(' ');
+    if (names.length >= 2) {
+      return `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase();
+    }
+    return userProfile.name.substring(0, 2).toUpperCase();
   };
 
   // --- LOGIC: HIDE NAVBAR ON HOMEPAGE IF LOGGED IN ---
@@ -217,30 +292,30 @@ export function Navbar() {
                 </button>
               </Link>
 
-              {/* User Profile Section */}
-              <div className="flex items-center gap-4 group">
-                <div className="flex items-center gap-3">
-                  <Avatar className="h-10 w-10 border-2 border-slate-100 group-hover:border-[#003566] transition-all duration-300">
+              {/* User Profile Section - STACKED LAYOUT */}
+              <div className="flex items-center">
+                <div className="flex flex-col items-center gap-1">
+                  <Avatar className="h-12 w-12 border-2 border-slate-100 hover:border-[#003566] transition-all duration-300">
                     <AvatarImage
                       src={
                         userProfile?.profile_image
-                          ? `${STORAGE_URL}${userProfile.profile_image}`
-                          : "/default-avatar.png" // Add a default avatar image or use initials
+                          ? getProfileImageUrl(userProfile.profile_image) || undefined
+                          : undefined
                       }
                       className="object-cover"
                       alt={userProfile?.name || "User"}
                     />
-                    <AvatarFallback className="bg-slate-100 text-[#003566] text-xs font-bold">
-                      {userProfile?.name?.substring(0, 2).toUpperCase() || "U"}
+                    <AvatarFallback className="bg-[#003566] text-white text-sm font-bold">
+                      {getUserInitials()}
                     </AvatarFallback>
                   </Avatar>
                   
-                  <div className="text-right">
-                    <p className="text-[11px] font-bold text-[#003566] leading-tight">
+                  <div className="text-center">
+                    <p className="text-[10px] font-bold text-[#003566] leading-tight truncate max-w-[100px]">
                       {userProfile?.name || "User"}
                     </p>
-                    <p className="text-[9px] text-slate-500 font-medium uppercase tracking-tight mt-1">
-                      {formatUserType(userProfile?.userType)}
+                    <p className="text-[8px] text-slate-500 font-medium uppercase tracking-tighter mt-0.5">
+                      {formatUserRole(userProfile?.role)}
                     </p>
                   </div>
                 </div>
@@ -307,31 +382,31 @@ export function Navbar() {
               
               {isLoggedIn ? (
                 <div className="space-y-6">
-                  {/* User Profile in Mobile Menu */}
-                  <div className="flex items-center gap-4 p-4 bg-slate-50 rounded-lg">
-                    <Avatar className="h-16 w-16 border-2 border-white">
+                  {/* User Profile in Mobile Menu - STACKED LAYOUT */}
+                  <div className="flex flex-col items-center gap-3 p-6 bg-slate-50 rounded-lg">
+                    <Avatar className="h-24 w-24 border-4 border-white shadow-sm">
                       <AvatarImage
                         src={
                           userProfile?.profile_image
-                            ? `${STORAGE_URL}${userProfile.profile_image}`
-                            : "/default-avatar.png"
+                            ? getProfileImageUrl(userProfile.profile_image) || undefined
+                            : undefined
                         }
                         className="object-cover"
                         alt={userProfile?.name || "User"}
                       />
-                      <AvatarFallback className="bg-[#003566] text-white text-lg font-bold">
-                        {userProfile?.name?.substring(0, 2).toUpperCase() || "U"}
+                      <AvatarFallback className="bg-[#003566] text-white text-2xl font-bold">
+                        {getUserInitials()}
                       </AvatarFallback>
                     </Avatar>
-                    <div>
-                      <p className="text-lg font-bold text-[#003566]">
+                    <div className="text-center">
+                      <p className="text-xl font-bold text-[#003566]">
                         {userProfile?.name || "User"}
                       </p>
-                      <p className="text-sm text-slate-600">
+                      <p className="text-sm text-slate-600 mt-1">
                         {userProfile?.email || "User Email"}
                       </p>
-                      <p className="text-xs text-slate-500 mt-1 uppercase tracking-wider">
-                        {formatUserType(userProfile?.userType)}
+                      <p className="text-xs text-slate-500 mt-2 uppercase tracking-wider bg-slate-100 inline-block px-3 py-1 rounded-full">
+                        {formatUserRole(userProfile?.role)}
                       </p>
                     </div>
                   </div>
