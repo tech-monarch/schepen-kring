@@ -234,7 +234,7 @@ export default function TaskManifestPage() {
         {/* MAIN CONTENT - Removed -mt-20 and fixed Margin */}
         <motion.main
           animate={{ marginLeft: isSidebarCollapsed ? 80 : 256 }}
-          className="flex-1 p-8 bg-white min-h-[calc(100vh-80px)]"
+          className="flex-1 p-8 bg-white min-h-[calc(100vh-80px)] -mt-20"
         >
           <div className="max-w-[1600px] mx-auto space-y-12">
             <Toaster position="top-right" />
