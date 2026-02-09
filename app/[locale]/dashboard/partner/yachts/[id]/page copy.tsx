@@ -22,45 +22,38 @@ import {
   Bed,
   Save,
   ArrowLeft,
-  Calendar,
-  Clock
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import { toast, Toaster } from "react-hot-toast";
+} from "lucide-react"; // [cite_start]// [cite: 2]
+import { Button } from "@/components/ui/button"; // [cite_start]// [cite: 3]
+import { cn } from "@/lib/utils"; // [cite_start]// [cite: 3]
+import { toast, Toaster } from "react-hot-toast"; // [cite_start]// [cite: 4]
 
 // Configuration
-const STORAGE_URL = "https://schepen-kring.nl/storage/";
+const STORAGE_URL = "https://schepen-kring.nl/storage/"; // [cite_start]// [cite: 4]
 const PLACEHOLDER_IMAGE =
-  "https://images.unsplash.com/photo-1569263979104-865ab7cd8d13?auto=format&fit=crop&w=600&q=80";
+  "https://images.unsplash.com/photo-1569263979104-865ab7cd8d13?auto=format&fit=crop&w=600&q=80"; // [cite: 4]
 
 type AiStagedImage = {
   file: File;
   preview: string;
   category: string;
   originalName: string;
-};
+}; // [cite_start]// [cite: 5]
 type GalleryState = { [key: string]: any[] };
-
-// Availability Rule Type
-type AvailabilityRule = {
-  day_of_week: number;
-  start_time: string;
-  end_time: string;
-};
 
 export default function YachtEditorPage() {
   const params = useParams();
   const router = useRouter();
+
+  // Logic: 'new' means create mode, otherwise it's the ID
   const isNewMode = params.id === "new";
   const yachtId = params.id;
 
   // Form State
-  const [selectedYacht, setSelectedYacht] = useState<any>(null);
+  const [selectedYacht, setSelectedYacht] = useState<any>(null); // Stores fetched data
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [loading, setLoading] = useState(!isNewMode);
+  const [loading, setLoading] = useState(!isNewMode); // Only load if not new
   const [errors, setErrors] = useState<any>(null);
-  
+
   // AI & Media State
   const [aiStaging, setAiStaging] = useState<AiStagedImage[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -71,11 +64,7 @@ export default function YachtEditorPage() {
     Interior: [],
     "Engine Room": [],
     Bridge: [],
-    General: [],
   });
-
-  // Availability State
-  const [availabilityRules, setAvailabilityRules] = useState<AvailabilityRule[]>([]);
 
   // --- 1. FETCH DATA (IF EDITING) ---
   useEffect(() => {
@@ -91,7 +80,7 @@ export default function YachtEditorPage() {
         // Populate Main Image
         setMainPreview(
           yacht.main_image ? `${STORAGE_URL}${yacht.main_image}` : null,
-        );
+        ); // [cite: 22]
 
         // Populate Gallery
         const initialGallery: GalleryState = {
@@ -99,32 +88,23 @@ export default function YachtEditorPage() {
           Interior: [],
           "Engine Room": [],
           Bridge: [],
-          General: [],
         };
 
         if (yacht.images) {
           yacht.images.forEach((img: any) => {
-            const category = img.category || "General";
+            const category = img.category || "Exterior";
             if (initialGallery[category]) {
               initialGallery[category].push(img);
             } else {
-              initialGallery["General"].push(img);
+              initialGallery["Exterior"].push(img);
             }
           });
-        }
+        } // [cite: 20]
         setGalleryState(initialGallery);
-
-        // Load existing availability rules
-        if (yacht.availability_rules) {
-          setAvailabilityRules(yacht.availability_rules);
-        } else if (yacht.availabilityRules) {
-          setAvailabilityRules(yacht.availabilityRules);
-        }
-
       } catch (err) {
         console.error("Failed to fetch yacht details", err);
         toast.error("Could not load vessel data.");
-        router.push("/nl/dashboard/admin/yachts");
+        router.push("/admin/yachts"); // Redirect back on error
       } finally {
         setLoading(false);
       }
@@ -167,44 +147,31 @@ export default function YachtEditorPage() {
     }
   };
 
-const handleAiCategorizer = async (files: FileList | null) => {
-  if (!files || files.length === 0) return;
-  setIsAnalyzing(true);
-  const formData = new FormData();
-  const fileArray = Array.from(files);
-  fileArray.forEach((file) => formData.append("images[]", file));
-  try {
-    toast.loading("Gemini is analyzing assets...", { id: "ai-loading" });
-    
-    // Try partner route first
-    let res;
+  const handleAiCategorizer = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    setIsAnalyzing(true);
+    const formData = new FormData();
+    const fileArray = Array.from(files);
+    fileArray.forEach((file) => formData.append("images[]", file));
     try {
-      res = await api.post("/partner/yachts/ai-classify", formData);
-    } catch (aiErr: any) {
-      // If partner route fails, try regular route
-      if (aiErr.response?.status === 403 || aiErr.response?.status === 404) {
-        res = await api.post("/yachts/ai-classify", formData);
-      } else {
-        throw aiErr;
-      }
+      toast.loading("Gemini is analyzing assets...", { id: "ai-loading" });
+      const res = await api.post("/yachts/ai-classify", formData);
+      const analyzedData: AiStagedImage[] = res.data.map(
+        (item: any, index: number) => ({
+          file: fileArray[index],
+          preview: item.preview,
+          category: item.category,
+          originalName: item.originalName,
+        }),
+      );
+      setAiStaging((prev) => [...prev, ...analyzedData]);
+      toast.success("AI Classification complete", { id: "ai-loading" });
+    } catch (err) {
+      toast.error("AI Analysis failed", { id: "ai-loading" });
+    } finally {
+      setIsAnalyzing(false);
     }
-    
-    const analyzedData: AiStagedImage[] = res.data.map(
-      (item: any, index: number) => ({
-        file: fileArray[index],
-        preview: item.preview,
-        category: item.category,
-        originalName: item.originalName,
-      }),
-    );
-    setAiStaging((prev) => [...prev, ...analyzedData]);
-    toast.success("AI Classification complete", { id: "ai-loading" });
-  } catch (err) {
-    toast.error("AI Analysis failed", { id: "ai-loading" });
-  } finally {
-    setIsAnalyzing(false);
-  }
-};
+  };
 
   const approveAiImage = (index: number) => {
     const item = aiStaging[index];
@@ -228,140 +195,80 @@ const handleAiCategorizer = async (files: FileList | null) => {
     toast.success("All assets approved");
   };
 
-  // Availability Handlers
-  const addAvailabilityRule = () => {
-    setAvailabilityRules([...availabilityRules, { day_of_week: 1, start_time: "09:00", end_time: "17:00" }]);
-  };
-
-  const removeAvailabilityRule = (index: number) => {
-    setAvailabilityRules(availabilityRules.filter((_, i) => i !== index));
-  };
-
-  const updateAvailabilityRule = (index: number, field: keyof AvailabilityRule, value: any) => {
-    const newRules = [...availabilityRules];
-    newRules[index] = { ...newRules[index], [field]: value };
-    setAvailabilityRules(newRules);
-  };
-
   // --- 3. SUBMIT LOGIC ---
-// --- 3. SUBMIT LOGIC ---
-const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-  e.preventDefault();
-  setIsSubmitting(true);
-  setErrors(null);
-  const formData = new FormData(e.currentTarget);
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setErrors(null);
+    const formData = new FormData(e.currentTarget);
 
-  if (mainFile) formData.set("main_image", mainFile);
+    if (mainFile) formData.set("main_image", mainFile);
 
-  // Handle boolean fields
-  const booleanFields = [
-    'allow_bidding', 'flybridge', 'oven', 'microwave', 'fridge', 'freezer',
-    'air_conditioning', 'navigation_lights', 'compass', 'depth_instrument',
-    'wind_instrument', 'autopilot', 'gps', 'vhf', 'plotter', 'speed_instrument',
-    'radar', 'life_raft', 'epirb', 'bilge_pump', 'fire_extinguisher',
-    'mob_system', 'spinnaker', 'battery', 'battery_charger', 'generator',
-    'inverter', 'television', 'cd_player', 'dvd_player', 'anchor',
-    'spray_hood', 'bimini'
-  ];
-
-  booleanFields.forEach(field => {
-    if (!formData.has(field)) {
-      formData.append(field, 'false');
+    if (!formData.has("trailer_included")) {
+      formData.append("trailer_included", "0");
     } else {
-      const value = formData.get(field);
-      formData.set(field, value === 'on' || value === 'true' || value === '1' ? 'true' : 'false');
-    }
-  });
+      formData.set("trailer_included", "1");
+    } // [cite: 28]
 
-  // Clean empty fields
-  const allFields = [
-    'boat_name', 'price', 'status', 'year',
-    'beam', 'draft', 'loa', 'lwl', 'air_draft', 'passenger_capacity',
-    'designer', 'builder', 'where', 'hull_colour', 'hull_construction',
-    'hull_number', 'hull_type', 'super_structure_colour', 'super_structure_construction',
-    'deck_colour', 'deck_construction', 'cockpit_type', 'control_type', 'ballast',
-    'displacement', 'cabins', 'berths', 'toilet', 'shower', 'bath', 'heating',
-    'stern_thruster', 'bow_thruster', 'fuel', 'hours', 'cruising_speed', 'max_speed',
-    'horse_power', 'engine_manufacturer', 'tankage', 'gallons_per_hour',
-    'starting_type', 'drive_type'
-  ];
+    // Cleanup empty numeric fields
+    const numericFields = [
+      "cabins",
+      "heads",
+      "price",
+      "year",
+      "engine_hours",
+      "engine_power",
+      "berths",
+    ];
+    numericFields.forEach((field) => {
+      const val = formData.get(field);
+      if (!val || val === "") formData.set(field, "");
+    }); // [cite: 30]
 
-  allFields.forEach(field => {
-    const val = formData.get(field);
-    if (!val || val === '') formData.delete(field);
-  });
+    try {
+      let finalYachtId = selectedYacht?.id;
 
-  // Append Availability Rules
-  if (availabilityRules.length > 0) {
-    formData.append("availability_rules", JSON.stringify(availabilityRules));
-  }
+      if (!isNewMode && selectedYacht) {
+        // UPDATE EXISTING
+        formData.append("_method", "PUT");
+        await api.post(`/yachts/${selectedYacht.id}`, formData); // [cite: 32]
+      } else {
+        // CREATE NEW
+        const res = await api.post("/yachts", formData);
+        finalYachtId = res.data.id; // [cite: 33]
+      }
 
-  try {
-    let finalYachtId = selectedYacht?.id;
-    
-    if (!isNewMode && selectedYacht) {
-      // UPDATE - Use PUT method
-      await api.put(`/yachts/${selectedYacht.id}`, formData);
-    } else {
-      // CREATE NEW - Try partner route first (which doesn't require 'manage yachts' permission)
-      try {
-        const res = await api.post("/partner/yachts", formData);
-        finalYachtId = res.data.id;
-      } catch (partnerErr: any) {
-        // If partner route fails, try regular route (for admins)
-        if (partnerErr.response?.status === 403 || partnerErr.response?.status === 404) {
-          const res = await api.post("/yachts", formData);
-          finalYachtId = res.data.id;
-        } else {
-          throw partnerErr;
+      // Bulk gallery submission (new files only)
+      for (const cat of Object.keys(galleryState)) {
+        const newFiles = galleryState[cat].filter(
+          (item) => item instanceof File,
+        );
+        if (newFiles.length > 0) {
+          const gData = new FormData();
+          newFiles.forEach((file) => gData.append("images[]", file));
+          gData.append("category", cat);
+          await api.post(`/yachts/${finalYachtId}/gallery`, gData); // [cite: 36]
         }
       }
-    }
 
-    // Bulk gallery submission (new files only)
-    for (const cat of Object.keys(galleryState)) {
-      const newFiles = galleryState[cat].filter(
-        (item) => item instanceof File,
+      toast.success(
+        isNewMode
+          ? "Vessel Registered Successfully"
+          : "Manifest Updated Successfully",
       );
-      if (newFiles.length > 0) {
-        const gData = new FormData();
-        newFiles.forEach((file) => gData.append("images[]", file));
-        gData.append("category", cat);
-        
-        // Try partner route first for gallery upload
-        try {
-          await api.post(`/partner/yachts/${finalYachtId}/gallery`, gData);
-        } catch (galleryErr: any) {
-          // If partner route fails, try regular route
-          if (galleryErr.response?.status === 403 || galleryErr.response?.status === 404) {
-            await api.post(`/yachts/${finalYachtId}/gallery`, gData);
-          } else {
-            throw galleryErr;
-          }
-        }
+      router.push("/admin/yachts"); // Return to list
+    } catch (err: any) {
+      if (err.response?.status === 422) {
+        setErrors(err.response.data.errors);
+        toast.error("Please fix validation errors");
+      } else {
+        console.error(err);
+        toast.error("Critical System Error");
       }
+    } finally {
+      setIsSubmitting(false);
     }
-
-    toast.success(
-      isNewMode
-        ? "Vessel Registered Successfully"
-        : "Manifest Updated Successfully",
-    );
-    router.push("/nl/dashboard/admin/yachts");
-  } catch (err: any) {
-    if (err.response?.status === 422) {
-      setErrors(err.response.data.errors);
-      toast.error("Please fix validation errors");
-    } else if (err.response?.status === 403) {
-      toast.error("Permission denied. You don't have access to perform this action.");
-    } else {
-      console.error(err);
-      toast.error(`Error ${err.response?.status}: ${err.response?.data?.message || "Critical System Error"}`);
-    }
-  } finally {
-    setIsSubmitting(false);
-  }
-};
+  };
 
   if (loading) {
     return (
@@ -388,7 +295,7 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
             <h1 className="text-2xl lg:text-3xl font-serif italic">
               {isNewMode
                 ? "New Vessel Registration"
-                : `Manifest: ${selectedYacht?.boat_name || "Loading..."}`}
+                : `Manifest: ${selectedYacht?.name || "Loading..."}`}
             </h1>
             <p className="text-blue-400 text-[10px] font-black uppercase tracking-[0.4em] mt-1">
               Registry Auth: Admin
@@ -409,7 +316,8 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                 {Object.keys(errors).map((key) => (
                   <p key={key} className="text-[10px] font-bold">
                     ● {key.toUpperCase()}: {errors[key][0]}
-                  </p>
+                    [cite_start]
+                  </p> // [cite: 81]
                 ))}
               </div>
             </div>
@@ -436,7 +344,7 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                   const file = e.target.files?.[0];
                   if (file) {
                     setMainFile(file);
-                    setMainPreview(URL.createObjectURL(file));
+                    setMainPreview(URL.createObjectURL(file)); // [cite: 88]
                   }
                 }}
               />
@@ -470,8 +378,8 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
               <div className="space-y-2">
                 <Label>Vessel Name</Label>
                 <Input
-                  name="boat_name"
-                  defaultValue={selectedYacht?.boat_name}
+                  name="name"
+                  defaultValue={selectedYacht?.name}
                   placeholder="e.g. M/Y NOBILITY"
                   required
                 />
@@ -483,6 +391,7 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                   type="number"
                   defaultValue={selectedYacht?.price}
                   placeholder="1500000"
+                  required
                 />
               </div>
               <div className="space-y-2">
@@ -492,29 +401,23 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                   type="number"
                   defaultValue={selectedYacht?.year}
                   placeholder="2024"
+                  required
                 />
               </div>
               <div className="space-y-2">
-                <Label>LOA (Length Overall)</Label>
+                <Label>Length (m)</Label>
                 <Input
-                  name="loa"
-                  defaultValue={selectedYacht?.loa}
+                  name="length"
+                  defaultValue={selectedYacht?.length}
                   placeholder="45.5"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>LWL (Waterline Length)</Label>
-                <Input
-                  name="lwl"
-                  defaultValue={selectedYacht?.lwl}
-                  placeholder="40.2"
+                  required
                 />
               </div>
               <div className="space-y-2">
                 <Label>Location</Label>
                 <Input
-                  name="where"
-                  defaultValue={selectedYacht?.where}
+                  name="location"
+                  defaultValue={selectedYacht?.location}
                   placeholder="e.g. Monaco"
                 />
               </div>
@@ -530,15 +433,6 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                   <option value="Sold">Sold</option>
                   <option value="Draft">Draft</option>
                 </select>
-              </div>
-              <div className="space-y-2">
-                <Label>Passenger Capacity</Label>
-                <Input
-                  name="passenger_capacity"
-                  type="number"
-                  defaultValue={selectedYacht?.passenger_capacity}
-                  placeholder="12"
-                />
               </div>
             </div>
           </div>
@@ -558,6 +452,22 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                 />
                 <div className="grid grid-cols-2 gap-6">
                   <div className="space-y-1">
+                    <Label>Hull Shape</Label>
+                    <Input
+                      name="hull_shape"
+                      defaultValue={selectedYacht?.hull_shape}
+                      placeholder="e.g. V-Bottom"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label>Material</Label>
+                    <Input
+                      name="construction_material"
+                      defaultValue={selectedYacht?.construction_material}
+                      placeholder="e.g. GRP / Polyester"
+                    />
+                  </div>
+                  <div className="space-y-1">
                     <Label>Beam (Width)</Label>
                     <Input
                       name="beam"
@@ -574,14 +484,6 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                     />
                   </div>
                   <div className="space-y-1">
-                    <Label>Air Draft (Clearance)</Label>
-                    <Input
-                      name="air_draft"
-                      defaultValue={selectedYacht?.air_draft}
-                      placeholder="e.g. 4.5m"
-                    />
-                  </div>
-                  <div className="space-y-1">
                     <Label>Displacement</Label>
                     <Input
                       name="displacement"
@@ -590,35 +492,11 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                     />
                   </div>
                   <div className="space-y-1">
-                    <Label>Hull Type</Label>
+                    <Label>Clearance</Label>
                     <Input
-                      name="hull_type"
-                      defaultValue={selectedYacht?.hull_type}
-                      placeholder="e.g. Monohull"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <Label>Hull Construction</Label>
-                    <Input
-                      name="hull_construction"
-                      defaultValue={selectedYacht?.hull_construction}
-                      placeholder="e.g. GRP / Polyester"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <Label>Hull Colour</Label>
-                    <Input
-                      name="hull_colour"
-                      defaultValue={selectedYacht?.hull_colour}
-                      placeholder="White"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <Label>Hull Number</Label>
-                    <Input
-                      name="hull_number"
-                      defaultValue={selectedYacht?.hull_number}
-                      placeholder="e.g. HULL001"
+                      name="clearance"
+                      defaultValue={selectedYacht?.clearance}
+                      placeholder="e.g. 4.5m"
                     />
                   </div>
                 </div>
@@ -631,19 +509,28 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                 />
                 <div className="bg-slate-50 p-6 border border-slate-100 grid grid-cols-2 gap-6">
                   <div className="space-y-1">
-                    <Label>Engine Manufacturer</Label>
+                    <Label>Engine Brand</Label>
                     <Input
-                      name="engine_manufacturer"
-                      defaultValue={selectedYacht?.engine_manufacturer}
+                      name="engine_brand"
+                      defaultValue={selectedYacht?.engine_brand}
                       placeholder="e.g. CAT / MTU"
                       className="bg-white"
                     />
                   </div>
                   <div className="space-y-1">
-                    <Label>Horse Power</Label>
+                    <Label>Model</Label>
                     <Input
-                      name="horse_power"
-                      defaultValue={selectedYacht?.horse_power}
+                      name="engine_model"
+                      defaultValue={selectedYacht?.engine_model}
+                      placeholder="e.g. V12 2000"
+                      className="bg-white"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label>Power (HP)</Label>
+                    <Input
+                      name="engine_power"
+                      defaultValue={selectedYacht?.engine_power}
                       placeholder="e.g. 2x 1500HP"
                       className="bg-white"
                     />
@@ -651,8 +538,8 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                   <div className="space-y-1">
                     <Label>Engine Hours</Label>
                     <Input
-                      name="hours"
-                      defaultValue={selectedYacht?.hours}
+                      name="engine_hours"
+                      defaultValue={selectedYacht?.engine_hours}
                       placeholder="e.g. 450 hrs"
                       className="bg-white"
                     />
@@ -660,8 +547,8 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                   <div className="space-y-1">
                     <Label>Fuel Type</Label>
                     <Input
-                      name="fuel"
-                      defaultValue={selectedYacht?.fuel}
+                      name="fuel_type"
+                      defaultValue={selectedYacht?.fuel_type}
                       placeholder="Diesel"
                       className="bg-white"
                     />
@@ -675,33 +562,6 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                       className="bg-white"
                     />
                   </div>
-                  <div className="space-y-1">
-                    <Label>Cruising Speed</Label>
-                    <Input
-                      name="cruising_speed"
-                      defaultValue={selectedYacht?.cruising_speed}
-                      placeholder="e.g. 25 kn"
-                      className="bg-white"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <Label>Gallons per Hour</Label>
-                    <Input
-                      name="gallons_per_hour"
-                      defaultValue={selectedYacht?.gallons_per_hour}
-                      placeholder="e.g. 50"
-                      className="bg-white"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <Label>Tankage</Label>
-                    <Input
-                      name="tankage"
-                      defaultValue={selectedYacht?.tankage}
-                      placeholder="e.g. 2000L"
-                      className="bg-white"
-                    />
-                  </div>
                 </div>
               </div>
             </div>
@@ -710,7 +570,7 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
             <div className="space-y-6">
               <SectionHeader
                 icon={<Bed size={14} />}
-                title="Accommodation & Facilities"
+                title="Accommodation & Systems"
               />
               <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                 <div className="space-y-1">
@@ -723,185 +583,98 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                   />
                 </div>
                 <div className="space-y-1">
-                  <Label>Berths</Label>
+                  <Label>Berths (Beds)</Label>
                   <Input
                     name="berths"
                     defaultValue={selectedYacht?.berths}
-                    placeholder="6"
+                    placeholder="6 + 2 Crew"
                   />
                 </div>
                 <div className="space-y-1">
-                  <Label>Toilet</Label>
+                  <Label>Heads (Baths)</Label>
                   <Input
-                    name="toilet"
-                    defaultValue={selectedYacht?.toilet}
+                    name="heads"
+                    type="number"
+                    defaultValue={selectedYacht?.heads}
                     placeholder="2"
                   />
                 </div>
                 <div className="space-y-1">
-                  <Label>Shower</Label>
+                  <Label>Water Tank</Label>
                   <Input
-                    name="shower"
-                    defaultValue={selectedYacht?.shower}
-                    placeholder="2"
+                    name="water_tank"
+                    defaultValue={selectedYacht?.water_tank}
+                    placeholder="e.g. 800L"
                   />
                 </div>
                 <div className="space-y-1">
-                  <Label>Bath</Label>
-                  <Input
-                    name="bath"
-                    defaultValue={selectedYacht?.bath}
-                    placeholder="1"
-                  />
+                  <Label>VAT Status</Label>
+                  <select
+                    name="vat_status"
+                    defaultValue={selectedYacht?.vat_status}
+                    className="w-full border-b border-slate-200 py-2.5 text-xs font-bold text-[#003566] bg-transparent outline-none"
+                  >
+                    <option value="VAT Included">VAT Included</option>
+                    <option value="VAT Excluded">VAT Excluded</option>
+                    <option value="Margin Scheme">Margin Scheme</option>
+                  </select>
                 </div>
                 <div className="space-y-1">
-                  <Label>Heating</Label>
+                  <Label>Steering</Label>
                   <Input
-                    name="heating"
-                    defaultValue={selectedYacht?.heating}
-                    placeholder="e.g. Central heating"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label>Cockpit Type</Label>
-                  <Input
-                    name="cockpit_type"
-                    defaultValue={selectedYacht?.cockpit_type}
-                    placeholder="e.g. Open / Closed"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label>Control Type</Label>
-                  <Input
-                    name="control_type"
-                    defaultValue={selectedYacht?.control_type}
-                    placeholder="e.g. Wheel / Joystick"
+                    name="steering"
+                    defaultValue={selectedYacht?.steering}
+                    placeholder="Wheel / Joystick"
                   />
                 </div>
               </div>
             </div>
 
-            {/* Sub-Section: Equipment Checkboxes */}
+            {/* Sub-Section: Equipment */}
             <div className="space-y-6">
               <SectionHeader
                 icon={<Box size={14} />}
                 title="Equipment & Features"
               />
-              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                {[
-                  'allow_bidding', 'flybridge', 'oven', 'microwave', 'fridge', 'freezer',
-                  'air_conditioning', 'navigation_lights', 'compass', 'depth_instrument',
-                  'wind_instrument', 'autopilot', 'gps', 'vhf', 'plotter', 'speed_instrument',
-                  'radar', 'life_raft', 'epirb', 'bilge_pump', 'fire_extinguisher',
-                  'mob_system', 'spinnaker', 'battery', 'battery_charger', 'generator',
-                  'inverter', 'television', 'cd_player', 'dvd_player', 'anchor',
-                  'spray_hood', 'bimini'
-                ].map((field) => (
-                  <div key={field} className="flex items-center gap-2 bg-slate-50/50 p-3">
-                    <input
-                      type="checkbox"
-                      name={field}
-                      id={field}
-                      defaultChecked={selectedYacht?.[field]}
-                      className="w-3 h-3 accent-[#003566] cursor-pointer"
-                    />
-                    <label
-                      htmlFor={field}
-                      className="text-[8px] font-black uppercase tracking-wider text-slate-600 cursor-pointer select-none flex-1"
-                    >
-                      {field.replace('_', ' ')}
-                    </label>
-                  </div>
-                ))}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-2">
+                  <Label>Navigation & Electronics</Label>
+                  <textarea
+                    name="navigation_electronics"
+                    defaultValue={selectedYacht?.navigation_electronics}
+                    placeholder="List all navigation equipment..."
+                    className="w-full border border-slate-200 p-4 text-xs font-medium text-[#003566] h-32 outline-none focus:border-blue-600 resize-none bg-slate-50/50"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Exterior & Deck Equipment</Label>
+                  <textarea
+                    name="exterior_equipment"
+                    defaultValue={selectedYacht?.exterior_equipment}
+                    placeholder="Anchor, Teak deck, Swimming ladder..."
+                    className="w-full border border-slate-200 p-4 text-xs font-medium text-[#003566] h-32 outline-none focus:border-blue-600 resize-none bg-slate-50/50"
+                  />
+                </div>
+              </div>
+              <div className="flex items-center gap-4 bg-blue-50/50 p-4 border border-blue-100 rounded-sm">
+                <input
+                  type="checkbox"
+                  name="trailer_included"
+                  id="trailer_check"
+                  defaultChecked={selectedYacht?.trailer_included}
+                  className="w-4 h-4 accent-[#003566] cursor-pointer"
+                />
+                <label
+                  htmlFor="trailer_check"
+                  className="text-[10px] font-black uppercase tracking-widest text-[#003566] cursor-pointer select-none flex items-center gap-2"
+                >
+                  <CheckSquare size={14} /> Trailer Included in Sale
+                </label>
               </div>
             </div>
           </div>
 
-          {/* NEW SECTION: SCHEDULING AUTHORITY */}
-          <div className="space-y-8 bg-slate-50 p-10 border border-slate-200 shadow-sm">
-             <div className="flex justify-between items-center border-b border-slate-200 pb-4">
-               <h3 className="text-[12px] font-black uppercase text-[#003566] tracking-[0.4em] flex items-center gap-3 italic">
-                  <Calendar size={20} className="text-blue-600" /> 04. Scheduling Authority
-                </h3>
-                <Button 
-                  type="button" 
-                  onClick={addAvailabilityRule}
-                  className="bg-[#003566] text-white text-[8px] font-black uppercase tracking-widest px-6 h-8"
-                >
-                  Add Window
-                </Button>
-             </div>
-
-             <div className="space-y-4">
-                {availabilityRules.map((rule, idx) => (
-                  <div key={idx} className="flex flex-wrap items-end gap-6 bg-white p-4 border border-slate-100 shadow-sm relative group">
-                    <div className="flex-1 min-w-[150px]">
-                      <Label>Day of Week</Label>
-                      <select
-                        value={rule.day_of_week}
-                        onChange={(e) => updateAvailabilityRule(idx, 'day_of_week', parseInt(e.target.value))}
-                        className="w-full bg-slate-50 p-2 border-b border-slate-200 text-[#003566] font-bold text-xs outline-none"
-                      >
-                        <option value={1}>Monday</option>
-                        <option value={2}>Tuesday</option>
-                        <option value={3}>Wednesday</option>
-                        <option value={4}>Thursday</option>
-                        <option value={5}>Friday</option>
-                        <option value={6}>Saturday</option>
-                        <option value={0}>Sunday</option>
-                      </select>
-                    </div>
-
-                    <div className="flex-1 min-w-[120px]">
-                      <Label>Start Time</Label>
-                      <div className="flex items-center gap-2 bg-slate-50 p-2 border-b border-slate-200">
-                        <Clock size={12} className="text-slate-400" />
-                        <input 
-                          type="time" 
-                          step="900" 
-                          value={rule.start_time}
-                          onChange={(e) => updateAvailabilityRule(idx, 'start_time', e.target.value)}
-                          className="bg-transparent text-xs font-bold text-[#003566] outline-none w-full"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="flex-1 min-w-[120px]">
-                      <Label>End Time</Label>
-                      <div className="flex items-center gap-2 bg-slate-50 p-2 border-b border-slate-200">
-                        <Clock size={12} className="text-slate-400" />
-                        <input 
-                          type="time" 
-                          step="900" 
-                          value={rule.end_time}
-                          onChange={(e) => updateAvailabilityRule(idx, 'end_time', e.target.value)}
-                          className="bg-transparent text-xs font-bold text-[#003566] outline-none w-full"
-                        />
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => removeAvailabilityRule(idx)}
-                      className="p-2 text-red-400 hover:text-red-600 transition-colors"
-                    >
-                      <Trash size={16} />
-                    </button>
-                  </div>
-                ))}
-
-                {availabilityRules.length === 0 && (
-                  <div className="text-center py-12 border-2 border-dashed border-slate-200 bg-white">
-                    <Calendar size={32} className="mx-auto text-slate-200 mb-2" />
-                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
-                      No Booking Windows Defined. Test Sails will be disabled.
-                    </p>
-                  </div>
-                )}
-             </div>
-          </div>
-
-          {/* 05. AI CARGO DROP */}
+          {/* 03. AI CARGO DROP */}
           <div className="space-y-8 bg-slate-900 p-12 border-l-8 border-blue-500 shadow-2xl">
             <div className="flex justify-between items-start">
               <div>
@@ -990,7 +763,7 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
             )}
           </div>
 
-          {/* --- SECTION 6: GALLERY --- */}
+          {/* --- SECTION 4: GALLERY --- */}
           {Object.keys(galleryState).map((category) => (
             <div key={category} className="space-y-8">
               <h3 className="text-[11px] font-black uppercase text-[#003566] tracking-widest flex items-center gap-2 italic border-b border-slate-200 pb-4">
@@ -1043,7 +816,7 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                               }));
                             } else {
                               deleteExistingImage(item.id, category, i);
-                            }
+                            } // [cite: 161]
                           }}
                           className="absolute inset-0 bg-red-600/90 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-all backdrop-blur-sm"
                         >
@@ -1098,7 +871,7 @@ function Label({ children }: { children: React.ReactNode }) {
     <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 pl-0.5">
       {children}
     </p>
-  );
+  ); // [cite: 172]
 }
 
 function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
@@ -1110,7 +883,7 @@ function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
         props.className,
       )}
     />
-  );
+  ); // [cite: 173]
 }
 
 function SectionHeader({
@@ -1124,5 +897,5 @@ function SectionHeader({
     <h4 className="text-[10px] font-black uppercase tracking-widest text-blue-600 flex items-center gap-2 mb-4">
       {icon} {title}
     </h4>
-  );
+  ); // [cite: 175]
 }
