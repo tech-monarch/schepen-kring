@@ -29,9 +29,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Schepenkring.nl| Elite Maritime Intelligence",
+  title: "Schepenkring.nl | Elite Maritime Intelligence",
   description:
-    "Advanced AI-powered management and optimization for the maritime industry.",
+    "The world's premier digital marketplace for luxury yachts and maritime excellence.",
   manifest: "/manifest.json",
 };
 
