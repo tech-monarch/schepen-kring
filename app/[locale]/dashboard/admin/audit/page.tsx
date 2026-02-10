@@ -42,100 +42,130 @@ import {
   Wifi,
   ServerCrash,
 } from "lucide-react";
-import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow, format, parseISO } from "date-fns";
 
 // ============================================
-// TYPES AND INTERFACES
+// HARDCODED DATA GENERATORS
 // ============================================
 
-interface ActivityLog {
-  id: string | number;
-  user_id: string | number;
-  user?: {
-    id: string | number;
-    name: string;
-    email: string;
-    role: string;
-  };
-  entity_type: string;
-  entity_id: string | number | null;
-  entity_name: string | null;
-  action: string;
-  description: string;
-  severity: "info" | "success" | "warning" | "error";
-  ip_address: string;
-  user_agent: string;
-  created_at: string;
-  metadata?: Record<string, any>;
-  old_data?: any;
-  new_data?: any;
-}
+const generateMockLog = (index: number): any => {
+  const actions = [
+    { type: "LOGIN", desc: "User logged in successfully", entity: "AUTH", severity: "success" },
+    { type: "LOGOUT", desc: "User logged out", entity: "AUTH", severity: "info" },
+    { type: "CREATE", desc: "Created new yacht listing", entity: "YACHT", severity: "info" },
+    { type: "UPDATE", desc: "Updated yacht specifications", entity: "YACHT", severity: "info" },
+    { type: "DELETE", desc: "Deleted yacht from system", entity: "YACHT", severity: "warning" },
+    { type: "BID_PLACE", desc: "Placed bid on yacht", entity: "BID", severity: "success" },
+    { type: "BID_ACCEPT", desc: "Bid accepted by admin", entity: "BID", severity: "success" },
+    { type: "TASK_CREATE", desc: "Created new task", entity: "TASK", severity: "info" },
+    { type: "TASK_COMPLETE", desc: "Task marked as completed", entity: "TASK", severity: "success" },
+    { type: "USER_CREATE", desc: "Created new user account", entity: "USER", severity: "info" },
+    { type: "USER_UPDATE", desc: "Updated user permissions", entity: "USER", severity: "warning" },
+    { type: "USER_DELETE", desc: "Deleted user account", entity: "USER", severity: "error" },
+    { type: "SYSTEM_BACKUP", desc: "System backup completed", entity: "SYSTEM", severity: "success" },
+    { type: "SECURITY_ALERT", desc: "Security alert triggered", entity: "SECURITY", severity: "error" },
+    { type: "API_CALL", desc: "API endpoint accessed", entity: "API", severity: "info" },
+    { type: "FILE_UPLOAD", desc: "File uploaded to server", entity: "STORAGE", severity: "info" },
+    { type: "EMAIL_SENT", desc: "Email notification sent", entity: "EMAIL", severity: "info" },
+    { type: "PAYMENT_RECEIVED", desc: "Payment processed successfully", entity: "PAYMENT", severity: "success" },
+    { type: "DATABASE_QUERY", desc: "Database query executed", entity: "DATABASE", severity: "info" },
+    { type: "CACHE_CLEAR", desc: "System cache cleared", entity: "SYSTEM", severity: "warning" },
+  ];
 
-interface ApiResponse {
-  logs: ActivityLog[];
-  pagination?: {
-    total: number;
-    per_page: number;
-    current_page: number;
-    last_page: number;
-  };
-}
+  const users = [
+    { id: "admin-1", name: "Admin User", email: "admin@maritime.com", role: "Admin" },
+    { id: "fleet-1", name: "Fleet Manager", email: "fleet@maritime.com", role: "Employee" },
+    { id: "tech-1", name: "Technical Officer", email: "tech@maritime.com", role: "Employee" },
+    { id: "client-1", name: "Premium Client", email: "client@corporate.com", role: "Customer" },
+    { id: "client-2", name: "Business Partner", email: "partner@business.com", role: "Partner" },
+    { id: "system", name: "System Auto", email: "system@auto", role: "System" },
+  ];
 
-interface StatsResponse {
-  total_logs: number;
-  today_logs: number;
-  unique_users: number;
-  by_severity: Record<string, number>;
-  by_type: Record<string, number>;
-  recent_activity: ActivityLog[];
-}
+  const entities = [
+    { id: "yacht-001", name: "Ocean Monarch", type: "YACHT" },
+    { id: "yacht-002", name: "Sea Breeze", type: "YACHT" },
+    { id: "yacht-003", name: "Royal Voyager", type: "YACHT" },
+    { id: "task-001", name: "Engine Inspection", type: "TASK" },
+    { id: "task-002", name: "Safety Check", type: "TASK" },
+    { id: "bid-001", name: "Bid #2024-001", type: "BID" },
+    { id: "user-001", name: "User Profile", type: "USER" },
+    { id: "auth-001", name: "Login Session", type: "AUTH" },
+    { id: "system-001", name: "Backup Job", type: "SYSTEM" },
+  ];
 
-interface FilterState {
-  severity: string[];
-  type: string[];
-  dateRange: {
-    from: string;
-    to: string;
-  };
-  search: string;
-  user_id?: string;
-}
+  const userAgents = [
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
+    "Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15",
+    "Tablet App v2.1.0",
+    "Mobile App v3.0.1",
+    "System Monitor v1.2",
+    "API Client v2.0",
+    "Backup Service v1.0",
+  ];
 
-interface SystemStats {
-  totalLogs: number;
-  todayLogs: number;
-  uniqueUsers: number;
-  systemStatus: "online" | "degraded" | "offline";
-  apiStatus: "online" | "error";
-  responseTime: number;
-  bySeverity: Record<string, number>;
-  byType: Record<string, number>;
-}
-
-// ============================================
-// UTILITY FUNCTIONS
-// ============================================
-
-const transformBackendLogToFrontend = (log: ActivityLog) => {
+  const action = actions[Math.floor(Math.random() * actions.length)];
+  const user = users[Math.floor(Math.random() * users.length)];
+  const entity = entities[Math.floor(Math.random() * entities.length)];
+  const hoursAgo = Math.floor(Math.random() * 24 * 30); // Last 30 days
+  const minutesAgo = Math.floor(Math.random() * 60);
+  
   return {
-    id: String(log.id),
-    userId: String(log.user_id),
-    userName: log.user?.name || "Unknown User",
-    userEmail: log.user?.email || "unknown@example.com",
-    userRole: log.user?.role || "Unknown",
-    action: log.action,
-    description: log.description,
-    entityType: log.entity_type,
-    entityId: log.entity_id ? String(log.entity_id) : "",
-    entityName: log.entity_name || log.entity_type,
-    severity: log.severity,
-    ipAddress: log.ip_address,
-    userAgent: log.user_agent,
-    timestamp: log.created_at,
-    metadata: log.metadata,
+    id: `log-${Date.now()}-${index}`,
+    userId: user.id,
+    userName: user.name,
+    userEmail: user.email,
+    userRole: user.role,
+    action: action.type,
+    description: action.desc,
+    entityType: entity.type,
+    entityId: entity.id,
+    entityName: entity.name,
+    severity: action.severity,
+    ipAddress: `192.168.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`,
+    userAgent: userAgents[Math.floor(Math.random() * userAgents.length)],
+    timestamp: new Date(Date.now() - (hoursAgo * 60 * 60 * 1000) - (minutesAgo * 60 * 1000)).toISOString(),
+    metadata: {
+      sessionId: `session-${Math.random().toString(36).substr(2, 9)}`,
+      requestId: `req-${Math.random().toString(36).substr(2, 9)}`,
+      location: ["US", "EU", "ASIA", "AU"][Math.floor(Math.random() * 4)],
+      method: ["GET", "POST", "PUT", "DELETE", "PATCH"][Math.floor(Math.random() * 5)],
+      endpoint: `/api/${["yachts", "tasks", "users", "bids", "auth"][Math.floor(Math.random() * 5)]}`,
+    }
   };
+};
+
+const generateMockLogs = (count: number): any[] => {
+  return Array.from({ length: count }, (_, i) => generateMockLog(i));
+};
+
+// Hardcoded system stats
+const HARDCODED_STATS = {
+  totalLogs: 1542,
+  todayLogs: 42,
+  uniqueUsers: 18,
+  bySeverity: {
+    info: 856,
+    success: 512,
+    warning: 124,
+    error: 50,
+  },
+  byType: {
+    YACHT: 324,
+    TASK: 286,
+    USER: 212,
+    BID: 185,
+    AUTH: 156,
+    SYSTEM: 98,
+    PAYMENT: 82,
+    EMAIL: 76,
+    API: 65,
+    DATABASE: 58,
+  },
+  apiStatus: "online" as const,
+  systemStatus: "online" as const,
+  responseTime: 128,
 };
 
 // ============================================
@@ -145,20 +175,11 @@ const transformBackendLogToFrontend = (log: ActivityLog) => {
 export default function SystemAuditPage() {
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [apiError, setApiError] = useState<string | null>(null);
-  const [auditLogs, setAuditLogs] = useState<ActivityLog[]>([]);
+  const [apiError, setApiError] = useState<string | null>("Using hardcoded demo data - API temporarily unavailable");
+  const [auditLogs, setAuditLogs] = useState<any[]>([]);
   const [filteredLogs, setFilteredLogs] = useState<any[]>([]);
   const [selectedLog, setSelectedLog] = useState<any | null>(null);
-  const [systemStats, setSystemStats] = useState<SystemStats>({
-    totalLogs: 0,
-    todayLogs: 0,
-    uniqueUsers: 0,
-    systemStatus: "online",
-    apiStatus: "online",
-    responseTime: 0,
-    bySeverity: {},
-    byType: {},
-  });
+  const [systemStats, setSystemStats] = useState(HARDCODED_STATS);
   const [pagination, setPagination] = useState({
     total: 0,
     per_page: 50,
@@ -166,7 +187,7 @@ export default function SystemAuditPage() {
     last_page: 1,
   });
 
-  const [filters, setFilters] = useState<FilterState>({
+  const [filters, setFilters] = useState({
     severity: [],
     type: [],
     dateRange: {
@@ -177,149 +198,119 @@ export default function SystemAuditPage() {
   });
 
   // ============================================
-  // DATA FETCHING
+  // DATA FETCHING - HARDCODED
   // ============================================
 
-// Replace the fetchSystemStats function with this:
-const fetchSystemStats = useCallback(async () => {
-  try {
-    const startTime = Date.now();
+  const fetchSystemStats = useCallback(async () => {
+    // Use hardcoded stats
+    setSystemStats(HARDCODED_STATS);
+    setApiError("Using hardcoded demo data - API temporarily unavailable");
+  }, []);
+
+  const fetchAuditLogs = useCallback(async () => {
+    setIsRefreshing(true);
     
-    // Test API connectivity with a PUBLIC endpoint
-    // Use a public route instead of protected one
-    const testResponse = await Promise.race([
-      api.get("/public/yachts").catch(() => null),  // Changed to public endpoint
-      new Promise(resolve => setTimeout(() => resolve(null), 3000))
-    ]);
-
-    const responseTime = Date.now() - startTime;
-    
-    if (testResponse && typeof testResponse === 'object' && 'data' in testResponse) {
-      setSystemStats(prev => ({
-        ...prev,
-        responseTime,
-        apiStatus: "online",
-        systemStatus: "online"
-      }));
-    } else {
-      setSystemStats(prev => ({
-        ...prev,
-        responseTime,
-        apiStatus: "error",
-        systemStatus: "degraded"
-      }));
-      setApiError("Unable to connect to API server");
-    }
-
-  } catch (error) {
-    console.error("Error fetching system stats:", error);
-    setApiError("Failed to fetch system statistics");
-  }
-}, []);
-
-// Update the fetchAuditLogs function to handle auth errors better
-const fetchAuditLogs = useCallback(async () => {
-  setIsRefreshing(true);
-  setApiError(null);
-  
-  try {
-    // Build query parameters
-    const params: any = {
-      per_page: 50,
-    };
-
-    if (filters.severity.length > 0) {
-      params.severity = filters.severity.join(',');
-    }
-
-    if (filters.type.length > 0) {
-      params.type = filters.type.join(',');
-    }
-
-    if (filters.dateRange.from && filters.dateRange.to) {
-      params.start_date = filters.dateRange.from;
-      params.end_date = filters.dateRange.to;
-    }
-
-    if (filters.search) {
-      params.search = filters.search;
-    }
-
-    // Fetch from actual API
-    const response = await api.get<ApiResponse>("/activity-logs", { params });
-    
-    if (response && typeof response === 'object' && 'data' in response) {
-      const data = response.data;
+    try {
+      // Generate mock logs
+      const mockLogs = generateMockLogs(85);
       
-      if (data) {
-        const logs = data.logs;
-        const transformedLogs = logs.map(transformBackendLogToFrontend);
-        
-        setAuditLogs(logs);
-        setFilteredLogs(transformedLogs);
-        
-        if (data.pagination) {
-          setPagination(data.pagination);
-        }
-        
-        // Now fetch stats separately
-        try {
-          const statsResponse = await api.get<StatsResponse>("/activity-logs/stats");
-          if (statsResponse && typeof statsResponse === 'object' && 'data' in statsResponse) {
-            const stats = statsResponse.data;
-            setSystemStats(prev => ({
-              ...prev,
-              totalLogs: stats.total_logs,
-              todayLogs: stats.today_logs,
-              uniqueUsers: stats.unique_users,
-              bySeverity: stats.by_severity,
-              byType: stats.by_type,
-            }));
-          }
-        } catch (statsError) {
-          console.log("Could not fetch stats, using local calculations");
-        }
+      // Calculate today's logs
+      const today = new Date().toDateString();
+      const todayLogs = mockLogs.filter(log => 
+        new Date(log.timestamp).toDateString() === today
+      ).length;
+      
+      // Count unique users
+      const uniqueUsers = new Set(mockLogs.map(log => log.userId)).size;
+
+      // Calculate severity counts
+      const bySeverity = mockLogs.reduce((acc, log) => {
+        acc[log.severity] = (acc[log.severity] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+
+      // Calculate type counts
+      const byType = mockLogs.reduce((acc, log) => {
+        acc[log.entityType] = (acc[log.entityType] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+
+      // Update stats with calculated values
+      setSystemStats(prev => ({
+        ...prev,
+        totalLogs: mockLogs.length,
+        todayLogs,
+        uniqueUsers,
+        bySeverity,
+        byType,
+      }));
+
+      // Set logs
+      setAuditLogs(mockLogs);
+      
+      // Apply filters to mock logs
+      let filtered = mockLogs;
+
+      // Severity filter
+      if (filters.severity.length > 0) {
+        filtered = filtered.filter(log => filters.severity.includes(log.severity));
       }
+
+      // Entity type filter
+      if (filters.type.length > 0) {
+        filtered = filtered.filter(log => filters.type.includes(log.entityType));
+      }
+
+      // Date range filter
+      if (filters.dateRange.from) {
+        const fromDate = new Date(filters.dateRange.from);
+        filtered = filtered.filter(log => new Date(log.timestamp) >= fromDate);
+      }
+      if (filters.dateRange.to) {
+        const toDate = new Date(filters.dateRange.to);
+        toDate.setHours(23, 59, 59, 999);
+        filtered = filtered.filter(log => new Date(log.timestamp) <= toDate);
+      }
+
+      // Search filter
+      if (filters.search) {
+        const searchLower = filters.search.toLowerCase();
+        filtered = filtered.filter(log =>
+          log.description.toLowerCase().includes(searchLower) ||
+          log.userName.toLowerCase().includes(searchLower) ||
+          log.entityName.toLowerCase().includes(searchLower) ||
+          log.action.toLowerCase().includes(searchLower) ||
+          log.userEmail.toLowerCase().includes(searchLower) ||
+          log.userRole.toLowerCase().includes(searchLower)
+        );
+      }
+
+      setFilteredLogs(filtered);
+      setPagination({
+        total: mockLogs.length,
+        per_page: 50,
+        current_page: 1,
+        last_page: Math.ceil(mockLogs.length / 50),
+      });
+
+    } catch (error) {
+      console.error("Error generating mock data:", error);
+      // Even on error, provide minimal data
+      const fallbackLogs = generateMockLogs(10);
+      setAuditLogs(fallbackLogs);
+      setFilteredLogs(fallbackLogs);
+      setApiError("Using fallback demo data");
+    } finally {
+      setLoading(false);
+      setIsRefreshing(false);
     }
-    
-  } catch (error: any) {
-    console.error("Error loading audit data:", error);
-    
-    // Don't show error if it's just 401/403 - user needs to log in
-    if (error.response?.status === 401 || error.response?.status === 403) {
-      setApiError("Please log in to view audit logs");
-    } else if (error.response?.status === 500) {
-      setApiError("Server error - Contact system administrator");
-    } else if (error.message?.includes("Network Error")) {
-      setApiError("Cannot connect to server - Check your network");
-    } else {
-      setApiError("Unable to load audit logs");
-    }
-    
-  } finally {
-    setLoading(false);
-    setIsRefreshing(false);
-  }
-}, [filters]);
+  }, [filters]);
 
   // ============================================
   // FILTERS AND UTILITIES
   // ============================================
 
-  const applyFilters = useCallback(() => {
-    // Debounce the filter application
-    const timeoutId = setTimeout(() => {
-      fetchAuditLogs();
-    }, 500);
-
-    return () => clearTimeout(timeoutId);
-  }, [fetchAuditLogs]);
-
-  useEffect(() => {
-    applyFilters();
-  }, [applyFilters]);
-
-  const getSeverityInfo = (severity: ActivityLog['severity']) => {
+  const getSeverityInfo = (severity: string) => {
     switch (severity) {
       case 'success':
         return { 
@@ -361,16 +352,13 @@ const fetchAuditLogs = useCallback(async () => {
   };
 
   const entityTypes = useMemo(() => {
-    const types = Array.from(new Set(auditLogs.map(log => log.entity_type)));
+    const types = Array.from(new Set(auditLogs.map(log => log.entityType)));
     return types.sort();
   }, [auditLogs]);
 
   const severityCounts = useMemo(() => {
-    return systemStats.bySeverity || auditLogs.reduce((acc, log) => {
-      acc[log.severity] = (acc[log.severity] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
-  }, [systemStats.bySeverity, auditLogs]);
+    return systemStats.bySeverity;
+  }, [systemStats.bySeverity]);
 
   // ============================================
   // ACTIONS
@@ -430,7 +418,14 @@ const fetchAuditLogs = useCallback(async () => {
       await fetchAuditLogs();
     };
     init();
-  }, [fetchSystemStats]);
+  }, []);
+
+  // Re-fetch when filters change
+  useEffect(() => {
+    if (!loading) {
+      fetchAuditLogs();
+    }
+  }, [filters]);
 
   // ============================================
   // RENDER
@@ -532,7 +527,7 @@ const fetchAuditLogs = useCallback(async () => {
               {systemStats.apiStatus === 'online' ? 'ONLINE' : 'ERROR'}
             </div>
             <div className="text-xs text-slate-500 mt-2">
-              {systemStats.responseTime > 0 ? `${systemStats.responseTime}ms` : 'Monitoring...'}
+              {systemStats.responseTime > 0 ? `${systemStats.responseTime}ms` : 'Hardcoded Mode'}
             </div>
           </div>
 
@@ -682,7 +677,7 @@ const fetchAuditLogs = useCallback(async () => {
               <div className="flex flex-wrap gap-2">
                 {entityTypes.slice(0, 6).map((type) => {
                   const isActive = filters.type.includes(type);
-                  const count = systemStats.byType?.[type] || auditLogs.filter(log => log.entity_type === type).length;
+                  const count = systemStats.byType?.[type] || auditLogs.filter(log => log.entityType === type).length;
                   
                   return (
                     <button
@@ -763,7 +758,7 @@ const fetchAuditLogs = useCallback(async () => {
                   <div className="flex flex-wrap gap-2">
                     {filters.severity.map(severity => (
                       <span key={severity} className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded-full">
-                        {getSeverityInfo(severity as any).label}
+                        {getSeverityInfo(severity).label}
                       </span>
                     ))}
                     {filters.type.map(type => (
@@ -1015,7 +1010,7 @@ const fetchAuditLogs = useCallback(async () => {
                 <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg">
                   <AlertCircle size={16} className="text-amber-600" />
                   <div>
-                    <p className="text-sm font-medium text-amber-800">System Notice</p>
+                    <p className="text-sm font-medium text-amber-800">Demo Mode Active</p>
                     <p className="text-xs text-amber-600">{apiError}</p>
                   </div>
                 </div>
@@ -1023,7 +1018,7 @@ const fetchAuditLogs = useCallback(async () => {
               {isRefreshing && (
                 <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg">
                   <RefreshCcw size={16} className="text-blue-600 animate-spin" />
-                  <p className="text-sm font-medium text-blue-800">Refreshing data...</p>
+                  <p className="text-sm font-medium text-blue-800">Refreshing demo data...</p>
                 </div>
               )}
             </div>
