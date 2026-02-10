@@ -180,7 +180,7 @@ export function DashboardHeader() {
     
     if (newState) {
       // If enabling notifications, fetch them
-      fetchNotifications();
+      // fetchNotifications();
       fetchUnreadCount();
       toast.success("Notifications enabled");
     } else {
@@ -194,7 +194,7 @@ export function DashboardHeader() {
   // Fetch data on mount and setup polling
   useEffect(() => {
     if (notificationsEnabled) {
-      fetchNotifications();
+      // fetchNotifications();
       fetchUnreadCount();
     }
 
@@ -412,7 +412,7 @@ export function DashboardHeader() {
         {/* Updated Notifications Dropdown with Toggle */}
         <DropdownMenu onOpenChange={(open) => {
           if (open && notificationsEnabled) {
-            fetchNotifications(); // Refresh when dropdown opens
+            // fetchNotifications(); // Refresh when dropdown opens
           }
         }}>
           <DropdownMenuTrigger className="relative text-slate-400 hover:text-[#003566] transition-colors outline-none">
@@ -496,12 +496,12 @@ export function DashboardHeader() {
                   <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">
                     No notifications yet
                   </p>
-                  <button 
+                  {/* <button 
                     onClick={fetchNotifications}
                     className="mt-2 text-[8px] font-bold uppercase tracking-widest text-blue-600 hover:text-blue-700"
                   >
                     Refresh
-                  </button>
+                  </button> */}
                 </div>
               ) : (
                 <div className="divide-y divide-slate-100">
