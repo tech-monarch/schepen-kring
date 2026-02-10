@@ -180,122 +180,127 @@ export default function SystemAuditPage() {
   // DATA FETCHING
   // ============================================
 
-  const fetchSystemStats = useCallback(async () => {
-    try {
-      const startTime = Date.now();
-      
-      // Test API connectivity
-      const testResponse = await Promise.race([
-        api.get<StatsResponse>("/activity-logs/stats").catch(() => null),
-        new Promise(resolve => setTimeout(() => resolve(null), 3000))
-      ]);
-
-      const responseTime = Date.now() - startTime;
-      
-      // Fix: Check if testResponse exists and has data property
-      if (testResponse && typeof testResponse === 'object' && 'data' in testResponse) {
-        const stats = testResponse.data as StatsResponse;
-        
-        setSystemStats(prev => ({
-          ...prev,
-          totalLogs: stats.total_logs,
-          todayLogs: stats.today_logs,
-          uniqueUsers: stats.unique_users,
-          bySeverity: stats.by_severity,
-          byType: stats.by_type,
-          responseTime,
-          apiStatus: "online",
-          systemStatus: "online"
-        }));
-      } else {
-        setSystemStats(prev => ({
-          ...prev,
-          responseTime,
-          apiStatus: "error",
-          systemStatus: "degraded"
-        }));
-        setApiError("Unable to fetch system stats");
-      }
-
-    } catch (error) {
-      console.error("Error fetching system stats:", error);
-      setApiError("Failed to fetch system statistics");
-    }
-  }, []);
-
-  const fetchAuditLogs = useCallback(async () => {
-    setIsRefreshing(true);
-    setApiError(null);
+// Replace the fetchSystemStats function with this:
+const fetchSystemStats = useCallback(async () => {
+  try {
+    const startTime = Date.now();
     
-    try {
-      // Build query parameters
-      const params: any = {
-        per_page: 50,
-      };
+    // Test API connectivity with a PUBLIC endpoint
+    // Use a public route instead of protected one
+    const testResponse = await Promise.race([
+      api.get("/public/yachts").catch(() => null),  // Changed to public endpoint
+      new Promise(resolve => setTimeout(() => resolve(null), 3000))
+    ]);
 
-      if (filters.severity.length > 0) {
-        params.severity = filters.severity.join(',');
-      }
+    const responseTime = Date.now() - startTime;
+    
+    if (testResponse && typeof testResponse === 'object' && 'data' in testResponse) {
+      setSystemStats(prev => ({
+        ...prev,
+        responseTime,
+        apiStatus: "online",
+        systemStatus: "online"
+      }));
+    } else {
+      setSystemStats(prev => ({
+        ...prev,
+        responseTime,
+        apiStatus: "error",
+        systemStatus: "degraded"
+      }));
+      setApiError("Unable to connect to API server");
+    }
 
-      if (filters.type.length > 0) {
-        params.type = filters.type.join(',');
-      }
+  } catch (error) {
+    console.error("Error fetching system stats:", error);
+    setApiError("Failed to fetch system statistics");
+  }
+}, []);
 
-      if (filters.dateRange.from && filters.dateRange.to) {
-        params.start_date = filters.dateRange.from;
-        params.end_date = filters.dateRange.to;
-      }
+// Update the fetchAuditLogs function to handle auth errors better
+const fetchAuditLogs = useCallback(async () => {
+  setIsRefreshing(true);
+  setApiError(null);
+  
+  try {
+    // Build query parameters
+    const params: any = {
+      per_page: 50,
+    };
 
-      if (filters.search) {
-        params.search = filters.search;
-      }
+    if (filters.severity.length > 0) {
+      params.severity = filters.severity.join(',');
+    }
 
-      // Fetch from actual API
-      const response = await api.get<ApiResponse>("/activity-logs", { params });
+    if (filters.type.length > 0) {
+      params.type = filters.type.join(',');
+    }
+
+    if (filters.dateRange.from && filters.dateRange.to) {
+      params.start_date = filters.dateRange.from;
+      params.end_date = filters.dateRange.to;
+    }
+
+    if (filters.search) {
+      params.search = filters.search;
+    }
+
+    // Fetch from actual API
+    const response = await api.get<ApiResponse>("/activity-logs", { params });
+    
+    if (response && typeof response === 'object' && 'data' in response) {
+      const data = response.data;
       
-      // Fix: Check if response exists and has data property
-      if (response && typeof response === 'object' && 'data' in response) {
-        const data = response.data;
+      if (data) {
+        const logs = data.logs;
+        const transformedLogs = logs.map(transformBackendLogToFrontend);
         
-        if (data) {
-          const logs = data.logs;
-          const transformedLogs = logs.map(transformBackendLogToFrontend);
-          
-          setAuditLogs(logs);
-          setFilteredLogs(transformedLogs);
-          
-          if (data.pagination) {
-            setPagination(data.pagination);
+        setAuditLogs(logs);
+        setFilteredLogs(transformedLogs);
+        
+        if (data.pagination) {
+          setPagination(data.pagination);
+        }
+        
+        // Now fetch stats separately
+        try {
+          const statsResponse = await api.get<StatsResponse>("/activity-logs/stats");
+          if (statsResponse && typeof statsResponse === 'object' && 'data' in statsResponse) {
+            const stats = statsResponse.data;
+            setSystemStats(prev => ({
+              ...prev,
+              totalLogs: stats.total_logs,
+              todayLogs: stats.today_logs,
+              uniqueUsers: stats.unique_users,
+              bySeverity: stats.by_severity,
+              byType: stats.by_type,
+            }));
           }
-          
-          // If we have filters, show message
-          if (filters.severity.length > 0 || filters.type.length > 0 || filters.search) {
-            setApiError(null);
-          }
+        } catch (statsError) {
+          console.log("Could not fetch stats, using local calculations");
         }
       }
-      
-    } catch (error: any) {
-      console.error("Error loading audit data:", error);
-      
-      // Provide helpful error message
-      if (error.response?.status === 401) {
-        setApiError("Unauthorized - Please log in to view audit logs");
-      } else if (error.response?.status === 403) {
-        setApiError("Forbidden - You don't have permission to view audit logs");
-      } else if (error.response?.status === 500) {
-        setApiError("Server error - Unable to fetch audit logs");
-      } else if (error.message?.includes("Network Error")) {
-        setApiError("Network error - Cannot connect to server");
-      } else {
-        setApiError("Failed to load audit logs. Please try again.");
-      }
-      
-    } finally {
-      setLoading(false);
-      setIsRefreshing(false);
     }
-  }, [filters]);
+    
+  } catch (error: any) {
+    console.error("Error loading audit data:", error);
+    
+    // Don't show error if it's just 401/403 - user needs to log in
+    if (error.response?.status === 401 || error.response?.status === 403) {
+      setApiError("Please log in to view audit logs");
+    } else if (error.response?.status === 500) {
+      setApiError("Server error - Contact system administrator");
+    } else if (error.message?.includes("Network Error")) {
+      setApiError("Cannot connect to server - Check your network");
+    } else {
+      setApiError("Unable to load audit logs");
+    }
+    
+  } finally {
+    setLoading(false);
+    setIsRefreshing(false);
+  }
+}, [filters]);
 
   // ============================================
   // FILTERS AND UTILITIES
