@@ -1,9 +1,7 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Search, Plus, X, Bot, Loader2, Minus, Sparkles, HelpCircle, ThumbsUp, ThumbsDown } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
-import { useTranslations } from "next-intl";
 import Image from "next/image";
 import axios from "axios";
 import { toast, Toaster } from "react-hot-toast";
@@ -22,39 +20,17 @@ interface FaqItem {
   updated_at: string;
 }
 
-// Add this interface for API response
-interface FaqResponse {
-  faqs: {
-    data: FaqItem[];
-    current_page: number;
-    total: number;
-  } | FaqItem[];
-  categories: string[];
-  total_count: number;
-}
-
-interface FaqStats {
-  total_faqs: number;
-  total_views: number;
-  total_helpful: number;
-  total_not_helpful: number;
-  categories: Array<{
-    category: string;
-    count: number;
-  }>;
-  popular_faqs: FaqItem[];
-}
-
 export default function Faq() {
-  const t = useTranslations("Faq");
-  const [categories, setCategories] = useState<any[]>([]);
   const [faqs, setFaqs] = useState<FaqItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({});
   const [categoryList, setCategoryList] = useState<string[]>(["All"]);
-  const [stats, setStats] = useState<FaqStats | null>(null);
+  const [showSearchIndicator, setShowSearchIndicator] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+  
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // AI States
   const [aiAnswer, setAiAnswer] = useState<string | null>(null);
@@ -63,14 +39,14 @@ export default function Faq() {
   const [showAiPanel, setShowAiPanel] = useState(false);
 
   // Fetch FAQs from Laravel API
-  const fetchFAQs = async () => {
+  const fetchFAQs = async (search: string = "", category: string = "all") => {
     try {
-      setIsLoading(true);
+      setIsSearching(true);
       const params = new URLSearchParams();
-      if (selectedCategory !== "all") params.append("category", selectedCategory);
-      if (searchQuery) params.append("search", searchQuery);
+      if (category !== "all") params.append("category", category);
+      if (search) params.append("search", search);
       
-      const response = await axios.get<FaqResponse>(`${API_BASE}/faqs?${params.toString()}`);
+      const response = await axios.get(`${API_BASE}/faqs?${params.toString()}`);
       
       // Handle both response structures
       let faqData: FaqItem[] = [];
@@ -82,47 +58,67 @@ export default function Faq() {
       
       setFaqs(faqData);
       
-      // Extract unique categories - FIXED TYPE ISSUE HERE
+      // Extract unique categories
       const categories = faqData.map((faq: FaqItem) => faq.category);
-      const uniqueCategories = Array.from(new Set(categories.filter((cat): cat is string => typeof cat === 'string')));
+      const uniqueCategories = Array.from(new Set(categories));
       setCategoryList(["All", ...uniqueCategories]);
       
-      // Group by category for display
-      const groupedCategories = uniqueCategories.map(category => ({
-        name: category,
-        items: faqData.filter((faq: FaqItem) => faq.category === category)
-      }));
-      setCategories(groupedCategories);
-      
+      // Hide search indicator after results load
+      setShowSearchIndicator(false);
     } catch (error) {
       console.error("Error fetching FAQs:", error);
       toast.error("Failed to load FAQs");
     } finally {
       setIsLoading(false);
+      setIsSearching(false);
     }
   };
 
-  // Fetch statistics
-  const fetchStats = async () => {
-    try {
-      const response = await axios.get<FaqStats>(`${API_BASE}/faqs/stats`);
-      setStats(response.data);
-    } catch (error) {
-      console.error("Error fetching stats:", error);
-    }
-  };
-
+  // Initial load and when category changes
   useEffect(() => {
     fetchFAQs();
-    fetchStats();
-  }, [selectedCategory, searchQuery]);
+  }, []);
+
+  // Handle search input with visual indicator
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchQuery(value);
+    
+    // Clear previous timeout
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+    
+    // Show search indicator
+    setShowSearchIndicator(true);
+    
+    // Set new timeout for search (800ms after typing stops)
+    searchTimeoutRef.current = setTimeout(() => {
+      fetchFAQs(value, selectedCategory);
+    }, 800);
+  };
+
+  // Handle category change
+  const handleCategoryChange = (category: string) => {
+    setSelectedCategory(category);
+    fetchFAQs(searchQuery, category === "All" ? "all" : category);
+  };
+
+  // Clean up timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Rate FAQ helpfulness
   const rateHelpful = async (id: number) => {
     try {
       await axios.post(`${API_BASE}/faqs/${id}/rate-helpful`);
       toast.success("Thank you for your feedback!");
-      fetchFAQs(); // Refresh to update counts
+      fetchFAQs(searchQuery, selectedCategory);
     } catch (error) {
       toast.error("Failed to submit rating");
     }
@@ -132,7 +128,7 @@ export default function Faq() {
     try {
       await axios.post(`${API_BASE}/faqs/${id}/rate-not-helpful`);
       toast.success("Thank you for your feedback!");
-      fetchFAQs();
+      fetchFAQs(searchQuery, selectedCategory);
     } catch (error) {
       toast.error("Failed to submit rating");
     }
@@ -148,7 +144,6 @@ export default function Faq() {
     setAiAnswerData(null);
 
     try {
-      // Using the new FAQ-specific AI endpoint
       const response = await axios.post(`${API_BASE}/faqs/ask-gemini`, {
         question: searchQuery
       });
@@ -156,14 +151,9 @@ export default function Faq() {
       setAiAnswer(response.data.answer);
       setAiAnswerData(response.data);
       toast.success("AI answered your question!");
-      
-      // Clear search after successful AI query
-      setSearchQuery("");
     } catch (error: any) {
       console.error("AI Error:", error);
-      const errorMessage = error.response?.data?.error || 
-        "Our maritime intelligence system is currently undergoing maintenance. Please try again in a moment.";
-      setAiAnswer(errorMessage);
+      setAiAnswer("Our maritime intelligence system is currently undergoing maintenance. Please try again in a moment.");
       toast.error("Failed to get AI answer");
     } finally {
       setIsAiLoading(false);
@@ -174,9 +164,26 @@ export default function Faq() {
   const handleResetFilters = () => {
     setSelectedCategory("all");
     setSearchQuery("");
+    fetchFAQs();
   };
 
-  if (isLoading) {
+  // Handle Enter key press
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !isAiLoading) {
+      handleAiSearch();
+    }
+  };
+
+  // Group FAQs by category
+  const groupedFaqs = categoryList
+    .filter(cat => cat !== "All")
+    .map(category => ({
+      name: category,
+      items: faqs.filter(faq => faq.category === category)
+    }))
+    .filter(group => group.items.length > 0);
+
+  if (isLoading && faqs.length === 0) {
     return (
       <div className="h-screen flex flex-col items-center justify-center bg-white">
         <Loader2 className="animate-spin text-[#003566] h-12 w-12 mb-4" />
@@ -205,64 +212,14 @@ export default function Faq() {
             Maritime Knowledge Hub
           </h1>
           <p className="text-blue-100/60 text-[10px] md:text-xs font-light uppercase tracking-[0.3em]">
-            {stats?.total_faqs || 0} FAQs • AI-Powered Assistance
+            {faqs.length} FAQs • AI-Powered Assistance
           </p>
         </div>
       </section>
 
       <main className="max-w-6xl mx-auto px-4 md:px-6 pb-40">
-        {/* --- STATS --- */}
-        {stats && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10 -mt-8">
-            <div className="bg-white p-4 border border-slate-200 shadow-sm rounded-lg">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                  <HelpCircle className="text-blue-600" size={20} />
-                </div>
-                <div>
-                  <p className="text-[8px] uppercase tracking-widest text-slate-400 font-black">FAQs</p>
-                  <p className="text-xl font-serif text-[#003566]">{stats.total_faqs}</p>
-                </div>
-              </div>
-            </div>
-            <div className="bg-white p-4 border border-slate-200 shadow-sm rounded-lg">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                  <Sparkles className="text-green-600" size={20} />
-                </div>
-                <div>
-                  <p className="text-[8px] uppercase tracking-widest text-slate-400 font-black">Views</p>
-                  <p className="text-xl font-serif text-[#003566]">{stats.total_views}</p>
-                </div>
-              </div>
-            </div>
-            <div className="bg-white p-4 border border-slate-200 shadow-sm rounded-lg">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center">
-                  <ThumbsUp className="text-emerald-600" size={20} />
-                </div>
-                <div>
-                  <p className="text-[8px] uppercase tracking-widest text-slate-400 font-black">Helpful</p>
-                  <p className="text-xl font-serif text-[#003566]">{stats.total_helpful}</p>
-                </div>
-              </div>
-            </div>
-            <div className="bg-white p-4 border border-slate-200 shadow-sm rounded-lg">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center">
-                  <ThumbsDown className="text-amber-600" size={20} />
-                </div>
-                <div>
-                  <p className="text-[8px] uppercase tracking-widest text-slate-400 font-black">Categories</p>
-                  <p className="text-xl font-serif text-[#003566]">{stats.categories?.length || 0}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* --- SEARCH / AI INPUT --- */}
-        <div className="relative mb-16">
+        <div className="relative mb-16 -mt-10">
           <div className="bg-white shadow-2xl border border-slate-100 rounded-xl p-2">
             <div className="flex flex-col md:flex-row items-stretch md:items-center">
               <div className="flex items-center flex-1">
@@ -271,18 +228,28 @@ export default function Faq() {
                   className="w-full h-12 md:h-16 px-4 text-base md:text-lg font-medium outline-none placeholder:text-slate-400"
                   placeholder="Search FAQs or ask the AI anything..."
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleAiSearch()}
+                  onChange={handleSearchChange}
+                  onKeyDown={handleKeyDown}
                 />
               </div>
               <button 
                 onClick={handleAiSearch}
-                disabled={isAiLoading}
+                disabled={isAiLoading || !searchQuery.trim()}
                 className="bg-[#003566] text-white px-6 h-12 md:h-16 font-bold uppercase text-[10px] tracking-widest hover:bg-blue-600 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg"
               >
                 {isAiLoading ? <Loader2 className="animate-spin h-4 w-4" /> : <><Sparkles size={14}/> Ask AI</>}
               </button>
             </div>
+            
+            {/* Search indicator */}
+            {showSearchIndicator && (
+              <div className="mt-3 px-4 flex items-center gap-2">
+                <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
+                <span className="text-[10px] text-slate-500 font-medium">
+                  Searching for "{searchQuery}"...
+                </span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -291,7 +258,7 @@ export default function Faq() {
           {categoryList.map((category) => (
             <button
               key={category}
-              onClick={() => setSelectedCategory(category === "All" ? "all" : category)}
+              onClick={() => handleCategoryChange(category)}
               className={`px-4 py-2 text-[10px] font-black uppercase tracking-widest border transition-all rounded-full ${
                 selectedCategory === (category === "All" ? "all" : category)
                   ? "bg-[#003566] text-white border-[#003566]"
@@ -318,7 +285,7 @@ export default function Faq() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 20 }}
-              className="mb-16 p-6 md:p-8 bg-gradient-to-r from-blue-50 to-slate-50 border border-blue-100 rounded-xl shadow-lg relative"
+              className="mb-16 p-6 md:p-8 bg-linear-to-r from-blue-50 to-slate-50 border border-blue-100 rounded-xl shadow-lg relative"
             >
               <button 
                 onClick={() => setShowAiPanel(false)} 
@@ -328,7 +295,7 @@ export default function Faq() {
               </button>
               
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
+                <div className="w-10 h-10 bg-linear-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
                   <Bot className="text-white" size={20} />
                 </div>
                 <div>
@@ -336,7 +303,7 @@ export default function Faq() {
                     Maritime AI Assistant
                   </p>
                   <p className="text-sm text-slate-600">
-                    Powered by Gemini AI • Trained on {stats?.total_faqs || 0} FAQs
+                    Powered by Gemini AI • Trained on {faqs.length} FAQs
                   </p>
                 </div>
               </div>
@@ -378,8 +345,20 @@ export default function Faq() {
           )}
         </AnimatePresence>
 
+        {/* --- LOADING INDICATOR --- */}
+        {isSearching && (
+          <div className="mb-8 p-4 bg-blue-50 border border-blue-100 rounded-lg flex items-center justify-center">
+            <div className="flex items-center gap-3">
+              <Loader2 className="animate-spin text-blue-600 h-5 w-5" />
+              <span className="text-blue-700 text-sm font-medium">
+                Searching through {faqs.length} FAQs...
+              </span>
+            </div>
+          </div>
+        )}
+
         {/* --- FAQ LIST --- */}
-        {faqs.length === 0 ? (
+        {!isSearching && faqs.length === 0 ? (
           <div className="text-center py-20">
             <HelpCircle className="mx-auto text-slate-300 h-16 w-16 mb-4" />
             <h3 className="text-xl font-serif text-slate-400 mb-2">No FAQs found</h3>
@@ -397,100 +376,77 @@ export default function Faq() {
               </button>
             )}
           </div>
-        ) : (
-          <div className="space-y-8">
-            {categories.map((category) => (
-              <div key={category.name} className="mb-12">
-                <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-500 mb-8 pb-4 border-b border-slate-100">
-                  {category.name} ({category.items.length})
-                </h2>
-                
+        ) : !isSearching && (
+          <>
+            {/* Results summary */}
+            <div className="mb-8 p-4 bg-slate-50 rounded-lg">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                  <h2 className="text-lg font-serif text-[#003566]">
+                    {selectedCategory === "all" ? "All FAQs" : selectedCategory}
+                  </h2>
+                  <p className="text-sm text-slate-500">
+                    Found {faqs.length} {faqs.length === 1 ? 'result' : 'results'}
+                    {searchQuery && ` for "${searchQuery}"`}
+                  </p>
+                </div>
+                {searchQuery && (
+                  <button
+                    onClick={() => {
+                      setSearchQuery("");
+                      fetchFAQs("", selectedCategory);
+                    }}
+                    className="text-[10px] uppercase tracking-widest text-slate-400 hover:text-red-500 flex items-center gap-2"
+                  >
+                    <X size={12} /> Clear search
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* FAQ Content */}
+            <div className="space-y-8">
+              {selectedCategory === "all" ? (
+                // Show grouped by category
+                groupedFaqs.map((category) => (
+                  <div key={category.name} className="mb-12">
+                    <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-500 mb-8 pb-4 border-b border-slate-100">
+                      {category.name} ({category.items.length})
+                    </h2>
+                    
+                    <div className="space-y-6">
+                      {category.items.map((item) => (
+                        <FaqItemCard
+                          key={item.id}
+                          item={item}
+                          expandedItems={expandedItems}
+                          setExpandedItems={setExpandedItems}
+                          rateHelpful={rateHelpful}
+                          rateNotHelpful={rateNotHelpful}
+                          showCategory={false}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                // Show filtered by category
                 <div className="space-y-6">
-                  {category.items.map((item: FaqItem) => (
-                    <motion.div
+                  {faqs.map((item) => (
+                    <FaqItemCard
                       key={item.id}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="bg-white border border-slate-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow"
-                    >
-                      <button
-                        onClick={() => setExpandedItems(prev => ({
-                          ...prev,
-                          [item.id]: !prev[item.id]
-                        }))}
-                        className="w-full p-6 text-left flex justify-between items-start group"
-                      >
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-3">
-                            <span className="bg-blue-100 text-blue-700 text-[8px] font-black uppercase tracking-widest px-3 py-1 rounded-full">
-                              {item.category}
-                            </span>
-                            <span className="text-[8px] text-slate-400">
-                              {item.views} views • {item.helpful} helpful
-                            </span>
-                          </div>
-                          
-                          <h3 className="text-xl font-medium text-slate-800 group-hover:text-blue-600 transition-colors">
-                            {item.question}
-                          </h3>
-                        </div>
-                        
-                        <div className="ml-4 text-slate-400">
-                          {expandedItems[item.id] ? (
-                            <Minus size={24} className="text-blue-600" />
-                          ) : (
-                            <Plus size={24} className="text-slate-300 group-hover:text-blue-400" />
-                          )}
-                        </div>
-                      </button>
-                      
-                      <AnimatePresence>
-                        {expandedItems[item.id] && (
-                          <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: "auto", opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            className="overflow-hidden"
-                          >
-                            <div className="px-6 pb-6 pt-2 border-t border-slate-100">
-                              <div className="text-slate-700 mb-6 whitespace-pre-wrap leading-relaxed">
-                                {item.answer}
-                              </div>
-                              
-                              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                                <div className="flex gap-4">
-                                  <button
-                                    onClick={() => rateHelpful(item.id)}
-                                    className="flex items-center gap-2 text-emerald-600 hover:text-emerald-700 text-[10px] font-black uppercase tracking-widest"
-                                  >
-                                    <ThumbsUp size={14} /> Helpful ({item.helpful})
-                                  </button>
-                                  <button
-                                    onClick={() => rateNotHelpful(item.id)}
-                                    className="flex items-center gap-2 text-amber-600 hover:text-amber-700 text-[10px] font-black uppercase tracking-widest"
-                                  >
-                                    <ThumbsDown size={14} /> Not Helpful ({item.not_helpful})
-                                  </button>
-                                </div>
-                                
-                                <p className="text-[8px] text-slate-400">
-                                  Added {new Date(item.created_at).toLocaleDateString('en-US', {
-                                    year: 'numeric',
-                                    month: 'short',
-                                    day: 'numeric'
-                                  })}
-                                </p>
-                              </div>
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </motion.div>
+                      item={item}
+                      expandedItems={expandedItems}
+                      setExpandedItems={setExpandedItems}
+                      rateHelpful={rateHelpful}
+                      rateNotHelpful={rateNotHelpful}
+                      showCategory={true}
+                    />
                   ))}
                 </div>
-              </div>
-            ))}
-          </div>
+              )}
+            </div>
+          </>
         )}
 
         {/* --- FOOTER --- */}
@@ -506,3 +462,105 @@ export default function Faq() {
     </div>
   );
 }
+
+// FAQ Item Component for reusability
+interface FaqItemCardProps {
+  item: FaqItem;
+  expandedItems: Record<string, boolean>;
+  setExpandedItems: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
+  rateHelpful: (id: number) => void;
+  rateNotHelpful: (id: number) => void;
+  showCategory: boolean;
+}
+
+const FaqItemCard: React.FC<FaqItemCardProps> = ({
+  item,
+  expandedItems,
+  setExpandedItems,
+  rateHelpful,
+  rateNotHelpful,
+  showCategory
+}) => {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="bg-white border border-slate-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow"
+    >
+      <button
+        onClick={() => setExpandedItems(prev => ({
+          ...prev,
+          [item.id]: !prev[item.id]
+        }))}
+        className="w-full p-6 text-left flex justify-between items-start group"
+      >
+        <div className="flex-1">
+          <div className="flex items-center gap-3 mb-3">
+            {showCategory && (
+              <span className="bg-blue-100 text-blue-700 text-[8px] font-black uppercase tracking-widest px-3 py-1 rounded-full">
+                {item.category}
+              </span>
+            )}
+            <span className="text-[8px] text-slate-400">
+              {item.views} views • {item.helpful} helpful
+            </span>
+          </div>
+          
+          <h3 className="text-xl font-medium text-slate-800 group-hover:text-blue-600 transition-colors">
+            {item.question}
+          </h3>
+        </div>
+        
+        <div className="ml-4 text-slate-400">
+          {expandedItems[item.id] ? (
+            <Minus size={24} className="text-blue-600" />
+          ) : (
+            <Plus size={24} className="text-slate-300 group-hover:text-blue-400" />
+          )}
+        </div>
+      </button>
+      
+      <AnimatePresence>
+        {expandedItems[item.id] && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="overflow-hidden"
+          >
+            <div className="px-6 pb-6 pt-2 border-t border-slate-100">
+              <div className="text-slate-700 mb-6 whitespace-pre-wrap leading-relaxed">
+                {item.answer}
+              </div>
+              
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div className="flex gap-4">
+                  <button
+                    onClick={() => rateHelpful(item.id)}
+                    className="flex items-center gap-2 text-emerald-600 hover:text-emerald-700 text-[10px] font-black uppercase tracking-widest"
+                  >
+                    <ThumbsUp size={14} /> Helpful ({item.helpful})
+                  </button>
+                  <button
+                    onClick={() => rateNotHelpful(item.id)}
+                    className="flex items-center gap-2 text-amber-600 hover:text-amber-700 text-[10px] font-black uppercase tracking-widest"
+                  >
+                    <ThumbsDown size={14} /> Not Helpful ({item.not_helpful})
+                  </button>
+                </div>
+                
+                <p className="text-[8px] text-slate-400">
+                  Added {new Date(item.created_at).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
+                  })}
+                </p>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+};
