@@ -721,7 +721,302 @@ export default function SystemAuditPage() {
           </div>
 
           {/* Rest of the component remains the same */}
-          {/* ... (filters, logs table, pagination, etc.) */}
+          
+        {/* System Logs Table */}
+        <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+          <div className="px-6 py-4 border-b border-slate-200 bg-slate-50">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold text-slate-800">System Activity Logs</h2>
+              <div className="text-sm text-slate-500">
+                Showing <span className="font-bold text-slate-700">{filteredLogs.length}</span> of{" "}
+                <span className="font-bold text-slate-700">{pagination.total}</span> logs
+                {pagination.last_page > 1 && (
+                  <span className="ml-2">(Page {pagination.current_page} of {pagination.last_page})</span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="divide-y divide-slate-100">
+            {loading ? (
+              // Loading skeleton
+              Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="p-6 animate-pulse">
+                  <div className="flex gap-4">
+                    <div className="w-12 h-12 bg-slate-200 rounded-lg" />
+                    <div className="flex-1 space-y-3">
+                      <div className="h-4 bg-slate-200 rounded w-3/4" />
+                      <div className="h-3 bg-slate-100 rounded w-1/2" />
+                      <div className="h-3 bg-slate-100 rounded w-2/3" />
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : apiError ? (
+              <div className="py-16 text-center">
+                <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-rose-100 flex items-center justify-center">
+                  <AlertCircle size={32} className="text-rose-500" />
+                </div>
+                <h3 className="text-lg font-bold text-slate-700 mb-2">Unable to load logs</h3>
+                <p className="text-slate-500 mb-6 max-w-md mx-auto">
+                  {apiError}
+                </p>
+                <div className="flex gap-3 justify-center">
+                  <button
+                    onClick={() => {
+                      setIsRefreshing(true);
+                      Promise.all([fetchSystemStats(), fetchSystemLogs()]).finally(() => {
+                        setIsRefreshing(false);
+                      });
+                    }}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                  >
+                    Retry
+                  </button>
+                  <button
+                    onClick={() => setApiError(null)}
+                    className="px-4 py-2 bg-white text-slate-600 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors font-medium"
+                  >
+                    Dismiss
+                  </button>
+                </div>
+              </div>
+            ) : filteredLogs.length > 0 ? (
+              filteredLogs.map((log, index) => {
+                const info = getSeverityInfo(log.event_type);
+                const Icon = info.icon;
+                
+                return (
+                  <motion.div
+                    key={log.id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.03 }}
+                    className="p-6 hover:bg-slate-50/50 transition-colors cursor-pointer group"
+                    onClick={() => setSelectedLog(selectedLog?.id === log.id ? null : log)}
+                  >
+                    <div className="flex gap-4">
+                      <div className="shrink-0">
+                        <div className={cn(
+                          "w-12 h-12 rounded-xl flex items-center justify-center",
+                          info.bg
+                        )}>
+                          <Icon className={info.color} size={20} />
+                        </div>
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between mb-3">
+                          <div>
+                            <p className="text-sm font-medium text-slate-800 leading-tight">
+                              {log.description}
+                            </p>
+                            <p className="text-xs text-slate-500 mt-1">
+                              {log.user ? (
+                                <span className="font-medium">{log.user.name}</span>
+                              ) : (
+                                <span className="font-medium">System</span>
+                              )} • {getEntityName(log)}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <span className={cn(
+                              "text-xs font-bold uppercase tracking-wider px-2 py-1 rounded",
+                              info.bg,
+                              info.color
+                            )}>
+                              {formatEventType(log.event_type)}
+                            </span>
+                            <ChevronRight 
+                              size={16} 
+                              className={cn(
+                                "text-slate-400 transition-transform",
+                                selectedLog?.id === log.id && "rotate-90"
+                              )} 
+                            />
+                          </div>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500">
+                          <span className="flex items-center gap-1">
+                            <Clock size={12} />
+                            {formatDistanceToNow(parseISO(log.created_at), { addSuffix: true })}
+                          </span>
+                          <span className="hidden md:inline">•</span>
+                          <span className="flex items-center gap-1">
+                            <User size={12} />
+                            {log.user?.email || 'system@auto'}
+                          </span>
+                          {log.ip_address && (
+                            <>
+                              <span className="hidden md:inline">•</span>
+                              <span className="font-mono text-xs bg-slate-100 px-2 py-1 rounded">
+                                {log.ip_address}
+                              </span>
+                            </>
+                          )}
+                        </div>
+
+                        {/* Expanded Details */}
+                        <AnimatePresence>
+                          {selectedLog?.id === log.id && (
+                            <motion.div
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: 'auto' }}
+                              exit={{ opacity: 0, height: 0 }}
+                              className="mt-4 pt-4 border-t border-slate-200"
+                            >
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {/* User Information */}
+                                <div>
+                                  <h4 className="text-sm font-bold text-slate-700 mb-3 flex items-center gap-2">
+                                    <User size={16} />
+                                    {log.user ? 'User Information' : 'System Action'}
+                                  </h4>
+                                  <div className="space-y-3">
+                                    {log.user ? (
+                                      <>
+                                        <div>
+                                          <p className="text-xs text-slate-500 uppercase tracking-wider font-medium mb-1">
+                                            Name
+                                          </p>
+                                          <p className="text-sm font-medium">{log.user.name}</p>
+                                        </div>
+                                        <div>
+                                          <p className="text-xs text-slate-500 uppercase tracking-wider font-medium mb-1">
+                                            Email
+                                          </p>
+                                          <p className="text-sm font-medium">{log.user.email}</p>
+                                        </div>
+                                        <div>
+                                          <p className="text-xs text-slate-500 uppercase tracking-wider font-medium mb-1">
+                                            Role
+                                          </p>
+                                          <p className="text-sm font-medium">{log.user.role}</p>
+                                        </div>
+                                      </>
+                                    ) : (
+                                      <div>
+                                        <p className="text-xs text-slate-500 uppercase tracking-wider font-medium mb-1">
+                                          Action
+                                        </p>
+                                        <p className="text-sm font-medium">System Automated Action</p>
+                                      </div>
+                                    )}
+                                    <div>
+                                      <p className="text-xs text-slate-500 uppercase tracking-wider font-medium mb-1">
+                                        Event Type
+                                      </p>
+                                      <p className="text-sm font-medium">{formatEventType(log.event_type)}</p>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Technical Details */}
+                                <div>
+                                  <h4 className="text-sm font-bold text-slate-700 mb-3 flex items-center gap-2">
+                                    <Settings size={16} />
+                                    Technical Details
+                                  </h4>
+                                  <div className="space-y-3">
+                                    <div>
+                                      <p className="text-xs text-slate-500 uppercase tracking-wider font-medium mb-1">
+                                        Entity Details
+                                      </p>
+                                      <p className="text-sm text-slate-600">
+                                        {getEntityName(log)}
+                                      </p>
+                                    </div>
+                                    <div>
+                                      <p className="text-xs text-slate-500 uppercase tracking-wider font-medium mb-1">
+                                        Timestamp
+                                      </p>
+                                      <p className="text-sm font-medium">
+                                        {format(parseISO(log.created_at), 'PPpp')}
+                                      </p>
+                                    </div>
+                                    {log.changes && Object.keys(log.changes).length > 0 && (
+                                      <div>
+                                        <p className="text-xs text-slate-500 uppercase tracking-wider font-medium mb-1">
+                                          Changes Made
+                                        </p>
+                                        <pre className="text-xs bg-slate-50 p-3 rounded overflow-auto max-h-40">
+                                          {JSON.stringify(log.changes, null, 2)}
+                                        </pre>
+                                      </div>
+                                    )}
+                                    {log.ip_address && (
+                                      <div>
+                                        <p className="text-xs text-slate-500 uppercase tracking-wider font-medium mb-1">
+                                          IP Address
+                                        </p>
+                                        <p className="text-sm font-mono">{log.ip_address}</p>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })
+            ) : (
+              <div className="py-16 text-center">
+                <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-slate-100 flex items-center justify-center">
+                  <Search size={32} className="text-slate-400" />
+                </div>
+                <h3 className="text-lg font-bold text-slate-700 mb-2">No activity logs found</h3>
+                <p className="text-slate-500 mb-6 max-w-md mx-auto">
+                  {filters.search || filters.event_type.length > 0 || filters.entity_type.length > 0
+                    ? "No activity logs match your current filters. Try adjusting your search criteria."
+                    : "No activity logs available yet. Start by creating tasks, updating yachts, or having users log in."}
+                </p>
+                {(filters.search || filters.event_type.length > 0 || filters.entity_type.length > 0) && (
+                  <button
+                    onClick={clearFilters}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                  >
+                    Clear all filters
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Pagination */}
+          {pagination.last_page > 1 && !apiError && (
+            <div className="px-6 py-4 border-t border-slate-200">
+              <div className="flex justify-between items-center">
+                <div className="text-sm text-gray-700">
+                  Showing {pagination.from} to {pagination.to} of {pagination.total} results
+                </div>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => changePage(pagination.current_page - 1)}
+                    disabled={pagination.current_page === 1 || loading}
+                    className="px-3 py-1 border rounded disabled:opacity-50 hover:bg-slate-50 transition-colors"
+                  >
+                    Previous
+                  </button>
+                  <span className="px-3 py-1">
+                    Page {pagination.current_page} of {pagination.last_page}
+                  </span>
+                  <button
+                    onClick={() => changePage(pagination.current_page + 1)}
+                    disabled={pagination.current_page === pagination.last_page || loading}
+                    className="px-3 py-1 border rounded disabled:opacity-50 hover:bg-slate-50 transition-colors"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
           
         </div>
 
