@@ -11,6 +11,17 @@ import { api } from "@/lib/api";
 const STORAGE_URL = "https://schepen-kring.nl/storage/";
 const PLACEHOLDER_IMAGE = "https://images.unsplash.com/photo-1569263979104-865ab7cd8d13?auto=format&fit=crop&w=600&q=80";
 
+// Helper function to generate slug from text
+function generateSlug(text: string): string {
+  if (!text) return '';
+  return text
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, '') // Remove special characters
+    .replace(/\s+/g, '-') // Replace spaces with hyphens
+    .replace(/--+/g, '-') // Replace multiple hyphens with single hyphen
+    .trim();
+}
+
 export default function PublicFleetGallery() {
   const [vessels, setVessels] = useState<any[]>([]);
   const [filter, setFilter] = useState("All");
@@ -131,6 +142,12 @@ export default function PublicFleetGallery() {
   const getYachtLength = (yacht: any) => yacht.loa || yacht.length || '--';
   const getYachtBuilder = (yacht: any) => yacht.builder || 'N/A';
   const getYachtDesigner = (yacht: any) => yacht.designer || 'N/A';
+
+  // Generate yacht detail URL with slug
+  const getYachtDetailUrl = (yacht: any) => {
+    const slug = generateSlug(yacht.boat_name || yacht.vessel_id || `yacht-${yacht.id}`);
+    return `/nl/yachts/${yacht.id}/${slug}`;
+  };
 
   if (loading) {
     return (
@@ -288,152 +305,156 @@ export default function PublicFleetGallery() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-16">
             <AnimatePresence mode="popLayout">
-              {sortedVessels.map((v: any) => (
-                <motion.div
-                  layout
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  key={v.id}
-                  className="group relative"
-                >
-                  <Link
-                    href={`/nl/yachts/${v.id}`}
-                    className="relative aspect-[4/5] overflow-hidden block bg-slate-100"
+              {sortedVessels.map((v: any) => {
+                const detailUrl = getYachtDetailUrl(v);
+                
+                return (
+                  <motion.div
+                    layout
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    key={v.id}
+                    className="group relative"
                   >
-                    <img
-                      src={getImageUrl(v.main_image)}
-                      onError={handleImageError}
-                      className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
-                      alt={getYachtName(v)}
-                    />
-                    <div className="absolute top-6 left-6 flex gap-2">
-                      <span
-                        className={cn(
-                          "px-4 py-2 text-[9px] font-black uppercase tracking-widest backdrop-blur-md border",
-                          getYachtStatus(v) === "For Bid"
-                            ? "bg-blue-600 text-white border-blue-700"
-                            : getYachtStatus(v) === "For Sale"
-                              ? "bg-emerald-600 text-white border-emerald-700"
-                              : getYachtStatus(v) === "Sold"
-                                ? "bg-red-600 text-white border-red-700"
-                                : "bg-slate-600 text-white border-slate-700",
-                        )}
-                      >
-                        {getYachtStatus(v) === "For Bid" 
-                          ? "Auction" 
-                          : getYachtStatus(v) === "For Sale"
-                            ? "For Sale"
-                            : getYachtStatus(v) === "Sold"
-                              ? "Sold"
-                              : "Draft"}
-                      </span>
-                      {v.vessel_id && (
-                        <span className="px-3 py-2 text-[8px] font-black uppercase tracking-widest bg-black/80 text-white">
-                          ID: {v.vessel_id}
-                        </span>
-                      )}
-                    </div>
-                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-6">
-                      <div className="flex justify-between items-end">
-                        <div>
-                          <p className="text-white text-xs font-black uppercase tracking-widest mb-1">
-                            {getYachtBuilder(v)}
-                          </p>
-                          <p className="text-white text-lg font-serif italic">
-                            {getYachtName(v)}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-white text-xs font-bold uppercase tracking-widest mb-1">
-                            Valuation
-                          </p>
-                          <p className="text-white text-2xl font-bold">
-                            {formatCurrency(v.price)}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </Link>
-
-                  <div className="pt-6">
-                    {/* VESSEL SPECS */}
-                    <div className="grid grid-cols-4 gap-2 mb-6">
-                      <div className="text-center">
-                        <p className="text-[8px] font-black uppercase text-slate-400 mb-1">
-                          LOA
-                        </p>
-                        <p className="text-sm font-serif font-bold text-[#003566]">
-                          {getYachtLength(v)}m
-                        </p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-[8px] font-black uppercase text-slate-400 mb-1">
-                          Year
-                        </p>
-                        <p className="text-sm font-serif font-bold text-[#003566]">
-                          {v.year || '--'}
-                        </p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-[8px] font-black uppercase text-slate-400 mb-1">
-                          Cabins
-                        </p>
-                        <p className="text-sm font-serif font-bold text-[#003566]">
-                          {v.cabins || "0"}
-                        </p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-[8px] font-black uppercase text-slate-400 mb-1">
-                          Beam
-                        </p>
-                        <p className="text-sm font-serif font-bold text-[#003566]">
-                          {v.beam || '--'}m
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* DETAILS */}
-                    <div className="space-y-3 mb-6">
-                      <div className="flex items-center gap-2 text-xs text-slate-600">
-                        <span className="font-bold">Designer:</span>
-                        <span>{getYachtDesigner(v)}</span>
-                      </div>
-                      {v.where && (
-                        <div className="flex items-center gap-2 text-xs text-slate-600">
-                          <span className="font-bold">Location:</span>
-                          <span>{v.where}</span>
-                        </div>
-                      )}
-                      {v.passenger_capacity && (
-                        <div className="flex items-center gap-2 text-xs text-slate-600">
-                          <span className="font-bold">Capacity:</span>
-                          <span>{v.passenger_capacity} passengers</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* ACTION BUTTONS */}
-                    <div className="flex gap-3">
-                      <Link 
-                        href={`/nl/yachts/${v.id}`}
-                        className="flex-1 bg-[#003566] text-white px-6 py-3 text-xs font-black uppercase tracking-widest hover:bg-blue-800 transition-all flex items-center justify-center gap-2"
-                      >
-                        <ArrowRight size={14} />
-                        View Details
-                      </Link>
-                      {getYachtStatus(v) === "For Bid" && (
-                        <Link 
-                          href={`/nl/yachts/${v.id}`}
-                          className="px-4 py-3 bg-amber-600 text-white hover:bg-amber-700 transition-all flex items-center justify-center"
+                    <Link
+                      href={detailUrl}
+                      className="relative aspect-[4/5] overflow-hidden block bg-slate-100"
+                    >
+                      <img
+                        src={getImageUrl(v.main_image)}
+                        onError={handleImageError}
+                        className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
+                        alt={getYachtName(v)}
+                      />
+                      <div className="absolute top-6 left-6 flex gap-2">
+                        <span
+                          className={cn(
+                            "px-4 py-2 text-[9px] font-black uppercase tracking-widest backdrop-blur-md border",
+                            getYachtStatus(v) === "For Bid"
+                              ? "bg-blue-600 text-white border-blue-700"
+                              : getYachtStatus(v) === "For Sale"
+                                ? "bg-emerald-600 text-white border-emerald-700"
+                                : getYachtStatus(v) === "Sold"
+                                  ? "bg-red-600 text-white border-red-700"
+                                  : "bg-slate-600 text-white border-slate-700",
+                          )}
                         >
-                          <Gavel size={16} />
+                          {getYachtStatus(v) === "For Bid" 
+                            ? "Auction" 
+                            : getYachtStatus(v) === "For Sale"
+                              ? "For Sale"
+                              : getYachtStatus(v) === "Sold"
+                                ? "Sold"
+                                : "Draft"}
+                        </span>
+                        {v.vessel_id && (
+                          <span className="px-3 py-2 text-[8px] font-black uppercase tracking-widest bg-black/80 text-white">
+                            ID: {v.vessel_id}
+                          </span>
+                        )}
+                      </div>
+                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-6">
+                        <div className="flex justify-between items-end">
+                          <div>
+                            <p className="text-white text-xs font-black uppercase tracking-widest mb-1">
+                              {getYachtBuilder(v)}
+                            </p>
+                            <p className="text-white text-lg font-serif italic">
+                              {getYachtName(v)}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-white text-xs font-bold uppercase tracking-widest mb-1">
+                              Valuation
+                            </p>
+                            <p className="text-white text-2xl font-bold">
+                              {formatCurrency(v.price)}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </Link>
+
+                    <div className="pt-6">
+                      {/* VESSEL SPECS */}
+                      <div className="grid grid-cols-4 gap-2 mb-6">
+                        <div className="text-center">
+                          <p className="text-[8px] font-black uppercase text-slate-400 mb-1">
+                            LOA
+                          </p>
+                          <p className="text-sm font-serif font-bold text-[#003566]">
+                            {getYachtLength(v)}m
+                          </p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-[8px] font-black uppercase text-slate-400 mb-1">
+                            Year
+                          </p>
+                          <p className="text-sm font-serif font-bold text-[#003566]">
+                            {v.year || '--'}
+                          </p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-[8px] font-black uppercase text-slate-400 mb-1">
+                            Cabins
+                          </p>
+                          <p className="text-sm font-serif font-bold text-[#003566]">
+                            {v.cabins || "0"}
+                          </p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-[8px] font-black uppercase text-slate-400 mb-1">
+                            Beam
+                          </p>
+                          <p className="text-sm font-serif font-bold text-[#003566]">
+                            {v.beam || '--'}m
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* DETAILS */}
+                      <div className="space-y-3 mb-6">
+                        <div className="flex items-center gap-2 text-xs text-slate-600">
+                          <span className="font-bold">Designer:</span>
+                          <span>{getYachtDesigner(v)}</span>
+                        </div>
+                        {v.where && (
+                          <div className="flex items-center gap-2 text-xs text-slate-600">
+                            <span className="font-bold">Location:</span>
+                            <span>{v.where}</span>
+                          </div>
+                        )}
+                        {v.passenger_capacity && (
+                          <div className="flex items-center gap-2 text-xs text-slate-600">
+                            <span className="font-bold">Capacity:</span>
+                            <span>{v.passenger_capacity} passengers</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* ACTION BUTTONS */}
+                      <div className="flex gap-3">
+                        <Link 
+                          href={detailUrl}
+                          className="flex-1 bg-[#003566] text-white px-6 py-3 text-xs font-black uppercase tracking-widest hover:bg-blue-800 transition-all flex items-center justify-center gap-2"
+                        >
+                          <ArrowRight size={14} />
+                          View Details
                         </Link>
-                      )}
+                        {getYachtStatus(v) === "For Bid" && (
+                          <Link 
+                            href={detailUrl}
+                            className="px-4 py-3 bg-amber-600 text-white hover:bg-amber-700 transition-all flex items-center justify-center"
+                          >
+                            <Gavel size={16} />
+                          </Link>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                </motion.div>
-              ))}
+                  </motion.div>
+                );
+              })}
             </AnimatePresence>
           </div>
         )}
@@ -484,7 +505,7 @@ export default function PublicFleetGallery() {
                   </div>
                 </div>
                 <Link 
-                  href={`/nl/yachts/${vessels[0].id}`}
+                  href={getYachtDetailUrl(vessels[0])}
                   className="inline-flex items-center gap-2 bg-[#003566] text-white px-8 py-4 text-xs font-black uppercase tracking-widest hover:bg-blue-800 transition-all"
                 >
                   Explore This Vessel
