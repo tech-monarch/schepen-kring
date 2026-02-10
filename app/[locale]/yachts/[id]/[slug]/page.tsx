@@ -735,22 +735,10 @@ export default function YachtTerminalPage() {
     <div className="min-h-screen bg-white text-[#333] selection:bg-blue-100">
       <Toaster position="top-center" />
 
-      {/* Simple Navigation */}
-      <header className="fixed top-20 left-0 right-0 z-50 bg-white border-b border-gray-200 h-16 flex items-center px-6 justify-between">
-        <Link
-          href="/nl/yachts"
-          className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-black transition-colors"
-        >
-          <ArrowLeft size={18} /> Terug naar overzicht
-        </Link>
-        <span className="text-sm font-medium text-gray-500">
-          REF: {yacht.vessel_id || yacht.id}
-        </span>
-      </header>
 
       <main className="pt-16">
         {/* HERO SECTION - Split Layout */}
-        <section className="w-full">
+        <section className="w-full top-20">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 h-[70vh]">
             {/* Left - Main Image */}
             <div className="relative bg-gray-100 overflow-hidden">
@@ -811,6 +799,19 @@ export default function YachtTerminalPage() {
             </div>
           </div>
         </section>
+        
+      {/* Simple Navigation */}
+      <header className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 h-16 flex items-center px-6 justify-between">
+        <Link
+          href="/nl/yachts"
+          className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-black transition-colors"
+        >
+          <ArrowLeft size={18} /> Terug naar overzicht
+        </Link>
+        <span className="text-sm font-medium text-gray-500">
+          REF: {yacht.vessel_id || yacht.id}
+        </span>
+      </header>
 
         {/* HEADER ACTION BAR */}
         <section className="bg-gray-50 py-6 px-8 border-y border-gray-200">
