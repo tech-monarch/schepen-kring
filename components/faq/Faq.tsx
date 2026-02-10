@@ -22,6 +22,29 @@ interface FaqItem {
   updated_at: string;
 }
 
+// Add this interface for API response
+interface FaqResponse {
+  faqs: {
+    data: FaqItem[];
+    current_page: number;
+    total: number;
+  } | FaqItem[];
+  categories: string[];
+  total_count: number;
+}
+
+interface FaqStats {
+  total_faqs: number;
+  total_views: number;
+  total_helpful: number;
+  total_not_helpful: number;
+  categories: Array<{
+    category: string;
+    count: number;
+  }>;
+  popular_faqs: FaqItem[];
+}
+
 export default function Faq() {
   const t = useTranslations("Faq");
   const [categories, setCategories] = useState<any[]>([]);
@@ -31,14 +54,13 @@ export default function Faq() {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({});
   const [categoryList, setCategoryList] = useState<string[]>(["All"]);
-  const [stats, setStats] = useState<any>(null);
+  const [stats, setStats] = useState<FaqStats | null>(null);
 
   // AI States
   const [aiAnswer, setAiAnswer] = useState<string | null>(null);
   const [aiAnswerData, setAiAnswerData] = useState<any>(null);
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [showAiPanel, setShowAiPanel] = useState(false);
-  const [sessionId] = useState(`faq-session-${Math.random().toString(36).substr(2, 9)}`);
 
   // Fetch FAQs from Laravel API
   const fetchFAQs = async () => {
@@ -48,14 +70,21 @@ export default function Faq() {
       if (selectedCategory !== "all") params.append("category", selectedCategory);
       if (searchQuery) params.append("search", searchQuery);
       
-      const response = await axios.get(`${API_BASE}/faqs?${params.toString()}`);
+      const response = await axios.get<FaqResponse>(`${API_BASE}/faqs?${params.toString()}`);
       
       // Handle both response structures
-      const faqData = response.data.faqs?.data || response.data.faqs || [];
+      let faqData: FaqItem[] = [];
+      if (Array.isArray(response.data.faqs)) {
+        faqData = response.data.faqs;
+      } else if (response.data.faqs && 'data' in response.data.faqs) {
+        faqData = response.data.faqs.data;
+      }
+      
       setFaqs(faqData);
       
-      // Extract unique categories
-      const uniqueCategories = Array.from(new Set(faqData.map((faq: FaqItem) => faq.category)));
+      // Extract unique categories - FIXED TYPE ISSUE HERE
+      const categories = faqData.map((faq: FaqItem) => faq.category);
+      const uniqueCategories = Array.from(new Set(categories.filter((cat): cat is string => typeof cat === 'string')));
       setCategoryList(["All", ...uniqueCategories]);
       
       // Group by category for display
@@ -76,7 +105,7 @@ export default function Faq() {
   // Fetch statistics
   const fetchStats = async () => {
     try {
-      const response = await axios.get(`${API_BASE}/faqs/stats`);
+      const response = await axios.get<FaqStats>(`${API_BASE}/faqs/stats`);
       setStats(response.data);
     } catch (error) {
       console.error("Error fetching stats:", error);
