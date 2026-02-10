@@ -50,32 +50,57 @@ import { formatDistanceToNow, format, parseISO } from "date-fns";
 // TYPES AND INTERFACES
 // ============================================
 
-interface AuditLog {
-  id: string;
-  userId: string;
-  userName: string;
-  userEmail: string;
-  userRole: string;
+interface ActivityLog {
+  id: string | number;
+  user_id: string | number;
+  user?: {
+    id: string | number;
+    name: string;
+    email: string;
+    role: string;
+  };
+  entity_type: string;
+  entity_id: string | number | null;
+  entity_name: string | null;
   action: string;
   description: string;
-  entityType: string;
-  entityId: string;
-  entityName: string;
   severity: "info" | "success" | "warning" | "error";
-  ipAddress: string;
-  userAgent: string;
-  timestamp: string;
+  ip_address: string;
+  user_agent: string;
+  created_at: string;
   metadata?: Record<string, any>;
+  old_data?: any;
+  new_data?: any;
+}
+
+interface ApiResponse {
+  logs: ActivityLog[];
+  pagination?: {
+    total: number;
+    per_page: number;
+    current_page: number;
+    last_page: number;
+  };
+}
+
+interface StatsResponse {
+  total_logs: number;
+  today_logs: number;
+  unique_users: number;
+  by_severity: Record<string, number>;
+  by_type: Record<string, number>;
+  recent_activity: ActivityLog[];
 }
 
 interface FilterState {
   severity: string[];
-  entityType: string[];
+  type: string[];
   dateRange: {
     from: string;
     to: string;
   };
   search: string;
+  user_id?: string;
 }
 
 interface SystemStats {
@@ -85,101 +110,32 @@ interface SystemStats {
   systemStatus: "online" | "degraded" | "offline";
   apiStatus: "online" | "error";
   responseTime: number;
+  bySeverity: Record<string, number>;
+  byType: Record<string, number>;
 }
 
 // ============================================
-// MOCK DATA GENERATORS
+// UTILITY FUNCTIONS
 // ============================================
 
-const generateMockLog = (index: number): AuditLog => {
-  const actions = [
-    { type: "LOGIN", desc: "User logged in successfully", entity: "AUTH", severity: "success" },
-    { type: "LOGOUT", desc: "User logged out", entity: "AUTH", severity: "info" },
-    { type: "CREATE", desc: "Created new yacht listing", entity: "YACHT", severity: "info" },
-    { type: "UPDATE", desc: "Updated yacht specifications", entity: "YACHT", severity: "info" },
-    { type: "DELETE", desc: "Deleted yacht from system", entity: "YACHT", severity: "warning" },
-    { type: "BID_PLACE", desc: "Placed bid on yacht", entity: "BID", severity: "success" },
-    { type: "BID_ACCEPT", desc: "Bid accepted by admin", entity: "BID", severity: "success" },
-    { type: "TASK_CREATE", desc: "Created new task", entity: "TASK", severity: "info" },
-    { type: "TASK_COMPLETE", desc: "Task marked as completed", entity: "TASK", severity: "success" },
-    { type: "USER_CREATE", desc: "Created new user account", entity: "USER", severity: "info" },
-    { type: "USER_UPDATE", desc: "Updated user permissions", entity: "USER", severity: "warning" },
-    { type: "USER_DELETE", desc: "Deleted user account", entity: "USER", severity: "error" },
-    { type: "SYSTEM_BACKUP", desc: "System backup completed", entity: "SYSTEM", severity: "success" },
-    { type: "SECURITY_ALERT", desc: "Security alert triggered", entity: "SECURITY", severity: "error" },
-    { type: "API_CALL", desc: "API endpoint accessed", entity: "API", severity: "info" },
-    { type: "FILE_UPLOAD", desc: "File uploaded to server", entity: "STORAGE", severity: "info" },
-    { type: "EMAIL_SENT", desc: "Email notification sent", entity: "EMAIL", severity: "info" },
-    { type: "PAYMENT_RECEIVED", desc: "Payment processed successfully", entity: "PAYMENT", severity: "success" },
-    { type: "DATABASE_QUERY", desc: "Database query executed", entity: "DATABASE", severity: "info" },
-    { type: "CACHE_CLEAR", desc: "System cache cleared", entity: "SYSTEM", severity: "warning" },
-  ];
-
-  const users = [
-    { id: "admin-1", name: "Admin User", email: "admin@maritime.com", role: "Admin" },
-    { id: "fleet-1", name: "Fleet Manager", email: "fleet@maritime.com", role: "Employee" },
-    { id: "tech-1", name: "Technical Officer", email: "tech@maritime.com", role: "Employee" },
-    { id: "client-1", name: "Premium Client", email: "client@corporate.com", role: "Customer" },
-    { id: "client-2", name: "Business Partner", email: "partner@business.com", role: "Partner" },
-    { id: "system", name: "System Auto", email: "system@auto", role: "System" },
-  ];
-
-  const entities = [
-    { id: "yacht-001", name: "Ocean Monarch", type: "YACHT" },
-    { id: "yacht-002", name: "Sea Breeze", type: "YACHT" },
-    { id: "yacht-003", name: "Royal Voyager", type: "YACHT" },
-    { id: "task-001", name: "Engine Inspection", type: "TASK" },
-    { id: "task-002", name: "Safety Check", type: "TASK" },
-    { id: "bid-001", name: "Bid #2024-001", type: "BID" },
-    { id: "user-001", name: "User Profile", type: "USER" },
-    { id: "auth-001", name: "Login Session", type: "AUTH" },
-    { id: "system-001", name: "Backup Job", type: "SYSTEM" },
-  ];
-
-  const userAgents = [
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
-    "Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15",
-    "Tablet App v2.1.0",
-    "Mobile App v3.0.1",
-    "System Monitor v1.2",
-    "API Client v2.0",
-    "Backup Service v1.0",
-  ];
-
-  const action = actions[Math.floor(Math.random() * actions.length)];
-  const user = users[Math.floor(Math.random() * users.length)];
-  const entity = entities[Math.floor(Math.random() * entities.length)];
-  const hoursAgo = Math.floor(Math.random() * 24 * 7);
-  const minutesAgo = Math.floor(Math.random() * 60);
-  
+const transformBackendLogToFrontend = (log: ActivityLog) => {
   return {
-    id: `log-${Date.now()}-${index}`,
-    userId: user.id,
-    userName: user.name,
-    userEmail: user.email,
-    userRole: user.role,
-    action: action.type,
-    description: action.desc,
-    entityType: entity.type,
-    entityId: entity.id,
-    entityName: entity.name,
-    severity: action.severity as any,
-    ipAddress: `192.168.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`,
-    userAgent: userAgents[Math.floor(Math.random() * userAgents.length)],
-    timestamp: new Date(Date.now() - (hoursAgo * 60 * 60 * 1000) - (minutesAgo * 60 * 1000)).toISOString(),
-    metadata: {
-      sessionId: `session-${Math.random().toString(36).substr(2, 9)}`,
-      requestId: `req-${Math.random().toString(36).substr(2, 9)}`,
-      location: ["US", "EU", "ASIA", "AU"][Math.floor(Math.random() * 4)],
-      method: ["GET", "POST", "PUT", "DELETE", "PATCH"][Math.floor(Math.random() * 5)],
-      endpoint: `/api/${["yachts", "tasks", "users", "bids", "auth"][Math.floor(Math.random() * 5)]}`,
-    }
+    id: String(log.id),
+    userId: String(log.user_id),
+    userName: log.user?.name || "Unknown User",
+    userEmail: log.user?.email || "unknown@example.com",
+    userRole: log.user?.role || "Unknown",
+    action: log.action,
+    description: log.description,
+    entityType: log.entity_type,
+    entityId: log.entity_id ? String(log.entity_id) : "",
+    entityName: log.entity_name || log.entity_type,
+    severity: log.severity,
+    ipAddress: log.ip_address,
+    userAgent: log.user_agent,
+    timestamp: log.created_at,
+    metadata: log.metadata,
   };
-};
-
-const generateMockLogs = (count: number): AuditLog[] => {
-  return Array.from({ length: count }, (_, i) => generateMockLog(i));
 };
 
 // ============================================
@@ -190,22 +146,30 @@ export default function SystemAuditPage() {
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
-  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
-  const [filteredLogs, setFilteredLogs] = useState<AuditLog[]>([]);
+  const [auditLogs, setAuditLogs] = useState<ActivityLog[]>([]);
+  const [filteredLogs, setFilteredLogs] = useState<any[]>([]);
   const [showDetails, setShowDetails] = useState<string | null>(null);
-  const [selectedLog, setSelectedLog] = useState<AuditLog | null>(null);
+  const [selectedLog, setSelectedLog] = useState<any | null>(null);
   const [systemStats, setSystemStats] = useState<SystemStats>({
     totalLogs: 0,
     todayLogs: 0,
     uniqueUsers: 0,
     systemStatus: "online",
-    apiStatus: "error",
+    apiStatus: "online",
     responseTime: 0,
+    bySeverity: {},
+    byType: {},
+  });
+  const [pagination, setPagination] = useState({
+    total: 0,
+    per_page: 50,
+    current_page: 1,
+    last_page: 1,
   });
 
   const [filters, setFilters] = useState<FilterState>({
     severity: [],
-    entityType: [],
+    type: [],
     dateRange: {
       from: "",
       to: "",
@@ -219,26 +183,43 @@ export default function SystemAuditPage() {
 
   const fetchSystemStats = useCallback(async () => {
     try {
-      // Try to get basic system info from available endpoints
       const startTime = Date.now();
       
       // Test API connectivity
       const testResponse = await Promise.race([
-        api.get("/yachts").catch(() => null),
+        api.get("/activity-logs/stats").catch(() => null),
         new Promise(resolve => setTimeout(() => resolve(null), 3000))
       ]);
 
       const responseTime = Date.now() - startTime;
       
-      setSystemStats(prev => ({
-        ...prev,
-        responseTime,
-        apiStatus: testResponse ? "online" : "error",
-        systemStatus: testResponse ? "online" : "degraded"
-      }));
+      if (testResponse && testResponse.data) {
+        const stats = testResponse.data as StatsResponse;
+        
+        setSystemStats(prev => ({
+          ...prev,
+          totalLogs: stats.total_logs,
+          todayLogs: stats.today_logs,
+          uniqueUsers: stats.unique_users,
+          bySeverity: stats.by_severity,
+          byType: stats.by_type,
+          responseTime,
+          apiStatus: "online",
+          systemStatus: "online"
+        }));
+      } else {
+        setSystemStats(prev => ({
+          ...prev,
+          responseTime,
+          apiStatus: "error",
+          systemStatus: "degraded"
+        }));
+        setApiError("Unable to fetch system stats");
+      }
 
     } catch (error) {
-      console.log("System stats check completed with demo data");
+      console.error("Error fetching system stats:", error);
+      setApiError("Failed to fetch system statistics");
     }
   }, []);
 
@@ -247,92 +228,90 @@ export default function SystemAuditPage() {
     setApiError(null);
     
     try {
-      // Always use mock data for now since API is not ready
-      const mockLogs = generateMockLogs(25);
-      
-      // Calculate stats from mock data
-      const today = new Date().toDateString();
-      const todayLogs = mockLogs.filter(log => 
-        new Date(log.timestamp).toDateString() === today
-      ).length;
-      
-      const uniqueUsers = new Set(mockLogs.map(log => log.userId)).size;
+      // Build query parameters
+      const params: any = {
+        per_page: 50,
+      };
 
-      setAuditLogs(mockLogs);
-      setFilteredLogs(mockLogs);
-      
-      setSystemStats(prev => ({
-        ...prev,
-        totalLogs: mockLogs.length,
-        todayLogs,
-        uniqueUsers,
-      }));
+      if (filters.severity.length > 0) {
+        params.severity = filters.severity.join(',');
+      }
 
-      setApiError("Using demo data - API endpoints not configured");
+      if (filters.type.length > 0) {
+        params.type = filters.type.join(',');
+      }
+
+      if (filters.dateRange.from && filters.dateRange.to) {
+        params.start_date = filters.dateRange.from;
+        params.end_date = filters.dateRange.to;
+      }
+
+      if (filters.search) {
+        params.search = filters.search;
+      }
+
+      // Fetch from actual API
+      const response = await api.get<ApiResponse>("/activity-logs", { params });
+      
+      if (response.data) {
+        const logs = response.data.logs;
+        const transformedLogs = logs.map(transformBackendLogToFrontend);
+        
+        setAuditLogs(logs);
+        setFilteredLogs(transformedLogs);
+        
+        if (response.data.pagination) {
+          setPagination(response.data.pagination);
+        }
+        
+        // If we have filters, show message
+        if (filters.severity.length > 0 || filters.type.length > 0 || filters.search) {
+          setApiError(null);
+        }
+      }
       
     } catch (error: any) {
       console.error("Error loading audit data:", error);
-      setApiError("Failed to load audit data. Using offline mode.");
       
-      // Fallback to minimal mock data
-      const fallbackLogs = generateMockLogs(10);
-      setAuditLogs(fallbackLogs);
-      setFilteredLogs(fallbackLogs);
+      // Provide helpful error message
+      if (error.response?.status === 401) {
+        setApiError("Unauthorized - Please log in to view audit logs");
+      } else if (error.response?.status === 403) {
+        setApiError("Forbidden - You don't have permission to view audit logs");
+      } else if (error.response?.status === 500) {
+        setApiError("Server error - Unable to fetch audit logs");
+      } else if (error.message?.includes("Network Error")) {
+        setApiError("Network error - Cannot connect to server");
+      } else {
+        setApiError("Failed to load audit logs. Please try again.");
+      }
+      
     } finally {
       setLoading(false);
       setIsRefreshing(false);
     }
-  }, []);
+  }, [filters]);
 
   // ============================================
   // FILTERS AND UTILITIES
   // ============================================
 
   const applyFilters = useCallback(() => {
-    let result = auditLogs;
-
-    // Severity filter
-    if (filters.severity.length > 0) {
-      result = result.filter(log => filters.severity.includes(log.severity));
-    }
-
-    // Entity type filter
-    if (filters.entityType.length > 0) {
-      result = result.filter(log => filters.entityType.includes(log.entityType));
-    }
-
-    // Date range filter
-    if (filters.dateRange.from) {
-      const fromDate = new Date(filters.dateRange.from);
-      result = result.filter(log => new Date(log.timestamp) >= fromDate);
-    }
-    if (filters.dateRange.to) {
-      const toDate = new Date(filters.dateRange.to);
-      toDate.setHours(23, 59, 59, 999);
-      result = result.filter(log => new Date(log.timestamp) <= toDate);
-    }
-
-    // Search filter
-    if (filters.search) {
-      const searchLower = filters.search.toLowerCase();
-      result = result.filter(log =>
-        log.description.toLowerCase().includes(searchLower) ||
-        log.userName.toLowerCase().includes(searchLower) ||
-        log.entityName.toLowerCase().includes(searchLower) ||
-        log.action.toLowerCase().includes(searchLower) ||
-        log.userEmail.toLowerCase().includes(searchLower) ||
-        log.userRole.toLowerCase().includes(searchLower)
-      );
-    }
-
-    setFilteredLogs(result);
-  }, [filters, auditLogs]);
+    // In this case, we're fetching filtered data from the API
+    // But we can also do client-side filtering for immediate feedback
+    fetchAuditLogs();
+  }, [fetchAuditLogs]);
 
   useEffect(() => {
-    applyFilters();
+    // Debounce the filter application
+    const timeoutId = setTimeout(() => {
+      applyFilters();
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
   }, [applyFilters]);
 
-  const getSeverityInfo = (severity: AuditLog['severity']) => {
+  const getSeverityInfo = (severity: ActivityLog['severity']) => {
     switch (severity) {
       case 'success':
         return { 
@@ -374,16 +353,16 @@ export default function SystemAuditPage() {
   };
 
   const entityTypes = useMemo(() => {
-    const types = Array.from(new Set(auditLogs.map(log => log.entityType)));
+    const types = Array.from(new Set(auditLogs.map(log => log.entity_type)));
     return types.sort();
   }, [auditLogs]);
 
   const severityCounts = useMemo(() => {
-    return auditLogs.reduce((acc, log) => {
+    return systemStats.bySeverity || auditLogs.reduce((acc, log) => {
       acc[log.severity] = (acc[log.severity] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
-  }, [auditLogs]);
+  }, [systemStats.bySeverity, auditLogs]);
 
   // ============================================
   // ACTIONS
@@ -417,13 +396,13 @@ export default function SystemAuditPage() {
   const clearFilters = () => {
     setFilters({
       severity: [],
-      entityType: [],
+      type: [],
       dateRange: { from: '', to: '' },
       search: ''
     });
   };
 
-  const toggleFilter = (type: 'severity' | 'entityType', value: string) => {
+  const toggleFilter = (type: 'severity' | 'type', value: string) => {
     setFilters(prev => {
       const current = prev[type];
       const updated = current.includes(value)
@@ -443,7 +422,7 @@ export default function SystemAuditPage() {
       await fetchAuditLogs();
     };
     init();
-  }, [fetchSystemStats, fetchAuditLogs]);
+  }, [fetchSystemStats]);
 
   // ============================================
   // RENDER
@@ -574,7 +553,7 @@ export default function SystemAuditPage() {
               const info = getSeverityInfo(severity);
               const Icon = info.icon;
               const count = severityCounts[severity] || 0;
-              const percentage = auditLogs.length > 0 ? (count / auditLogs.length) * 100 : 0;
+              const percentage = systemStats.totalLogs > 0 ? (count / systemStats.totalLogs) * 100 : 0;
               
               return (
                 <motion.div
@@ -694,13 +673,13 @@ export default function SystemAuditPage() {
               <h3 className="text-sm font-medium text-slate-700 mb-3">Entity Type</h3>
               <div className="flex flex-wrap gap-2">
                 {entityTypes.slice(0, 6).map((type) => {
-                  const isActive = filters.entityType.includes(type);
-                  const count = auditLogs.filter(log => log.entityType === type).length;
+                  const isActive = filters.type.includes(type);
+                  const count = systemStats.byType?.[type] || auditLogs.filter(log => log.entity_type === type).length;
                   
                   return (
                     <button
                       key={type}
-                      onClick={() => toggleFilter('entityType', type)}
+                      onClick={() => toggleFilter('type', type)}
                       className={cn(
                         "px-3 py-2 rounded-lg text-sm font-medium transition-all",
                         isActive
@@ -768,7 +747,7 @@ export default function SystemAuditPage() {
           </div>
           
           {/* Active Filters */}
-          {(filters.severity.length > 0 || filters.entityType.length > 0 || filters.dateRange.from || filters.dateRange.to || filters.search) && (
+          {(filters.severity.length > 0 || filters.type.length > 0 || filters.dateRange.from || filters.dateRange.to || filters.search) && (
             <div className="mt-6 pt-6 border-t border-slate-200">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -779,7 +758,7 @@ export default function SystemAuditPage() {
                         {getSeverityInfo(severity as any).label}
                       </span>
                     ))}
-                    {filters.entityType.map(type => (
+                    {filters.type.map(type => (
                       <span key={type} className="px-2 py-1 text-xs bg-amber-100 text-amber-700 rounded-full">
                         {type}
                       </span>
@@ -809,7 +788,10 @@ export default function SystemAuditPage() {
               <h2 className="text-lg font-bold text-slate-800">Audit Log Entries</h2>
               <div className="text-sm text-slate-500">
                 Showing <span className="font-bold text-slate-700">{filteredLogs.length}</span> of{" "}
-                <span className="font-bold text-slate-700">{auditLogs.length}</span> logs
+                <span className="font-bold text-slate-700">{pagination.total}</span> logs
+                {pagination.last_page > 1 && (
+                  <span className="ml-2">(Page {pagination.current_page} of {pagination.last_page})</span>
+                )}
               </div>
             </div>
           </div>
@@ -932,6 +914,12 @@ export default function SystemAuditPage() {
                                       </p>
                                       <p className="text-sm font-medium">{log.userRole}</p>
                                     </div>
+                                    <div>
+                                      <p className="text-xs text-slate-500 uppercase tracking-wider font-medium mb-1">
+                                        User ID
+                                      </p>
+                                      <p className="text-sm font-mono">{log.userId}</p>
+                                    </div>
                                   </div>
                                 </div>
 
@@ -952,10 +940,10 @@ export default function SystemAuditPage() {
                                     </div>
                                     <div>
                                       <p className="text-xs text-slate-500 uppercase tracking-wider font-medium mb-1">
-                                        User Agent
+                                        Entity Details
                                       </p>
-                                      <p className="text-sm text-slate-600 truncate" title={log.userAgent}>
-                                        {log.userAgent}
+                                      <p className="text-sm text-slate-600">
+                                        {log.entityType} / {log.entityId} / {log.entityName}
                                       </p>
                                     </div>
                                     <div>
@@ -966,6 +954,16 @@ export default function SystemAuditPage() {
                                         {format(parseISO(log.timestamp), 'PPpp')}
                                       </p>
                                     </div>
+                                    {log.metadata && (
+                                      <div>
+                                        <p className="text-xs text-slate-500 uppercase tracking-wider font-medium mb-1">
+                                          Metadata
+                                        </p>
+                                        <pre className="text-xs bg-slate-50 p-3 rounded overflow-auto max-h-40">
+                                          {JSON.stringify(log.metadata, null, 2)}
+                                        </pre>
+                                      </div>
+                                    )}
                                   </div>
                                 </div>
                               </div>
@@ -984,11 +982,11 @@ export default function SystemAuditPage() {
                 </div>
                 <h3 className="text-lg font-bold text-slate-700 mb-2">No logs found</h3>
                 <p className="text-slate-500 mb-6 max-w-md mx-auto">
-                  {filters.search || filters.severity.length > 0 || filters.entityType.length > 0
+                  {filters.search || filters.severity.length > 0 || filters.type.length > 0
                     ? "No audit logs match your current filters. Try adjusting your search criteria."
                     : "No audit logs available. Start by generating some activity in the system."}
                 </p>
-                {(filters.search || filters.severity.length > 0 || filters.entityType.length > 0) && (
+                {(filters.search || filters.severity.length > 0 || filters.type.length > 0) && (
                   <button
                     onClick={clearFilters}
                     className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
@@ -1009,9 +1007,15 @@ export default function SystemAuditPage() {
                 <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg">
                   <AlertCircle size={16} className="text-amber-600" />
                   <div>
-                    <p className="text-sm font-medium text-amber-800">Demo Mode Active</p>
-                    <p className="text-xs text-amber-600">Using generated data for demonstration</p>
+                    <p className="text-sm font-medium text-amber-800">System Notice</p>
+                    <p className="text-xs text-amber-600">{apiError}</p>
                   </div>
+                </div>
+              )}
+              {isRefreshing && (
+                <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg">
+                  <RefreshCcw size={16} className="text-blue-600 animate-spin" />
+                  <p className="text-sm font-medium text-blue-800">Refreshing data...</p>
                 </div>
               )}
             </div>
