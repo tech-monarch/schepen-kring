@@ -148,7 +148,6 @@ export default function SystemAuditPage() {
   const [apiError, setApiError] = useState<string | null>(null);
   const [auditLogs, setAuditLogs] = useState<ActivityLog[]>([]);
   const [filteredLogs, setFilteredLogs] = useState<any[]>([]);
-  const [showDetails, setShowDetails] = useState<string | null>(null);
   const [selectedLog, setSelectedLog] = useState<any | null>(null);
   const [systemStats, setSystemStats] = useState<SystemStats>({
     totalLogs: 0,
@@ -187,13 +186,14 @@ export default function SystemAuditPage() {
       
       // Test API connectivity
       const testResponse = await Promise.race([
-        api.get("/activity-logs/stats").catch(() => null),
+        api.get<StatsResponse>("/activity-logs/stats").catch(() => null),
         new Promise(resolve => setTimeout(() => resolve(null), 3000))
       ]);
 
       const responseTime = Date.now() - startTime;
       
-      if (testResponse && testResponse.data) {
+      // Fix: Check if testResponse exists and has data property
+      if (testResponse && typeof testResponse === 'object' && 'data' in testResponse) {
         const stats = testResponse.data as StatsResponse;
         
         setSystemStats(prev => ({
@@ -253,20 +253,25 @@ export default function SystemAuditPage() {
       // Fetch from actual API
       const response = await api.get<ApiResponse>("/activity-logs", { params });
       
-      if (response.data) {
-        const logs = response.data.logs;
-        const transformedLogs = logs.map(transformBackendLogToFrontend);
+      // Fix: Check if response exists and has data property
+      if (response && typeof response === 'object' && 'data' in response) {
+        const data = response.data;
         
-        setAuditLogs(logs);
-        setFilteredLogs(transformedLogs);
-        
-        if (response.data.pagination) {
-          setPagination(response.data.pagination);
-        }
-        
-        // If we have filters, show message
-        if (filters.severity.length > 0 || filters.type.length > 0 || filters.search) {
-          setApiError(null);
+        if (data) {
+          const logs = data.logs;
+          const transformedLogs = logs.map(transformBackendLogToFrontend);
+          
+          setAuditLogs(logs);
+          setFilteredLogs(transformedLogs);
+          
+          if (data.pagination) {
+            setPagination(data.pagination);
+          }
+          
+          // If we have filters, show message
+          if (filters.severity.length > 0 || filters.type.length > 0 || filters.search) {
+            setApiError(null);
+          }
         }
       }
       
@@ -297,18 +302,16 @@ export default function SystemAuditPage() {
   // ============================================
 
   const applyFilters = useCallback(() => {
-    // In this case, we're fetching filtered data from the API
-    // But we can also do client-side filtering for immediate feedback
-    fetchAuditLogs();
-  }, [fetchAuditLogs]);
-
-  useEffect(() => {
     // Debounce the filter application
     const timeoutId = setTimeout(() => {
-      applyFilters();
+      fetchAuditLogs();
     }, 500);
 
     return () => clearTimeout(timeoutId);
+  }, [fetchAuditLogs]);
+
+  useEffect(() => {
+    applyFilters();
   }, [applyFilters]);
 
   const getSeverityInfo = (severity: ActivityLog['severity']) => {
@@ -429,7 +432,7 @@ export default function SystemAuditPage() {
   // ============================================
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+    <div className="min-h-screen bg-linear-to-b from-slate-50 to-white">
       {/* Header */}
       <div className="border-b border-slate-200 bg-white/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-6 py-4">
@@ -826,7 +829,7 @@ export default function SystemAuditPage() {
                     onClick={() => setSelectedLog(selectedLog?.id === log.id ? null : log)}
                   >
                     <div className="flex gap-4">
-                      <div className="flex-shrink-0">
+                      <div className="shrink-0">
                         <div className={cn(
                           "w-12 h-12 rounded-xl flex items-center justify-center",
                           info.bg
