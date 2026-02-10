@@ -29,6 +29,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { toast, Toaster } from "react-hot-toast";
 
+import { Sidebar } from "@/components/dashboard/Sidebar";
 // Configuration
 const STORAGE_URL = "https://schepen-kring.nl/storage/";
 const PLACEHOLDER_IMAGE =
@@ -66,6 +67,7 @@ export default function YachtEditorPage() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [mainPreview, setMainPreview] = useState<string | null>(null);
   const [mainFile, setMainFile] = useState<File | null>(null);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [galleryState, setGalleryState] = useState<GalleryState>({
     Exterior: [],
     Interior: [],
@@ -374,6 +376,7 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
   return (
     <div className="min-h-screen bg-[#F8FAFC] pb-20">
       <Toaster position="top-right" />
+              <Sidebar onCollapse={setIsSidebarCollapsed} />
 
       {/* PAGE HEADER */}
       <div className="bg-[#003566] text-white p-8 sticky top-0 z-40 shadow-xl flex justify-between items-center">
