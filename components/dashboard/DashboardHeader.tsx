@@ -379,7 +379,7 @@ export function DashboardHeader() {
 
       {/* Brand Logo Section */}
       <div className="flex items-center gap-12">
-        <Link href="/nl/dashboard" className="flex items-center group">
+        <Link href="#" className="flex items-center group">
           <Image
             src={ANSWER24LOGO}
             alt="Schepenkring Logo"
@@ -408,6 +408,12 @@ export function DashboardHeader() {
       {/* User Actions */}
       <div className="flex items-center gap-8">
         <ReturnToAdmin />
+    <Link href="/yachts">
+      <button className="px-6 py-3 rounded-2xl bg-black text-white hover:bg-gray-800 transition">
+        Frontend
+      </button>
+    </Link>
+        
         
         {/* Updated Notifications Dropdown with Toggle */}
         <DropdownMenu onOpenChange={(open) => {
