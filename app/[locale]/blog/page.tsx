@@ -1,14 +1,14 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Search, Calendar, BookOpen, ArrowRight, Zap } from "lucide-react";
+import { Search, Calendar, ArrowRight, X } from "lucide-react";
 import Image from "next/image";
 import { Link } from "@/i18n/navigation";
 import { Blog } from "@/types/blog.d";
 import BlogSkeleton from "@/components/blog/BlogSkeleton";
 import BLOGIMAGEPLACEHOLDER from "@/public/image.png";
 import { useTranslations, useLocale } from "next-intl";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -28,12 +28,8 @@ const BlogComponent = () => {
   const fetchBlogs = useCallback(async () => {
     setIsLoading(true);
     try {
-      // Fetch all published blogs from public API
       const response = await fetch(`${API_BASE}/public/blogs?status=published`);
-      
-      if (!response.ok) {
-        throw new Error(`Failed to fetch blogs: ${response.status}`);
-      }
+      if (!response.ok) throw new Error(`Failed to fetch blogs: ${response.status}`);
       
       const result = await response.json();
       const allBlogs = result.data.map((blog: any) => ({
@@ -45,7 +41,6 @@ const BlogComponent = () => {
       setBlogs(allBlogs);
       setFilteredBlogs(allBlogs);
       
-      // Try to get featured blogs, otherwise use first blog
       try {
         const featuredResponse = await fetch(`${API_BASE}/public/blogs/featured`);
         if (featuredResponse.ok) {
@@ -55,17 +50,11 @@ const BlogComponent = () => {
             blog_image: featuredResult.data.featured_image,
             published_at: featuredResult.data.created_at
           });
-        } else {
-          // Fallback: use first blog as featured
-          if (allBlogs.length > 0) {
+        } else if (allBlogs.length > 0) {
             setFeaturedBlog(allBlogs[0]);
-          }
         }
       } catch (featuredError) {
-        console.error("Error fetching featured blog:", featuredError);
-        if (allBlogs.length > 0) {
-          setFeaturedBlog(allBlogs[0]);
-        }
+        if (allBlogs.length > 0) setFeaturedBlog(allBlogs[0]);
       }
     } catch (err) {
       console.error("Error fetching blogs:", err);
@@ -79,204 +68,159 @@ const BlogComponent = () => {
     fetchBlogs();
   }, [fetchBlogs]);
 
-  // Search functionality
   useEffect(() => {
     if (searchQuery.trim() === "") {
       setFilteredBlogs(blogs);
     } else {
       const filtered = blogs.filter(blog =>
         blog.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (blog.excerpt && blog.excerpt.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (blog.content && blog.content.toLowerCase().includes(searchQuery.toLowerCase()))
+        (blog.excerpt && blog.excerpt.toLowerCase().includes(searchQuery.toLowerCase()))
       );
       setFilteredBlogs(filtered);
     }
   }, [searchQuery, blogs]);
 
-  const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      // Search is already handled by useEffect
-    }
-  };
-
   if (isLoading) return <BlogSkeleton />;
   
   if (error) return (
-    <div className="h-screen flex items-center justify-center bg-white text-[#003566] font-serif italic text-2xl">
+    <div className="h-screen flex items-center justify-center bg-gray-50 text-slate-600">
       {error}
     </div>
   );
 
-  // Separate featured blog from others if it's in the list
-  const otherBlogs = filteredBlogs.filter(blog => 
-    !featuredBlog || blog.id !== featuredBlog.id
-  );
-
-  // If no blogs found
-  if (blogs.length === 0 && !isLoading) {
-    return (
-      <div className="min-h-screen bg-white text-[#003566]">
-        <section className="relative pt-28 pb-12 md:pt-40 md:pb-20 px-6 md:px-12 max-w-[1400px] mx-auto border-b border-slate-100">
-          <div className="text-center py-20">
-            <h1 className="text-5xl md:text-8xl font-serif tracking-tighter leading-[0.9] mb-8 text-[#003566]">
-              The <span className="italic font-light text-slate-300">Journal</span>
-            </h1>
-            <p className="text-slate-500 text-xl font-light mb-12">
-              No articles published yet. Check back soon!
-            </p>
-          </div>
-        </section>
-      </div>
-    );
-  }
+  const otherBlogs = filteredBlogs.filter(blog => !featuredBlog || blog.id !== featuredBlog.id);
 
   return (
-    <div className="min-h-screen bg-white text-[#003566]">
-      {/* --- Editorial Hero Section --- */}
-      <section className="relative pt-28 pb-12 md:pt-40 md:pb-20 px-6 md:px-12 max-w-[1400px] mx-auto border-b border-slate-100">
-        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8 md:gap-12">
-          <div className="max-w-3xl">
-            <motion.div 
-              initial={{ opacity: 0, x: -20 }} 
-              animate={{ opacity: 1, x: 0 }} 
-              className="flex items-center gap-3 md:gap-4 mb-4 md:mb-6"
-            >
-              <span className="w-8 md:w-12 h-[1px] bg-blue-600" />
-              <p className="text-[9px] md:text-[11px] font-black uppercase tracking-[0.4em] text-blue-600">
-                {t("new_updates_label")}
-              </p>
-            </motion.div>
+    <div className="min-h-screen bg-gray-50/50 text-slate-800 font-sans selection:bg-blue-100">
+      
+      {/* --- Clean Hero Section --- */}
+      <section className="pt-32 pb-16 px-6 md:px-12 max-w-7xl mx-auto text-center">
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }} 
+          animate={{ opacity: 1, y: 0 }} 
+          className="max-w-3xl mx-auto space-y-6"
+        >
+          <span className="inline-block py-1 px-3 rounded-full bg-blue-50 text-blue-600 text-xs font-semibold tracking-wide uppercase">
+            {t("new_updates_label") || "Our Blog"}
+          </span>
+          <h1 className="text-4xl md:text-6xl font-serif text-[#003566] tracking-tight leading-tight">
+            Insights & <span className="text-blue-600">Updates</span>
+          </h1>
+          <p className="text-slate-500 text-lg md:text-xl max-w-2xl mx-auto leading-relaxed">
+            {t("subtitle")}
+          </p>
 
-            <h1 className="text-5xl md:text-8xl font-serif tracking-tighter leading-[0.9] mb-4 md:mb-6 text-[#003566]">
-              The <span className="italic font-light text-slate-300">Journal</span>
-            </h1>
-            
-            <p className="text-slate-500 text-base md:text-xl font-light max-w-xl tracking-tight leading-relaxed">
-              {t("subtitle")}
-            </p>
-          </div>
-
-          <div className="relative w-full lg:w-96 group mt-4 lg:mt-0">
+          {/* Search Pill */}
+          <div className="relative max-w-md mx-auto mt-8 group">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
             <Input
-              placeholder={t("search_placeholder")}
+              placeholder={t("search_placeholder") || "Search articles..."}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyPress={handleSearch}
-              className="w-full h-12 md:h-14 pl-12 bg-slate-50 border-slate-200 rounded-none text-[#003566] placeholder:text-slate-400 focus-visible:ring-1 focus-visible:ring-blue-600 transition-all uppercase text-[9px] md:text-[10px] font-bold tracking-widest"
+              className="w-full h-12 pl-11 pr-4 bg-white border-slate-200 rounded-full shadow-sm text-slate-700 placeholder:text-slate-400 focus-visible:ring-2 focus-visible:ring-blue-100 focus-visible:border-blue-400 transition-all"
             />
             {searchQuery && (
-              <p className="text-[10px] text-slate-400 mt-2">
-                Found {filteredBlogs.length} {filteredBlogs.length === 1 ? 'article' : 'articles'}
-              </p>
+              <button onClick={() => setSearchQuery("")} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                <X size={14} />
+              </button>
             )}
           </div>
-        </div>
+        </motion.div>
       </section>
 
-      <div className="max-w-[1400px] mx-auto px-6 md:px-12 py-24">
-        {/* --- Featured Entry: Thick Bordered Card --- */}
-        {featuredBlog && (
-          <div className="mb-32">
-            <Link
-              href={`/blog/${featuredBlog.slug}`}
-              className="group grid grid-cols-1 lg:grid-cols-12 gap-0 border-[3px] border-[#003566] overflow-hidden hover:shadow-[0_30px_60px_-15px_rgba(0,53,102,0.2)] transition-all duration-500"
-            >
-              <div className="lg:col-span-7 relative aspect-[16/10] lg:aspect-auto overflow-hidden border-b-[3px] lg:border-b-0 lg:border-r-[3px] border-[#003566]">
-                <Image
-                  src={featuredBlog.blog_image || featuredBlog.featured_image || BLOGIMAGEPLACEHOLDER}
-                  alt={featuredBlog.title}
-                  fill
-                  className="object-cover transition-transform duration-1000 group-hover:scale-105"
-                  sizes="(max-width: 1024px) 100vw, 50vw"
-                />
-              </div>
-              <div className="lg:col-span-5 p-12 md:p-20 flex flex-col justify-center bg-white">
-                <div className="flex items-center gap-3 mb-8 text-[10px] font-black uppercase tracking-widest text-blue-600">
-                  <Calendar size={14} strokeWidth={3} />
-                  {featuredBlog.published_at && new Date(featuredBlog.published_at).toLocaleDateString(locale, { month: "long", day: "numeric", year: "numeric" })}
+      <div className="max-w-7xl mx-auto px-6 md:px-12 pb-24">
+        
+        {/* --- Featured Entry: Modern Card --- */}
+        {featuredBlog && !searchQuery && (
+          <div className="mb-24">
+            <Link href={`/blog/${featuredBlog.slug}`} className="group block relative">
+              <div className="grid lg:grid-cols-2 gap-8 items-center bg-white rounded-3xl p-4 md:p-6 shadow-[0_2px_20px_-5px_rgba(0,0,0,0.05)] hover:shadow-xl transition-all duration-300 border border-slate-100">
+                <div className="relative aspect-[16/10] overflow-hidden rounded-2xl bg-slate-100">
+                  <Image
+                    src={featuredBlog.blog_image || featuredBlog.featured_image || BLOGIMAGEPLACEHOLDER}
+                    alt={featuredBlog.title}
+                    fill
+                    className="object-cover transition-transform duration-700 group-hover:scale-105"
+                  />
                 </div>
-                <h2 className="text-4xl md:text-6xl font-serif text-[#003566] mb-8 leading-[1.1] group-hover:text-blue-600 transition-colors">
-                  {featuredBlog.title}
-                </h2>
-                <p className="text-slate-500 text-lg font-light mb-12 line-clamp-3 leading-relaxed">
-                  {featuredBlog.excerpt}
-                </p>
-                <div className="flex items-center gap-4 text-[#003566] text-[11px] font-black uppercase tracking-[0.3em]">
-                  {t("read_more")} <ArrowRight size={18} className="group-hover:translate-x-2 transition-transform" />
+                <div className="p-4 md:p-8">
+                  <div className="flex items-center gap-2 mb-4 text-sm font-medium text-blue-600">
+                    <Calendar size={14} />
+                    {featuredBlog.published_at && new Date(featuredBlog.published_at).toLocaleDateString(locale, { month: "long", day: "numeric", year: "numeric" })}
+                  </div>
+                  <h2 className="text-3xl md:text-4xl font-serif text-[#003566] mb-4 leading-tight group-hover:text-blue-700 transition-colors">
+                    {featuredBlog.title}
+                  </h2>
+                  <p className="text-slate-500 text-lg mb-8 line-clamp-3 leading-relaxed">
+                    {featuredBlog.excerpt}
+                  </p>
+                  <span className="inline-flex items-center text-sm font-semibold text-[#003566] group-hover:text-blue-600 transition-colors">
+                    Read Article <ArrowRight size={16} className="ml-2 group-hover:translate-x-1 transition-transform" />
+                  </span>
                 </div>
               </div>
             </Link>
           </div>
         )}
 
-        {/* --- Secondary Feed: Thick Bordered Grid --- */}
+        {/* --- Secondary Feed: Clean Grid --- */}
         {otherBlogs.length > 0 ? (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-12">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {otherBlogs.map((post) => (
               <Link 
                 key={post.id} 
                 href={`/blog/${post.slug}`} 
-                className="group flex flex-col bg-white border-[3px] border-slate-100 p-0 hover:border-[#003566] hover:shadow-xl transition-all duration-300"
+                className="group flex flex-col bg-white rounded-2xl border border-slate-100 overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
               >
-                <div className="relative aspect-video overflow-hidden border-b-[3px] border-slate-100 group-hover:border-[#003566] transition-colors">
+                <div className="relative aspect-video overflow-hidden bg-slate-100">
                   <Image 
                     src={post.blog_image || post.featured_image || BLOGIMAGEPLACEHOLDER} 
                     alt={post.title} 
                     fill 
-                    className="object-cover transition-transform duration-700 group-hover:scale-110" 
-                    sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    className="object-cover transition-transform duration-700 group-hover:scale-105" 
                   />
                 </div>
-                <div className="p-8">
-                  <h3 className="text-2xl font-serif text-[#003566] mb-4 group-hover:text-blue-600 transition-colors leading-tight">
+                <div className="p-6 flex flex-col flex-grow">
+                  <div className="mb-3 text-xs font-medium text-slate-400">
+                    {post.published_at && new Date(post.published_at).toLocaleDateString(locale)}
+                  </div>
+                  <h3 className="text-xl font-serif text-[#003566] mb-3 group-hover:text-blue-600 transition-colors leading-snug">
                     {post.title}
                   </h3>
-                  <p className="text-slate-500 text-sm font-light line-clamp-2 mb-8 leading-relaxed">
+                  <p className="text-slate-500 text-sm line-clamp-3 mb-4 flex-grow leading-relaxed">
                     {post.excerpt}
                   </p>
-                  <div className="flex items-center justify-between pt-6 border-t border-slate-100">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                      {post.published_at && new Date(post.published_at).toLocaleDateString(locale)}
-                    </span>
-                    <ArrowRight size={16} className="text-blue-600 opacity-0 group-hover:opacity-100 -translate-x-4 group-hover:translate-x-0 transition-all" />
+                  <div className="pt-4 mt-auto border-t border-slate-50 flex items-center text-blue-600 text-xs font-bold uppercase tracking-wide">
+                    {t("read_more") || "Read more"}
                   </div>
                 </div>
               </Link>
             ))}
           </div>
         ) : (
-          searchQuery && (
-            <div className="text-center py-20">
-              <p className="text-slate-500 text-lg font-light mb-8">
-                No articles found for "{searchQuery}"
-              </p>
-              <Button 
-                onClick={() => setSearchQuery("")}
-                className="bg-[#003566] text-white rounded-none uppercase text-[10px] tracking-widest font-black px-8 h-12"
-              >
-                Clear Search
-              </Button>
-            </div>
-          )
+          <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-slate-200">
+            <p className="text-slate-500 mb-4">No articles found matching your search.</p>
+            <Button onClick={() => setSearchQuery("")} variant="outline" className="rounded-full">
+              Clear Search
+            </Button>
+          </div>
         )}
 
-        {/* --- Newsletter CTA: Navy Inversion --- */}
-        <div className="mt-40 bg-[#003566] p-16 md:p-32 text-center relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/2" />
-          <div className="relative z-10 max-w-3xl mx-auto">
-            <h2 className="text-5xl md:text-7xl font-serif text-white mb-8 leading-tight">
-              Stay <span className="italic font-light opacity-60">Informed</span>
+        {/* --- Simple Newsletter --- */}
+        <div className="mt-32 bg-[#003566] rounded-3xl p-12 md:p-20 text-center relative overflow-hidden">
+          <div className="relative z-10 max-w-2xl mx-auto">
+            <h2 className="text-3xl md:text-5xl font-serif text-white mb-6">
+              Stay in the loop
             </h2>
-            <p className="text-blue-100/60 text-xl font-light mb-12 tracking-wide leading-relaxed">
+            <p className="text-blue-100 text-lg mb-10 font-light">
               {t("newsletter_subtitle")}
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+            <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
                <Input 
                  placeholder="Email Address" 
-                 className="h-16 w-full sm:w-80 rounded-none border-none bg-white/10 text-white placeholder:text-blue-300/50 px-8 focus-visible:ring-1 focus-visible:ring-white"
+                 className="h-12 w-full sm:w-80 rounded-full border-transparent bg-white/10 text-white placeholder:text-blue-200/70 px-6 focus-visible:ring-1 focus-visible:ring-white focus-visible:bg-white/20"
                />
-               <Button className="h-16 px-12 rounded-none bg-white text-[#003566] font-black uppercase tracking-widest text-[11px] hover:bg-blue-50 transition-all">
+               <Button className="h-12 px-8 rounded-full bg-white text-[#003566] font-bold hover:bg-blue-50 transition-all">
                 {t("subscribed")}
               </Button>
             </div>
