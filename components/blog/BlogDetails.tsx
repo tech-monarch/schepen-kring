@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Calendar, Clock, Share2, Bookmark, User, Eye } from "lucide-react";
+import { ArrowLeft, Calendar, Clock, Share2, Bookmark, User, Eye, ChevronRight, Tag } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Link } from "@/i18n/navigation";
 import { Blog } from "@/types/blog.d";
@@ -23,6 +23,7 @@ export default function BlogDetailsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isSaved, setIsSaved] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
   const t = useTranslations("BlogDetails");
   const locale = useLocale();
 
@@ -84,16 +85,23 @@ export default function BlogDetailsPage() {
     }
   };
 
-  const handleShare = () => {
-    if (navigator.share && post) {
-      navigator.share({
-        title: post.title,
-        text: post.excerpt,
-        url: window.location.href,
-      });
-    } else {
-      navigator.clipboard.writeText(window.location.href);
-      alert("Link copied to clipboard!");
+  const handleShare = async () => {
+    setIsSharing(true);
+    try {
+      if (navigator.share && post) {
+        await navigator.share({
+          title: post.title,
+          text: post.excerpt,
+          url: window.location.href,
+        });
+      } else {
+        await navigator.clipboard.writeText(window.location.href);
+        alert("Link copied to clipboard!");
+      }
+    } catch (err) {
+      console.error("Error sharing:", err);
+    } finally {
+      setIsSharing(false);
     }
   };
 
@@ -111,10 +119,10 @@ export default function BlogDetailsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <div className="h-12 w-12 border-2 border-t-[#003566] border-gray-200 rounded-full animate-spin mx-auto" />
-          <p className="text-sm text-gray-500">Loading article...</p>
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50/30 flex items-center justify-center">
+        <div className="text-center space-y-6 glass-card p-12 rounded-3xl">
+          <div className="h-16 w-16 border-4 border-t-blue-500 border-blue-200 rounded-full animate-spin mx-auto" />
+          <p className="text-gray-600">Loading article...</p>
         </div>
       </div>
     );
@@ -122,12 +130,14 @@ export default function BlogDetailsPage() {
 
   if (error || !post) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center px-6">
-        <div className="text-center max-w-md space-y-6">
-          <h1 className="text-3xl font-serif text-gray-900">Article Not Found</h1>
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50/30 flex items-center justify-center px-4">
+        <div className="text-center max-w-md space-y-8 glass-card p-12 rounded-3xl">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 to-blue-900 bg-clip-text text-transparent">
+            Article Not Found
+          </h1>
           <p className="text-gray-600">{error || "The article you're looking for doesn't exist."}</p>
           <Link href="/blog">
-            <Button className="bg-[#003566] text-white hover:bg-[#002244] px-8">
+            <Button className="glass-button px-10 py-6 text-lg font-semibold hover:scale-105 transition-transform">
               Back to Blog
             </Button>
           </Link>
@@ -139,141 +149,189 @@ export default function BlogDetailsPage() {
   const readTime = calculateReadTime(post.content || "");
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Minimal Navigation */}
-      <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-100">
-        <div className="max-w-4xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Link href="/blog" className="group flex items-center text-gray-600 hover:text-gray-900 transition-colors">
-            <ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-1 transition-transform" />
-            <span className="text-sm font-medium">Back</span>
-          </Link>
-          
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handleShare}
-              className="p-2 text-gray-500 hover:text-gray-900 transition-colors"
-              aria-label="Share"
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50/30 relative overflow-hidden">
+      {/* Background decorative elements */}
+      <div className="fixed top-0 left-0 w-full h-1/2 bg-gradient-to-b from-blue-500/5 to-transparent -z-10" />
+      <div className="fixed bottom-0 right-0 w-1/2 h-1/2 bg-gradient-to-t from-purple-500/5 to-transparent -z-10" />
+      
+      {/* Navigation */}
+      <nav className="fixed top-0 left-0 right-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 py-6">
+          <div className="glass-card rounded-2xl p-4 flex items-center justify-between">
+            <Link 
+              href="/blog" 
+              className="group flex items-center gap-3 text-gray-600 hover:text-gray-900 transition-colors glass-tag px-4 py-2 rounded-full"
             >
-              <Share2 className="h-5 w-5" />
-            </button>
-            <button
-              onClick={handleSave}
-              className={cn(
-                "p-2 transition-colors",
-                isSaved ? "text-amber-500" : "text-gray-500 hover:text-gray-900"
-              )}
-              aria-label="Save"
-            >
-              <Bookmark className="h-5 w-5" fill={isSaved ? "currentColor" : "none"} />
-            </button>
+              <ArrowLeft className="h-5 w-5 group-hover:-translate-x-1 transition-transform" />
+              <span className="text-sm font-medium">Back to Blog</span>
+            </Link>
+            
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleShare}
+                disabled={isSharing}
+                className="glass-button p-3 rounded-xl hover:scale-105 transition-all disabled:opacity-50"
+                aria-label="Share"
+              >
+                <Share2 className="h-5 w-5" />
+              </button>
+              <button
+                onClick={handleSave}
+                className={cn(
+                  "glass-button p-3 rounded-xl hover:scale-105 transition-all",
+                  isSaved && "bg-amber-50/50"
+                )}
+                aria-label="Save"
+              >
+                <Bookmark className="h-5 w-5" fill={isSaved ? "currentColor" : "none"} />
+              </button>
+            </div>
           </div>
         </div>
       </nav>
 
       {/* Article Content */}
-      <article className="max-w-4xl mx-auto px-6 py-12">
+      <article className="max-w-4xl mx-auto px-4 pt-32 pb-20 relative">
         {/* Article Header */}
-        <header className="mb-12">
-          <div className="flex items-center gap-4 text-sm text-gray-500 mb-6">
-            <span className="flex items-center gap-1">
+        <motion.header
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-16"
+        >
+          <div className="flex flex-wrap items-center gap-3 mb-8">
+            <span className="flex items-center gap-2 glass-tag px-4 py-2 rounded-full text-sm">
               <Calendar className="h-4 w-4" />
               {post.published_at && new Date(post.published_at).toLocaleDateString(locale, {
                 month: "long", day: "numeric", year: "numeric"
               })}
             </span>
-            <span>•</span>
-            <span className="flex items-center gap-1">
+            <span className="flex items-center gap-2 glass-tag px-4 py-2 rounded-full text-sm">
               <Clock className="h-4 w-4" />
               {readTime} min read
             </span>
-            <span>•</span>
-            <span className="flex items-center gap-1">
+            <span className="flex items-center gap-2 glass-tag px-4 py-2 rounded-full text-sm">
               <Eye className="h-4 w-4" />
               {post.views || 0} views
             </span>
           </div>
 
-          <h1 className="text-5xl md:text-6xl font-serif text-gray-900 mb-8 leading-tight">
+          <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-8 leading-tight bg-gradient-to-r from-gray-900 via-blue-900 to-purple-900 bg-clip-text text-transparent">
             {post.title}
           </h1>
 
           {post.excerpt && (
-            <p className="text-xl text-gray-600 mb-8 leading-relaxed">
+            <p className="text-xl text-gray-600 mb-12 leading-relaxed glass-card p-8 rounded-2xl">
               {post.excerpt}
             </p>
           )}
 
-          <div className="flex items-center gap-4 pt-6 border-t border-gray-100">
-            <div className="h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center">
-              <User className="h-6 w-6 text-gray-600" />
+          <div className="flex items-center gap-6 pt-8 border-t border-gray-200/50">
+            <div className="glass-card h-14 w-14 rounded-full flex items-center justify-center overflow-hidden">
+              <User className="h-7 w-7 text-gray-600" />
             </div>
             <div>
-              <p className="text-sm text-gray-500 mb-1">Written by</p>
-              <p className="font-medium text-gray-900">
+              <p className="text-sm text-gray-500 mb-2">Written by</p>
+              <p className="font-semibold text-gray-900 text-lg">
                 {post.author || t("editorial_team")}
               </p>
             </div>
           </div>
-        </header>
+        </motion.header>
 
         {/* Hero Image */}
         {post.blog_image && (
-          <div className="mb-12">
-            <div className="relative aspect-[21/9] w-full overflow-hidden bg-gray-50">
-              <Image
-                src={post.blog_image}
-                alt={post.title}
-                fill
-                className="object-cover"
-                priority
-                sizes="(max-width: 1200px) 100vw, 1200px"
-              />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.2 }}
+            className="mb-16"
+          >
+            <div className="glass-card rounded-3xl overflow-hidden p-2">
+              <div className="relative aspect-[21/9] w-full overflow-hidden rounded-2xl">
+                <Image
+                  src={post.blog_image}
+                  alt={post.title}
+                  fill
+                  className="object-cover"
+                  priority
+                  sizes="(max-width: 1200px) 100vw, 1200px"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent" />
+              </div>
             </div>
-          </div>
+          </motion.div>
         )}
 
         {/* Article Content */}
-        <div className="prose prose-lg max-w-none">
-          <div 
-            className="text-gray-700 leading-relaxed space-y-6"
-            dangerouslySetInnerHTML={{ __html: post.content || "" }}
-          />
-        </div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="prose prose-lg max-w-none"
+        >
+          <div className="glass-card rounded-3xl p-12">
+            <div 
+              className="text-gray-700 leading-relaxed space-y-8 text-lg"
+              dangerouslySetInnerHTML={{ __html: post.content || "" }}
+            />
+          </div>
+        </motion.div>
 
         {/* Related Articles */}
         {relatedPosts.length > 0 && (
-          <section className="mt-24 pt-12 border-t border-gray-100">
-            <h2 className="text-2xl font-serif text-gray-900 mb-8">
-              Continue Reading
-            </h2>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {relatedPosts.map((related) => (
-                <Link 
-                  key={related.id} 
-                  href={`/blog/${related.slug}`}
-                  className="group block"
+          <motion.section
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            className="mt-24"
+          >
+            <div className="flex items-center justify-between mb-10">
+              <h2 className="text-3xl font-bold text-gray-900">
+                Continue Reading
+              </h2>
+              <ChevronRight className="h-6 w-6 text-gray-400" />
+            </div>
+            
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {relatedPosts.map((related, index) => (
+                <motion.div
+                  key={related.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.1 }}
                 >
-                  <div className="relative aspect-[16/10] overflow-hidden bg-gray-50 mb-4">
-                    {related.blog_image && (
-                      <Image
-                        src={related.blog_image}
-                        alt={related.title}
-                        fill
-                        className="object-cover transition-transform duration-500 group-hover:scale-105"
-                        sizes="(max-width: 768px) 100vw, 400px"
-                      />
-                    )}
-                  </div>
-                  <h3 className="text-lg font-medium text-gray-900 group-hover:text-[#003566] transition-colors mb-2">
-                    {related.title}
-                  </h3>
-                  <p className="text-sm text-gray-500">
-                    {related.published_at && new Date(related.published_at).toLocaleDateString(locale)}
-                  </p>
-                </Link>
+                  <Link 
+                    href={`/blog/${related.slug}`}
+                    className="group block"
+                  >
+                    <div className="glass-card rounded-2xl overflow-hidden h-full hover:shadow-xl transition-all duration-300">
+                      <div className="relative aspect-[16/10] overflow-hidden">
+                        {related.blog_image && (
+                          <Image
+                            src={related.blog_image}
+                            alt={related.title}
+                            fill
+                            className="object-cover transition-transform duration-500 group-hover:scale-110"
+                            sizes="(max-width: 768px) 100vw, 400px"
+                          />
+                        )}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </div>
+                      <div className="p-6">
+                        <h3 className="text-lg font-semibold text-gray-900 group-hover:text-blue-700 transition-colors mb-3 line-clamp-2">
+                          {related.title}
+                        </h3>
+                        <p className="text-sm text-gray-500">
+                          {related.published_at && new Date(related.published_at).toLocaleDateString(locale)}
+                        </p>
+                      </div>
+                    </div>
+                  </Link>
+                </motion.div>
               ))}
             </div>
-          </section>
+          </motion.section>
         )}
       </article>
     </div>
