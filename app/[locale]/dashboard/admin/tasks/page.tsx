@@ -691,30 +691,29 @@ export default function AdminTaskBoardPage() {
     fetchData();
   }, []);
 
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      const token = localStorage.getItem("auth_token");
-      const headers = { Authorization: `Bearer ${token}` };
+const fetchData = async () => {
+  setLoading(true);
+  try {
+    const token = localStorage.getItem("auth_token");
+    const headers = { Authorization: `Bearer ${token}` };
 
-      // Fetch all data in parallel
-      const [tasksRes, usersRes, yachtsRes] = await Promise.all([
-        axios.get(`${API_BASE}/tasks`, { headers }),
-        axios.get(`${API_BASE}/users`, { headers }),
-        axios.get(`${API_BASE}/yachts`, { headers }),
-      ]);
+    const [tasksRes, usersRes, yachtsRes] = await Promise.all([
+      axios.get(`${API_BASE}/tasks`, { headers }),
+      axios.get(`${API_BASE}/users/staff`, { headers }), // Use staff endpoint
+      axios.get(`${API_BASE}/yachts`, { headers }),
+    ]);
 
-      setTasks(tasksRes.data);
-      setUsers(usersRes.data);
-      setYachts(yachtsRes.data);
-      
-    } catch (error: any) {
-      console.error("Error fetching data:", error);
-      toast.error(error.response?.data?.error || "Failed to load tasks");
-    } finally {
-      setLoading(false);
-    }
-  };
+    setTasks(tasksRes.data);
+    setUsers(usersRes.data);
+    setYachts(yachtsRes.data);
+    
+  } catch (error: any) {
+    console.error("Error fetching data:", error);
+    toast.error(error.response?.data?.error || "Failed to load tasks");
+  } finally {
+    setLoading(false);
+  }
+};
 
   // Filter tasks
   const filteredTasks = useMemo(() => {
