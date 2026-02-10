@@ -323,9 +323,9 @@ export function Navbar() {
             </div>
           ) : (
             <Link href="/login">
-              <button className="px-10 py-3.5 border border-[#003566] text-[#003566] text-[9px] font-sans font-bold uppercase tracking-[0.3em] hover:bg-[#003566] hover:text-white transition-all duration-500">
+              {/* <button className="px-10 py-3.5 border border-[#003566] text-[#003566] text-[9px] font-sans font-bold uppercase tracking-[0.3em] hover:bg-[#003566] hover:text-white transition-all duration-500">
                 Employee Login
-              </button>
+              </button> */}
             </Link>
           )}
         </div>
@@ -424,9 +424,9 @@ export function Navbar() {
                 </div>
               ) : (
                 <Link href="/login" onClick={() => setIsMobileMenuOpen(false)}>
-                  <Button className="w-full bg-[#003566] text-white font-sans font-bold h-16 rounded-none uppercase tracking-[0.3em]">
+                  {/* <Button className="w-full bg-[#003566] text-white font-sans font-bold h-16 rounded-none uppercase tracking-[0.3em]">
                     Employee Login
-                  </Button>
+                  </Button> */}
                 </Link>
               )}
             </div>
