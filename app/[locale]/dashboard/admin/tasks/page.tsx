@@ -10,11 +10,9 @@ import {
   Trash2,
   Search,
   Loader2,
-  Anchor,
   Calendar as CalendarIcon,
   Eye,
   EyeOff,
-  Filter,
   List,
   CalendarDays,
   AlertTriangle,
@@ -32,17 +30,10 @@ import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { Toaster, toast } from "react-hot-toast";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
-import { Sidebar } from "@/components/dashboard/Sidebar";
 
 // ============================================
 // INTERFACES
 // ============================================
-interface Yacht {
-  id: number;
-  name: string;
-  vessel_id: string;
-}
-
 interface User {
   id: number;
   name: string;
@@ -59,7 +50,6 @@ interface Task {
   due_date: string;
   assigned_to?: number;
   assigned_to_user?: User;
-  yacht?: Yacht;
   type: "assigned" | "personal";
   user_id?: number;
   created_at: string;
@@ -330,9 +320,8 @@ interface TaskModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (data: any) => void;
-  task?: Task;  // Changed from task?: Task | null
+  task?: Task;
   users: User[];
-  // yachts: Yacht[];
 }
 
 function TaskModal({ isOpen, onClose, onSubmit, task, users }: TaskModalProps) {
@@ -399,7 +388,13 @@ function TaskModal({ isOpen, onClose, onSubmit, task, users }: TaskModalProps) {
       return;
     }
 
-    onSubmit(formData);
+    // Prepare data for API
+    const apiData = {
+      ...formData,
+      assigned_to: formData.assigned_to ? parseInt(formData.assigned_to) : null,
+    };
+
+    onSubmit(apiData);
   };
 
   const handlePrioritySelect = (priority: Task["priority"]) => {
@@ -562,53 +557,35 @@ function TaskModal({ isOpen, onClose, onSubmit, task, users }: TaskModalProps) {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Assign to */}
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-slate-700">
-                Assign to {formData.type === "assigned" && "*"}
-              </label>
-              <select
-                value={formData.assigned_to}
-                onChange={(e) => setFormData(prev => ({ ...prev, assigned_to: e.target.value }))}
-                className={cn(
-                  "w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all",
-                  errors.assigned_to ? "border-red-500" : "border-slate-200"
-                )}
-                disabled={formData.type === "personal"}
-              >
-                <option value="">Select user</option>
-                {users
-                  .filter(user => user.role !== "Customer")
-                  .map(user => (
-                    <option key={user.id} value={user.id}>
-                      {user.name} ({user.role})
-                    </option>
-                  ))}
-              </select>
-              {errors.assigned_to && (
-                <p className="text-red-500 text-sm">{errors.assigned_to}</p>
+          {/* Assign to */}
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-slate-700">
+              Assign to {formData.type === "assigned" && "*"}
+            </label>
+            <select
+              value={formData.assigned_to}
+              onChange={(e) => setFormData(prev => ({ ...prev, assigned_to: e.target.value }))}
+              className={cn(
+                "w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all",
+                errors.assigned_to ? "border-red-500" : "border-slate-200"
               )}
-            </div>
-
-            {/* Yacht */}
-            {/* <div className="space-y-2">
-              <label className="block text-sm font-medium text-slate-700">
-                Yacht (Optional)
-              </label>
-              <select
-                value={formData.yacht_id}
-                onChange={(e) => setFormData(prev => ({ ...prev, yacht_id: e.target.value }))}
-                className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-              >
-                <option value="">Select yacht</option>
-                {yachts.map(yacht => (
-                  <option key={yacht.id} value={yacht.id}>
-                    {yacht.name}
-                  </option>
-                ))}
-              </select>
-            </div> */}
+              disabled={formData.type === "personal"}
+            >
+              <option value="">Select user</option>
+              {users.map(user => (
+                <option key={user.id} value={user.id}>
+                  {user.name} ({user.role})
+                </option>
+              ))}
+            </select>
+            {errors.assigned_to && (
+              <p className="text-red-500 text-sm">{errors.assigned_to}</p>
+            )}
+            {formData.type === "personal" && (
+              <p className="text-sm text-slate-500">
+                Personal tasks will be assigned to you automatically
+              </p>
+            )}
           </div>
 
           {/* Status */}
@@ -667,10 +644,9 @@ export default function AdminTaskBoardPage() {
   // State
   const [tasks, setTasks] = useState<Task[]>([]);
   const [users, setUsers] = useState<User[]>([]);
-  const [yachts, setYachts] = useState<Yacht[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  const [editingTask, setEditingTask] = useState<Task | undefined>(undefined); // Changed from null to undefined
+  const [editingTask, setEditingTask] = useState<Task | undefined>(undefined);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [showDone, setShowDone] = useState(true);
@@ -688,29 +664,35 @@ export default function AdminTaskBoardPage() {
     fetchData();
   }, []);
 
-const fetchData = async () => {
-  setLoading(true);
-  try {
-    const token = localStorage.getItem("auth_token");
-    const headers = { Authorization: `Bearer ${token}` };
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const token = localStorage.getItem("auth_token");
+      
+      // Fetch tasks (requires authentication)
+      const tasksPromise = axios.get(`${API_BASE}/tasks`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      });
 
-    const [tasksRes, usersRes, yachtsRes] = await Promise.all([
-      axios.get(`${API_BASE}/tasks`, { headers }),
-      axios.get(`${API_BASE}/users/staff`, { headers }), // Use staff endpoint
-      axios.get(`${API_BASE}/yachts`, { headers }),
-    ]);
+      // Fetch users for assignment (public endpoint)
+      const usersPromise = axios.get(`${API_BASE}/public/users/employees`);
 
-    setTasks(tasksRes.data);
-    setUsers(usersRes.data);
-    setYachts(yachtsRes.data);
-    
-  } catch (error: any) {
-    console.error("Error fetching data:", error);
-    toast.error(error.response?.data?.error || "Failed to load tasks");
-  } finally {
-    setLoading(false);
-  }
-};
+      const [tasksRes, usersRes] = await Promise.all([tasksPromise, usersPromise]);
+
+      setTasks(tasksRes.data);
+      setUsers(usersRes.data);
+      
+    } catch (error: any) {
+      console.error("Error fetching data:", error);
+      const errorMessage = error.response?.data?.error || 
+                          error.response?.data?.message || 
+                          error.message || 
+                          "Failed to load data";
+      toast.error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Filter tasks
   const filteredTasks = useMemo(() => {
@@ -737,8 +719,7 @@ const fetchData = async () => {
       filtered = filtered.filter(task =>
         task.title.toLowerCase().includes(searchLower) ||
         task.description?.toLowerCase().includes(searchLower) ||
-        task.assigned_to_user?.name.toLowerCase().includes(searchLower) ||
-        task.yacht?.name.toLowerCase().includes(searchLower)
+        task.assigned_to_user?.name.toLowerCase().includes(searchLower)
       );
     }
 
@@ -754,25 +735,43 @@ const fetchData = async () => {
   const handleTaskSubmit = async (taskData: any) => {
     try {
       const token = localStorage.getItem("auth_token");
-      const headers = { Authorization: `Bearer ${token}` };
+      if (!token) {
+        toast.error("No authentication token found");
+        return;
+      }
+      
+      const headers = { 
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      };
+
+      // Ensure assigned_to is a number or null
+      const dataToSend = {
+        ...taskData,
+        assigned_to: taskData.assigned_to ? parseInt(taskData.assigned_to) : null,
+      };
 
       if (editingTask) {
         // Update task
-        await axios.put(`${API_BASE}/tasks/${editingTask.id}`, taskData, { headers });
+        await axios.put(`${API_BASE}/tasks/${editingTask.id}`, dataToSend, { headers });
         toast.success("Task updated successfully");
       } else {
         // Create task
-        await axios.post(`${API_BASE}/tasks`, taskData, { headers });
+        await axios.post(`${API_BASE}/tasks`, dataToSend, { headers });
         toast.success("Task created successfully");
       }
 
       await fetchData();
       setIsModalOpen(false);
-      setEditingTask(undefined); // Changed from null to undefined
+      setEditingTask(undefined);
       
     } catch (error: any) {
       console.error("Error saving task:", error);
-      toast.error(error.response?.data?.error || "Failed to save task");
+      const errorMessage = error.response?.data?.error || 
+                          error.response?.data?.message || 
+                          error.message || 
+                          "Failed to save task";
+      toast.error(errorMessage);
     }
   };
 
@@ -782,7 +781,10 @@ const fetchData = async () => {
 
     try {
       const token = localStorage.getItem("auth_token");
-      const headers = { Authorization: `Bearer ${token}` };
+      const headers = { 
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      };
 
       await axios.delete(`${API_BASE}/tasks/${taskId}`, { headers });
       toast.success("Task deleted successfully");
@@ -798,7 +800,10 @@ const fetchData = async () => {
   const handleStatusChange = async (taskId: number, newStatus: Task["status"]) => {
     try {
       const token = localStorage.getItem("auth_token");
-      const headers = { Authorization: `Bearer ${token}` };
+      const headers = { 
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      };
 
       await axios.patch(
         `${API_BASE}/tasks/${taskId}/status`,
@@ -878,7 +883,6 @@ const fetchData = async () => {
       <Toaster position="top-right" />
       
       <div className="flex pt-20">
-        
         <motion.main
           animate={{ marginLeft: isSidebarCollapsed ? 80 : 256 }}
           className="flex-1 p-6 bg-white min-h-[calc(100vh-80px)] z-30 -mt-20"
@@ -931,7 +935,7 @@ const fetchData = async () => {
                 {/* New Task Button */}
                 <Button
                   onClick={() => {
-                    setEditingTask(undefined); // Changed from null to undefined
+                    setEditingTask(undefined);
                     setIsModalOpen(true);
                   }}
                   className="bg-[#003566] text-white rounded-none h-12 px-8 uppercase text-xs tracking-widest font-black shadow-lg hover:bg-[#003566]/90"
@@ -1163,10 +1167,10 @@ const fetchData = async () => {
         isOpen={isModalOpen}
         onClose={() => {
           setIsModalOpen(false);
-          setEditingTask(undefined); // Changed from null to undefined
+          setEditingTask(undefined);
         }}
         onSubmit={handleTaskSubmit}
-        task={editingTask} // Now this is Task | undefined which matches TaskModalProps
+        task={editingTask}
         users={users}
       />
     </div>
