@@ -330,6 +330,12 @@ export function DashboardHeader() {
     localStorage.removeItem("admin_token");
     localStorage.removeItem("fleet_tasks");
     localStorage.removeItem("task_cache");
+    // Clear sidebar cache on logout
+    Object.keys(localStorage).forEach(key => {
+      if (key.startsWith("sidebar_cache_")) {
+        localStorage.removeItem(key);
+      }
+});
     router.push("/");
   };
 
