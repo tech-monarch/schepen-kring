@@ -130,7 +130,7 @@ export function Sidebar({ onCollapse }: { onCollapse?: (collapsed: boolean) => v
     },
     { 
       title: "Tasks", 
-      href: userRole === "Admin" ? "/dashboard/admin/tasks" : "/dashboard/tasks", 
+      href: userRole === "Admin" ? "/dashboard/tasks" : "/dashboard/tasks", 
       icon: CheckSquare, 
       roles: ["Admin", "Employee"],
       page_key: "tasks"
