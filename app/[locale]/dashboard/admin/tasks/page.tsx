@@ -332,17 +332,16 @@ interface TaskModalProps {
   onSubmit: (data: any) => void;
   task?: Task;  // Changed from task?: Task | null
   users: User[];
-  yachts: Yacht[];
+  // yachts: Yacht[];
 }
 
-function TaskModal({ isOpen, onClose, onSubmit, task, users, yachts }: TaskModalProps) {
+function TaskModal({ isOpen, onClose, onSubmit, task, users }: TaskModalProps) {
   const [formData, setFormData] = useState({
     title: "",
     description: "",
     priority: "Medium" as Task["priority"],
     status: "To Do" as Task["status"],
     assigned_to: "",
-    yacht_id: "",
     due_date: new Date().toISOString().split("T")[0],
     type: "assigned" as "assigned" | "personal",
   });
@@ -357,7 +356,6 @@ function TaskModal({ isOpen, onClose, onSubmit, task, users, yachts }: TaskModal
         priority: task.priority || "Medium",
         status: task.status || "To Do",
         assigned_to: task.assigned_to?.toString() || "",
-        yacht_id: task.yacht?.id?.toString() || "",
         due_date: task.due_date ? task.due_date.split("T")[0] : new Date().toISOString().split("T")[0],
         type: task.type || "assigned",
       });
@@ -368,7 +366,6 @@ function TaskModal({ isOpen, onClose, onSubmit, task, users, yachts }: TaskModal
         priority: "Medium",
         status: "To Do",
         assigned_to: "",
-        yacht_id: "",
         due_date: new Date().toISOString().split("T")[0],
         type: "assigned",
       });
@@ -595,7 +592,7 @@ function TaskModal({ isOpen, onClose, onSubmit, task, users, yachts }: TaskModal
             </div>
 
             {/* Yacht */}
-            <div className="space-y-2">
+            {/* <div className="space-y-2">
               <label className="block text-sm font-medium text-slate-700">
                 Yacht (Optional)
               </label>
@@ -611,7 +608,7 @@ function TaskModal({ isOpen, onClose, onSubmit, task, users, yachts }: TaskModal
                   </option>
                 ))}
               </select>
-            </div>
+            </div> */}
           </div>
 
           {/* Status */}
@@ -1084,12 +1081,6 @@ const fetchData = async () => {
                                   {task.assigned_to_user.name}
                                 </span>
                               )}
-                              {task.yacht && (
-                                <span className="flex items-center gap-1.5">
-                                  <Anchor size={14} />
-                                  {task.yacht.name}
-                                </span>
-                              )}
                               <span className={cn(
                                 "flex items-center gap-1.5",
                                 isOverdue(task.due_date) && "text-red-600 font-bold"
@@ -1177,7 +1168,6 @@ const fetchData = async () => {
         onSubmit={handleTaskSubmit}
         task={editingTask} // Now this is Task | undefined which matches TaskModalProps
         users={users}
-        yachts={yachts}
       />
     </div>
   );
