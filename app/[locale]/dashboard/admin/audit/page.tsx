@@ -434,7 +434,7 @@ export default function SystemAuditPage() {
   // ============================================
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/20">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/20 -top-20">
       {/* Header */}
       <div className="border-b border-slate-200/70 bg-white/90 backdrop-blur-xl supports-backdrop-blur:bg-white/80 sticky top-0 z-50 shadow-sm">
         <div className="container mx-auto px-6 py-4">
