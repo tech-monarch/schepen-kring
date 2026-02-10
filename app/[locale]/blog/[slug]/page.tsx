@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Calendar, Clock, Share2, Bookmark, ChevronRight, User, Eye, Loader2 } from "lucide-react";
+import { ArrowLeft, Calendar, Clock, Share2, Bookmark, User, Eye, ChevronRight, Tag } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Link } from "@/i18n/navigation";
 import { Blog } from "@/types/blog.d";
@@ -22,6 +22,8 @@ export default function BlogDetailsPage() {
   const [relatedPosts, setRelatedPosts] = useState<Blog[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isSaved, setIsSaved] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
   const t = useTranslations("BlogDetails");
   const locale = useLocale();
 
@@ -32,7 +34,6 @@ export default function BlogDetailsPage() {
   const fetchBlogData = async () => {
     setLoading(true);
     try {
-      // Fetch the main blog post
       const blogResponse = await fetch(`${API_BASE}/public/blogs/slug/${slug}`);
       
       if (!blogResponse.ok) {
@@ -51,14 +52,13 @@ export default function BlogDetailsPage() {
       
       setPost(blogData);
       
-      // Fetch related posts (other published blogs)
-      const relatedResponse = await fetch(`${API_BASE}/public/blogs?status=published&per_page=10`);
+      // Fetch related posts
+      const relatedResponse = await fetch(`${API_BASE}/public/blogs?status=published&per_page=3`);
       
       if (relatedResponse.ok) {
         const relatedResult = await relatedResponse.json();
         const relatedBlogs = relatedResult.data
           .filter((blog: any) => blog.slug !== slug)
-          .slice(0, 6)
           .map((blog: any) => ({
             ...blog,
             blog_image: blog.featured_image,
@@ -85,18 +85,29 @@ export default function BlogDetailsPage() {
     }
   };
 
-  const handleShare = () => {
-    if (navigator.share && post) {
-      navigator.share({
-        title: post.title,
-        text: post.excerpt,
-        url: window.location.href,
-      });
-    } else {
-      // Fallback: copy to clipboard
-      navigator.clipboard.writeText(window.location.href);
-      alert("Link copied to clipboard!");
+  const handleShare = async () => {
+    setIsSharing(true);
+    try {
+      if (navigator.share && post) {
+        await navigator.share({
+          title: post.title,
+          text: post.excerpt,
+          url: window.location.href,
+        });
+      } else {
+        await navigator.clipboard.writeText(window.location.href);
+        alert("Link copied to clipboard!");
+      }
+    } catch (err) {
+      console.error("Error sharing:", err);
+    } finally {
+      setIsSharing(false);
     }
+  };
+
+  const handleSave = () => {
+    setIsSaved(!isSaved);
+    // Add actual save functionality here
   };
 
   const calculateReadTime = (content: string) => {
@@ -108,12 +119,10 @@ export default function BlogDetailsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="h-12 w-12 text-[#003566] animate-spin mx-auto mb-4" />
-          <p className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-400">
-            Loading Article...
-          </p>
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50/30 flex items-center justify-center">
+        <div className="text-center space-y-6 glass-card p-12 rounded-3xl">
+          <div className="h-16 w-16 border-4 border-t-blue-500 border-blue-200 rounded-full animate-spin mx-auto" />
+          <p className="text-gray-600">Loading article...</p>
         </div>
       </div>
     );
@@ -121,13 +130,15 @@ export default function BlogDetailsPage() {
 
   if (error || !post) {
     return (
-      <div className="min-h-screen bg-white text-[#003566] p-6 max-w-7xl mx-auto">
-        <div className="flex flex-col items-center justify-center h-screen -mt-20">
-          <h1 className="text-4xl font-serif italic text-[#003566] mb-6">Article Not Found</h1>
-          <p className="text-slate-500 mb-8">{error || "The article you're looking for doesn't exist."}</p>
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50/30 flex items-center justify-center px-4">
+        <div className="text-center max-w-md space-y-8 glass-card p-12 rounded-3xl">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 to-blue-900 bg-clip-text text-transparent">
+            Article Not Found
+          </h1>
+          <p className="text-gray-600">{error || "The article you're looking for doesn't exist."}</p>
           <Link href="/blog">
-            <Button className="bg-[#003566] text-white rounded-none uppercase text-[10px] tracking-widest font-black px-8 h-12">
-              <ArrowLeft className="mr-2 w-4 h-4" /> Back to Blog
+            <Button className="glass-button px-10 py-6 text-lg font-semibold hover:scale-105 transition-transform">
+              Back to Blog
             </Button>
           </Link>
         </div>
@@ -138,184 +149,191 @@ export default function BlogDetailsPage() {
   const readTime = calculateReadTime(post.content || "");
 
   return (
-    <article className="min-h-screen bg-white pb-24 text-[#003566]">
-      {/* --- Sticky Navigation --- */}
-      <nav className="sticky top-0 z-40 w-full bg-white/90 backdrop-blur-md border-b-2 border-slate-100 transition-all">
-        <div className="max-w-[1400px] mx-auto px-6 md:px-12 h-20 flex items-center justify-between">
-          <Button variant="ghost" size="sm" asChild className="hover:bg-slate-50 rounded-none group">
-            <Link href="/blog" className="flex items-center text-[11px] font-black uppercase tracking-[0.3em] text-[#003566]">
-              <ArrowLeft className="h-4 w-4 mr-3 transition-transform group-hover:-translate-x-1" strokeWidth={3} />
-              {t("back_to_insights")}
-            </Link>
-          </Button>
-          
-          <div className="flex items-center gap-3">
-            <Button 
-              variant="outline" 
-              size="icon" 
-              className="rounded-none border-2 border-slate-100 hover:border-[#003566] bg-transparent text-[#003566] transition-all"
-              onClick={handleShare}
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50/30 relative overflow-hidden">
+      {/* Background decorative elements */}
+      <div className="fixed top-0 left-0 w-full h-1/2 bg-gradient-to-b from-blue-500/5 to-transparent -z-10" />
+      <div className="fixed bottom-0 right-0 w-1/2 h-1/2 bg-gradient-to-t from-purple-500/5 to-transparent -z-10" />
+      
+      {/* Navigation */}
+      <nav className="fixed top-0 left-0 right-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 py-6">
+          <div className="glass-card rounded-2xl p-4 flex items-center justify-between">
+            <Link 
+              href="/blog" 
+              className="group flex items-center gap-3 text-gray-600 hover:text-gray-900 transition-colors glass-tag px-4 py-2 rounded-full"
             >
-              <Share2 className="h-4 w-4" />
-            </Button>
-            <Button variant="outline" size="icon" className="rounded-none border-2 border-slate-100 hover:border-[#003566] bg-transparent text-[#003566] transition-all">
-              <Bookmark className="h-4 w-4" />
-            </Button>
+              <ArrowLeft className="h-5 w-5 group-hover:-translate-x-1 transition-transform" />
+              <span className="text-sm font-medium">Back to Blog</span>
+            </Link>
+            
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleShare}
+                disabled={isSharing}
+                className="glass-button p-3 rounded-xl hover:scale-105 transition-all disabled:opacity-50"
+                aria-label="Share"
+              >
+                <Share2 className="h-5 w-5" />
+              </button>
+              <button
+                onClick={handleSave}
+                className={cn(
+                  "glass-button p-3 rounded-xl hover:scale-105 transition-all",
+                  isSaved && "bg-amber-50/50"
+                )}
+                aria-label="Save"
+              >
+                <Bookmark className="h-5 w-5" fill={isSaved ? "currentColor" : "none"} />
+              </button>
+            </div>
           </div>
         </div>
       </nav>
 
-      {/* --- Editorial Header --- */}
-      <header className="max-w-5xl mx-auto px-6 pt-32 pb-16 text-center">
-        <motion.div 
-          initial={{ opacity: 0, y: 10 }} 
-          animate={{ opacity: 1, y: 0 }}
-          className="flex items-center justify-center gap-6 text-[11px] font-black text-blue-600 mb-12 uppercase tracking-[0.4em]"
-        >
-          <span className="flex items-center">
-            <Calendar className="h-3 w-3 mr-2" strokeWidth={3} />
-            {post.published_at && new Date(post.published_at).toLocaleDateString(locale, {
-              month: "long", day: "numeric", year: "numeric"
-            })}
-          </span>
-          <span className="w-1.5 h-1.5 rounded-full bg-slate-200" />
-          <span className="flex items-center text-slate-400">
-            <Clock className="h-3 w-3 mr-2" strokeWidth={3} />
-            {t("read_time", { min: readTime })}
-          </span>
-          <span className="w-1.5 h-1.5 rounded-full bg-slate-200" />
-          <span className="flex items-center text-slate-400">
-            <Eye className="h-3 w-3 mr-2" strokeWidth={3} />
-            {post.views || 0} views
-          </span>
-        </motion.div>
-
-        <motion.h1 
+      {/* Article Content */}
+      <article className="max-w-4xl mx-auto px-4 pt-32 pb-20 relative">
+        {/* Article Header */}
+        <motion.header
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="text-5xl md:text-8xl font-serif text-[#003566] mb-16 leading-[0.9] tracking-tighter"
+          className="mb-16"
         >
-          {post.title}
-        </motion.h1>
+          <div className="flex flex-wrap items-center gap-3 mb-8">
+            <span className="flex items-center gap-2 glass-tag px-4 py-2 rounded-full text-sm">
+              <Calendar className="h-4 w-4" />
+              {post.published_at && new Date(post.published_at).toLocaleDateString(locale, {
+                month: "long", day: "numeric", year: "numeric"
+              })}
+            </span>
+            <span className="flex items-center gap-2 glass-tag px-4 py-2 rounded-full text-sm">
+              <Clock className="h-4 w-4" />
+              {readTime} min read
+            </span>
+            <span className="flex items-center gap-2 glass-tag px-4 py-2 rounded-full text-sm">
+              <Eye className="h-4 w-4" />
+              {post.views || 0} views
+            </span>
+          </div>
 
-        <div className="flex items-center justify-center gap-4 border-y border-slate-100 py-8 max-w-xs mx-auto">
-           <div className="h-12 w-12 rounded-none bg-[#003566] flex items-center justify-center">
-              <User className="h-5 w-5 text-white" />
-           </div>
-           <div className="text-left">
-              <p className="text-[9px] text-slate-400 font-black uppercase tracking-widest leading-none mb-1">
-                {t("published_by")}
-              </p>
-              <p className="font-serif italic text-[#003566] text-xl leading-none">
+          <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-8 leading-tight bg-gradient-to-r from-gray-900 via-blue-900 to-purple-900 bg-clip-text text-transparent">
+            {post.title}
+          </h1>
+
+          {post.excerpt && (
+            <p className="text-xl text-gray-600 mb-12 leading-relaxed glass-card p-8 rounded-2xl">
+              {post.excerpt}
+            </p>
+          )}
+
+          <div className="flex items-center gap-6 pt-8 border-t border-gray-200/50">
+            <div className="glass-card h-14 w-14 rounded-full flex items-center justify-center overflow-hidden">
+              <User className="h-7 w-7 text-gray-600" />
+            </div>
+            <div>
+              <p className="text-sm text-gray-500 mb-2">Written by</p>
+              <p className="font-semibold text-gray-900 text-lg">
                 {post.author || t("editorial_team")}
               </p>
-           </div>
-        </div>
-      </header>
-
-      {/* --- Immersive Wide Hero --- */}
-      {post.blog_image && (
-        <div className="max-w-[1400px] mx-auto px-6 md:px-12 mb-32">
-          <div className="relative aspect-21/9 border-[3px] border-[#003566] shadow-[0_40px_80px_-20px_rgba(0,53,102,0.15)] overflow-hidden bg-slate-50">
-            <Image
-              src={post.blog_image}
-              alt={post.title}
-              fill
-              className="object-cover"
-              priority
-              sizes="(max-width: 1400px) 100vw, 1400px"
-            />
-          </div>
-        </div>
-      )}
-
-      {/* --- Content Layout --- */}
-      <div className="max-w-[1400px] mx-auto px-6 md:px-12 grid grid-cols-1 lg:grid-cols-12 gap-24">
-        <div className="lg:col-span-8">
-          <div className="prose prose-slate prose-lg max-w-none 
-            prose-headings:font-serif prose-headings:text-[#003566] prose-headings:tracking-tight
-            prose-p:font-light prose-p:leading-[2] prose-p:text-slate-600
-            prose-strong:text-[#003566] prose-strong:font-black
-            prose-blockquote:border-l-[3px] prose-blockquote:border-blue-600 prose-blockquote:bg-blue-50/50 prose-blockquote:font-serif prose-blockquote:italic prose-blockquote:text-blue-900 prose-blockquote:py-2">
-            
-            {post.excerpt && (
-              <p className="text-2xl md:text-3xl font-serif text-slate-400 mb-20 leading-snug">
-                {post.excerpt}
-              </p>
-            )}
-
-            <div dangerouslySetInnerHTML={{ __html: post.content || "" }} />
-          </div>
-        </div>
-
-        {/* --- Sidebar --- */}
-        <aside className="lg:col-span-4 hidden lg:block">
-          <div className="sticky top-40 space-y-16">
-            <div className="border-t-[3px] border-[#003566] pt-10">
-              <h4 className="text-[11px] font-black uppercase tracking-[0.4em] text-[#003566] mb-12">
-                {t("related_reading")}
-              </h4>
-              <div className="space-y-12">
-                {relatedPosts.slice(0, 3).map((relatedPost) => (
-                  <Link key={relatedPost.id} href={`/blog/${relatedPost.slug}`} className="group flex flex-col gap-5">
-                    <div className="relative aspect-video w-full overflow-hidden border-[3px] border-slate-100 group-hover:border-[#003566] transition-all duration-500">
-                      <Image 
-                        src={relatedPost.blog_image || "/placeholder.png"} 
-                        alt={relatedPost.title} 
-                        fill 
-                        className="object-cover transition-transform duration-700 group-hover:scale-110" 
-                        sizes="(max-width: 400px) 100vw, 400px"
-                      />
-                    </div>
-                    <h5 className="font-serif text-xl text-[#003566] group-hover:text-blue-600 transition-colors leading-tight">
-                      {relatedPost.title}
-                    </h5>
-                  </Link>
-                ))}
-              </div>
             </div>
           </div>
-        </aside>
-      </div>
+        </motion.header>
 
-      {/* --- Further Reading --- */}
-      {relatedPosts.length > 0 && (
-        <section className="max-w-[1400px] mx-auto px-6 md:px-12 mt-48 pt-24 border-t border-slate-100">
-          <div className="flex items-center justify-between mb-20">
-            <h2 className="text-4xl md:text-5xl font-serif text-[#003566] tracking-tight">
-              {t("further_reading")}
-            </h2>
-            <Button variant="ghost" className="text-[11px] font-black uppercase tracking-widest text-blue-600 hover:bg-blue-50 gap-3" asChild>
-              <Link href="/blog">
-                {t("view_all")} <ChevronRight className="h-4 w-4" strokeWidth={3} />
-              </Link>
-            </Button>
-          </div>
+        {/* Hero Image */}
+        {post.blog_image && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.2 }}
+            className="mb-16"
+          >
+            <div className="glass-card rounded-3xl overflow-hidden p-2">
+              <div className="relative aspect-[21/9] w-full overflow-hidden rounded-2xl">
+                <Image
+                  src={post.blog_image}
+                  alt={post.title}
+                  fill
+                  className="object-cover"
+                  priority
+                  sizes="(max-width: 1200px) 100vw, 1200px"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent" />
+              </div>
+            </div>
+          </motion.div>
+        )}
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-            {relatedPosts.slice(0, 3).map((related) => (
-              <Link key={related.id} href={`/blog/${related.slug}`} className="group block">
-                <div className="relative aspect-16/10 border-[3px] border-slate-100 group-hover:border-[#003566] overflow-hidden transition-all duration-500 mb-8">
-                  <Image 
-                    src={related.blog_image || "/placeholder.png"} 
-                    alt={related.title} 
-                    fill 
-                    className="object-cover transition-transform duration-1000 group-hover:scale-110" 
-                    sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                  />
-                </div>
-                <h3 className="font-serif text-2xl text-[#003566] group-hover:text-blue-600 transition-colors mb-4">
-                  {related.title}
-                </h3>
-                <div className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
-                  {related.published_at && new Date(related.published_at).toLocaleDateString(locale)}
-                </div>
-              </Link>
-            ))}
+        {/* Article Content */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="prose prose-lg max-w-none"
+        >
+          <div className="glass-card rounded-3xl p-12">
+            <div 
+              className="text-gray-700 leading-relaxed space-y-8 text-lg"
+              dangerouslySetInnerHTML={{ __html: post.content || "" }}
+            />
           </div>
-        </section>
-      )}
-    </article>
+        </motion.div>
+
+        {/* Related Articles */}
+        {relatedPosts.length > 0 && (
+          <motion.section
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            className="mt-24"
+          >
+            <div className="flex items-center justify-between mb-10">
+              <h2 className="text-3xl font-bold text-gray-900">
+                Continue Reading
+              </h2>
+              <ChevronRight className="h-6 w-6 text-gray-400" />
+            </div>
+            
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {relatedPosts.map((related, index) => (
+                <motion.div
+                  key={related.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.1 }}
+                >
+                  <Link 
+                    href={`/blog/${related.slug}`}
+                    className="group block"
+                  >
+                    <div className="glass-card rounded-2xl overflow-hidden h-full hover:shadow-xl transition-all duration-300">
+                      <div className="relative aspect-[16/10] overflow-hidden">
+                        {related.blog_image && (
+                          <Image
+                            src={related.blog_image}
+                            alt={related.title}
+                            fill
+                            className="object-cover transition-transform duration-500 group-hover:scale-110"
+                            sizes="(max-width: 768px) 100vw, 400px"
+                          />
+                        )}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </div>
+                      <div className="p-6">
+                        <h3 className="text-lg font-semibold text-gray-900 group-hover:text-blue-700 transition-colors mb-3 line-clamp-2">
+                          {related.title}
+                        </h3>
+                        <p className="text-sm text-gray-500">
+                          {related.published_at && new Date(related.published_at).toLocaleDateString(locale)}
+                        </p>
+                      </div>
+                    </div>
+                  </Link>
+                </motion.div>
+              ))}
+            </div>
+          </motion.section>
+        )}
+      </article>
+    </div>
   );
 }
