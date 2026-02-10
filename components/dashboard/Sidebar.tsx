@@ -89,18 +89,16 @@ export function Sidebar({ onCollapse }: { onCollapse?: (collapsed: boolean) => v
   }, [pathname]);
 
   // Helper function to check if a page should be shown
-  const shouldShowPage = (pageKey: string, userRole: string | null): boolean => {
+  const shouldShowPage = (pageKey: string, itemRoles: string[]): boolean => {
     // If no user role, don't show
     if (!userRole) return false;
     
     // Find the permission for this page
     const pagePermission = userPagePermissions.find(p => p.page_key === pageKey);
     
-    // If no specific permission found, use default behavior based on role
+    // If no specific permission found, check if user has the required role
     if (!pagePermission) {
-      // Default behavior for Employees and Admins: show the page
-      // For other roles: hide unless explicitly allowed
-      return ["Admin", "Employee"].includes(userRole);
+      return itemRoles.includes(userRole);
     }
     
     // Use the permission value
@@ -109,9 +107,9 @@ export function Sidebar({ onCollapse }: { onCollapse?: (collapsed: boolean) => v
         return true;
       case 2: // Explicitly hide
         return false;
-      case 0: // Use default
+      case 0: // Use default (role-based)
       default:
-        return ["Admin", "Employee"].includes(userRole);
+        return itemRoles.includes(userRole);
     }
   };
 
@@ -123,70 +121,70 @@ export function Sidebar({ onCollapse }: { onCollapse?: (collapsed: boolean) => v
       href: userRole === "Admin" ? "/dashboard/admin" : "/dashboard", 
       icon: BarChart3, 
       roles: ["Admin", "Employee", "Partner", "Customer"],
-      page_key: "dashboard" // This might not need permission control
+      page_key: "dashboard"
     },
     { 
       title: "Tasks", 
       href: userRole === "Admin" ? "/dashboard/admin/tasks" : "/dashboard/tasks", 
       icon: CheckSquare, 
       roles: ["Admin", "Employee"],
-      page_key: "tasks"  // matches backend page_key
+      page_key: "tasks"
     },
     { 
       title: "Assign Tasks", 
       href: userRole === "Admin" ? "/dashboard/admin/tasks" : "/dashboard/admin/tasks", 
       icon: Calendar, 
       roles: ["Admin", "Employee"],
-      page_key: "assign_tasks"  // matches backend page_key
+      page_key: "assign_tasks"
     },
     { 
       title: "View Users", 
       href: "/dashboard/admin/users", 
       icon: Users, 
       roles: ["Admin", "Employee"],
-      page_key: "view_users"  // matches backend page_key
+      page_key: "view_users"
     },
     { 
       title: "Yachts", 
       href: userRole === "Admin" ? "/dashboard/admin/yachts" : "/dashboard/yachts", 
       icon: Anchor, 
       roles: ["Admin", "Employee"],
-      page_key: "dashboard"  // matches backend page_key
+      page_key: "yachts"  // Changed from "dashboard" to "yachts"
     },
     { 
       title: "Fleets", 
       href: userRole === "Admin" ? "/yachts" : "/yachts", 
       icon: Anchor, 
       roles: ["Admin", "Employee", "Partner", "Customer"],
-      page_key: "manage_yachts"  // matches backend page_key
+      page_key: "manage_yachts"
     },
-    // { 
-    //   title: "Biddings", 
-    //   href: userRole === "Admin" ? "/dashboard/admin/biddings" : "/dashboard/biddings", 
-    //   icon: Gavel, 
-    //   roles: ["Admin", "Employee"],
-    //   page_key: "biddings"  // matches backend page_key
-    // },
+    { 
+      title: "Biddings", 
+      href: userRole === "Admin" ? "/dashboard/admin/biddings" : "/dashboard/biddings", 
+      icon: Gavel, 
+      roles: ["Admin", "Employee"],
+      page_key: "biddings"
+    },
     { 
       title: "Blog", 
       href: userRole === "Admin" ? "/dashboard/admin/blog" : "/dashboard/blog", 
       icon: FileText, 
       roles: ["Admin", "Employee"],
-      page_key: "blog"  // matches backend page_key
+      page_key: "blog"
     },
     { 
       title: "Logs", 
       href: userRole === "Admin" ? "/dashboard/admin/logs" : "/dashboard/logs", 
       icon: FileText, 
       roles: ["Admin"],
-      page_key: "logs"  // matches backend page_key
+      page_key: "logs"
     },
     { 
       title: "My Boats", 
       href: "/dashboard/partner/boats", 
       icon: Ship, 
       roles: ["Partner"],
-      page_key: "partner_boats"  // Special page for partners
+      page_key: "partner_boats"
     },
     { 
       title: "Account Settings", 
@@ -205,7 +203,7 @@ export function Sidebar({ onCollapse }: { onCollapse?: (collapsed: boolean) => v
 
     // Check page permission if page_key exists
     if (item.page_key) {
-      return shouldShowPage(item.page_key, userRole);
+      return shouldShowPage(item.page_key, item.roles);
     }
 
     // If no page_key specified, show by default for allowed roles
@@ -215,11 +213,26 @@ export function Sidebar({ onCollapse }: { onCollapse?: (collapsed: boolean) => v
   // For debugging: show current permissions
   useEffect(() => {
     if (userRole && userId) {
+      console.log("=== SIDEBAR DEBUG ===");
       console.log("User Role:", userRole);
       console.log("User ID:", userId);
       console.log("Page Permissions:", userPagePermissions);
+      console.log("Total Menu Items:", menuItems.length);
+      console.log("Visible Items:", visibleItems.length);
+      
+      // Show what items are visible and why
+      const visibilityReport = menuItems.map(item => ({
+        title: item.title,
+        page_key: item.page_key,
+        hasRole: userRole && item.roles.includes(userRole),
+        permission: userPagePermissions.find(p => p.page_key === item.page_key),
+        visible: visibleItems.includes(item),
+        shouldShow: item.page_key ? shouldShowPage(item.page_key, item.roles) : true
+      }));
+      
+      console.log("Visibility Report:", visibilityReport);
     }
-  }, [userRole, userId, userPagePermissions]);
+  }, [userRole, userId, userPagePermissions, visibleItems]);
 
   return (
     <motion.aside 
@@ -283,6 +296,18 @@ export function Sidebar({ onCollapse }: { onCollapse?: (collapsed: boolean) => v
               </Link>
             );
           })}
+          
+          {/* Show message if no items are visible */}
+          {visibleItems.length === 0 && userRole && (
+            <div className="px-4 py-3 text-center">
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
+                No pages available
+              </p>
+              <p className="text-[8px] text-slate-300 mt-1">
+                Check your permissions
+              </p>
+            </div>
+          )}
         </nav>
 
         <div className="p-4 border-t border-slate-100 bg-slate-50/50">
