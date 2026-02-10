@@ -59,7 +59,11 @@ export function Sidebar({ onCollapse }: { onCollapse?: (collapsed: boolean) => v
     if (userDataStr && token) {
       try {
         const parsed = JSON.parse(userDataStr);
-        setUserRole(parsed.userType || "Customer");
+        console.log("Parsed user data:", parsed); // Debug
+        
+        // Support both 'role' and 'userType' fields
+        const role = parsed.role || parsed.userType || "Customer";
+        setUserRole(role);
         setUserId(parsed.id);
 
         // Fetch page permissions from the new system
@@ -68,6 +72,7 @@ export function Sidebar({ onCollapse }: { onCollapse?: (collapsed: boolean) => v
             const res = await axios.get(`${API_BASE}/users/${parsed.id}/page-permissions`, {
               headers: { Authorization: `Bearer ${token}` }
             });
+            console.log("Fetched permissions:", res.data); // Debug
             setUserPagePermissions(res.data);
           } catch (err) {
             console.error("Failed to fetch page permissions", err);
@@ -149,7 +154,7 @@ export function Sidebar({ onCollapse }: { onCollapse?: (collapsed: boolean) => v
       href: userRole === "Admin" ? "/dashboard/admin/yachts" : "/dashboard/yachts", 
       icon: Anchor, 
       roles: ["Admin", "Employee"],
-      page_key: "yachts"  // Changed from "dashboard" to "yachts"
+      page_key: "yachts"
     },
     { 
       title: "Fleets", 
@@ -212,25 +217,32 @@ export function Sidebar({ onCollapse }: { onCollapse?: (collapsed: boolean) => v
 
   // For debugging: show current permissions
   useEffect(() => {
-    if (userRole && userId) {
-      console.log("=== SIDEBAR DEBUG ===");
-      console.log("User Role:", userRole);
-      console.log("User ID:", userId);
-      console.log("Page Permissions:", userPagePermissions);
-      console.log("Total Menu Items:", menuItems.length);
-      console.log("Visible Items:", visibleItems.length);
-      
-      // Show what items are visible and why
-      const visibilityReport = menuItems.map(item => ({
-        title: item.title,
-        page_key: item.page_key,
-        hasRole: userRole && item.roles.includes(userRole),
-        permission: userPagePermissions.find(p => p.page_key === item.page_key),
-        visible: visibleItems.includes(item),
-        shouldShow: item.page_key ? shouldShowPage(item.page_key, item.roles) : true
-      }));
+    console.log("=== SIDEBAR DEBUG ===");
+    console.log("User Role:", userRole);
+    console.log("User ID:", userId);
+    console.log("Page Permissions:", userPagePermissions);
+    console.log("Menu Items:", menuItems.length);
+    console.log("Visible Items:", visibleItems.length);
+    
+    // Show what items are visible and why
+    if (userRole) {
+      const visibilityReport = menuItems.map(item => {
+        const hasRole = item.roles.includes(userRole);
+        const permission = userPagePermissions.find(p => p.page_key === item.page_key);
+        const shouldShow = item.page_key ? shouldShowPage(item.page_key, item.roles) : true;
+        
+        return {
+          title: item.title,
+          page_key: item.page_key,
+          hasRole,
+          permission: permission ? `${permission.permission_value} (${permission.permission_value === 1 ? 'show' : permission.permission_value === 2 ? 'hide' : 'default'})` : 'none',
+          shouldShow,
+          visible: visibleItems.includes(item)
+        };
+      });
       
       console.log("Visibility Report:", visibilityReport);
+      console.log("Visible Items Titles:", visibleItems.map(item => item.title));
     }
   }, [userRole, userId, userPagePermissions, visibleItems]);
 
