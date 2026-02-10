@@ -881,7 +881,6 @@ const fetchData = async () => {
       <Toaster position="top-right" />
       
       <div className="flex pt-20">
-        <Sidebar onCollapse={setIsSidebarCollapsed} />
         
         <motion.main
           animate={{ marginLeft: isSidebarCollapsed ? 80 : 256 }}

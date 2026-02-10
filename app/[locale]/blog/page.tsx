@@ -1,14 +1,17 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Search, Calendar, ArrowRight, Filter } from "lucide-react";
+import { Search, Calendar, BookOpen, ArrowRight, Zap } from "lucide-react";
 import Image from "next/image";
 import { Link } from "@/i18n/navigation";
 import { Blog } from "@/types/blog.d";
+import BlogSkeleton from "@/components/blog/BlogSkeleton";
+import BLOGIMAGEPLACEHOLDER from "@/public/image.png";
 import { useTranslations, useLocale } from "next-intl";
 import { motion, AnimatePresence } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 const API_BASE = "https://schepen-kring.nl/api";
 
@@ -25,6 +28,7 @@ const BlogComponent = () => {
   const fetchBlogs = useCallback(async () => {
     setIsLoading(true);
     try {
+      // Fetch all published blogs from public API
       const response = await fetch(`${API_BASE}/public/blogs?status=published`);
       
       if (!response.ok) {
@@ -41,8 +45,27 @@ const BlogComponent = () => {
       setBlogs(allBlogs);
       setFilteredBlogs(allBlogs);
       
-      if (allBlogs.length > 0) {
-        setFeaturedBlog(allBlogs[0]);
+      // Try to get featured blogs, otherwise use first blog
+      try {
+        const featuredResponse = await fetch(`${API_BASE}/public/blogs/featured`);
+        if (featuredResponse.ok) {
+          const featuredResult = await featuredResponse.json();
+          setFeaturedBlog({
+            ...featuredResult.data,
+            blog_image: featuredResult.data.featured_image,
+            published_at: featuredResult.data.created_at
+          });
+        } else {
+          // Fallback: use first blog as featured
+          if (allBlogs.length > 0) {
+            setFeaturedBlog(allBlogs[0]);
+          }
+        }
+      } catch (featuredError) {
+        console.error("Error fetching featured blog:", featuredError);
+        if (allBlogs.length > 0) {
+          setFeaturedBlog(allBlogs[0]);
+        }
       }
     } catch (err) {
       console.error("Error fetching blogs:", err);
@@ -56,305 +79,210 @@ const BlogComponent = () => {
     fetchBlogs();
   }, [fetchBlogs]);
 
+  // Search functionality
   useEffect(() => {
     if (searchQuery.trim() === "") {
       setFilteredBlogs(blogs);
     } else {
       const filtered = blogs.filter(blog =>
         blog.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (blog.excerpt && blog.excerpt.toLowerCase().includes(searchQuery.toLowerCase()))
+        (blog.excerpt && blog.excerpt.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (blog.content && blog.content.toLowerCase().includes(searchQuery.toLowerCase()))
       );
       setFilteredBlogs(filtered);
     }
   }, [searchQuery, blogs]);
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50/30 px-4 py-12">
-        <div className="max-w-7xl mx-auto">
-          <div className="glass-card h-12 w-48 animate-pulse mb-12 rounded-2xl" />
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="space-y-4">
-                <div className="aspect-[16/9] glass-card animate-pulse rounded-2xl" />
-                <div className="h-4 glass-card animate-pulse w-3/4 rounded-full" />
-                <div className="h-3 glass-card animate-pulse w-1/2 rounded-full" />
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      // Search is already handled by useEffect
+    }
+  };
 
-  if (error) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 via-white to-blue-50/30 px-4">
-        <div className="text-center space-y-6 p-8 glass-card rounded-3xl max-w-md">
-          <p className="text-gray-700">{error}</p>
-          <Button 
-            onClick={fetchBlogs} 
-            className="glass-button hover:scale-105 transition-all duration-300"
-          >
-            Try Again
-          </Button>
-        </div>
-      </div>
-    );
-  }
+  if (isLoading) return <BlogSkeleton />;
+  
+  if (error) return (
+    <div className="h-screen flex items-center justify-center bg-white text-[#003566] font-serif italic text-2xl">
+      {error}
+    </div>
+  );
 
-  if (blogs.length === 0) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50/30 flex items-center justify-center px-4">
-        <div className="text-center space-y-6 p-8 glass-card rounded-3xl max-w-md">
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-blue-900 bg-clip-text text-transparent">
-            No articles yet
-          </h1>
-          <p className="text-gray-600">Check back soon for new content.</p>
-        </div>
-      </div>
-    );
-  }
-
+  // Separate featured blog from others if it's in the list
   const otherBlogs = filteredBlogs.filter(blog => 
     !featuredBlog || blog.id !== featuredBlog.id
   );
 
+  // If no blogs found
+  if (blogs.length === 0 && !isLoading) {
+    return (
+      <div className="min-h-screen bg-white text-[#003566]">
+        <section className="relative pt-28 pb-12 md:pt-40 md:pb-20 px-6 md:px-12 max-w-[1400px] mx-auto border-b border-slate-100">
+          <div className="text-center py-20">
+            <h1 className="text-5xl md:text-8xl font-serif tracking-tighter leading-[0.9] mb-8 text-[#003566]">
+              The <span className="italic font-light text-slate-300">Journal</span>
+            </h1>
+            <p className="text-slate-500 text-xl font-light mb-12">
+              No articles published yet. Check back soon!
+            </p>
+          </div>
+        </section>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50/30 relative overflow-hidden">
-      {/* Background decorative elements */}
-      <div className="absolute top-0 left-0 w-full h-96 bg-gradient-to-r from-blue-500/5 to-purple-500/5 -rotate-6 -translate-y-1/2" />
-      <div className="absolute bottom-0 right-0 w-96 h-96 bg-gradient-to-l from-blue-500/5 to-purple-500/5 rotate-12 translate-y-1/2" />
-      
-      {/* Hero Section */}
-      <section className="relative">
-        <div className="max-w-7xl mx-auto px-4 py-20">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="space-y-10"
-          >
-            <div className="text-center max-w-3xl mx-auto">
-              <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-gray-900 via-blue-900 to-purple-900 bg-clip-text text-transparent leading-tight">
-                Insights & Perspectives
-              </h1>
-              <p className="text-xl text-gray-600 leading-relaxed">
-                Thoughtful articles on strategy, innovation, and industry trends.
+    <div className="min-h-screen bg-white text-[#003566]">
+      {/* --- Editorial Hero Section --- */}
+      <section className="relative pt-28 pb-12 md:pt-40 md:pb-20 px-6 md:px-12 max-w-[1400px] mx-auto border-b border-slate-100">
+        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8 md:gap-12">
+          <div className="max-w-3xl">
+            <motion.div 
+              initial={{ opacity: 0, x: -20 }} 
+              animate={{ opacity: 1, x: 0 }} 
+              className="flex items-center gap-3 md:gap-4 mb-4 md:mb-6"
+            >
+              <span className="w-8 md:w-12 h-[1px] bg-blue-600" />
+              <p className="text-[9px] md:text-[11px] font-black uppercase tracking-[0.4em] text-blue-600">
+                {t("new_updates_label")}
               </p>
-            </div>
+            </motion.div>
+
+            <h1 className="text-5xl md:text-8xl font-serif tracking-tighter leading-[0.9] mb-4 md:mb-6 text-[#003566]">
+              The <span className="italic font-light text-slate-300">Journal</span>
+            </h1>
             
-            {/* Search Bar */}
-            <div className="max-w-xl mx-auto">
-              <div className="relative group">
-                <Search className="absolute left-6 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 z-10" />
-                <Input
-                  placeholder="Search articles..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="glass-input pl-14 h-14 rounded-2xl text-lg border-0 shadow-lg focus:shadow-xl transition-all duration-300"
-                />
-                <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                  <Button 
-                    className="glass-button h-10 w-10 p-0"
-                    variant="ghost"
-                  >
-                    <Filter className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </motion.div>
+            <p className="text-slate-500 text-base md:text-xl font-light max-w-xl tracking-tight leading-relaxed">
+              {t("subtitle")}
+            </p>
+          </div>
+
+          <div className="relative w-full lg:w-96 group mt-4 lg:mt-0">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
+            <Input
+              placeholder={t("search_placeholder")}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyPress={handleSearch}
+              className="w-full h-12 md:h-14 pl-12 bg-slate-50 border-slate-200 rounded-none text-[#003566] placeholder:text-slate-400 focus-visible:ring-1 focus-visible:ring-blue-600 transition-all uppercase text-[9px] md:text-[10px] font-bold tracking-widest"
+            />
+            {searchQuery && (
+              <p className="text-[10px] text-slate-400 mt-2">
+                Found {filteredBlogs.length} {filteredBlogs.length === 1 ? 'article' : 'articles'}
+              </p>
+            )}
+          </div>
         </div>
       </section>
 
-      <main className="max-w-7xl mx-auto px-4 pb-24 relative">
-        {/* Featured Article */}
+      <div className="max-w-[1400px] mx-auto px-6 md:px-12 py-24">
+        {/* --- Featured Entry: Thick Bordered Card --- */}
         {featuredBlog && (
-          <section className="mb-20">
-            <Link href={`/blog/${featuredBlog.slug}`} className="group block">
-              <motion.div
-                whileHover={{ scale: 1.02 }}
-                transition={{ duration: 0.3 }}
-                className="glass-card overflow-hidden rounded-3xl p-1"
-              >
-                <div className="grid lg:grid-cols-2 gap-0">
-                  <div className="relative aspect-[16/9] lg:aspect-square overflow-hidden rounded-l-3xl">
-                    {featuredBlog.blog_image && (
-                      <Image
-                        src={featuredBlog.blog_image}
-                        alt={featuredBlog.title}
-                        fill
-                        className="object-cover transition-transform duration-700 group-hover:scale-110"
-                        sizes="(max-width: 1024px) 100vw, 50vw"
-                      />
-                    )}
-                    <div className="absolute inset-0 bg-gradient-to-tr from-black/20 to-transparent" />
-                  </div>
-                  
-                  <div className="p-10 lg:p-12 flex flex-col justify-center bg-white/70 backdrop-blur-xl">
-                    <div className="flex items-center gap-4 text-sm text-gray-500 mb-6">
-                      <span className="flex items-center gap-2 px-4 py-2 glass-tag rounded-full">
-                        <Calendar className="h-4 w-4" />
-                        {featuredBlog.published_at && new Date(featuredBlog.published_at).toLocaleDateString(locale, { 
-                          month: "short", day: "numeric", year: "numeric" 
-                        })}
-                      </span>
-                    </div>
-                    
-                    <h2 className="text-3xl md:text-4xl font-bold text-gray-900 group-hover:text-blue-700 transition-colors leading-tight mb-6">
-                      {featuredBlog.title}
-                    </h2>
-                    
-                    <p className="text-gray-600 leading-relaxed mb-8 text-lg">
-                      {featuredBlog.excerpt}
-                    </p>
-                    
-                    <div className="flex items-center gap-3 text-blue-600 font-semibold group-hover:gap-4 transition-all">
-                      <span className="relative overflow-hidden">
-                        Read article
-                        <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-blue-600 group-hover:w-full transition-all duration-300" />
-                      </span>
-                      <ArrowRight className="h-5 w-5 group-hover:translate-x-2 transition-transform" />
-                    </div>
-                  </div>
+          <div className="mb-32">
+            <Link
+              href={`/blog/${featuredBlog.slug}`}
+              className="group grid grid-cols-1 lg:grid-cols-12 gap-0 border-[3px] border-[#003566] overflow-hidden hover:shadow-[0_30px_60px_-15px_rgba(0,53,102,0.2)] transition-all duration-500"
+            >
+              <div className="lg:col-span-7 relative aspect-[16/10] lg:aspect-auto overflow-hidden border-b-[3px] lg:border-b-0 lg:border-r-[3px] border-[#003566]">
+                <Image
+                  src={featuredBlog.blog_image || featuredBlog.featured_image || BLOGIMAGEPLACEHOLDER}
+                  alt={featuredBlog.title}
+                  fill
+                  className="object-cover transition-transform duration-1000 group-hover:scale-105"
+                  sizes="(max-width: 1024px) 100vw, 50vw"
+                />
+              </div>
+              <div className="lg:col-span-5 p-12 md:p-20 flex flex-col justify-center bg-white">
+                <div className="flex items-center gap-3 mb-8 text-[10px] font-black uppercase tracking-widest text-blue-600">
+                  <Calendar size={14} strokeWidth={3} />
+                  {featuredBlog.published_at && new Date(featuredBlog.published_at).toLocaleDateString(locale, { month: "long", day: "numeric", year: "numeric" })}
                 </div>
-              </motion.div>
+                <h2 className="text-4xl md:text-6xl font-serif text-[#003566] mb-8 leading-[1.1] group-hover:text-blue-600 transition-colors">
+                  {featuredBlog.title}
+                </h2>
+                <p className="text-slate-500 text-lg font-light mb-12 line-clamp-3 leading-relaxed">
+                  {featuredBlog.excerpt}
+                </p>
+                <div className="flex items-center gap-4 text-[#003566] text-[11px] font-black uppercase tracking-[0.3em]">
+                  {t("read_more")} <ArrowRight size={18} className="group-hover:translate-x-2 transition-transform" />
+                </div>
+              </div>
             </Link>
-          </section>
+          </div>
         )}
 
-        {/* Articles Grid */}
-        <AnimatePresence mode="wait">
-          {otherBlogs.length > 0 ? (
-            <motion.section
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-            >
-              <div className="flex justify-between items-center mb-10">
-                <h2 className="text-3xl font-bold text-gray-900">
-                  Latest Articles
-                </h2>
-                <div className="text-sm text-gray-500 glass-tag px-4 py-2 rounded-full">
-                  {otherBlogs.length} articles
+        {/* --- Secondary Feed: Thick Bordered Grid --- */}
+        {otherBlogs.length > 0 ? (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-12">
+            {otherBlogs.map((post) => (
+              <Link 
+                key={post.id} 
+                href={`/blog/${post.slug}`} 
+                className="group flex flex-col bg-white border-[3px] border-slate-100 p-0 hover:border-[#003566] hover:shadow-xl transition-all duration-300"
+              >
+                <div className="relative aspect-video overflow-hidden border-b-[3px] border-slate-100 group-hover:border-[#003566] transition-colors">
+                  <Image 
+                    src={post.blog_image || post.featured_image || BLOGIMAGEPLACEHOLDER} 
+                    alt={post.title} 
+                    fill 
+                    className="object-cover transition-transform duration-700 group-hover:scale-110" 
+                    sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                  />
                 </div>
-              </div>
-              
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {otherBlogs.map((post, index) => (
-                  <motion.div
-                    key={post.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                  >
-                    <Link
-                      href={`/blog/${post.slug}`}
-                      className="group block"
-                    >
-                      <div className="glass-card rounded-2xl overflow-hidden h-full hover:shadow-xl transition-all duration-300">
-                        <div className="relative aspect-[16/9] overflow-hidden">
-                          {post.blog_image && (
-                            <Image
-                              src={post.blog_image}
-                              alt={post.title}
-                              fill
-                              className="object-cover transition-transform duration-500 group-hover:scale-110"
-                              sizes="(max-width: 768px) 100vw, 400px"
-                            />
-                          )}
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                        </div>
-                        
-                        <div className="p-6 space-y-4">
-                          <div className="flex items-center gap-2 text-sm text-gray-500">
-                            <Calendar className="h-4 w-4" />
-                            {post.published_at && new Date(post.published_at).toLocaleDateString(locale, { 
-                              month: "short", day: "numeric" 
-                            })}
-                          </div>
-                          
-                          <h3 className="text-xl font-semibold text-gray-900 group-hover:text-blue-700 transition-colors leading-snug line-clamp-2">
-                            {post.title}
-                          </h3>
-                          
-                          {post.excerpt && (
-                            <p className="text-gray-600 text-sm line-clamp-3 leading-relaxed">
-                              {post.excerpt}
-                            </p>
-                          )}
-                          
-                          <div className="pt-4">
-                            <span className="inline-flex items-center text-blue-600 text-sm font-medium group-hover:gap-2 transition-all">
-                              Read more
-                              <ArrowRight className="h-4 w-4 ml-1 group-hover:translate-x-1 transition-transform" />
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </Link>
-                  </motion.div>
-                ))}
-              </div>
-            </motion.section>
-          ) : (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="text-center py-20 space-y-6"
-            >
-              <div className="glass-card p-12 rounded-3xl max-w-md mx-auto">
-                <p className="text-gray-700 text-lg mb-6">No articles found for "{searchQuery}"</p>
-                <Button 
-                  onClick={() => setSearchQuery("")}
-                  className="glass-button hover:scale-105 transition-all"
-                >
-                  Clear Search
-                </Button>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Newsletter CTA */}
-        <section className="mt-32">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="glass-card rounded-3xl overflow-hidden relative"
-          >
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-purple-500/10" />
-            <div className="relative z-10 max-w-3xl mx-auto text-center space-y-10 p-12">
-              <div className="space-y-6">
-                <h3 className="text-4xl font-bold bg-gradient-to-r from-gray-900 to-blue-900 bg-clip-text text-transparent">
-                  Stay Updated
-                </h3>
-                <p className="text-gray-600 text-lg">
-                  Subscribe to receive our latest insights directly in your inbox.
-                </p>
-              </div>
-              
-              <form className="flex flex-col sm:flex-row gap-4 max-w-xl mx-auto">
-                <Input
-                  type="email"
-                  placeholder="Your email address"
-                  className="glass-input flex-1 h-14 rounded-2xl border-0 text-lg"
-                  required
-                />
-                <Button className="glass-button h-14 px-10 text-lg font-semibold hover:scale-105 transition-transform">
-                  Subscribe
-                </Button>
-              </form>
-              
-              <p className="text-sm text-gray-500">
-                No spam. Unsubscribe at any time.
+                <div className="p-8">
+                  <h3 className="text-2xl font-serif text-[#003566] mb-4 group-hover:text-blue-600 transition-colors leading-tight">
+                    {post.title}
+                  </h3>
+                  <p className="text-slate-500 text-sm font-light line-clamp-2 mb-8 leading-relaxed">
+                    {post.excerpt}
+                  </p>
+                  <div className="flex items-center justify-between pt-6 border-t border-slate-100">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                      {post.published_at && new Date(post.published_at).toLocaleDateString(locale)}
+                    </span>
+                    <ArrowRight size={16} className="text-blue-600 opacity-0 group-hover:opacity-100 -translate-x-4 group-hover:translate-x-0 transition-all" />
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          searchQuery && (
+            <div className="text-center py-20">
+              <p className="text-slate-500 text-lg font-light mb-8">
+                No articles found for "{searchQuery}"
               </p>
+              <Button 
+                onClick={() => setSearchQuery("")}
+                className="bg-[#003566] text-white rounded-none uppercase text-[10px] tracking-widest font-black px-8 h-12"
+              >
+                Clear Search
+              </Button>
             </div>
-          </motion.div>
-        </section>
-      </main>
+          )
+        )}
+
+        {/* --- Newsletter CTA: Navy Inversion --- */}
+        <div className="mt-40 bg-[#003566] p-16 md:p-32 text-center relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/2" />
+          <div className="relative z-10 max-w-3xl mx-auto">
+            <h2 className="text-5xl md:text-7xl font-serif text-white mb-8 leading-tight">
+              Stay <span className="italic font-light opacity-60">Informed</span>
+            </h2>
+            <p className="text-blue-100/60 text-xl font-light mb-12 tracking-wide leading-relaxed">
+              {t("newsletter_subtitle")}
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+               <Input 
+                 placeholder="Email Address" 
+                 className="h-16 w-full sm:w-80 rounded-none border-none bg-white/10 text-white placeholder:text-blue-300/50 px-8 focus-visible:ring-1 focus-visible:ring-white"
+               />
+               <Button className="h-16 px-12 rounded-none bg-white text-[#003566] font-black uppercase tracking-widest text-[11px] hover:bg-blue-50 transition-all">
+                {t("subscribed")}
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
