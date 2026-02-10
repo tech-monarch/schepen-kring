@@ -10,12 +10,14 @@ import {
   Search,
   Loader2,
   Anchor,
+  Wifi,
+  WifiOff,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
+import { Toaster, toast } from "react-hot-toast";
 
-// --- TYPES ---
 interface Yacht {
   id: number;
   name: string;
@@ -25,37 +27,58 @@ interface Yacht {
 interface User {
   id: number;
   name: string;
-  role: string; // Admin, Employee, Customer [cite: 11]
+  email: string;
+  role: string;
 }
 
 interface Task {
   id: number;
   title: string;
+  description?: string;
   priority: string;
   status: string;
   due_date: string;
-  assigned_to?: User;
+  assigned_to?: number;
+  assigned_to_user?: User;
   yacht?: Yacht;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export default function AdminTaskBoardPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [users, setUsers] = useState<User[]>([]);
-  const [yachts, setYachts] = useState<Yacht[]>([]); // New state for ships
+  const [yachts, setYachts] = useState<Yacht[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [isOnline, setIsOnline] = useState<boolean>(true);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     title: "",
+    description: "",
     priority: "Medium",
     status: "To Do",
     assigned_to: "",
-    yacht_id: "", // Added for ship assignment [cite: 70]
+    yacht_id: "",
     due_date: "",
   });
 
   const API_BASE = "https://schepen-kring.nl/api";
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user_data");
+    if (storedUser) {
+      const user = JSON.parse(storedUser);
+      setCurrentUserId(user.id || user.userId);
+    }
+
+    window.addEventListener("online", () => setIsOnline(true));
+    window.addEventListener("offline", () => setIsOnline(false));
+
+    initLoad();
+  }, []);
 
   const getHeaders = () => {
     const token = localStorage.getItem("auth_token");
@@ -67,33 +90,46 @@ export default function AdminTaskBoardPage() {
     };
   };
 
-  useEffect(() => {
-    const initLoad = async () => {
-      setLoading(true);
-      try {
-        // Fetch tasks, users, and yachts in parallel [cite: 36, 68, 9]
-        const [taskRes, userRes, yachtRes] = await Promise.all([
-          axios.get(`${API_BASE}/tasks`, getHeaders()),
-          axios.get(`${API_BASE}/users`, getHeaders()),
-          axios.get(`${API_BASE}/yachts`, getHeaders()),
-        ]);
+  const initLoad = async () => {
+    setLoading(true);
+    try {
+      const [taskRes, userRes, yachtRes] = await Promise.all([
+        axios.get(`${API_BASE}/tasks`, getHeaders()),
+        axios.get(`${API_BASE}/users`, getHeaders()),
+        axios.get(`${API_BASE}/yachts`, getHeaders()),
+      ]);
 
-        setTasks(taskRes.data);
-        setUsers(userRes.data);
-        setYachts(yachtRes.data);
+      // Transform tasks to include assigned user object
+      const tasksWithUsers = taskRes.data.map((task: any) => ({
+        ...task,
+        assigned_to_user: userRes.data.find((u: User) => u.id === task.assigned_to)
+      }));
 
-        localStorage.setItem("fleet_tasks", JSON.stringify(taskRes.data));
-      } catch (err) {
-        console.error("Fleet sync failed:", err);
-      } finally {
-        setLoading(false);
+      setTasks(tasksWithUsers);
+      setUsers(userRes.data);
+      setYachts(yachtRes.data);
+
+      // Cache with user-specific key
+      if (currentUserId) {
+        localStorage.setItem(`admin_tasks_${currentUserId}`, JSON.stringify(tasksWithUsers));
       }
-    };
-    initLoad();
-  }, []);
+    } catch (err) {
+      console.error("Failed to load:", err);
+      toast.error("Failed to load tasks");
+      
+      // Try to load from cache
+      if (currentUserId) {
+        const cached = localStorage.getItem(`admin_tasks_${currentUserId}`);
+        if (cached) {
+          setTasks(JSON.parse(cached));
+          toast("Using cached data");
+        }
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  // --- FILTERING ---
-  // 1. Filter out Customers so only Staff/Admins show in the crew dropdown [cite: 11]
   const staffOnly = useMemo(() => {
     return users.filter((u) => u.role !== "Customer");
   }, [users]);
@@ -102,44 +138,62 @@ export default function AdminTaskBoardPage() {
     return tasks.filter(
       (task: Task) =>
         task.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        task.assigned_to?.name
+        task.assigned_to_user?.name
           ?.toLowerCase()
-          .includes(searchQuery.toLowerCase()),
+          .includes(searchQuery.toLowerCase()) ||
+        task.assigned_to_user?.email
+          ?.toLowerCase()
+          .includes(searchQuery.toLowerCase())
     );
   }, [tasks, searchQuery]);
 
-  // --- ACTIONS ---
   const handleCreateTask = async (e: FormEvent) => {
     e.preventDefault();
+    
+    if (!formData.assigned_to) {
+      toast.error("Please select a crew member");
+      return;
+    }
+
     try {
       const res = await axios.post(`${API_BASE}/tasks`, formData, getHeaders());
-      setTasks([res.data, ...tasks]);
+      
+      // Add the assigned user object to the new task
+      const newTask = {
+        ...res.data,
+        assigned_to_user: users.find(u => u.id === parseInt(formData.assigned_to))
+      };
+      
+      setTasks([newTask, ...tasks]);
       setIsModalOpen(false);
       setFormData({
         title: "",
+        description: "",
         priority: "Medium",
         status: "To Do",
         assigned_to: "",
         yacht_id: "",
         due_date: "",
       });
-    } catch (err) {
-      alert("Error: Ensure all fields match system requirements.");
+      toast.success("Task assigned successfully");
+    } catch (err: any) {
+      console.error("Error creating task:", err);
+      toast.error(err.response?.data?.error || "Failed to create task");
     }
   };
 
   const deleteTask = async (id: number) => {
     if (!confirm("Permanently delete this task from the manifest?")) return;
 
-    // Optimistic Update
     const previousTasks = [...tasks];
     setTasks(tasks.filter((t) => t.id !== id));
 
     try {
-      await axios.delete(`${API_BASE}/tasks/${id}`, getHeaders()); // [cite: 77]
+      await axios.delete(`${API_BASE}/tasks/${id}`, getHeaders());
+      toast.success("Task deleted");
     } catch (err) {
       setTasks(previousTasks);
-      alert("System could not purge task. Check connection.");
+      toast.error("Failed to delete task");
     }
   };
 
@@ -154,14 +208,17 @@ export default function AdminTaskBoardPage() {
         `${API_BASE}/tasks/${id}/status`,
         { status: nextStatus },
         getHeaders(),
-      ); // [cite: 80]
+      );
+      toast.success("Status updated");
     } catch (err) {
-      console.error("Status sync failed");
+      toast.error("Failed to update status");
     }
   };
 
   return (
     <div className="space-y-10 p-6 max-w-7xl mx-auto -mt-20">
+      <Toaster position="top-right" />
+      
       {/* HEADER */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
         <div>
@@ -171,6 +228,12 @@ export default function AdminTaskBoardPage() {
           <p className="text-[10px] uppercase tracking-widest text-blue-600 font-black mt-2">
             Fleet Management & Command
           </p>
+          {!isOnline && (
+            <div className="flex items-center gap-2 mt-2 text-xs text-amber-600">
+              <WifiOff size={12} />
+              <span>Offline Mode</span>
+            </div>
+          )}
         </div>
 
         <div className="flex w-full md:w-auto gap-4">
@@ -189,20 +252,37 @@ export default function AdminTaskBoardPage() {
               }
             />
           </div>
-          <Button
-            onClick={() => setIsModalOpen(true)}
-            className="bg-[#003566] text-white rounded-none h-12 px-8 uppercase text-[10px] tracking-widest font-black shadow-lg"
-          >
-            <Plus className="mr-2 w-4 h-4" /> New Assignment
-          </Button>
+          <div className="flex items-center gap-4">
+            {isOnline ? (
+              <div className="flex items-center gap-2 text-xs text-emerald-600">
+                <Wifi size={12} />
+                <span>Online</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 text-xs text-amber-600">
+                <WifiOff size={12} />
+                <span>Offline</span>
+              </div>
+            )}
+            <Button
+              onClick={() => setIsModalOpen(true)}
+              className="bg-[#003566] text-white rounded-none h-12 px-8 uppercase text-[10px] tracking-widest font-black shadow-lg hover:bg-[#003566]/90"
+            >
+              <Plus className="mr-2 w-4 h-4" /> New Assignment
+            </Button>
+          </div>
         </div>
       </div>
 
-      {/* LIST */}
+      {/* TASK LIST */}
       <div className="bg-white border border-slate-200 divide-y divide-slate-100 shadow-sm">
         {loading && tasks.length === 0 ? (
           <div className="p-20 flex flex-col items-center text-slate-300 uppercase tracking-widest text-[10px] font-black">
-            <Loader2 className="animate-spin mb-4" /> Syncing Fleet...
+            <Loader2 className="animate-spin mb-4" /> Loading Tasks...
+          </div>
+        ) : filteredTasks.length === 0 ? (
+          <div className="p-20 text-center text-slate-400">
+            No tasks found. {searchQuery && "Try a different search term."}
           </div>
         ) : (
           filteredTasks.map((task) => (
@@ -214,26 +294,54 @@ export default function AdminTaskBoardPage() {
                 <div
                   className={cn(
                     "w-1 h-12 shrink-0",
-                    task.priority === "Urgent" || task.priority === "High"
+                    task.priority === "Urgent"
                       ? "bg-red-500"
-                      : "bg-blue-600",
+                      : task.priority === "High"
+                      ? "bg-orange-500"
+                      : task.priority === "Medium"
+                      ? "bg-blue-500"
+                      : "bg-slate-400"
                   )}
                 />
-                <div>
-                  <div className="flex items-center gap-3">
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 mb-2">
                     <span className="text-[8px] font-black text-blue-600 uppercase tracking-widest bg-blue-50 px-2 py-0.5 border border-blue-100">
                       {task.yacht?.name || "General Fleet"}
                     </span>
                     <h3 className="text-sm font-bold text-[#003566] uppercase tracking-widest">
                       {task.title}
                     </h3>
+                    {task.priority === "Urgent" && (
+                      <span className="px-2 py-0.5 bg-red-100 text-red-700 text-[7px] font-black uppercase">
+                        URGENT
+                      </span>
+                    )}
                   </div>
-                  <div className="flex items-center gap-4 text-[9px] uppercase tracking-widest text-slate-400 mt-2 font-medium">
+                  {task.description && (
+                    <p className="text-xs text-slate-600 mb-2">
+                      {task.description}
+                    </p>
+                  )}
+                  <div className="flex items-center gap-4 text-[9px] uppercase tracking-widest text-slate-400 font-medium">
                     <span className="flex items-center gap-1.5 text-slate-600 font-bold">
                       <UserIcon size={12} className="text-blue-600" />{" "}
-                      {task.assigned_to?.name || "Unassigned"}
+                      {task.assigned_to_user?.name || "Unassigned"}
+                      {task.assigned_to_user?.email && (
+                        <span className="text-slate-400 font-normal">
+                          ({task.assigned_to_user.email})
+                        </span>
+                      )}
                     </span>
-                    <span>Due: {task.due_date || "Immediate"}</span>
+                    <span>Due: {task.due_date || "No deadline"}</span>
+                    <span className={cn(
+                      "px-2 py-0.5",
+                      task.priority === "Urgent" ? "bg-red-100 text-red-700" :
+                      task.priority === "High" ? "bg-orange-100 text-orange-700" :
+                      task.priority === "Medium" ? "bg-blue-100 text-blue-700" :
+                      "bg-slate-100 text-slate-700"
+                    )}>
+                      {task.priority}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -244,8 +352,8 @@ export default function AdminTaskBoardPage() {
                   className={cn(
                     "px-4 py-1.5 text-[9px] font-black uppercase tracking-widest border transition-all min-w-[110px]",
                     task.status === "Done"
-                      ? "bg-emerald-50 text-emerald-600 border-emerald-100"
-                      : "bg-white text-slate-500 border-slate-200",
+                      ? "bg-emerald-50 text-emerald-600 border-emerald-100 hover:bg-emerald-100"
+                      : "bg-white text-slate-500 border-slate-200 hover:bg-slate-50",
                   )}
                 >
                   {task.status}
@@ -253,6 +361,7 @@ export default function AdminTaskBoardPage() {
                 <button
                   onClick={() => deleteTask(task.id)}
                   className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 transition-all"
+                  title="Delete task"
                 >
                   <Trash2 size={16} />
                 </button>
@@ -262,13 +371,14 @@ export default function AdminTaskBoardPage() {
         )}
       </div>
 
-      {/* UPDATED MODAL WITH SHIP SELECTION & FILTERED CREW */}
+      {/* MODAL */}
       <AnimatePresence>
         {isModalOpen && (
           <div className="fixed inset-0 bg-[#003566]/30 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
               className="bg-white p-8 border border-slate-200 w-full max-w-md shadow-2xl"
             >
               <div className="flex justify-between items-center mb-8">
@@ -276,22 +386,39 @@ export default function AdminTaskBoardPage() {
                   Assign New Task
                 </h2>
                 <X
-                  className="cursor-pointer text-slate-400"
+                  className="cursor-pointer text-slate-400 hover:text-slate-600"
                   onClick={() => setIsModalOpen(false)}
+                  size={20}
                 />
               </div>
 
               <form onSubmit={handleCreateTask} className="space-y-6">
                 <div className="space-y-1">
                   <label className="text-[8px] font-black uppercase tracking-widest text-slate-400">
-                    Task Title
+                    Task Title *
                   </label>
                   <input
                     className="w-full border-b border-slate-200 py-2 outline-none text-xs uppercase tracking-widest focus:border-blue-600"
                     placeholder="E.G. ENGINE SERVICE"
                     required
+                    value={formData.title}
                     onChange={(e) =>
                       setFormData({ ...formData, title: e.target.value })
+                    }
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[8px] font-black uppercase tracking-widest text-slate-400">
+                    Description (Optional)
+                  </label>
+                  <textarea
+                    className="w-full border-b border-slate-200 py-2 outline-none text-xs focus:border-blue-600 resize-none"
+                    placeholder="Detailed instructions..."
+                    rows={2}
+                    value={formData.description}
+                    onChange={(e) =>
+                      setFormData({ ...formData, description: e.target.value })
                     }
                   />
                 </div>
@@ -299,10 +426,11 @@ export default function AdminTaskBoardPage() {
                 <div className="grid grid-cols-2 gap-6">
                   <div className="space-y-1">
                     <label className="text-[8px] font-black uppercase tracking-widest text-slate-400">
-                      Crew Member
+                      Crew Member *
                     </label>
                     <select
                       className="w-full border-b border-slate-200 py-2 outline-none text-[10px] uppercase font-bold"
+                      value={formData.assigned_to}
                       onChange={(e) =>
                         setFormData({
                           ...formData,
@@ -325,6 +453,7 @@ export default function AdminTaskBoardPage() {
                     </label>
                     <select
                       className="w-full border-b border-slate-200 py-2 outline-none text-[10px] uppercase font-bold"
+                      value={formData.yacht_id}
                       onChange={(e) =>
                         setFormData({ ...formData, yacht_id: e.target.value })
                       }
@@ -332,7 +461,7 @@ export default function AdminTaskBoardPage() {
                       <option value="">General Fleet</option>
                       {yachts.map((y) => (
                         <option key={y.id} value={y.id}>
-                          {y.name}
+                          {y.name} ({y.vessel_id})
                         </option>
                       ))}
                     </select>
@@ -346,6 +475,7 @@ export default function AdminTaskBoardPage() {
                     </label>
                     <select
                       className="w-full border-b border-slate-200 py-2 text-[10px] font-bold outline-none"
+                      value={formData.priority}
                       onChange={(e) =>
                         setFormData({ ...formData, priority: e.target.value })
                       }
@@ -363,19 +493,31 @@ export default function AdminTaskBoardPage() {
                     <input
                       type="date"
                       className="w-full border-b border-slate-200 py-2 text-[10px] outline-none"
+                      value={formData.due_date}
                       onChange={(e) =>
                         setFormData({ ...formData, due_date: e.target.value })
                       }
+                      min={new Date().toISOString().split('T')[0]}
                     />
                   </div>
                 </div>
 
-                <Button
-                  type="submit"
-                  className="w-full bg-[#003566] text-white rounded-none h-12 uppercase text-[10px] tracking-widest font-black"
-                >
-                  Deploy Assignment
-                </Button>
+                <div className="flex gap-4 pt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="flex-1 border-slate-200 text-slate-500 rounded-none h-12 uppercase text-[10px] tracking-widest"
+                    onClick={() => setIsModalOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    className="flex-1 bg-[#003566] text-white rounded-none h-12 uppercase text-[10px] tracking-widest font-black hover:bg-[#003566]/90"
+                  >
+                    Deploy Assignment
+                  </Button>
+                </div>
               </form>
             </motion.div>
           </div>
