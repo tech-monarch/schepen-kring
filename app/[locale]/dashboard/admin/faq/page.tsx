@@ -1,27 +1,62 @@
-// app/faq/page.js or pages/faq.js
+// app/[locale]/dashboard/admin/faq/page.tsx
 "use client";
 
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { Search, MessageSquare, HelpCircle, ThumbsUp, ThumbsDown, Filter, BookOpen, Bot, RefreshCw, ChevronDown, ChevronUp, Plus, Edit, Trash2 } from "lucide-react";
+import { 
+  Search, 
+  HelpCircle, 
+  ThumbsUp, 
+  ThumbsDown, 
+  Bot, 
+  RefreshCw, 
+  ChevronDown, 
+  ChevronUp, 
+  Plus, 
+  Trash2,
+  X,
+  Filter,
+  BarChart
+} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Toaster, toast } from "react-hot-toast";
 
 const API_BASE = "https://schepen-kring.nl/api";
 
+interface Faq {
+  id: number;
+  question: string;
+  answer: string;
+  category: string;
+  views: number;
+  helpful: number;
+  not_helpful: number;
+  created_at: string;
+  updated_at: string;
+}
+
 export default function FAQPage() {
-  const [faqs, setFaqs] = useState([]);
-  const [categories, setCategories] = useState([]);
+  const [faqs, setFaqs] = useState<Faq[]>([]);
+  const [categories, setCategories] = useState<string[]>(["General", "Booking", "Technical", "Payment"]);
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
-  const [expandedId, setExpandedId] = useState(null);
+  const [expandedId, setExpandedId] = useState<number | null>(null);
   const [aiQuery, setAiQuery] = useState("");
-  const [aiAnswer, setAiAnswer] = useState(null);
+  const [aiAnswer, setAiAnswer] = useState<{
+    question: string;
+    answer: string;
+    sources: number;
+    timestamp: string;
+  } | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
-  const [stats, setStats] = useState(null);
+  const [stats, setStats] = useState<any>(null);
   const [showAddForm, setShowAddForm] = useState(false);
-  const [newFaq, setNewFaq] = useState({ question: "", answer: "", category: "General" });
+  const [newFaq, setNewFaq] = useState({
+    question: "",
+    answer: "",
+    category: "General"
+  });
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
@@ -46,9 +81,9 @@ export default function FAQPage() {
       if (searchQuery) params.append("search", searchQuery);
       
       const response = await axios.get(`${API_BASE}/faqs?${params.toString()}`);
-      setFaqs(response.data.faqs.data || response.data.faqs);
+      setFaqs(response.data.faqs?.data || response.data.faqs || []);
       setCategories(response.data.categories || ["General", "Booking", "Technical", "Payment"]);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching FAQs:", error);
       toast.error("Failed to load FAQs");
     } finally {
@@ -60,12 +95,12 @@ export default function FAQPage() {
     try {
       const response = await axios.get(`${API_BASE}/faqs/stats`);
       setStats(response.data);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching stats:", error);
     }
   };
 
-  const askGemini = async (e) => {
+  const askGemini = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!aiQuery.trim()) return;
     
@@ -84,7 +119,7 @@ export default function FAQPage() {
       
       setAiQuery("");
       toast.success("AI answered your question!");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error asking Gemini:", error);
       toast.error("Failed to get AI answer");
     } finally {
@@ -92,32 +127,35 @@ export default function FAQPage() {
     }
   };
 
-  const rateHelpful = async (id) => {
+  const rateHelpful = async (id: number) => {
     try {
       await axios.post(`${API_BASE}/faqs/${id}/rate-helpful`);
-      fetchFaqs(); // Refresh to update counts
+      fetchFaqs();
       toast.success("Thanks for your feedback!");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error rating:", error);
     }
   };
 
-  const rateNotHelpful = async (id) => {
+  const rateNotHelpful = async (id: number) => {
     try {
       await axios.post(`${API_BASE}/faqs/${id}/rate-not-helpful`);
       fetchFaqs();
       toast.success("Thanks for your feedback!");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error rating:", error);
     }
   };
 
-  const handleAddFaq = async (e) => {
+  const handleAddFaq = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       const token = localStorage.getItem("auth_token");
       await axios.post(`${API_BASE}/faqs`, newFaq, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
       });
       
       toast.success("FAQ added successfully!");
@@ -125,12 +163,12 @@ export default function FAQPage() {
       setShowAddForm(false);
       fetchFaqs();
       fetchStats();
-    } catch (error) {
-      toast.error("Failed to add FAQ");
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to add FAQ");
     }
   };
 
-  const handleDeleteFaq = async (id) => {
+  const handleDeleteFaq = async (id: number) => {
     if (!confirm("Are you sure you want to delete this FAQ?")) return;
     
     try {
@@ -142,7 +180,7 @@ export default function FAQPage() {
       toast.success("FAQ deleted!");
       fetchFaqs();
       fetchStats();
-    } catch (error) {
+    } catch (error: any) {
       toast.error("Failed to delete FAQ");
     }
   };
@@ -154,7 +192,7 @@ export default function FAQPage() {
         headers: { Authorization: `Bearer ${token}` }
       });
       toast.success("Gemini AI trained with latest FAQs!");
-    } catch (error) {
+    } catch (error: any) {
       toast.error("Failed to train AI");
     }
   };
@@ -168,10 +206,10 @@ export default function FAQPage() {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10">
           <div>
             <h1 className="text-4xl md:text-5xl font-serif italic text-[#003566]">
-              Maritime Knowledge Hub
+              FAQ Knowledge Base
             </h1>
             <p className="text-[10px] uppercase tracking-[0.4em] text-blue-600 font-black mt-2">
-              Powered by Gemini AI • {stats?.total_faqs || 0} FAQs Available
+              AI-Powered • {stats?.total_faqs || 0} FAQs Available
             </p>
           </div>
           
@@ -179,13 +217,13 @@ export default function FAQPage() {
             <div className="flex gap-4 mt-4 md:mt-0">
               <button
                 onClick={() => setShowAddForm(!showAddForm)}
-                className="bg-emerald-600 text-white px-6 py-3 text-[10px] font-black uppercase tracking-widest flex items-center gap-2"
+                className="bg-emerald-600 text-white px-6 py-3 text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:bg-emerald-700 transition-colors"
               >
                 <Plus size={14} /> Add FAQ
               </button>
               <button
                 onClick={trainGemini}
-                className="bg-purple-600 text-white px-6 py-3 text-[10px] font-black uppercase tracking-widest flex items-center gap-2"
+                className="bg-purple-600 text-white px-6 py-3 text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:bg-purple-700 transition-colors"
               >
                 <RefreshCw size={14} /> Train AI
               </button>
@@ -196,27 +234,55 @@ export default function FAQPage() {
         {/* Stats */}
         {stats && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
-            <div className="bg-white p-6 border border-slate-200">
-              <p className="text-[8px] uppercase tracking-widest text-slate-400 font-black">Total FAQs</p>
-              <p className="text-3xl font-serif text-[#003566] mt-2">{stats.total_faqs}</p>
+            <div className="bg-white p-6 border border-slate-200 shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                  <HelpCircle className="text-blue-600" size={20} />
+                </div>
+                <div>
+                  <p className="text-[8px] uppercase tracking-widest text-slate-400 font-black">Total FAQs</p>
+                  <p className="text-2xl font-serif text-[#003566]">{stats.total_faqs}</p>
+                </div>
+              </div>
             </div>
-            <div className="bg-white p-6 border border-slate-200">
-              <p className="text-[8px] uppercase tracking-widest text-slate-400 font-black">Total Views</p>
-              <p className="text-3xl font-serif text-[#003566] mt-2">{stats.total_views}</p>
+            <div className="bg-white p-6 border border-slate-200 shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                  <BarChart className="text-green-600" size={20} />
+                </div>
+                <div>
+                  <p className="text-[8px] uppercase tracking-widest text-slate-400 font-black">Total Views</p>
+                  <p className="text-2xl font-serif text-[#003566]">{stats.total_views}</p>
+                </div>
+              </div>
             </div>
-            <div className="bg-white p-6 border border-slate-200">
-              <p className="text-[8px] uppercase tracking-widest text-slate-400 font-black">Helpful Votes</p>
-              <p className="text-3xl font-serif text-[#003566] mt-2">{stats.total_helpful}</p>
+            <div className="bg-white p-6 border border-slate-200 shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center">
+                  <ThumbsUp className="text-emerald-600" size={20} />
+                </div>
+                <div>
+                  <p className="text-[8px] uppercase tracking-widest text-slate-400 font-black">Helpful Votes</p>
+                  <p className="text-2xl font-serif text-[#003566]">{stats.total_helpful}</p>
+                </div>
+              </div>
             </div>
-            <div className="bg-white p-6 border border-slate-200">
-              <p className="text-[8px] uppercase tracking-widest text-slate-400 font-black">Categories</p>
-              <p className="text-3xl font-serif text-[#003566] mt-2">{stats.categories?.length || 0}</p>
+            <div className="bg-white p-6 border border-slate-200 shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center">
+                  <Filter className="text-amber-600" size={20} />
+                </div>
+                <div>
+                  <p className="text-[8px] uppercase tracking-widest text-slate-400 font-black">Categories</p>
+                  <p className="text-2xl font-serif text-[#003566]">{stats.categories?.length || 0}</p>
+                </div>
+              </div>
             </div>
           </div>
         )}
 
         {/* AI Chat Section */}
-        <div className="bg-white border border-slate-200 p-8 mb-10 shadow-lg">
+        <div className="bg-white border border-slate-200 p-8 mb-10 shadow-lg rounded-lg">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
               <Bot className="text-white" size={24} />
@@ -236,13 +302,13 @@ export default function FAQPage() {
                 value={aiQuery}
                 onChange={(e) => setAiQuery(e.target.value)}
                 placeholder="Ask anything about yachts, bookings, or maritime services..."
-                className="w-full border-2 border-slate-200 p-4 text-[10px] font-bold uppercase tracking-widest outline-none focus:border-blue-400 pr-32"
+                className="w-full border-2 border-slate-200 p-4 text-sm font-medium outline-none focus:border-blue-400 pr-32 placeholder:text-slate-400"
                 disabled={aiLoading}
               />
               <button
                 type="submit"
                 disabled={aiLoading || !aiQuery.trim()}
-                className="absolute right-2 top-2 bg-[#003566] text-white px-6 py-3 text-[10px] font-black uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                className="absolute right-2 top-2 bg-[#003566] text-white px-6 py-3 text-[10px] font-black uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 hover:bg-blue-900 transition-colors"
               >
                 {aiLoading ? "Thinking..." : "Ask AI"}
               </button>
@@ -254,28 +320,27 @@ export default function FAQPage() {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-blue-50 border border-blue-200 p-6"
+              className="bg-blue-50 border border-blue-200 p-6 rounded-lg"
             >
               <div className="flex justify-between items-start mb-4">
                 <div>
                   <p className="text-[10px] uppercase tracking-widest text-blue-600 font-black">AI Answer</p>
                   <p className="text-sm text-slate-700 mt-2 font-medium">{aiAnswer.question}</p>
                 </div>
-                <p className="text-[8px] text-slate-400">{aiAnswer.timestamp}</p>
-              </div>
-              <div className="bg-white p-4 border border-slate-100">
-                <p className="text-slate-700 whitespace-pre-wrap">{aiAnswer.answer}</p>
-              </div>
-              <div className="flex justify-between items-center mt-4">
-                <p className="text-[8px] text-slate-400">
-                  Sources: {aiAnswer.sources} FAQs • Gemini Pro
-                </p>
                 <button
                   onClick={() => setAiAnswer(null)}
-                  className="text-[8px] uppercase tracking-widest text-slate-400 hover:text-slate-600"
+                  className="text-slate-400 hover:text-slate-600"
                 >
-                  Clear
+                  <X size={18} />
                 </button>
+              </div>
+              <div className="bg-white p-4 border border-slate-100 rounded-md">
+                <p className="text-slate-700 whitespace-pre-wrap">{aiAnswer.answer}</p>
+              </div>
+              <div className="mt-4">
+                <p className="text-[8px] text-slate-400">
+                  Sources: {aiAnswer.sources} FAQs • Gemini Pro • {aiAnswer.timestamp}
+                </p>
               </div>
             </motion.div>
           )}
@@ -288,46 +353,54 @@ export default function FAQPage() {
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
-              className="bg-white border border-slate-200 p-8 mb-10 overflow-hidden"
+              className="bg-white border border-slate-200 p-8 mb-10 overflow-hidden rounded-lg shadow-lg"
             >
-              <h3 className="text-xl font-serif text-[#003566] mb-6">Add New FAQ</h3>
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-serif text-[#003566]">Add New FAQ</h3>
+                <button
+                  onClick={() => setShowAddForm(false)}
+                  className="text-slate-400 hover:text-slate-600"
+                >
+                  <X size={20} />
+                </button>
+              </div>
               <form onSubmit={handleAddFaq} className="space-y-6">
                 <div>
-                  <label className="text-[8px] uppercase tracking-widest text-slate-400 font-black block mb-2">
+                  <label className="text-[10px] uppercase tracking-widest text-slate-600 font-black block mb-2">
                     Question
                   </label>
                   <input
                     type="text"
                     value={newFaq.question}
                     onChange={(e) => setNewFaq({...newFaq, question: e.target.value})}
-                    className="w-full border-b border-slate-200 py-3 text-sm outline-none focus:border-blue-400"
+                    className="w-full border border-slate-200 p-3 text-sm outline-none focus:border-blue-400 rounded"
                     placeholder="Enter question..."
                     required
                   />
                 </div>
                 
                 <div>
-                  <label className="text-[8px] uppercase tracking-widest text-slate-400 font-black block mb-2">
+                  <label className="text-[10px] uppercase tracking-widest text-slate-600 font-black block mb-2">
                     Answer
                   </label>
                   <textarea
                     value={newFaq.answer}
                     onChange={(e) => setNewFaq({...newFaq, answer: e.target.value})}
-                    className="w-full border border-slate-200 p-4 text-sm outline-none focus:border-blue-400 min-h-[150px]"
+                    className="w-full border border-slate-200 p-4 text-sm outline-none focus:border-blue-400 min-h-[150px] rounded"
                     placeholder="Enter detailed answer..."
                     required
                   />
                 </div>
                 
-                <div className="grid grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="text-[8px] uppercase tracking-widest text-slate-400 font-black block mb-2">
+                    <label className="text-[10px] uppercase tracking-widest text-slate-600 font-black block mb-2">
                       Category
                     </label>
                     <select
                       value={newFaq.category}
                       onChange={(e) => setNewFaq({...newFaq, category: e.target.value})}
-                      className="w-full border-b border-slate-200 py-3 text-sm outline-none"
+                      className="w-full border border-slate-200 p-3 text-sm outline-none rounded"
                     >
                       {categories.map((cat) => (
                         <option key={cat} value={cat}>{cat}</option>
@@ -338,7 +411,7 @@ export default function FAQPage() {
                   <div className="flex items-end gap-4">
                     <button
                       type="submit"
-                      className="bg-[#003566] text-white px-8 py-3 text-[10px] font-black uppercase tracking-widest"
+                      className="bg-[#003566] text-white px-8 py-3 text-[10px] font-black uppercase tracking-widest hover:bg-blue-900 transition-colors rounded"
                     >
                       Add FAQ
                     </button>
@@ -365,27 +438,27 @@ export default function FAQPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="SEARCH FAQs..."
-              className="w-full bg-white border border-slate-200 pl-12 pr-4 py-4 text-[10px] font-bold uppercase tracking-widest outline-none focus:border-blue-400"
+              className="w-full bg-white border border-slate-200 pl-12 pr-4 py-3 text-[10px] font-bold uppercase tracking-widest outline-none focus:border-blue-400 rounded"
             />
           </div>
           
           <div className="flex gap-2 flex-wrap">
             <button
               onClick={() => setSelectedCategory("all")}
-              className={`px-6 py-4 text-[10px] font-black uppercase tracking-widest border transition-all ${
+              className={`px-4 py-3 text-[10px] font-black uppercase tracking-widest border transition-all rounded ${
                 selectedCategory === "all"
                   ? "bg-[#003566] text-white border-[#003566]"
                   : "bg-white text-slate-400 border-slate-200 hover:border-blue-400"
               }`}
             >
-              All Categories
+              All
             </button>
             
             {categories.map((category) => (
               <button
                 key={category}
                 onClick={() => setSelectedCategory(category)}
-                className={`px-6 py-4 text-[10px] font-black uppercase tracking-widest border transition-all ${
+                className={`px-4 py-3 text-[10px] font-black uppercase tracking-widest border transition-all rounded ${
                   selectedCategory === category
                     ? "bg-blue-100 text-blue-700 border-blue-300"
                     : "bg-white text-slate-400 border-slate-200 hover:border-blue-400"
@@ -401,57 +474,58 @@ export default function FAQPage() {
         {loading ? (
           <div className="text-center py-20">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#003566] mx-auto"></div>
-            <p className="text-[10px] uppercase tracking-widest text-slate-400 mt-4">Loading Maritime Knowledge...</p>
+            <p className="text-[10px] uppercase tracking-widest text-slate-400 mt-4">Loading FAQs...</p>
           </div>
         ) : faqs.length === 0 ? (
-          <div className="text-center py-20 bg-white border border-slate-200">
+          <div className="text-center py-20 bg-white border border-slate-200 rounded-lg">
             <HelpCircle className="mx-auto text-slate-300" size={48} />
             <p className="text-[10px] uppercase tracking-widest text-slate-400 mt-4">No FAQs found</p>
+            <p className="text-sm text-slate-500 mt-2">Try a different search or category</p>
           </div>
         ) : (
           <div className="space-y-4">
             {faqs.map((faq) => (
               <motion.div
                 key={faq.id}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="bg-white border border-slate-200 hover:border-blue-200 transition-all"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-white border border-slate-200 hover:border-blue-200 transition-all rounded-lg overflow-hidden"
               >
                 <div
-                  className="p-6 cursor-pointer flex justify-between items-center"
+                  className="p-6 cursor-pointer flex justify-between items-start"
                   onClick={() => setExpandedId(expandedId === faq.id ? null : faq.id)}
                 >
                   <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <span className="bg-blue-100 text-blue-700 text-[8px] font-black uppercase tracking-widest px-3 py-1">
+                    <div className="flex items-center gap-3 mb-3">
+                      <span className="bg-blue-100 text-blue-700 text-[8px] font-black uppercase tracking-widest px-3 py-1 rounded-full">
                         {faq.category}
                       </span>
                       <span className="text-[8px] text-slate-400">
                         {faq.views} views • {faq.helpful || 0} helpful
                       </span>
                     </div>
-                    <h3 className="text-lg font-serif text-[#003566]">{faq.question}</h3>
+                    <h3 className="text-lg font-medium text-slate-800">{faq.question}</h3>
                   </div>
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-4 ml-4">
                     {isAdmin && (
-                      <>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (confirm("Delete this FAQ?")) handleDeleteFaq(faq.id);
-                          }}
-                          className="text-red-400 hover:text-red-600"
-                          title="Delete FAQ"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteFaq(faq.id);
+                        }}
+                        className="text-red-400 hover:text-red-600 transition-colors"
+                        title="Delete FAQ"
+                      >
+                        <Trash2 size={16} />
+                      </button>
                     )}
-                    {expandedId === faq.id ? (
-                      <ChevronUp className="text-slate-400" />
-                    ) : (
-                      <ChevronDown className="text-slate-400" />
-                    )}
+                    <div className="text-slate-400">
+                      {expandedId === faq.id ? (
+                        <ChevronUp size={20} />
+                      ) : (
+                        <ChevronDown size={20} />
+                      )}
+                    </div>
                   </div>
                 </div>
                 
@@ -464,13 +538,11 @@ export default function FAQPage() {
                       className="overflow-hidden"
                     >
                       <div className="px-6 pb-6 pt-2 border-t border-slate-100">
-                        <div className="prose max-w-none text-slate-700 mb-6">
-                          {faq.answer.split('\n').map((line, i) => (
-                            <p key={i} className="mb-3">{line}</p>
-                          ))}
+                        <div className="text-slate-700 mb-6 whitespace-pre-wrap">
+                          {faq.answer}
                         </div>
                         
-                        <div className="flex justify-between items-center">
+                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                           <div className="flex gap-4">
                             <button
                               onClick={() => rateHelpful(faq.id)}
@@ -487,7 +559,11 @@ export default function FAQPage() {
                           </div>
                           
                           <p className="text-[8px] text-slate-400">
-                            Added {new Date(faq.created_at).toLocaleDateString()}
+                            Added {new Date(faq.created_at).toLocaleDateString('en-US', {
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric'
+                            })}
                           </p>
                         </div>
                       </div>
