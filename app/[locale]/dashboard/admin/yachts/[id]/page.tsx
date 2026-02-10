@@ -23,7 +23,8 @@ import {
   Save,
   ArrowLeft,
   Calendar,
-  Clock
+  Clock,
+  Eye
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -48,6 +49,48 @@ type AvailabilityRule = {
   start_time: string;
   end_time: string;
 };
+
+// Spec Checkbox Component
+function SpecCheckbox({ field, label, selectedYacht, onSpecChange }: { 
+  field: string; 
+  label: string; 
+  selectedYacht: any;
+  onSpecChange: (field: string, isChecked: boolean) => void;
+}) {
+  const [isChecked, setIsChecked] = useState(() => {
+    // If editing and display_specs exists, check if field is in array
+    if (selectedYacht?.display_specs) {
+      return selectedYacht.display_specs.includes(field);
+    }
+    // If new or no display_specs, default to checked (show all)
+    return true;
+  });
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newChecked = e.target.checked;
+    setIsChecked(newChecked);
+    onSpecChange(field, newChecked);
+  };
+
+  return (
+    <div className="flex items-center gap-2 bg-slate-50/50 p-2 rounded">
+      <input
+        type="checkbox"
+        name={`display_specs[${field}]`}
+        id={`display_spec_${field}`}
+        checked={isChecked}
+        onChange={handleChange}
+        className="w-3 h-3 accent-[#003566] cursor-pointer"
+      />
+      <label
+        htmlFor={`display_spec_${field}`}
+        className="text-[8px] font-medium uppercase tracking-wider text-slate-600 cursor-pointer select-none flex-1"
+      >
+        {label}
+      </label>
+    </div>
+  );
+}
 
 export default function YachtEditorPage() {
   const params = useParams();
@@ -76,6 +119,9 @@ export default function YachtEditorPage() {
 
   // Availability State
   const [availabilityRules, setAvailabilityRules] = useState<AvailabilityRule[]>([]);
+  
+  // Display Specs State
+  const [displaySpecs, setDisplaySpecs] = useState<Record<string, boolean>>({});
 
   // --- 1. FETCH DATA (IF EDITING) ---
   useEffect(() => {
@@ -119,6 +165,31 @@ export default function YachtEditorPage() {
           setAvailabilityRules(yacht.availability_rules);
         } else if (yacht.availabilityRules) {
           setAvailabilityRules(yacht.availabilityRules);
+        }
+
+        // Initialize display specs state
+        if (yacht.display_specs) {
+          const specsState: Record<string, boolean> = {};
+          // All possible spec fields
+          const allSpecs = [
+            // General
+            'builder', 'model', 'year', 'designer', 'where', 'hull_number', 'hull_type',
+            // Dimensions
+            'loa', 'lwl', 'beam', 'draft', 'air_draft', 'displacement', 'ballast', 'passenger_capacity',
+            // Construction
+            'hull_colour', 'hull_construction', 'super_structure_colour', 'super_structure_construction',
+            'deck_colour', 'deck_construction', 'cockpit_type', 'control_type',
+            // Engine
+            'engine_manufacturer', 'horse_power', 'fuel', 'hours', 'cruising_speed', 'max_speed',
+            'tankage', 'gallons_per_hour', 'starting_type', 'drive_type',
+            // Accommodation
+            'cabins', 'berths', 'toilet', 'shower', 'bath', 'heating'
+          ];
+          
+          allSpecs.forEach(spec => {
+            specsState[spec] = yacht.display_specs.includes(spec);
+          });
+          setDisplaySpecs(specsState);
         }
 
       } catch (err) {
@@ -243,8 +314,15 @@ const handleAiCategorizer = async (files: FileList | null) => {
     setAvailabilityRules(newRules);
   };
 
+  // Display Specs Handler
+  const handleSpecChange = (field: string, isChecked: boolean) => {
+    setDisplaySpecs(prev => ({
+      ...prev,
+      [field]: isChecked
+    }));
+  };
+
   // --- 3. SUBMIT LOGIC ---
-// --- 3. SUBMIT LOGIC ---
 const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
   e.preventDefault();
   setIsSubmitting(true);
@@ -275,7 +353,7 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
 
   // Clean empty fields
   const allFields = [
-    'boat_name', 'price', 'status', 'year',
+    'boat_name', 'price', 'status', 'year', 'min_bid_amount',
     'beam', 'draft', 'loa', 'lwl', 'air_draft', 'passenger_capacity',
     'designer', 'builder', 'where', 'hull_colour', 'hull_construction',
     'hull_number', 'hull_type', 'super_structure_colour', 'super_structure_construction',
@@ -295,6 +373,10 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
   if (availabilityRules.length > 0) {
     formData.append("availability_rules", JSON.stringify(availabilityRules));
   }
+
+  // Append Display Specs
+  const selectedSpecs = Object.keys(displaySpecs).filter(key => displaySpecs[key]);
+  formData.append("display_specs", JSON.stringify(selectedSpecs));
 
   try {
     let finalYachtId = selectedYacht?.id;
@@ -484,6 +566,19 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                   defaultValue={selectedYacht?.price}
                   placeholder="1500000"
                 />
+              </div>
+              <div className="space-y-2">
+                <Label>Minimum Bid Amount (€)</Label>
+                <Input
+                  name="min_bid_amount"
+                  type="number"
+                  defaultValue={selectedYacht?.min_bid_amount || ''}
+                  placeholder="e.g., 90% of price (auto-calculates if empty)"
+                  step="1000"
+                />
+                <p className="text-[8px] text-gray-500 mt-1">
+                  Leave empty for auto-calculation (90% of price)
+                </p>
               </div>
               <div className="space-y-2">
                 <Label>Year Built</Label>
@@ -813,6 +908,99 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                     </label>
                   </div>
                 ))}
+              </div>
+            </div>
+
+            {/* --- Display Specifications Control --- */}
+            <div className="space-y-6 bg-white p-6 border border-slate-200">
+              <SectionHeader
+                icon={<Eye size={14} />}
+                title="Display Specifications"
+              />
+              <p className="text-[9px] text-gray-600 mb-4">
+                Select which specifications to show on the public yacht page
+              </p>
+              
+              <div className="space-y-4">
+                {/* General Specs */}
+                <div className="space-y-2">
+                  <h4 className="text-[9px] font-black uppercase text-gray-700">General</h4>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                    {['builder', 'model', 'year', 'designer', 'where', 'hull_number', 'hull_type'].map((field) => (
+                      <SpecCheckbox
+                        key={field}
+                        field={field}
+                        label={field.replace('_', ' ')}
+                        selectedYacht={selectedYacht}
+                        onSpecChange={handleSpecChange}
+                      />
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Dimensions */}
+                <div className="space-y-2">
+                  <h4 className="text-[9px] font-black uppercase text-gray-700">Dimensions</h4>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                    {['loa', 'lwl', 'beam', 'draft', 'air_draft', 'displacement', 'ballast', 'passenger_capacity'].map((field) => (
+                      <SpecCheckbox
+                        key={field}
+                        field={field}
+                        label={field.replace('_', ' ')}
+                        selectedYacht={selectedYacht}
+                        onSpecChange={handleSpecChange}
+                      />
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Construction */}
+                <div className="space-y-2">
+                  <h4 className="text-[9px] font-black uppercase text-gray-700">Construction</h4>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                    {['hull_colour', 'hull_construction', 'super_structure_colour', 'super_structure_construction', 'deck_colour', 'deck_construction', 'cockpit_type', 'control_type'].map((field) => (
+                      <SpecCheckbox
+                        key={field}
+                        field={field}
+                        label={field.replace('_', ' ')}
+                        selectedYacht={selectedYacht}
+                        onSpecChange={handleSpecChange}
+                      />
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Engine */}
+                <div className="space-y-2">
+                  <h4 className="text-[9px] font-black uppercase text-gray-700">Engine & Performance</h4>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                    {['engine_manufacturer', 'horse_power', 'fuel', 'hours', 'cruising_speed', 'max_speed', 'tankage', 'gallons_per_hour', 'starting_type', 'drive_type'].map((field) => (
+                      <SpecCheckbox
+                        key={field}
+                        field={field}
+                        label={field.replace('_', ' ')}
+                        selectedYacht={selectedYacht}
+                        onSpecChange={handleSpecChange}
+                      />
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Accommodation */}
+                <div className="space-y-2">
+                  <h4 className="text-[9px] font-black uppercase text-gray-700">Accommodation</h4>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                    {['cabins', 'berths', 'toilet', 'shower', 'bath', 'heating'].map((field) => (
+                      <SpecCheckbox
+                        key={field}
+                        field={field}
+                        label={field.replace('_', ' ')}
+                        selectedYacht={selectedYacht}
+                        onSpecChange={handleSpecChange}
+                      />
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
