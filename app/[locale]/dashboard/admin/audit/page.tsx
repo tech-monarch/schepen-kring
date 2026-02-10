@@ -17,156 +17,58 @@ import {
   Database,
   Server,
   ChevronRight,
-  Eye,
   Users,
   Calendar,
   FileText,
   Ship,
   Settings,
-  Key,
-  Globe,
-  Mail,
-  Phone,
-  MapPin,
-  CreditCard,
   BarChart3,
-  Bell,
   Shield,
-  Database as DatabaseIcon,
-  Network,
-  Terminal,
-  Cpu,
-  HardDrive,
-  MemoryStick,
-  Router,
-  Wifi,
-  ServerCrash,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow, format, parseISO } from "date-fns";
+import axios from "axios";
 
-// ============================================
-// HARDCODED DATA GENERATORS
-// ============================================
-
-const generateMockLog = (index: number): any => {
-  const actions = [
-    { type: "LOGIN", desc: "User logged in successfully", entity: "AUTH", severity: "success" },
-    { type: "LOGOUT", desc: "User logged out", entity: "AUTH", severity: "info" },
-    { type: "CREATE", desc: "Created new yacht listing", entity: "YACHT", severity: "info" },
-    { type: "UPDATE", desc: "Updated yacht specifications", entity: "YACHT", severity: "info" },
-    { type: "DELETE", desc: "Deleted yacht from system", entity: "YACHT", severity: "warning" },
-    { type: "BID_PLACE", desc: "Placed bid on yacht", entity: "BID", severity: "success" },
-    { type: "BID_ACCEPT", desc: "Bid accepted by admin", entity: "BID", severity: "success" },
-    { type: "TASK_CREATE", desc: "Created new task", entity: "TASK", severity: "info" },
-    { type: "TASK_COMPLETE", desc: "Task marked as completed", entity: "TASK", severity: "success" },
-    { type: "USER_CREATE", desc: "Created new user account", entity: "USER", severity: "info" },
-    { type: "USER_UPDATE", desc: "Updated user permissions", entity: "USER", severity: "warning" },
-    { type: "USER_DELETE", desc: "Deleted user account", entity: "USER", severity: "error" },
-    { type: "SYSTEM_BACKUP", desc: "System backup completed", entity: "SYSTEM", severity: "success" },
-    { type: "SECURITY_ALERT", desc: "Security alert triggered", entity: "SECURITY", severity: "error" },
-    { type: "API_CALL", desc: "API endpoint accessed", entity: "API", severity: "info" },
-    { type: "FILE_UPLOAD", desc: "File uploaded to server", entity: "STORAGE", severity: "info" },
-    { type: "EMAIL_SENT", desc: "Email notification sent", entity: "EMAIL", severity: "info" },
-    { type: "PAYMENT_RECEIVED", desc: "Payment processed successfully", entity: "PAYMENT", severity: "success" },
-    { type: "DATABASE_QUERY", desc: "Database query executed", entity: "DATABASE", severity: "info" },
-    { type: "CACHE_CLEAR", desc: "System cache cleared", entity: "SYSTEM", severity: "warning" },
-  ];
-
-  const users = [
-    { id: "admin-1", name: "Admin User", email: "admin@maritime.com", role: "Admin" },
-    { id: "fleet-1", name: "Fleet Manager", email: "fleet@maritime.com", role: "Employee" },
-    { id: "tech-1", name: "Technical Officer", email: "tech@maritime.com", role: "Employee" },
-    { id: "client-1", name: "Premium Client", email: "client@corporate.com", role: "Customer" },
-    { id: "client-2", name: "Business Partner", email: "partner@business.com", role: "Partner" },
-    { id: "system", name: "System Auto", email: "system@auto", role: "System" },
-  ];
-
-  const entities = [
-    { id: "yacht-001", name: "Ocean Monarch", type: "YACHT" },
-    { id: "yacht-002", name: "Sea Breeze", type: "YACHT" },
-    { id: "yacht-003", name: "Royal Voyager", type: "YACHT" },
-    { id: "task-001", name: "Engine Inspection", type: "TASK" },
-    { id: "task-002", name: "Safety Check", type: "TASK" },
-    { id: "bid-001", name: "Bid #2024-001", type: "BID" },
-    { id: "user-001", name: "User Profile", type: "USER" },
-    { id: "auth-001", name: "Login Session", type: "AUTH" },
-    { id: "system-001", name: "Backup Job", type: "SYSTEM" },
-  ];
-
-  const userAgents = [
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
-    "Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15",
-    "Tablet App v2.1.0",
-    "Mobile App v3.0.1",
-    "System Monitor v1.2",
-    "API Client v2.0",
-    "Backup Service v1.0",
-  ];
-
-  const action = actions[Math.floor(Math.random() * actions.length)];
-  const user = users[Math.floor(Math.random() * users.length)];
-  const entity = entities[Math.floor(Math.random() * entities.length)];
-  const hoursAgo = Math.floor(Math.random() * 24 * 30); // Last 30 days
-  const minutesAgo = Math.floor(Math.random() * 60);
-  
-  return {
-    id: `log-${Date.now()}-${index}`,
-    userId: user.id,
-    userName: user.name,
-    userEmail: user.email,
-    userRole: user.role,
-    action: action.type,
-    description: action.desc,
-    entityType: entity.type,
-    entityId: entity.id,
-    entityName: entity.name,
-    severity: action.severity,
-    ipAddress: `192.168.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`,
-    userAgent: userAgents[Math.floor(Math.random() * userAgents.length)],
-    timestamp: new Date(Date.now() - (hoursAgo * 60 * 60 * 1000) - (minutesAgo * 60 * 1000)).toISOString(),
-    metadata: {
-      sessionId: `session-${Math.random().toString(36).substr(2, 9)}`,
-      requestId: `req-${Math.random().toString(36).substr(2, 9)}`,
-      location: ["US", "EU", "ASIA", "AU"][Math.floor(Math.random() * 4)],
-      method: ["GET", "POST", "PUT", "DELETE", "PATCH"][Math.floor(Math.random() * 5)],
-      endpoint: `/api/${["yachts", "tasks", "users", "bids", "auth"][Math.floor(Math.random() * 5)]}`,
-    }
+// Types
+interface SystemLog {
+  id: number;
+  event_type: string;
+  entity_type: string;
+  entity_id: number | null;
+  user_id: number | null;
+  old_data: any;
+  new_data: any;
+  changes: any;
+  description: string;
+  ip_address: string | null;
+  user_agent: string | null;
+  created_at: string;
+  user?: {
+    id: number;
+    name: string;
+    email: string;
+    role: string;
   };
-};
+}
 
-const generateMockLogs = (count: number): any[] => {
-  return Array.from({ length: count }, (_, i) => generateMockLog(i));
-};
+interface SystemStats {
+  summary: {
+    total_logs: number;
+    event_types: Array<{ event_type: string; count: number }>;
+    entity_types: Array<{ entity_type: string; count: number }>;
+  };
+  recent_activity: SystemLog[];
+  daily_activity: Array<{ date: string; count: number }>;
+}
 
-// Hardcoded system stats
-const HARDCODED_STATS = {
-  totalLogs: 1542,
-  todayLogs: 42,
-  uniqueUsers: 18,
-  bySeverity: {
-    info: 856,
-    success: 512,
-    warning: 124,
-    error: 50,
-  },
-  byType: {
-    YACHT: 324,
-    TASK: 286,
-    USER: 212,
-    BID: 185,
-    AUTH: 156,
-    SYSTEM: 98,
-    PAYMENT: 82,
-    EMAIL: 76,
-    API: 65,
-    DATABASE: 58,
-  },
-  apiStatus: "online" as const,
-  systemStatus: "online" as const,
-  responseTime: 128,
-};
+interface PaginationMeta {
+  current_page: number;
+  last_page: number;
+  per_page: number;
+  total: number;
+  from: number;
+  to: number;
+}
 
 // ============================================
 // MAIN COMPONENT
@@ -175,131 +77,84 @@ const HARDCODED_STATS = {
 export default function SystemAuditPage() {
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [apiError, setApiError] = useState<string | null>("Using hardcoded demo data - API temporarily unavailable");
-  const [auditLogs, setAuditLogs] = useState<any[]>([]);
-  const [filteredLogs, setFilteredLogs] = useState<any[]>([]);
-  const [selectedLog, setSelectedLog] = useState<any | null>(null);
-  const [systemStats, setSystemStats] = useState(HARDCODED_STATS);
-  const [pagination, setPagination] = useState({
+  const [apiError, setApiError] = useState<string | null>(null);
+  const [systemLogs, setSystemLogs] = useState<SystemLog[]>([]);
+  const [filteredLogs, setFilteredLogs] = useState<SystemLog[]>([]);
+  const [selectedLog, setSelectedLog] = useState<SystemLog | null>(null);
+  const [systemStats, setSystemStats] = useState<SystemStats | null>(null);
+  const [pagination, setPagination] = useState<PaginationMeta>({
     total: 0,
     per_page: 50,
     current_page: 1,
     last_page: 1,
+    from: 1,
+    to: 1,
   });
 
   const [filters, setFilters] = useState({
-    severity: [],
-    type: [],
+    event_type: [] as string[],
+    entity_type: [] as string[],
     dateRange: {
       from: "",
       to: "",
     },
     search: "",
+    page: 1,
   });
 
   // ============================================
-  // DATA FETCHING - HARDCODED
+  // API CALLS
   // ============================================
 
   const fetchSystemStats = useCallback(async () => {
-    // Use hardcoded stats
-    setSystemStats(HARDCODED_STATS);
-    setApiError("Using hardcoded demo data - API temporarily unavailable");
+    try {
+      const response = await axios.get("/api/system-logs/summary");
+      setSystemStats(response.data);
+    } catch (error: any) {
+      console.error("Error fetching system stats:", error);
+      setApiError("Failed to load system statistics");
+    }
   }, []);
 
-  const fetchAuditLogs = useCallback(async () => {
+  const fetchSystemLogs = useCallback(async () => {
     setIsRefreshing(true);
     
     try {
-      // Generate mock logs
-      const mockLogs = generateMockLogs(85);
+      const params = new URLSearchParams();
       
-      // Calculate today's logs
-      const today = new Date().toDateString();
-      const todayLogs = mockLogs.filter(log => 
-        new Date(log.timestamp).toDateString() === today
-      ).length;
-      
-      // Count unique users
-      const uniqueUsers = new Set(mockLogs.map(log => log.userId)).size;
-
-      // Calculate severity counts
-      const bySeverity = mockLogs.reduce((acc, log) => {
-        acc[log.severity] = (acc[log.severity] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>);
-
-      // Calculate type counts
-      const byType = mockLogs.reduce((acc, log) => {
-        acc[log.entityType] = (acc[log.entityType] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>);
-
-      // Update stats with calculated values
-      setSystemStats(prev => ({
-        ...prev,
-        totalLogs: mockLogs.length,
-        todayLogs,
-        uniqueUsers,
-        bySeverity,
-        byType,
-      }));
-
-      // Set logs
-      setAuditLogs(mockLogs);
-      
-      // Apply filters to mock logs
-      let filtered = mockLogs;
-
-      // Severity filter
-      if (filters.severity.length > 0) {
-        filtered = filtered.filter(log => filters.severity.includes(log.severity));
+      // Add filters
+      if (filters.event_type.length > 0) {
+        filters.event_type.forEach(type => params.append('event_type[]', type));
       }
-
-      // Entity type filter
-      if (filters.type.length > 0) {
-        filtered = filtered.filter(log => filters.type.includes(log.entityType));
+      
+      if (filters.entity_type.length > 0) {
+        filters.entity_type.forEach(type => params.append('entity_type[]', type));
       }
-
-      // Date range filter
+      
       if (filters.dateRange.from) {
-        const fromDate = new Date(filters.dateRange.from);
-        filtered = filtered.filter(log => new Date(log.timestamp) >= fromDate);
+        params.append('start_date', filters.dateRange.from);
       }
+      
       if (filters.dateRange.to) {
-        const toDate = new Date(filters.dateRange.to);
-        toDate.setHours(23, 59, 59, 999);
-        filtered = filtered.filter(log => new Date(log.timestamp) <= toDate);
+        params.append('end_date', filters.dateRange.to);
       }
-
-      // Search filter
+      
       if (filters.search) {
-        const searchLower = filters.search.toLowerCase();
-        filtered = filtered.filter(log =>
-          log.description.toLowerCase().includes(searchLower) ||
-          log.userName.toLowerCase().includes(searchLower) ||
-          log.entityName.toLowerCase().includes(searchLower) ||
-          log.action.toLowerCase().includes(searchLower) ||
-          log.userEmail.toLowerCase().includes(searchLower) ||
-          log.userRole.toLowerCase().includes(searchLower)
-        );
+        params.append('search', filters.search);
       }
-
-      setFilteredLogs(filtered);
-      setPagination({
-        total: mockLogs.length,
-        per_page: 50,
-        current_page: 1,
-        last_page: Math.ceil(mockLogs.length / 50),
-      });
-
-    } catch (error) {
-      console.error("Error generating mock data:", error);
-      // Even on error, provide minimal data
-      const fallbackLogs = generateMockLogs(10);
-      setAuditLogs(fallbackLogs);
-      setFilteredLogs(fallbackLogs);
-      setApiError("Using fallback demo data");
+      
+      params.append('page', filters.page.toString());
+      
+      const response = await axios.get(`/api/system-logs?${params}`);
+      setSystemLogs(response.data.data);
+      setFilteredLogs(response.data.data);
+      setPagination(response.data.meta);
+      setApiError(null);
+    } catch (error: any) {
+      console.error("Error fetching system logs:", error);
+      setApiError(error.response?.data?.error || "Failed to load system logs");
+      setSystemLogs([]);
+      setFilteredLogs([]);
     } finally {
       setLoading(false);
       setIsRefreshing(false);
@@ -310,102 +165,127 @@ export default function SystemAuditPage() {
   // FILTERS AND UTILITIES
   // ============================================
 
-  const getSeverityInfo = (severity: string) => {
-    switch (severity) {
-      case 'success':
-        return { 
-          icon: CheckCircle, 
-          color: 'text-emerald-600', 
-          bg: 'bg-emerald-50', 
-          border: 'border-emerald-200',
-          label: 'Success',
-          dotColor: 'bg-emerald-400'
-        };
-      case 'warning':
-        return { 
-          icon: AlertCircle, 
-          color: 'text-amber-600', 
-          bg: 'bg-amber-50', 
-          border: 'border-amber-200',
-          label: 'Warning',
-          dotColor: 'bg-amber-400'
-        };
-      case 'error':
-        return { 
-          icon: XCircle, 
-          color: 'text-rose-600', 
-          bg: 'bg-rose-50', 
-          border: 'border-rose-200',
-          label: 'Error',
-          dotColor: 'bg-rose-400'
-        };
-      default:
-        return { 
-          icon: Activity, 
-          color: 'text-blue-600', 
-          bg: 'bg-blue-50', 
-          border: 'border-blue-200',
-          label: 'Info',
-          dotColor: 'bg-blue-400'
-        };
+  const getSeverityInfo = (eventType: string) => {
+    const eventTypeLower = eventType.toLowerCase();
+    
+    if (eventTypeLower.includes('error') || eventTypeLower.includes('failed') || eventTypeLower.includes('alert')) {
+      return { 
+        icon: XCircle, 
+        color: 'text-rose-600', 
+        bg: 'bg-rose-50', 
+        border: 'border-rose-200',
+        label: 'Error',
+        dotColor: 'bg-rose-400'
+      };
     }
+    
+    if (eventTypeLower.includes('warning') || eventTypeLower.includes('deleted') || eventTypeLower.includes('suspended')) {
+      return { 
+        icon: AlertCircle, 
+        color: 'text-amber-600', 
+        bg: 'bg-amber-50', 
+        border: 'border-amber-200',
+        label: 'Warning',
+        dotColor: 'bg-amber-400'
+      };
+    }
+    
+    if (eventTypeLower.includes('success') || eventTypeLower.includes('completed') || eventTypeLower.includes('accepted') || eventTypeLower.includes('created')) {
+      return { 
+        icon: CheckCircle, 
+        color: 'text-emerald-600', 
+        bg: 'bg-emerald-50', 
+        border: 'border-emerald-200',
+        label: 'Success',
+        dotColor: 'bg-emerald-400'
+      };
+    }
+    
+    // Default info
+    return { 
+      icon: Activity, 
+      color: 'text-blue-600', 
+      bg: 'bg-blue-50', 
+      border: 'border-blue-200',
+      label: 'Info',
+      dotColor: 'bg-blue-400'
+    };
   };
 
-  const entityTypes = useMemo(() => {
-    const types = Array.from(new Set(auditLogs.map(log => log.entityType)));
-    return types.sort();
-  }, [auditLogs]);
+  const formatEventType = (eventType: string) => {
+    return eventType
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  };
 
-  const severityCounts = useMemo(() => {
-    return systemStats.bySeverity;
-  }, [systemStats.bySeverity]);
+  const getEntityName = (log: SystemLog) => {
+    if (log.entity_type && log.entity_id) {
+      return `${log.entity_type} #${log.entity_id}`;
+    }
+    return log.entity_type || 'Unknown Entity';
+  };
+
+  const eventTypes = useMemo(() => {
+    if (!systemStats?.summary.event_types) return [];
+    return systemStats.summary.event_types.map(item => item.event_type);
+  }, [systemStats]);
+
+  const entityTypes = useMemo(() => {
+    if (!systemStats?.summary.entity_types) return [];
+    return systemStats.summary.entity_types.map(item => item.entity_type);
+  }, [systemStats]);
 
   // ============================================
   // ACTIONS
   // ============================================
 
-  const exportLogs = () => {
-    const csvContent = [
-      ['Timestamp', 'Severity', 'Action', 'Description', 'User', 'Role', 'Entity', 'Entity Type', 'IP Address'],
-      ...filteredLogs.map(log => [
-        format(parseISO(log.timestamp), 'yyyy-MM-dd HH:mm:ss'),
-        log.severity.toUpperCase(),
-        log.action,
-        `"${log.description.replace(/"/g, '""')}"`,
-        log.userName,
-        log.userRole,
-        log.entityName,
-        log.entityType,
-        log.ipAddress
-      ])
-    ].map(row => row.join(',')).join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `audit-logs-${format(new Date(), 'yyyy-MM-dd')}.csv`;
-    a.click();
-    window.URL.revokeObjectURL(url);
+  const exportLogs = async () => {
+    try {
+      const params = new URLSearchParams();
+      if (filters.dateRange.from) params.append('start_date', filters.dateRange.from);
+      if (filters.dateRange.to) params.append('end_date', filters.dateRange.to);
+      
+      const response = await axios.get(`/api/system-logs/export?${params}`);
+      
+      // Create and download CSV file
+      const blob = new Blob([response.data.csv_data], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = response.data.filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error: any) {
+      console.error('Error exporting logs:', error);
+      setApiError('Failed to export logs');
+    }
   };
 
   const clearFilters = () => {
     setFilters({
-      severity: [],
-      type: [],
+      event_type: [],
+      entity_type: [],
       dateRange: { from: '', to: '' },
-      search: ''
+      search: '',
+      page: 1,
     });
   };
 
-  const toggleFilter = (type: 'severity' | 'type', value: string) => {
+  const toggleFilter = (type: 'event_type' | 'entity_type', value: string) => {
     setFilters(prev => {
       const current = prev[type];
       const updated = current.includes(value)
         ? current.filter(v => v !== value)
         : [...current, value];
-      return { ...prev, [type]: updated };
+      return { ...prev, [type]: updated, page: 1 };
     });
+  };
+
+  const changePage = (page: number) => {
+    setFilters(prev => ({ ...prev, page }));
   };
 
   // ============================================
@@ -415,7 +295,7 @@ export default function SystemAuditPage() {
   useEffect(() => {
     const init = async () => {
       await fetchSystemStats();
-      await fetchAuditLogs();
+      await fetchSystemLogs();
     };
     init();
   }, []);
@@ -423,9 +303,51 @@ export default function SystemAuditPage() {
   // Re-fetch when filters change
   useEffect(() => {
     if (!loading) {
-      fetchAuditLogs();
+      fetchSystemLogs();
     }
-  }, [filters]);
+  }, [filters.page]);
+
+  // Apply search and filters immediately
+  useEffect(() => {
+    if (!loading && systemLogs.length > 0) {
+      let filtered = systemLogs;
+
+      // Event type filter
+      if (filters.event_type.length > 0) {
+        filtered = filtered.filter(log => filters.event_type.includes(log.event_type));
+      }
+
+      // Entity type filter
+      if (filters.entity_type.length > 0) {
+        filtered = filtered.filter(log => filters.entity_type.includes(log.entity_type));
+      }
+
+      // Date range filter
+      if (filters.dateRange.from) {
+        const fromDate = new Date(filters.dateRange.from);
+        filtered = filtered.filter(log => new Date(log.created_at) >= fromDate);
+      }
+      if (filters.dateRange.to) {
+        const toDate = new Date(filters.dateRange.to);
+        toDate.setHours(23, 59, 59, 999);
+        filtered = filtered.filter(log => new Date(log.created_at) <= toDate);
+      }
+
+      // Search filter
+      if (filters.search) {
+        const searchLower = filters.search.toLowerCase();
+        filtered = filtered.filter(log =>
+          log.description.toLowerCase().includes(searchLower) ||
+          (log.user?.name?.toLowerCase() || '').includes(searchLower) ||
+          log.entity_type.toLowerCase().includes(searchLower) ||
+          log.event_type.toLowerCase().includes(searchLower) ||
+          (log.user?.email?.toLowerCase() || '').includes(searchLower)
+        );
+      }
+
+      setFilteredLogs(filtered);
+    }
+  }, [filters.search, filters.event_type, filters.entity_type, filters.dateRange, systemLogs, loading]);
 
   // ============================================
   // RENDER
@@ -443,7 +365,7 @@ export default function SystemAuditPage() {
               </div>
               <div>
                 <h1 className="text-2xl font-serif italic text-[#003566]">
-                  System Audit & Security
+                  System Activity Monitor
                 </h1>
                 <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500 font-medium mt-1">
                   REAL-TIME MONITORING • SECURITY COMPLIANCE • ACTIVITY TRACKING
@@ -454,22 +376,18 @@ export default function SystemAuditPage() {
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2 text-sm">
                 <div className={`w-2 h-2 rounded-full ${
-                  systemStats.systemStatus === 'online' ? 'bg-emerald-500' :
-                  systemStats.systemStatus === 'degraded' ? 'bg-amber-500' : 'bg-rose-500'
+                  apiError ? 'bg-rose-500' : 'bg-emerald-500'
                 }`} />
                 <span className="text-slate-600 font-medium">
-                  {systemStats.systemStatus === 'online' ? 'All Systems Operational' :
-                   systemStats.systemStatus === 'degraded' ? 'Partial Degradation' : 'System Offline'}
+                  {apiError ? 'API Connection Error' : 'Connected to System Logs'}
                 </span>
               </div>
               
               <button
                 onClick={() => {
                   setIsRefreshing(true);
-                  setTimeout(() => {
-                    fetchAuditLogs();
-                    fetchSystemStats();
-                  }, 500);
+                  fetchSystemStats();
+                  fetchSystemLogs();
                 }}
                 disabled={isRefreshing}
                 className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
@@ -487,14 +405,18 @@ export default function SystemAuditPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
             <div className="flex items-center justify-between mb-3">
-              <DatabaseIcon size={20} className="text-blue-500" />
+              <Database size={20} className="text-blue-500" />
               <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
                 TOTAL LOGS
               </span>
             </div>
-            <div className="text-3xl font-bold text-slate-800">{systemStats.totalLogs.toLocaleString()}</div>
+            <div className="text-3xl font-bold text-slate-800">
+              {systemStats?.summary?.total_logs?.toLocaleString() || '0'}
+            </div>
             <div className="text-xs text-slate-500 mt-2">
-              <span className="text-emerald-600 font-medium">+{systemStats.todayLogs}</span> today
+              <span className="text-emerald-600 font-medium">
+                {systemStats?.recent_activity?.length || 0}
+              </span> recent
             </div>
           </div>
 
@@ -502,32 +424,29 @@ export default function SystemAuditPage() {
             <div className="flex items-center justify-between mb-3">
               <Users size={20} className="text-emerald-500" />
               <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                UNIQUE USERS
+                ACTIVITY TYPES
               </span>
             </div>
-            <div className="text-3xl font-bold text-slate-800">{systemStats.uniqueUsers}</div>
+            <div className="text-3xl font-bold text-slate-800">
+              {eventTypes.length || 0}
+            </div>
             <div className="text-xs text-slate-500 mt-2">
-              Active across the system
+              Different event types
             </div>
           </div>
 
           <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
             <div className="flex items-center justify-between mb-3">
-              <Server size={20} className={cn(
-                systemStats.apiStatus === 'online' ? 'text-emerald-500' : 'text-rose-500'
-              )} />
+              <Server size={20} className="text-emerald-500" />
               <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
                 API STATUS
               </span>
             </div>
-            <div className={cn(
-              "text-3xl font-bold",
-              systemStats.apiStatus === 'online' ? 'text-emerald-600' : 'text-rose-600'
-            )}>
-              {systemStats.apiStatus === 'online' ? 'ONLINE' : 'ERROR'}
+            <div className="text-3xl font-bold text-emerald-600">
+              ONLINE
             </div>
             <div className="text-xs text-slate-500 mt-2">
-              {systemStats.responseTime > 0 ? `${systemStats.responseTime}ms` : 'Hardcoded Mode'}
+              System Logs API
             </div>
           </div>
 
@@ -535,71 +454,77 @@ export default function SystemAuditPage() {
             <div className="flex items-center justify-between mb-3">
               <Shield size={20} className="text-amber-500" />
               <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                SECURITY LEVEL
+                ENTITY TYPES
               </span>
             </div>
-            <div className="text-3xl font-bold text-slate-800">HIGH</div>
+            <div className="text-3xl font-bold text-slate-800">
+              {entityTypes.length || 0}
+            </div>
             <div className="text-xs text-slate-500 mt-2">
-              All protocols active
+              Tracked system entities
             </div>
           </div>
         </div>
 
-        {/* Severity Quick Stats */}
-        <div className="mb-8">
-          <h2 className="text-sm font-bold text-slate-700 uppercase tracking-wider mb-4 flex items-center gap-2">
-            <Activity size={16} />
-            Activity by Severity
-          </h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {(['info', 'success', 'warning', 'error'] as const).map((severity, index) => {
-              const info = getSeverityInfo(severity);
-              const Icon = info.icon;
-              const count = severityCounts[severity] || 0;
-              const percentage = systemStats.totalLogs > 0 ? (count / systemStats.totalLogs) * 100 : 0;
-              
-              return (
-                <motion.div
-                  key={severity}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  className={cn(
-                    "p-4 border rounded-xl cursor-pointer transition-all hover:shadow-md",
-                    info.bg,
-                    info.border,
-                    filters.severity.includes(severity) && "ring-2 ring-offset-1",
-                    filters.severity.includes(severity) && info.color.replace('text', 'ring')
-                  )}
-                  onClick={() => toggleFilter('severity', severity)}
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-3">
-                      <div className={cn("p-2 rounded-lg", info.bg)}>
-                        <Icon className={info.color} size={20} />
+        {/* Event Type Quick Stats */}
+        {systemStats?.summary?.event_types && systemStats.summary.event_types.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-sm font-bold text-slate-700 uppercase tracking-wider mb-4 flex items-center gap-2">
+              <Activity size={16} />
+              Activity by Event Type
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+              {systemStats.summary.event_types.slice(0, 4).map((item, index) => {
+                const info = getSeverityInfo(item.event_type);
+                const Icon = info.icon;
+                const percentage = systemStats.summary.total_logs > 0 ? 
+                  (item.count / systemStats.summary.total_logs) * 100 : 0;
+                
+                return (
+                  <motion.div
+                    key={item.event_type}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    className={cn(
+                      "p-4 border rounded-xl cursor-pointer transition-all hover:shadow-md",
+                      info.bg,
+                      info.border,
+                      filters.event_type.includes(item.event_type) && "ring-2 ring-offset-1",
+                      filters.event_type.includes(item.event_type) && info.color.replace('text', 'ring')
+                    )}
+                    onClick={() => toggleFilter('event_type', item.event_type)}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-3">
+                        <div className={cn("p-2 rounded-lg", info.bg)}>
+                          <Icon className={info.color} size={20} />
+                        </div>
+                        <div>
+                          <p className="font-bold text-slate-800 text-sm truncate">
+                            {formatEventType(item.event_type)}
+                          </p>
+                          <p className="text-2xl font-bold mt-1" style={{ color: info.color.split(' ')[1] }}>
+                            {item.count}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-bold text-slate-800">{info.label}</p>
-                        <p className="text-2xl font-bold mt-1" style={{ color: info.color.split(' ')[1] }}>
-                          {count}
-                        </p>
+                      <div className="text-right">
+                        <p className="text-xs text-slate-500">{percentage.toFixed(1)}%</p>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-xs text-slate-500">{percentage.toFixed(1)}%</p>
+                    <div className="w-full bg-slate-200 rounded-full h-2 mt-2">
+                      <div 
+                        className={cn("h-2 rounded-full transition-all", info.dotColor)}
+                        style={{ width: `${percentage}%` }}
+                      />
                     </div>
-                  </div>
-                  <div className="w-full bg-slate-200 rounded-full h-2 mt-2">
-                    <div 
-                      className={cn("h-2 rounded-full transition-all", info.dotColor)}
-                      style={{ width: `${percentage}%` }}
-                    />
-                  </div>
-                </motion.div>
-              );
-            })}
+                  </motion.div>
+                );
+              })}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Filters Panel */}
         <div className="bg-white border border-slate-200 rounded-xl p-6 mb-8 shadow-sm">
@@ -637,32 +562,30 @@ export default function SystemAuditPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Severity Filters */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Event Type Filters */}
             <div>
-              <h3 className="text-sm font-medium text-slate-700 mb-3">Severity Level</h3>
-              <div className="flex flex-wrap gap-2">
-                {(['info', 'success', 'warning', 'error'] as const).map((severity) => {
-                  const info = getSeverityInfo(severity);
-                  const Icon = info.icon;
-                  const isActive = filters.severity.includes(severity);
+              <h3 className="text-sm font-medium text-slate-700 mb-3">Event Type</h3>
+              <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto p-1">
+                {eventTypes.map((type) => {
+                  const isActive = filters.event_type.includes(type);
+                  const count = systemStats?.summary?.event_types?.find(item => item.event_type === type)?.count || 0;
                   
                   return (
                     <button
-                      key={severity}
-                      onClick={() => toggleFilter('severity', severity)}
+                      key={type}
+                      onClick={() => toggleFilter('event_type', type)}
                       className={cn(
-                        "flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all",
+                        "px-3 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap",
                         isActive
-                          ? `${info.bg} ${info.color} border ${info.border}`
+                          ? "bg-blue-100 text-blue-700 border border-blue-300"
                           : "bg-slate-100 text-slate-600 hover:bg-slate-200 border border-transparent"
                       )}
                     >
-                      <Icon size={14} />
-                      {info.label}
+                      {formatEventType(type)}
                       {isActive && (
                         <span className="ml-1 text-xs px-1.5 py-0.5 bg-white/50 rounded">
-                          {severityCounts[severity] || 0}
+                          {count}
                         </span>
                       )}
                     </button>
@@ -674,19 +597,19 @@ export default function SystemAuditPage() {
             {/* Entity Type Filters */}
             <div>
               <h3 className="text-sm font-medium text-slate-700 mb-3">Entity Type</h3>
-              <div className="flex flex-wrap gap-2">
-                {entityTypes.slice(0, 6).map((type) => {
-                  const isActive = filters.type.includes(type);
-                  const count = systemStats.byType?.[type] || auditLogs.filter(log => log.entityType === type).length;
+              <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto p-1">
+                {entityTypes.map((type) => {
+                  const isActive = filters.entity_type.includes(type);
+                  const count = systemStats?.summary?.entity_types?.find(item => item.entity_type === type)?.count || 0;
                   
                   return (
                     <button
                       key={type}
-                      onClick={() => toggleFilter('type', type)}
+                      onClick={() => toggleFilter('entity_type', type)}
                       className={cn(
                         "px-3 py-2 rounded-lg text-sm font-medium transition-all",
                         isActive
-                          ? "bg-blue-100 text-blue-700 border border-blue-300"
+                          ? "bg-amber-100 text-amber-700 border border-amber-300"
                           : "bg-slate-100 text-slate-600 hover:bg-slate-200 border border-transparent"
                       )}
                     >
@@ -699,16 +622,11 @@ export default function SystemAuditPage() {
                     </button>
                   );
                 })}
-                {entityTypes.length > 6 && (
-                  <span className="text-xs text-slate-500 self-center ml-2">
-                    +{entityTypes.length - 6} more
-                  </span>
-                )}
               </div>
             </div>
 
             {/* Date Range */}
-            <div>
+            <div className="col-span-1 md:col-span-2">
               <h3 className="text-sm font-medium text-slate-700 mb-3">Date Range</h3>
               <div className="flex flex-col gap-3">
                 <div className="flex gap-3">
@@ -750,18 +668,18 @@ export default function SystemAuditPage() {
           </div>
           
           {/* Active Filters */}
-          {(filters.severity.length > 0 || filters.type.length > 0 || filters.dateRange.from || filters.dateRange.to || filters.search) && (
+          {(filters.event_type.length > 0 || filters.entity_type.length > 0 || filters.dateRange.from || filters.dateRange.to || filters.search) && (
             <div className="mt-6 pt-6 border-t border-slate-200">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-slate-600">Active filters:</span>
                   <div className="flex flex-wrap gap-2">
-                    {filters.severity.map(severity => (
-                      <span key={severity} className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded-full">
-                        {getSeverityInfo(severity).label}
+                    {filters.event_type.map(type => (
+                      <span key={type} className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded-full">
+                        {formatEventType(type)}
                       </span>
                     ))}
-                    {filters.type.map(type => (
+                    {filters.entity_type.map(type => (
                       <span key={type} className="px-2 py-1 text-xs bg-amber-100 text-amber-700 rounded-full">
                         {type}
                       </span>
@@ -784,11 +702,11 @@ export default function SystemAuditPage() {
           )}
         </div>
 
-        {/* Audit Logs Table */}
+        {/* System Logs Table */}
         <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
           <div className="px-6 py-4 border-b border-slate-200 bg-slate-50">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-bold text-slate-800">Audit Log Entries</h2>
+              <h2 className="text-lg font-bold text-slate-800">System Activity Logs</h2>
               <div className="text-sm text-slate-500">
                 Showing <span className="font-bold text-slate-700">{filteredLogs.length}</span> of{" "}
                 <span className="font-bold text-slate-700">{pagination.total}</span> logs
@@ -816,7 +734,7 @@ export default function SystemAuditPage() {
               ))
             ) : filteredLogs.length > 0 ? (
               filteredLogs.map((log, index) => {
-                const info = getSeverityInfo(log.severity);
+                const info = getSeverityInfo(log.event_type);
                 const Icon = info.icon;
                 
                 return (
@@ -845,7 +763,11 @@ export default function SystemAuditPage() {
                               {log.description}
                             </p>
                             <p className="text-xs text-slate-500 mt-1">
-                              <span className="font-medium">{log.userName}</span> ({log.userRole}) • {log.entityType}: {log.entityName}
+                              {log.user ? (
+                                <span className="font-medium">{log.user.name}</span>
+                              ) : (
+                                <span className="font-medium">System</span>
+                              )} • {getEntityName(log)}
                             </p>
                           </div>
                           <div className="flex items-center gap-3">
@@ -854,7 +776,7 @@ export default function SystemAuditPage() {
                               info.bg,
                               info.color
                             )}>
-                              {log.severity}
+                              {formatEventType(log.event_type)}
                             </span>
                             <ChevronRight 
                               size={16} 
@@ -869,17 +791,21 @@ export default function SystemAuditPage() {
                         <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500">
                           <span className="flex items-center gap-1">
                             <Clock size={12} />
-                            {formatDistanceToNow(parseISO(log.timestamp), { addSuffix: true })}
+                            {formatDistanceToNow(parseISO(log.created_at), { addSuffix: true })}
                           </span>
                           <span className="hidden md:inline">•</span>
                           <span className="flex items-center gap-1">
                             <User size={12} />
-                            {log.userEmail}
+                            {log.user?.email || 'system@auto'}
                           </span>
-                          <span className="hidden md:inline">•</span>
-                          <span className="font-mono text-xs bg-slate-100 px-2 py-1 rounded">
-                            {log.ipAddress}
-                          </span>
+                          {log.ip_address && (
+                            <>
+                              <span className="hidden md:inline">•</span>
+                              <span className="font-mono text-xs bg-slate-100 px-2 py-1 rounded">
+                                {log.ip_address}
+                              </span>
+                            </>
+                          )}
                         </div>
 
                         {/* Expanded Details */}
@@ -896,32 +822,43 @@ export default function SystemAuditPage() {
                                 <div>
                                   <h4 className="text-sm font-bold text-slate-700 mb-3 flex items-center gap-2">
                                     <User size={16} />
-                                    User Information
+                                    {log.user ? 'User Information' : 'System Action'}
                                   </h4>
                                   <div className="space-y-3">
+                                    {log.user ? (
+                                      <>
+                                        <div>
+                                          <p className="text-xs text-slate-500 uppercase tracking-wider font-medium mb-1">
+                                            Name
+                                          </p>
+                                          <p className="text-sm font-medium">{log.user.name}</p>
+                                        </div>
+                                        <div>
+                                          <p className="text-xs text-slate-500 uppercase tracking-wider font-medium mb-1">
+                                            Email
+                                          </p>
+                                          <p className="text-sm font-medium">{log.user.email}</p>
+                                        </div>
+                                        <div>
+                                          <p className="text-xs text-slate-500 uppercase tracking-wider font-medium mb-1">
+                                            Role
+                                          </p>
+                                          <p className="text-sm font-medium">{log.user.role}</p>
+                                        </div>
+                                      </>
+                                    ) : (
+                                      <div>
+                                        <p className="text-xs text-slate-500 uppercase tracking-wider font-medium mb-1">
+                                          Action
+                                        </p>
+                                        <p className="text-sm font-medium">System Automated Action</p>
+                                      </div>
+                                    )}
                                     <div>
                                       <p className="text-xs text-slate-500 uppercase tracking-wider font-medium mb-1">
-                                        Name
+                                        Event Type
                                       </p>
-                                      <p className="text-sm font-medium">{log.userName}</p>
-                                    </div>
-                                    <div>
-                                      <p className="text-xs text-slate-500 uppercase tracking-wider font-medium mb-1">
-                                        Email
-                                      </p>
-                                      <p className="text-sm font-medium">{log.userEmail}</p>
-                                    </div>
-                                    <div>
-                                      <p className="text-xs text-slate-500 uppercase tracking-wider font-medium mb-1">
-                                        Role
-                                      </p>
-                                      <p className="text-sm font-medium">{log.userRole}</p>
-                                    </div>
-                                    <div>
-                                      <p className="text-xs text-slate-500 uppercase tracking-wider font-medium mb-1">
-                                        User ID
-                                      </p>
-                                      <p className="text-sm font-mono">{log.userId}</p>
+                                      <p className="text-sm font-medium">{formatEventType(log.event_type)}</p>
                                     </div>
                                   </div>
                                 </div>
@@ -935,18 +872,10 @@ export default function SystemAuditPage() {
                                   <div className="space-y-3">
                                     <div>
                                       <p className="text-xs text-slate-500 uppercase tracking-wider font-medium mb-1">
-                                        Action
-                                      </p>
-                                      <p className="text-sm font-mono bg-slate-100 px-3 py-2 rounded">
-                                        {log.action}
-                                      </p>
-                                    </div>
-                                    <div>
-                                      <p className="text-xs text-slate-500 uppercase tracking-wider font-medium mb-1">
                                         Entity Details
                                       </p>
                                       <p className="text-sm text-slate-600">
-                                        {log.entityType} / {log.entityId} / {log.entityName}
+                                        {getEntityName(log)}
                                       </p>
                                     </div>
                                     <div>
@@ -954,17 +883,25 @@ export default function SystemAuditPage() {
                                         Timestamp
                                       </p>
                                       <p className="text-sm font-medium">
-                                        {format(parseISO(log.timestamp), 'PPpp')}
+                                        {format(parseISO(log.created_at), 'PPpp')}
                                       </p>
                                     </div>
-                                    {log.metadata && (
+                                    {log.changes && Object.keys(log.changes).length > 0 && (
                                       <div>
                                         <p className="text-xs text-slate-500 uppercase tracking-wider font-medium mb-1">
-                                          Metadata
+                                          Changes Made
                                         </p>
                                         <pre className="text-xs bg-slate-50 p-3 rounded overflow-auto max-h-40">
-                                          {JSON.stringify(log.metadata, null, 2)}
+                                          {JSON.stringify(log.changes, null, 2)}
                                         </pre>
+                                      </div>
+                                    )}
+                                    {log.ip_address && (
+                                      <div>
+                                        <p className="text-xs text-slate-500 uppercase tracking-wider font-medium mb-1">
+                                          IP Address
+                                        </p>
+                                        <p className="text-sm font-mono">{log.ip_address}</p>
                                       </div>
                                     )}
                                   </div>
@@ -983,13 +920,23 @@ export default function SystemAuditPage() {
                 <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-slate-100 flex items-center justify-center">
                   <Search size={32} className="text-slate-400" />
                 </div>
-                <h3 className="text-lg font-bold text-slate-700 mb-2">No logs found</h3>
+                <h3 className="text-lg font-bold text-slate-700 mb-2">No activity logs found</h3>
                 <p className="text-slate-500 mb-6 max-w-md mx-auto">
-                  {filters.search || filters.severity.length > 0 || filters.type.length > 0
-                    ? "No audit logs match your current filters. Try adjusting your search criteria."
-                    : "No audit logs available. Start by generating some activity in the system."}
+                  {apiError 
+                    ? `Error: ${apiError}`
+                    : filters.search || filters.event_type.length > 0 || filters.entity_type.length > 0
+                    ? "No activity logs match your current filters. Try adjusting your search criteria."
+                    : "No activity logs available yet. Start by creating tasks, updating yachts, or having users log in."}
                 </p>
-                {(filters.search || filters.severity.length > 0 || filters.type.length > 0) && (
+                {apiError && (
+                  <button
+                    onClick={fetchSystemLogs}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium mr-3"
+                  >
+                    Retry
+                  </button>
+                )}
+                {(filters.search || filters.event_type.length > 0 || filters.entity_type.length > 0) && (
                   <button
                     onClick={clearFilters}
                     className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
@@ -1000,6 +947,36 @@ export default function SystemAuditPage() {
               </div>
             )}
           </div>
+
+          {/* Pagination */}
+          {pagination.last_page > 1 && (
+            <div className="px-6 py-4 border-t border-slate-200">
+              <div className="flex justify-between items-center">
+                <div className="text-sm text-gray-700">
+                  Showing {pagination.from} to {pagination.to} of {pagination.total} results
+                </div>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => changePage(pagination.current_page - 1)}
+                    disabled={pagination.current_page === 1}
+                    className="px-3 py-1 border rounded disabled:opacity-50 hover:bg-slate-50"
+                  >
+                    Previous
+                  </button>
+                  <span className="px-3 py-1">
+                    Page {pagination.current_page} of {pagination.last_page}
+                  </span>
+                  <button
+                    onClick={() => changePage(pagination.current_page + 1)}
+                    disabled={pagination.current_page === pagination.last_page}
+                    className="px-3 py-1 border rounded disabled:opacity-50 hover:bg-slate-50"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Footer Status */}
@@ -1010,7 +987,7 @@ export default function SystemAuditPage() {
                 <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg">
                   <AlertCircle size={16} className="text-amber-600" />
                   <div>
-                    <p className="text-sm font-medium text-amber-800">Demo Mode Active</p>
+                    <p className="text-sm font-medium text-amber-800">Connection Error</p>
                     <p className="text-xs text-amber-600">{apiError}</p>
                   </div>
                 </div>
@@ -1018,7 +995,7 @@ export default function SystemAuditPage() {
               {isRefreshing && (
                 <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg">
                   <RefreshCcw size={16} className="text-blue-600 animate-spin" />
-                  <p className="text-sm font-medium text-blue-800">Refreshing demo data...</p>
+                  <p className="text-sm font-medium text-blue-800">Refreshing data...</p>
                 </div>
               )}
             </div>
@@ -1026,7 +1003,7 @@ export default function SystemAuditPage() {
             <div className="flex items-center gap-6 text-sm text-slate-500">
               <div className="flex items-center gap-2">
                 <Server size={14} />
-                <span>System ID: MARITIME-AUDIT-001</span>
+                <span>System ID: SYSL-001</span>
               </div>
               <div className="flex items-center gap-2">
                 <Clock size={14} />
@@ -1034,7 +1011,7 @@ export default function SystemAuditPage() {
               </div>
               <div className="flex items-center gap-2">
                 <Shield size={14} />
-                <span>Security Level: HIGH</span>
+                <span>Connected to SystemLog API</span>
               </div>
             </div>
           </div>
