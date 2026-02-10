@@ -58,11 +58,9 @@ function SpecCheckbox({ field, label, selectedYacht, onSpecChange }: {
   onSpecChange: (field: string, isChecked: boolean) => void;
 }) {
   const [isChecked, setIsChecked] = useState(() => {
-    // If editing and display_specs exists, check if field is in array
     if (selectedYacht?.display_specs) {
       return selectedYacht.display_specs.includes(field);
     }
-    // If new or no display_specs, default to checked (show all)
     return true;
   });
 
@@ -170,19 +168,13 @@ export default function YachtEditorPage() {
         // Initialize display specs state
         if (yacht.display_specs) {
           const specsState: Record<string, boolean> = {};
-          // All possible spec fields
           const allSpecs = [
-            // General
             'builder', 'model', 'year', 'designer', 'where', 'hull_number', 'hull_type',
-            // Dimensions
             'loa', 'lwl', 'beam', 'draft', 'air_draft', 'displacement', 'ballast', 'passenger_capacity',
-            // Construction
             'hull_colour', 'hull_construction', 'super_structure_colour', 'super_structure_construction',
             'deck_colour', 'deck_construction', 'cockpit_type', 'control_type',
-            // Engine
             'engine_manufacturer', 'horse_power', 'fuel', 'hours', 'cruising_speed', 'max_speed',
             'tankage', 'gallons_per_hour', 'starting_type', 'drive_type',
-            // Accommodation
             'cabins', 'berths', 'toilet', 'shower', 'bath', 'heating'
           ];
           
@@ -247,12 +239,10 @@ const handleAiCategorizer = async (files: FileList | null) => {
   try {
     toast.loading("Gemini is analyzing assets...", { id: "ai-loading" });
     
-    // Try partner route first
     let res;
     try {
       res = await api.post("/partner/yachts/ai-classify", formData);
     } catch (aiErr: any) {
-      // If partner route fails, try regular route
       if (aiErr.response?.status === 403 || aiErr.response?.status === 404) {
         res = await api.post("/yachts/ai-classify", formData);
       } else {
@@ -322,16 +312,54 @@ const handleAiCategorizer = async (files: FileList | null) => {
     }));
   };
 
-  // --- 3. SUBMIT LOGIC ---
+  // --- 3. SIMPLIFIED SUBMIT LOGIC ---
 const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
   e.preventDefault();
   setIsSubmitting(true);
   setErrors(null);
-  const formData = new FormData(e.currentTarget);
+  
+  // Create form data directly without validation
+  const formData = new FormData();
 
-  if (mainFile) formData.set("main_image", mainFile);
+  // Collect all form data
+  const formElements = e.currentTarget.elements;
+  
+  // Add boat name and price first
+  const boatName = (document.querySelector('input[name="boat_name"]') as HTMLInputElement)?.value;
+  const price = (document.querySelector('input[name="price"]') as HTMLInputElement)?.value;
+  const minBidAmount = (document.querySelector('input[name="min_bid_amount"]') as HTMLInputElement)?.value;
+  
+  if (boatName) formData.append('boat_name', boatName);
+  if (price) formData.append('price', price);
+  if (minBidAmount) formData.append('min_bid_amount', minBidAmount);
 
-  // Handle boolean fields
+  // Add main image if exists
+  if (mainFile) {
+    formData.append('main_image', mainFile);
+  }
+
+  // Add all other fields from form
+  const fields = [
+    'year', 'status', 'loa', 'lwl', 'where', 'passenger_capacity',
+    'beam', 'draft', 'air_draft', 'displacement', 'hull_type', 'hull_construction',
+    'hull_colour', 'hull_number', 'designer', 'builder',
+    'engine_manufacturer', 'horse_power', 'hours', 'fuel', 'max_speed',
+    'cruising_speed', 'gallons_per_hour', 'tankage', 'cabins', 'berths',
+    'toilet', 'shower', 'bath', 'heating', 'cockpit_type', 'control_type',
+    'external_url', 'print_url', 'owners_comment', 'reg_details', 
+    'known_defects', 'last_serviced', 'super_structure_colour',
+    'super_structure_construction', 'deck_colour', 'deck_construction',
+    'ballast', 'stern_thruster', 'bow_thruster', 'starting_type', 'drive_type'
+  ];
+
+  fields.forEach(field => {
+    const element = document.querySelector(`[name="${field}"]`) as HTMLInputElement;
+    if (element && element.value !== undefined && element.value !== '') {
+      formData.append(field, element.value);
+    }
+  });
+
+  // Handle boolean fields - SIMPLIFIED
   const booleanFields = [
     'allow_bidding', 'flybridge', 'oven', 'microwave', 'fridge', 'freezer',
     'air_conditioning', 'navigation_lights', 'compass', 'depth_instrument',
@@ -343,54 +371,37 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
   ];
 
   booleanFields.forEach(field => {
-    if (!formData.has(field)) {
-      formData.append(field, 'false');
+    const checkbox = document.querySelector(`[name="${field}"]`) as HTMLInputElement;
+    if (checkbox) {
+      formData.append(field, checkbox.checked ? 'true' : 'false');
     } else {
-      const value = formData.get(field);
-      formData.set(field, value === 'on' || value === 'true' || value === '1' ? 'true' : 'false');
+      formData.append(field, 'false');
     }
   });
 
-  // Clean empty fields
-  const allFields = [
-    'boat_name', 'price', 'status', 'year', 'min_bid_amount',
-    'beam', 'draft', 'loa', 'lwl', 'air_draft', 'passenger_capacity',
-    'designer', 'builder', 'where', 'hull_colour', 'hull_construction',
-    'hull_number', 'hull_type', 'super_structure_colour', 'super_structure_construction',
-    'deck_colour', 'deck_construction', 'cockpit_type', 'control_type', 'ballast',
-    'displacement', 'cabins', 'berths', 'toilet', 'shower', 'bath', 'heating',
-    'stern_thruster', 'bow_thruster', 'fuel', 'hours', 'cruising_speed', 'max_speed',
-    'horse_power', 'engine_manufacturer', 'tankage', 'gallons_per_hour',
-    'starting_type', 'drive_type'
-  ];
-
-  allFields.forEach(field => {
-    const val = formData.get(field);
-    if (!val || val === '') formData.delete(field);
-  });
-
-  // Append Availability Rules
+  // Add availability rules
   if (availabilityRules.length > 0) {
     formData.append("availability_rules", JSON.stringify(availabilityRules));
   }
 
-  // Append Display Specs
+  // Add display specs
   const selectedSpecs = Object.keys(displaySpecs).filter(key => displaySpecs[key]);
-  formData.append("display_specs", JSON.stringify(selectedSpecs));
+  if (selectedSpecs.length > 0) {
+    formData.append("display_specs", JSON.stringify(selectedSpecs));
+  }
 
   try {
     let finalYachtId = selectedYacht?.id;
     
     if (!isNewMode && selectedYacht) {
-      // UPDATE - Use PUT method
+      // UPDATE
       await api.put(`/yachts/${selectedYacht.id}`, formData);
     } else {
-      // CREATE NEW - Try partner route first (which doesn't require 'manage yachts' permission)
+      // CREATE NEW
       try {
         const res = await api.post("/partner/yachts", formData);
         finalYachtId = res.data.id;
       } catch (partnerErr: any) {
-        // If partner route fails, try regular route (for admins)
         if (partnerErr.response?.status === 403 || partnerErr.response?.status === 404) {
           const res = await api.post("/yachts", formData);
           finalYachtId = res.data.id;
@@ -410,11 +421,9 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         newFiles.forEach((file) => gData.append("images[]", file));
         gData.append("category", cat);
         
-        // Try partner route first for gallery upload
         try {
           await api.post(`/partner/yachts/${finalYachtId}/gallery`, gData);
         } catch (galleryErr: any) {
-          // If partner route fails, try regular route
           if (galleryErr.response?.status === 403 || galleryErr.response?.status === 404) {
             await api.post(`/yachts/${finalYachtId}/gallery`, gData);
           } else {
@@ -431,14 +440,17 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     );
     router.push("/nl/dashboard/admin/yachts");
   } catch (err: any) {
+    console.error("Submission error:", err);
+    
     if (err.response?.status === 422) {
       setErrors(err.response.data.errors);
-      toast.error("Please fix validation errors");
+      toast.error("Please check required fields");
     } else if (err.response?.status === 403) {
-      toast.error("Permission denied. You don't have access to perform this action.");
+      toast.error("Permission denied.");
+    } else if (err.response?.status === 500) {
+      toast.error("Server error. Please try again.");
     } else {
-      console.error(err);
-      toast.error(`Error ${err.response?.status}: ${err.response?.data?.message || "Critical System Error"}`);
+      toast.error(`Error: ${err.response?.data?.message || "System Error"}`);
     }
   } finally {
     setIsSubmitting(false);
@@ -550,7 +562,7 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               <div className="space-y-2">
-                <Label>Vessel Name</Label>
+                <Label>Vessel Name *</Label>
                 <Input
                   name="boat_name"
                   defaultValue={selectedYacht?.boat_name}
@@ -573,12 +585,9 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                   name="min_bid_amount"
                   type="number"
                   defaultValue={selectedYacht?.min_bid_amount || ''}
-                  placeholder="e.g., 90% of price (auto-calculates if empty)"
+                  placeholder="Auto-calculates 90% of price if empty"
                   step="1000"
                 />
-                <p className="text-[8px] text-gray-500 mt-1">
-                  Leave empty for auto-calculation (90% of price)
-                </p>
               </div>
               <div className="space-y-2">
                 <Label>Year Built</Label>

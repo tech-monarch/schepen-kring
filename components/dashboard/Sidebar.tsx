@@ -178,6 +178,13 @@ export function Sidebar({ onCollapse }: { onCollapse?: (collapsed: boolean) => v
       page_key: "blog"
     },
     { 
+      title: "System Audits", 
+      href: userRole === "Admin" ? "/dashboard/admin/audit" : "/dashboard/admin/audit", 
+      icon: FileText, 
+      roles: ["Admin"],
+      page_key: "logs"
+    },
+    { 
       title: "Logs", 
       href: userRole === "Admin" ? "/dashboard/admin/logs" : "/dashboard/logs", 
       icon: FileText, 

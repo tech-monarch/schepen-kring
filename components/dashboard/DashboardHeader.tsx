@@ -410,7 +410,7 @@ export function DashboardHeader() {
         <ReturnToAdmin />
     <Link href="/yachts">
                 <button className="flex items-center gap-3 px-8 py-3 bg-[#003566] text-white text-[9px] font-sans font-bold uppercase tracking-[0.3em] hover:bg-[#001d3d] transition-all group">
-                  Dashboard
+                  Frontend
                   <ArrowRight size={12} className="group-hover:translate-x-1 transition-transform" />
                 </button>
               </Link>
