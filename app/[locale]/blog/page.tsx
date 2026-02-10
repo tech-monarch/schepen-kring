@@ -61,7 +61,7 @@ const BlogComponent = () => {
   if (isLoading) return <BlogSkeleton />;
 
   return (
-    <div className="min-h-screen bg-white text-slate-900 font-sans">
+    <div className="min-h-screen bg-white text-slate-900 font-sans top-10">
       
       {/* --- 30vh Hero Section --- */}
       <section className="relative h-[35vh] flex flex-col items-center justify-center text-center px-4">

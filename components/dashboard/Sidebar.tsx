@@ -322,26 +322,26 @@ export function Sidebar({ onCollapse }: { onCollapse?: (collapsed: boolean) => v
           )}
         </nav>
 
-        <div className="p-4 border-t border-slate-100 bg-slate-50/50">
-          <button 
-            onClick={() => {
-              if(confirm("Terminate Session?")) {
-                localStorage.removeItem("auth_token");
-                localStorage.removeItem("user_data");
-                localStorage.removeItem("task_cache");
-                localStorage.removeItem("personal_tasks");
-                window.location.href = "/";
-              }
-            }}
-            className={cn(
-              "w-full flex items-center gap-3 border-2 border-red-100 text-red-400 hover:bg-red-50 p-3 rounded-none font-black uppercase text-[10px] tracking-widest transition-all",
-              isCollapsed && "justify-center px-0 gap-0 border-none"
-            )}
-          >
-            <LogOut size={16} className="shrink-0" />
-            {!isCollapsed && <span>Terminate Session</span>}
-          </button>
-        </div>
+          {/* <div className="p-4 border-t border-slate-100 bg-slate-50/50">
+            <button 
+              onClick={() => {
+                if(confirm("Terminate Session?")) {
+                  localStorage.removeItem("auth_token");
+                  localStorage.removeItem("user_data");
+                  localStorage.removeItem("task_cache");
+                  localStorage.removeItem("personal_tasks");
+                  window.location.href = "/";
+                }
+              }}
+              className={cn(
+                "w-full flex items-center gap-3 border-2 border-red-100 text-red-400 hover:bg-red-50 p-3 rounded-none font-black uppercase text-[10px] tracking-widest transition-all",
+                isCollapsed && "justify-center px-0 gap-0 border-none"
+              )}
+            >
+              <LogOut size={16} className="shrink-0" />
+              {!isCollapsed && <span>Terminate Session</span>}
+            </button>
+          </div> */}
       </div>
     </motion.aside>
   );

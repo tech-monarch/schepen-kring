@@ -13,7 +13,7 @@ import {
   CheckCheck,
   Trash2,
   BellOff,
-  BellRing,
+  BellRing, ArrowRight
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useRouter } from "@/i18n/navigation";
@@ -409,10 +409,11 @@ export function DashboardHeader() {
       <div className="flex items-center gap-8">
         <ReturnToAdmin />
     <Link href="/yachts">
-      <button className="px-6 py-3 rounded-2xl bg-black text-white hover:bg-gray-800 transition">
-        Frontend
-      </button>
-    </Link>
+                <button className="flex items-center gap-3 px-8 py-3 bg-[#003566] text-white text-[9px] font-sans font-bold uppercase tracking-[0.3em] hover:bg-[#001d3d] transition-all group">
+                  Dashboard
+                  <ArrowRight size={12} className="group-hover:translate-x-1 transition-transform" />
+                </button>
+              </Link>
         
         
         {/* Updated Notifications Dropdown with Toggle */}

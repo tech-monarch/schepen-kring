@@ -38,7 +38,7 @@ export default function BlogDetailsPage() {
   if (!post) return <div className="h-screen flex items-center justify-center">Post not found</div>;
 
   return (
-    <article className="min-h-screen bg-white font-sans text-slate-800">
+    <article className="min-h-screen bg-white font-sans text-slate-800 top-10">
       
       {/* --- 35vh Hero Header (Post Title & Image) --- */}
       <header className="relative h-[35vh] min-h-[300px] flex items-center justify-center text-center px-4">
