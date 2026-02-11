@@ -21,6 +21,12 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'http',
+        hostname: '72.62.33.112', // Put your IP here
+        port: '',
+        pathname: '/storage/**',
+      },
     ],
   },
 };
