@@ -136,10 +136,20 @@ interface Yacht {
   bimini?: boolean;
 }
 
-const DUTCH_DAYS = ['Zo', 'Ma', 'Di', 'Wo', 'Do', 'Vr', 'Za'];
+const DUTCH_DAYS = ["Zo", "Ma", "Di", "Wo", "Do", "Vr", "Za"];
 const DUTCH_MONTHS = [
-  'Januari', 'Februari', 'Maart', 'April', 'Mei', 'Juni',
-  'Juli', 'Augustus', 'September', 'Oktober', 'November', 'December'
+  "Januari",
+  "Februari",
+  "Maart",
+  "April",
+  "Mei",
+  "Juni",
+  "Juli",
+  "Augustus",
+  "September",
+  "Oktober",
+  "November",
+  "December",
 ];
 
 interface CalendarDay {
@@ -159,9 +169,9 @@ interface Bid {
 function generateSlug(text: string): string {
   return text
     .toLowerCase()
-    .replace(/[^\w\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/--+/g, '-')
+    .replace(/[^\w\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/--+/g, "-")
     .trim();
 }
 
@@ -182,24 +192,28 @@ export default function YachtTerminalPage() {
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   const [expandedGallery, setExpandedGallery] = useState(false);
   const [paymentMode, setPaymentMode] = useState<"buy_now" | null>(null);
-  const [paymentStatus, setPaymentStatus] = useState<"idle" | "processing" | "success">("idle");
+  const [paymentStatus, setPaymentStatus] = useState<
+    "idle" | "processing" | "success"
+  >("idle");
   const [showTestSailForm, setShowTestSailForm] = useState(false);
-  const [testSailStatus, setTestSailStatus] = useState<"idle" | "processing" | "success">("idle");
-  
+  const [testSailStatus, setTestSailStatus] = useState<
+    "idle" | "processing" | "success"
+  >("idle");
+
   // ---------- FORM STATES (auto-filled from localStorage) ----------
   const [bookingForm, setBookingForm] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    notes: ''
+    name: "",
+    email: "",
+    phone: "",
+    notes: "",
   });
-  
+
   const [contactForm, setContactForm] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    requestType: '',
-    comment: ''
+    name: "",
+    email: "",
+    phone: "",
+    requestType: "",
+    comment: "",
   });
 
   const [placingBid, setPlacingBid] = useState(false);
@@ -208,15 +222,15 @@ export default function YachtTerminalPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   const getAuthToken = () => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('auth_token');
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("auth_token");
     }
     return null;
   };
 
   const getUserData = () => {
-    if (typeof window !== 'undefined') {
-      const userDataStr = localStorage.getItem('user_data');
+    if (typeof window !== "undefined") {
+      const userDataStr = localStorage.getItem("user_data");
       if (userDataStr) {
         try {
           return JSON.parse(userDataStr);
@@ -235,29 +249,35 @@ export default function YachtTerminalPage() {
     if (token && userData) {
       setIsAuthenticated(true);
       setUser(userData);
-      
+
       // Pre-fill contact form
       setContactForm({
-        name: userData.name || '',
-        email: userData.email || '',
-        phone: userData.phone_number || '',
-        requestType: '',
-        comment: ''
+        name: userData.name || "",
+        email: userData.email || "",
+        phone: userData.phone_number || "",
+        requestType: "",
+        comment: "",
       });
-      
+
       // Pre-fill test sail booking form
       setBookingForm({
-        name: userData.name || '',
-        email: userData.email || '',
-        phone: userData.phone_number || '',
-        notes: ''
+        name: userData.name || "",
+        email: userData.email || "",
+        phone: userData.phone_number || "",
+        notes: "",
       });
     } else {
       setIsAuthenticated(false);
       setUser(null);
       // Clear forms when logged out
-      setContactForm({ name: '', email: '', phone: '', requestType: '', comment: '' });
-      setBookingForm({ name: '', email: '', phone: '', notes: '' });
+      setContactForm({
+        name: "",
+        email: "",
+        phone: "",
+        requestType: "",
+        comment: "",
+      });
+      setBookingForm({ name: "", email: "", phone: "", notes: "" });
     }
   }, []); // runs once on mount
 
@@ -269,7 +289,9 @@ export default function YachtTerminalPage() {
 
   useEffect(() => {
     if (yacht && slug) {
-      const expectedSlug = generateSlug(yacht.boat_name || yacht.vessel_id || `yacht-${id}`);
+      const expectedSlug = generateSlug(
+        yacht.boat_name || yacht.vessel_id || `yacht-${id}`,
+      );
       if (slug !== expectedSlug) {
         router.replace(`/nl/yachts/${id}/${expectedSlug}`);
       }
@@ -305,18 +327,22 @@ export default function YachtTerminalPage() {
     try {
       const month = currentMonth.getMonth() + 1;
       const year = currentMonth.getFullYear();
-      const res = await api.get(`/yachts/${id}/available-dates?month=${month}&year=${year}`);
+      const res = await api.get(
+        `/yachts/${id}/available-dates?month=${month}&year=${year}`,
+      );
       const availableDates = res.data.availableDates || [];
-      setCalendarDays(prev => prev.map(day => ({
-        ...day,
-        available: availableDates.includes(formatDate(day.date))
-      })));
+      setCalendarDays((prev) =>
+        prev.map((day) => ({
+          ...day,
+          available: availableDates.includes(formatDate(day.date)),
+        })),
+      );
     } catch (error) {
       console.error("Error fetching available dates:", error);
     }
   };
 
-  const formatDate = (date: Date): string => date.toISOString().split('T')[0];
+  const formatDate = (date: Date): string => date.toISOString().split("T")[0];
 
   const fetchVesselData = async () => {
     try {
@@ -341,7 +367,10 @@ export default function YachtTerminalPage() {
   };
 
   const formatPrice = (price: number) =>
-    new Intl.NumberFormat('nl-NL', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(price);
+    new Intl.NumberFormat("nl-NL", {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(price);
 
   const openPhotoGallery = (imageUrl: string, index: number) => {
     setSelectedGalleryImage(imageUrl);
@@ -349,15 +378,18 @@ export default function YachtTerminalPage() {
     setShowPhotoGallery(true);
   };
 
-  const navigateGallery = (direction: 'prev' | 'next') => {
+  const navigateGallery = (direction: "prev" | "next") => {
     if (!yacht) return;
     const allImages = [
-      yacht.main_image ? `${STORAGE_URL}${yacht.main_image}` : PLACEHOLDER_IMAGE,
-      ...yacht.images.map(img => `${STORAGE_URL}${img.url}`)
+      yacht.main_image
+        ? `${STORAGE_URL}${yacht.main_image}`
+        : PLACEHOLDER_IMAGE,
+      ...yacht.images.map((img) => `${STORAGE_URL}${img.url}`),
     ];
-    let newIndex = direction === 'next'
-      ? (currentPhotoIndex + 1) % allImages.length
-      : (currentPhotoIndex - 1 + allImages.length) % allImages.length;
+    let newIndex =
+      direction === "next"
+        ? (currentPhotoIndex + 1) % allImages.length
+        : (currentPhotoIndex - 1 + allImages.length) % allImages.length;
     setCurrentPhotoIndex(newIndex);
     setSelectedGalleryImage(allImages[newIndex]);
   };
@@ -372,53 +404,61 @@ export default function YachtTerminalPage() {
     const token = getAuthToken();
     if (!token) {
       toast.error("U moet ingelogd zijn om een bod te plaatsen.");
-      router.push('/login');
+      router.push("/login");
       return;
     }
-    if (yacht.status === 'Sold') {
+    if (yacht.status === "Sold") {
       setBidError("Dit schip is al verkocht");
       toast.error("Dit schip is al verkocht");
       return;
     }
-    if (!['For Bid', 'For Sale'].includes(yacht.status)) {
+    if (!["For Bid", "For Sale"].includes(yacht.status)) {
       setBidError("Dit schip is niet beschikbaar voor biedingen");
       toast.error("Dit schip is niet beschikbaar voor biedingen");
       return;
     }
-    const currentPrice = yacht.current_bid ? Number(yacht.current_bid) : Number(yacht.price);
+    const currentPrice = yacht.current_bid
+      ? Number(yacht.current_bid)
+      : Number(yacht.price);
     const minBidAmount = yacht.min_bid_amount || yacht.price * 0.9;
     if (amount < minBidAmount) {
-      setBidError(`Bod moet minimaal €${minBidAmount.toLocaleString('nl-NL')} zijn (90% van vraagprijs)`);
+      setBidError(
+        `Bod moet minimaal €${minBidAmount.toLocaleString("nl-NL")} zijn (90% van vraagprijs)`,
+      );
       toast.error("Bod is te laag. Minimaal bod is 90% van de vraagprijs.");
       return;
     }
     if (amount <= currentPrice) {
-      setBidError(`Bod moet hoger zijn dan €${currentPrice.toLocaleString('nl-NL')}`);
+      setBidError(
+        `Bod moet hoger zijn dan €${currentPrice.toLocaleString("nl-NL")}`,
+      );
       return;
     }
     setPlacingBid(true);
     setBidError("");
     try {
       const response = await fetch(`https://schepen-kring.nl/api/bids/place`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/json'
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
         },
-        body: JSON.stringify({ yacht_id: yacht.id, amount })
+        body: JSON.stringify({ yacht_id: yacht.id, amount }),
       });
       const data = await response.json();
       if (!response.ok) {
         if (response.status === 401 || response.status === 403) {
           toast.error("Geen toegang. Log opnieuw in.");
-          localStorage.removeItem('auth_token');
-          localStorage.removeItem('user_data');
-          router.push('/login');
+          localStorage.removeItem("auth_token");
+          localStorage.removeItem("user_data");
+          router.push("/login");
           return;
         }
         if (response.status === 422) {
-          setBidError(data.message || data.errors?.amount?.[0] || "Bod plaatsen mislukt");
+          setBidError(
+            data.message || data.errors?.amount?.[0] || "Bod plaatsen mislukt",
+          );
           toast.error(data.message || "Bod plaatsen mislukt");
           return;
         }
@@ -426,7 +466,9 @@ export default function YachtTerminalPage() {
       }
       toast.success("Bod geplaatst! De verkoper zal uw bod beoordelen.");
       setBidAmount("");
-      setTimeout(() => { fetchVesselData(); }, 1000);
+      setTimeout(() => {
+        fetchVesselData();
+      }, 1000);
     } catch (e: any) {
       console.error("Bid error:", e);
       setBidError(e.message || "Bod plaatsen mislukt");
@@ -446,24 +488,24 @@ export default function YachtTerminalPage() {
     try {
       const token = getAuthToken();
       const headers: any = {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
+        "Content-Type": "application/json",
+        Accept: "application/json",
       };
-      if (token) headers['Authorization'] = `Bearer ${token}`;
+      if (token) headers["Authorization"] = `Bearer ${token}`;
 
-      await fetch('https://schepen-kring.nl/api/tasks', {
-        method: 'POST',
+      await fetch("https://schepen-kring.nl/api/tasks", {
+        method: "POST",
         headers,
         body: JSON.stringify({
           title: `INFORMATIE AANVRAAG: ${yacht?.boat_name}`,
-          description: `Klant vraagt meer informatie over ${yacht?.boat_name} (${yacht?.vessel_id}).\n\nNaam: ${contactForm.name}\nEmail: ${contactForm.email}\nTelefoon: ${contactForm.phone}\nAanvraag type: ${contactForm.requestType || 'Niet gespecificeerd'}\nOpmerking: ${contactForm.comment || 'Geen'}`,
+          description: `Klant vraagt meer informatie over ${yacht?.boat_name} (${yacht?.vessel_id}).\n\nNaam: ${contactForm.name}\nEmail: ${contactForm.email}\nTelefoon: ${contactForm.phone}\nAanvraag type: ${contactForm.requestType || "Niet gespecificeerd"}\nOpmerking: ${contactForm.comment || "Geen"}`,
           priority: "Medium",
           status: "To Do",
           yacht_id: yacht?.id,
-        })
+        }),
       });
       toast.success("Informatie aanvraag verzonden!");
-      setContactForm(prev => ({ ...prev, requestType: '', comment: '' })); // keep name/email/phone
+      setContactForm((prev) => ({ ...prev, requestType: "", comment: "" })); // keep name/email/phone
     } catch {
       toast.error("Verzenden mislukt.");
     }
@@ -481,36 +523,39 @@ export default function YachtTerminalPage() {
     setTestSailStatus("processing");
     try {
       const startDateTime = new Date(selectedDate);
-      const [hours, minutes] = selectedTime.split(':').map(Number);
+      const [hours, minutes] = selectedTime.split(":").map(Number);
       startDateTime.setHours(hours, minutes, 0, 0);
       const token = getAuthToken();
       const headers: any = {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
+        "Content-Type": "application/json",
+        Accept: "application/json",
       };
-      if (token) headers['Authorization'] = `Bearer ${token}`;
-      const bookingResponse = await fetch(`https://schepen-kring.nl/api/yachts/${yacht?.id}/book`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          start_at: startDateTime.toISOString(),
-          name: bookingForm.name,
-          email: bookingForm.email,
-          phone: bookingForm.phone,
-          notes: bookingForm.notes
-        })
-      });
-      if (!bookingResponse.ok) throw new Error('Booking failed');
-      await fetch('https://schepen-kring.nl/api/tasks', {
-        method: 'POST',
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+      const bookingResponse = await fetch(
+        `https://schepen-kring.nl/api/yachts/${yacht?.id}/book`,
+        {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            start_at: startDateTime.toISOString(),
+            name: bookingForm.name,
+            email: bookingForm.email,
+            phone: bookingForm.phone,
+            notes: bookingForm.notes,
+          }),
+        },
+      );
+      if (!bookingResponse.ok) throw new Error("Booking failed");
+      await fetch("https://schepen-kring.nl/api/tasks", {
+        method: "POST",
         headers,
         body: JSON.stringify({
           title: `PROEFVAART AANVRAAG: ${yacht?.boat_name}`,
-          description: `Klant heeft een proefvaart aangevraagd voor ${selectedDate?.toLocaleDateString('nl-NL')} om ${selectedTime}.\n\nKlantgegevens:\nNaam: ${bookingForm.name}\nEmail: ${bookingForm.email}\nTelefoon: ${bookingForm.phone || 'Niet opgegeven'}\nOpmerkingen: ${bookingForm.notes || 'Geen'}`,
+          description: `Klant heeft een proefvaart aangevraagd voor ${selectedDate?.toLocaleDateString("nl-NL")} om ${selectedTime}.\n\nKlantgegevens:\nNaam: ${bookingForm.name}\nEmail: ${bookingForm.email}\nTelefoon: ${bookingForm.phone || "Niet opgegeven"}\nOpmerkingen: ${bookingForm.notes || "Geen"}`,
           priority: "Medium",
           status: "To Do",
           yacht_id: yacht?.id,
-        })
+        }),
       });
       setTestSailStatus("success");
       toast.success("Proefvaart succesvol aangevraagd!");
@@ -521,7 +566,7 @@ export default function YachtTerminalPage() {
         setSelectedTime(null);
         setAvailableSlots([]);
         // Keep the pre-filled user data, only clear notes
-        setBookingForm(prev => ({ ...prev, notes: '' }));
+        setBookingForm((prev) => ({ ...prev, notes: "" }));
       }, 3000);
     } catch (error) {
       setTestSailStatus("idle");
@@ -534,12 +579,12 @@ export default function YachtTerminalPage() {
     try {
       const token = getAuthToken();
       const headers: any = {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
+        "Content-Type": "application/json",
+        Accept: "application/json",
       };
-      if (token) headers['Authorization'] = `Bearer ${token}`;
-      const response = await fetch('https://schepen-kring.nl/api/tasks', {
-        method: 'POST',
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+      const response = await fetch("https://schepen-kring.nl/api/tasks", {
+        method: "POST",
         headers,
         body: JSON.stringify({
           title: `URGENT: KOOP NU AANVRAAG - ${yacht?.boat_name}`,
@@ -547,9 +592,9 @@ export default function YachtTerminalPage() {
           priority: "High",
           status: "To Do",
           yacht_id: yacht?.id,
-        })
+        }),
       });
-      if (!response.ok) throw new Error('Task creation failed');
+      if (!response.ok) throw new Error("Task creation failed");
       setPaymentStatus("success");
       toast.success("Aankoop aanvraag succesvol verzonden!");
       setTimeout(() => {
@@ -565,11 +610,22 @@ export default function YachtTerminalPage() {
   const fetchAvailableSlots = async (date: Date) => {
     try {
       const dateStr = formatDate(date);
-      const res = await api.get(`https://schepen-kring.nl/api/yachts/${id}/available-slots?date=${dateStr}`);
-      setAvailableSlots(res.data.timeSlots || ['09:00', '10:30', '12:00', '13:30', '15:00', '16:30']);
+      const res = await api.get(
+        `https://schepen-kring.nl/api/yachts/${id}/available-slots?date=${dateStr}`,
+      );
+      setAvailableSlots(
+        res.data.timeSlots || [
+          "09:00",
+          "10:30",
+          "12:00",
+          "13:30",
+          "15:00",
+          "16:30",
+        ],
+      );
       setSelectedTime(null);
     } catch {
-      setAvailableSlots(['09:00', '10:30', '12:00', '13:30', '15:00', '16:30']);
+      setAvailableSlots(["09:00", "10:30", "12:00", "13:30", "15:00", "16:30"]);
     }
   };
 
@@ -583,7 +639,7 @@ export default function YachtTerminalPage() {
   };
 
   const handlePrevMonth = () => {
-    setCurrentMonth(prev => {
+    setCurrentMonth((prev) => {
       const newDate = new Date(prev);
       newDate.setMonth(newDate.getMonth() - 1);
       return newDate;
@@ -591,7 +647,7 @@ export default function YachtTerminalPage() {
   };
 
   const handleNextMonth = () => {
-    setCurrentMonth(prev => {
+    setCurrentMonth((prev) => {
       const newDate = new Date(prev);
       newDate.setMonth(newDate.getMonth() + 1);
       return newDate;
@@ -600,9 +656,11 @@ export default function YachtTerminalPage() {
 
   const isToday = (date: Date) => {
     const today = new Date();
-    return date.getDate() === today.getDate() &&
+    return (
+      date.getDate() === today.getDate() &&
       date.getMonth() === today.getMonth() &&
-      date.getFullYear() === today.getFullYear();
+      date.getFullYear() === today.getFullYear()
+    );
   };
 
   const handleMoreInfo = () => {
@@ -610,7 +668,7 @@ export default function YachtTerminalPage() {
   };
 
   const handlePrintPDF = () => {
-    window.open(yacht?.print_url || `#`, '_blank');
+    window.open(yacht?.print_url || `#`, "_blank");
   };
 
   const handleShare = async () => {
@@ -624,7 +682,7 @@ export default function YachtTerminalPage() {
   };
 
   const handleLoginRedirect = () => {
-    router.push('/login');
+    router.push("/login");
   };
 
   if (loading || !yacht) {
@@ -641,12 +699,14 @@ export default function YachtTerminalPage() {
   const depositAmount = yacht.price * 0.1;
   const allImages = [
     yacht.main_image ? `${STORAGE_URL}${yacht.main_image}` : PLACEHOLDER_IMAGE,
-    ...yacht.images.map(img => `${STORAGE_URL}${img.url}`)
+    ...yacht.images.map((img) => `${STORAGE_URL}${img.url}`),
   ];
   const mainImage = allImages[0];
   const otherImages = allImages.slice(1, 5);
   const hasMoreImages = allImages.length > 5;
-  const galleryImagesToShow = expandedGallery ? allImages : allImages.slice(0, 8);
+  const galleryImagesToShow = expandedGallery
+    ? allImages
+    : allImages.slice(0, 8);
   const formattedPrice = `€ ${formatPrice(yacht.price)}`;
   const minBidAmount = yacht.min_bid_amount || yacht.price * 0.9;
 
@@ -673,6 +733,7 @@ export default function YachtTerminalPage() {
           padding-top: 10px;
           background-color: #f3f4fa;
           height: 500px;
+          max-width: 1400px;
         }
         .photo-of-object {
           overflow: hidden;
@@ -732,7 +793,13 @@ export default function YachtTerminalPage() {
           <div className="inner-photo-holder">
             {allImages.slice(0, 5).map((img, idx) => (
               <div key={idx} className="photo-of-object">
-                <a href="#" onClick={(e) => { e.preventDefault(); openPhotoGallery(img, idx); }}>
+                <a
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    openPhotoGallery(img, idx);
+                  }}
+                >
                   <img
                     src={img}
                     onError={handleImageError}
@@ -800,9 +867,18 @@ export default function YachtTerminalPage() {
               <ArrowLeft size={18} /> ❮ Back to overview
             </Link>
             <div className="text-gray-600">
-              <Link href="/" className="hover:text-[#2a77b1]">Home</Link> ❯
-              <Link href="/nl/yachts" className="hover:text-[#2a77b1] ml-1"> Boat offer</Link> ❯
-              <span className="ml-1 text-gray-800 notranslate">{yacht.boat_name}</span>
+              <Link href="/" className="hover:text-[#2a77b1]">
+                Home
+              </Link>{" "}
+              ❯
+              <Link href="/nl/yachts" className="hover:text-[#2a77b1] ml-1">
+                {" "}
+                Boat offer
+              </Link>{" "}
+              ❯
+              <span className="ml-1 text-gray-800 notranslate">
+                {yacht.boat_name}
+              </span>
             </div>
           </div>
         </div>
@@ -810,7 +886,6 @@ export default function YachtTerminalPage() {
         {/* ----- TWO‑COLUMN LAYOUT ----- */}
         <div className="max-w-7xl mx-auto px-6 lg:px-8 mt-8">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
-
             {/* ----- LEFT COLUMN (8/12) ----- */}
             <div className="lg:col-span-2 space-y-10">
               {/* GENERAL SPECIFICATIONS */}
@@ -818,14 +893,44 @@ export default function YachtTerminalPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2">
                   <SpecItem label="Asking price" value={formattedPrice} />
                   <SpecItem label="VAT status" value="Including VAT" />
-                  <SpecItem label="Categories" value="Speedboats and sports boats" />
-                  <SpecItem label="Brand / Model" value={`${yacht.make || yacht.builder || ''} ${yacht.model || ''}`.trim() || yacht.boat_name} />
-                  <SpecItem label="Year of construction" value={yacht.year?.toString()} />
-                  <SpecItem label="Motor" value={yacht.engine_manufacturer ? `${yacht.horse_power || ''} hp ${yacht.engine_manufacturer}` : undefined} />
-                  <SpecItem label="berth" value={yacht.where || yacht.location} />
+                  <SpecItem
+                    label="Categories"
+                    value="Speedboats and sports boats"
+                  />
+                  <SpecItem
+                    label="Brand / Model"
+                    value={
+                      `${yacht.make || yacht.builder || ""} ${yacht.model || ""}`.trim() ||
+                      yacht.boat_name
+                    }
+                  />
+                  <SpecItem
+                    label="Year of construction"
+                    value={yacht.year?.toString()}
+                  />
+                  <SpecItem
+                    label="Motor"
+                    value={
+                      yacht.engine_manufacturer
+                        ? `${yacht.horse_power || ""} hp ${yacht.engine_manufacturer}`
+                        : undefined
+                    }
+                  />
+                  <SpecItem
+                    label="berth"
+                    value={yacht.where || yacht.location}
+                  />
                   <SpecItem label="Reference code" value={yacht.vessel_id} />
-                  <SpecItem label="building material" value={yacht.hull_construction} />
-                  <SpecItem label="L x W x D approx." value={`${yacht.loa || yacht.length || ''} x ${yacht.beam || ''} x ${yacht.draft || ''}`.replace(/x\s*x/g, '').trim()} />
+                  <SpecItem
+                    label="building material"
+                    value={yacht.hull_construction}
+                  />
+                  <SpecItem
+                    label="L x W x D approx."
+                    value={`${yacht.loa || yacht.length || ""} x ${yacht.beam || ""} x ${yacht.draft || ""}`
+                      .replace(/x\s*x/g, "")
+                      .trim()}
+                  />
                   <SpecItem label="Sleeps" value={yacht.berths} />
                 </div>
               </SpecCard>
@@ -833,7 +938,9 @@ export default function YachtTerminalPage() {
               {/* COMMENTS */}
               {yacht.owners_comment && (
                 <SpecCard title="Comments">
-                  <p className="text-gray-700 leading-relaxed">{yacht.owners_comment}</p>
+                  <p className="text-gray-700 leading-relaxed">
+                    {yacht.owners_comment}
+                  </p>
                 </SpecCard>
               )}
 
@@ -842,18 +949,59 @@ export default function YachtTerminalPage() {
                 <div className="flex-shrink-0">
                   <img
                     src={BROKER_LOGO_FALLBACK}
-                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                    onError={(e) => {
+                      e.currentTarget.style.display = "none";
+                    }}
                     alt="Schepenkring Roermond"
                     className="h-16 w-auto object-contain"
                   />
-                  <div className="text-[#2a77b1] font-bold text-xl notranslate mt-1">Schepenkring</div>
+                  <div className="text-[#2a77b1] font-bold text-xl notranslate mt-1">
+                    Schepenkring
+                  </div>
                 </div>
                 <div className="space-y-2 text-sm">
-                  <h2 className="text-lg font-serif italic text-[#2a77b1] notranslate">Makelaar - Schepenkring Roermond</h2>
-                  <p className="flex gap-2"><span className="font-medium min-w-[100px]">Phone number</span> <a href="tel:+31(0)475315661" className="text-[#2a77b1] hover:underline">+31(0)475 315661</a></p>
-                  <p className="flex gap-2"><span className="font-medium min-w-[100px]">Email</span> <a href="mailto:roermond@schepenkring.nl" className="text-[#2a77b1] hover:underline">roermond@schepenkring.nl</a></p>
-                  <p className="flex gap-2"><span className="font-medium min-w-[100px]">Address</span> <span>Hertenerweg 2, Roermond 6049 AA<br />The Netherlands</span></p>
-                  <p className="flex gap-2"><span className="font-medium min-w-[100px]">Route</span> <a href="https://www.google.nl/maps/dir//51.1862287,5.9717313" target="_blank" rel="noopener" className="text-[#2a77b1] hover:underline">calculate route</a></p>
+                  <h2 className="text-lg font-serif italic text-[#2a77b1] notranslate">
+                    Makelaar - Schepenkring Roermond
+                  </h2>
+                  <p className="flex gap-2">
+                    <span className="font-medium min-w-[100px]">
+                      Phone number
+                    </span>{" "}
+                    <a
+                      href="tel:+31(0)475315661"
+                      className="text-[#2a77b1] hover:underline"
+                    >
+                      +31(0)475 315661
+                    </a>
+                  </p>
+                  <p className="flex gap-2">
+                    <span className="font-medium min-w-[100px]">Email</span>{" "}
+                    <a
+                      href="mailto:roermond@schepenkring.nl"
+                      className="text-[#2a77b1] hover:underline"
+                    >
+                      roermond@schepenkring.nl
+                    </a>
+                  </p>
+                  <p className="flex gap-2">
+                    <span className="font-medium min-w-[100px]">Address</span>{" "}
+                    <span>
+                      Hertenerweg 2, Roermond 6049 AA
+                      <br />
+                      The Netherlands
+                    </span>
+                  </p>
+                  <p className="flex gap-2">
+                    <span className="font-medium min-w-[100px]">Route</span>{" "}
+                    <a
+                      href="https://www.google.nl/maps/dir//51.1862287,5.9717313"
+                      target="_blank"
+                      rel="noopener"
+                      className="text-[#2a77b1] hover:underline"
+                    >
+                      calculate route
+                    </a>
+                  </p>
                 </div>
               </div>
 
@@ -867,14 +1015,26 @@ export default function YachtTerminalPage() {
                   { label: "CE max weight", value: null },
                   { label: "Hull shape", value: yacht.hull_type },
                   { label: "Hull color", value: yacht.hull_colour },
-                  { label: "Deck and superstructure colour", value: yacht.super_structure_colour },
-                  { label: "Deck and superstructure construction", value: yacht.super_structure_construction },
-                  { label: "Open Cockpit (OK)", value: yacht.cockpit_type ? true : null },
+                  {
+                    label: "Deck and superstructure colour",
+                    value: yacht.super_structure_colour,
+                  },
+                  {
+                    label: "Deck and superstructure construction",
+                    value: yacht.super_structure_construction,
+                  },
+                  {
+                    label: "Open Cockpit (OK)",
+                    value: yacht.cockpit_type ? true : null,
+                  },
                   { label: "Normal clearance height", value: yacht.air_draft },
                   { label: "Draught", value: yacht.draft },
                   { label: "Waterline length", value: yacht.lwl },
                   { label: "Water displacement", value: yacht.displacement },
-                  { label: "Control", value: yacht.control_type ? `Steering wheel` : null },
+                  {
+                    label: "Control",
+                    value: yacht.control_type ? `Steering wheel` : null,
+                  },
                   { label: "Place control", value: yacht.control_type },
                   { label: "Trim flaps", value: null },
                 ]}
@@ -888,11 +1048,28 @@ export default function YachtTerminalPage() {
                   { label: "Sleeps", value: yacht.berths },
                   { label: "Type of interior", value: "Modern, light" },
                   { label: "Mattresses", value: true },
-                  { label: "Water tank & material", value: yacht.tankage ? `${yacht.tankage} liters Plastic` : null },
-                  { label: "Water system", value: "Pressure system Electric pump" },
-                  { label: "Number of showers", value: yacht.shower ? true : null },
-                  { label: "Radio CD player", value: yacht.cd_player ? "Fusion stereo system" : null },
-                  { label: "Refrigerator & food", value: yacht.fridge ? "Electric 12V cool box" : null },
+                  {
+                    label: "Water tank & material",
+                    value: yacht.tankage
+                      ? `${yacht.tankage} liters Plastic`
+                      : null,
+                  },
+                  {
+                    label: "Water system",
+                    value: "Pressure system Electric pump",
+                  },
+                  {
+                    label: "Number of showers",
+                    value: yacht.shower ? true : null,
+                  },
+                  {
+                    label: "Radio CD player",
+                    value: yacht.cd_player ? "Fusion stereo system" : null,
+                  },
+                  {
+                    label: "Refrigerator & food",
+                    value: yacht.fridge ? "Electric 12V cool box" : null,
+                  },
                 ]}
               />
 
@@ -906,7 +1083,10 @@ export default function YachtTerminalPage() {
                   { label: "Brand", value: yacht.engine_manufacturer },
                   { label: "Door Design", value: null },
                   { label: "Serial Number", value: null },
-                  { label: "Year of construction", value: yacht.year?.toString() },
+                  {
+                    label: "Year of construction",
+                    value: yacht.year?.toString(),
+                  },
                   { label: "Amount of cilinders", value: null },
                   { label: "Power", value: yacht.horse_power },
                   { label: "Hour meter", value: true },
@@ -917,7 +1097,10 @@ export default function YachtTerminalPage() {
                   { label: "Fuel tank quantity", value: true },
                   { label: "Max speed", value: yacht.max_speed },
                   { label: "Tachometer", value: true },
-                  { label: "Battery", value: yacht.battery ? `2 Capacity: 95 Ah` : null },
+                  {
+                    label: "Battery",
+                    value: yacht.battery ? `2 Capacity: 95 Ah` : null,
+                  },
                   { label: "Dynamo", value: true },
                   { label: "Voltmeter", value: true },
                   { label: "Voltage", value: "12 volt" },
@@ -930,13 +1113,30 @@ export default function YachtTerminalPage() {
                 subtitle="Navigatie & Elektronica"
                 specs={[
                   { label: "Kompas", value: yacht.compass ? true : null },
-                  { label: "Log/speed", value: yacht.speed_instrument ? true : null },
-                  { label: "Depth gauge", value: yacht.depth_instrument ? true : null },
-                  { label: "Navigation lights", value: yacht.navigation_lights ? true : null },
+                  {
+                    label: "Log/speed",
+                    value: yacht.speed_instrument ? true : null,
+                  },
+                  {
+                    label: "Depth gauge",
+                    value: yacht.depth_instrument ? true : null,
+                  },
+                  {
+                    label: "Navigation lights",
+                    value: yacht.navigation_lights ? true : null,
+                  },
                   { label: "Rudder angle indicator", value: null },
                   { label: "GPS", value: yacht.gps ? "Simrad Evo 3" : null },
-                  { label: "chart plotter", value: yacht.plotter ? "Simrad Evo 3 with Europe map from Navionics" : null },
-                  { label: "Fishfinder", value: yacht.plotter ? "Simrad Evo 3" : null },
+                  {
+                    label: "chart plotter",
+                    value: yacht.plotter
+                      ? "Simrad Evo 3 with Europe map from Navionics"
+                      : null,
+                  },
+                  {
+                    label: "Fishfinder",
+                    value: yacht.plotter ? "Simrad Evo 3" : null,
+                  },
                 ]}
               />
 
@@ -944,11 +1144,17 @@ export default function YachtTerminalPage() {
                 title="Outside equipment"
                 subtitle="Uitrusting buitenom"
                 specs={[
-                  { label: "Anchors & Material", value: yacht.anchor ? "Delta anchor 4kg" : null },
+                  {
+                    label: "Anchors & Material",
+                    value: yacht.anchor ? "Delta anchor 4kg" : null,
+                  },
                   { label: "Anchor rod", value: true },
                   { label: "Sprayhood", value: yacht.spray_hood ? true : null },
                   { label: "Cockpit tent", value: yacht.bimini ? true : null },
-                  { label: "Tarpaulin(s)", value: "Winter tent and transport hood" },
+                  {
+                    label: "Tarpaulin(s)",
+                    value: "Winter tent and transport hood",
+                  },
                   { label: "Pulpit and bastion(s)", value: true },
                   { label: "Swimming platform", value: true },
                   { label: "Swimming ladder", value: true },
@@ -965,8 +1171,14 @@ export default function YachtTerminalPage() {
                 subtitle="Veiligheid"
                 specs={[
                   { label: "Lifebuoy", value: true },
-                  { label: "Bilge pump", value: yacht.bilge_pump ? "Electric 2x" : null },
-                  { label: "Fire extinguisher", value: yacht.fire_extinguisher ? true : null },
+                  {
+                    label: "Bilge pump",
+                    value: yacht.bilge_pump ? "Electric 2x" : null,
+                  },
+                  {
+                    label: "Fire extinguisher",
+                    value: yacht.fire_extinguisher ? true : null,
+                  },
                   { label: "Self-draining cockpit", value: true },
                   { label: "Comments", value: "1x windshield wiper" },
                 ]}
@@ -979,7 +1191,14 @@ export default function YachtTerminalPage() {
                 </h3>
                 <div className="vibp_more_images grid grid-cols-2 md:grid-cols-4 gap-4">
                   {allImages.slice(0, 4).map((img, idx) => (
-                    <a key={idx} href="#" onClick={(e) => { e.preventDefault(); openPhotoGallery(img, idx); }}>
+                    <a
+                      key={idx}
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        openPhotoGallery(img, idx);
+                      }}
+                    >
                       <img
                         src={img}
                         onError={handleImageError}
@@ -989,7 +1208,15 @@ export default function YachtTerminalPage() {
                     </a>
                   ))}
                   {allImages.slice(4).map((img, idx) => (
-                    <a key={idx + 4} href="#" onClick={(e) => { e.preventDefault(); openPhotoGallery(img, idx + 4); }} className="vibp_hidden_image hidden">
+                    <a
+                      key={idx + 4}
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        openPhotoGallery(img, idx + 4);
+                      }}
+                      className="vibp_hidden_image hidden"
+                    >
                       <img
                         src={img}
                         onError={handleImageError}
@@ -1002,19 +1229,27 @@ export default function YachtTerminalPage() {
                 <button
                   id="vibp_load_more_images_btn"
                   onClick={() => {
-                    const btn = document.getElementById('vibp_load_more_images_btn');
-                    const hidden = document.querySelectorAll('.vibp_hidden_image');
-                    if (btn?.classList.contains('show-images')) {
-                      hidden.forEach(el => el.classList.remove('hidden', 'vibp_hidden_image'));
+                    const btn = document.getElementById(
+                      "vibp_load_more_images_btn",
+                    );
+                    const hidden =
+                      document.querySelectorAll(".vibp_hidden_image");
+                    if (btn?.classList.contains("show-images")) {
+                      hidden.forEach((el) =>
+                        el.classList.remove("hidden", "vibp_hidden_image"),
+                      );
                       btn.textContent = "Toon minder foto's";
-                      btn.classList.remove('show-images');
+                      btn.classList.remove("show-images");
                     } else {
-                      const allMediaLinks = document.querySelectorAll('.vibp_more_images > a');
+                      const allMediaLinks = document.querySelectorAll(
+                        ".vibp_more_images > a",
+                      );
                       allMediaLinks.forEach((el, idx) => {
-                        if (idx >= 4) el.classList.add('hidden', 'vibp_hidden_image');
+                        if (idx >= 4)
+                          el.classList.add("hidden", "vibp_hidden_image");
                       });
                       btn!.textContent = "Show more photos";
-                      btn!.classList.add('show-images');
+                      btn!.classList.add("show-images");
                     }
                   }}
                   className="mt-6 bg-[#2a77b1] hover:bg-[#1e5a8a] text-white px-6 py-3 rounded-full text-sm font-medium transition-colors show-images"
@@ -1024,7 +1259,10 @@ export default function YachtTerminalPage() {
               </div>
 
               {/* DOCUMENTS */}
-              <div id="documenten" className="bg-white border border-[#eaeef5] p-6">
+              <div
+                id="documenten"
+                className="bg-white border border-[#eaeef5] p-6"
+              >
                 <h3 className="text-xl font-serif italic text-[#2a77b1] mb-5 pb-3 border-b border-[#eaeef5]">
                   Documents
                 </h3>
@@ -1052,42 +1290,67 @@ export default function YachtTerminalPage() {
               {/* BIDDING CARD */}
               <div className="bg-gray-50 border border-gray-200 p-6">
                 <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-serif italic text-gray-900">Bod uitbrengen</h3>
-                  <span className={cn(
-                    "text-xs font-medium px-3 py-1.5 rounded-full",
-                    yacht.status === 'Sold' ? 'bg-red-100 text-red-800' :
-                    yacht.status === 'For Bid' ? 'bg-blue-100 text-blue-800' :
-                    'bg-green-100 text-green-800'
-                  )}>
-                    {yacht.status === 'For Sale' ? 'Te Koop' : yacht.status === 'For Bid' ? 'Veiling Actief' : 'Verkocht'}
+                  <h3 className="text-lg font-serif italic text-gray-900">
+                    Bod uitbrengen
+                  </h3>
+                  <span
+                    className={cn(
+                      "text-xs font-medium px-3 py-1.5 rounded-full",
+                      yacht.status === "Sold"
+                        ? "bg-red-100 text-red-800"
+                        : yacht.status === "For Bid"
+                          ? "bg-blue-100 text-blue-800"
+                          : "bg-green-100 text-green-800",
+                    )}
+                  >
+                    {yacht.status === "For Sale"
+                      ? "Te Koop"
+                      : yacht.status === "For Bid"
+                        ? "Veiling Actief"
+                        : "Verkocht"}
                   </span>
                 </div>
                 <div className="mb-5">
-                  <p className="text-sm text-gray-500 mb-1">Huidig hoogste bod:</p>
-                  <p className="text-2xl font-serif italic text-gray-900">
-                    €{(yacht.current_bid ? Number(yacht.current_bid) : Number(yacht.price)).toLocaleString('nl-NL')}
+                  <p className="text-sm text-gray-500 mb-1">
+                    Huidig hoogste bod:
                   </p>
-                  {yacht.status === 'For Sale' && (
+                  <p className="text-2xl font-serif italic text-gray-900">
+                    €
+                    {(yacht.current_bid
+                      ? Number(yacht.current_bid)
+                      : Number(yacht.price)
+                    ).toLocaleString("nl-NL")}
+                  </p>
+                  {yacht.status === "For Sale" && (
                     <p className="text-xs text-gray-500 mt-1">Startprijs</p>
                   )}
                 </div>
-                {yacht.status !== 'Sold' && (
+                {yacht.status !== "Sold" && (
                   <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-md">
                     <div className="flex items-start gap-2">
-                      <AlertCircle size={16} className="text-amber-600 mt-0.5 flex-shrink-0" />
+                      <AlertCircle
+                        size={16}
+                        className="text-amber-600 mt-0.5 flex-shrink-0"
+                      />
                       <div>
-                        <p className="text-sm font-medium text-amber-800">Minimaal bod vereist:</p>
+                        <p className="text-sm font-medium text-amber-800">
+                          Minimaal bod vereist:
+                        </p>
                         <p className="text-lg font-bold text-amber-900">
-                          €{minBidAmount.toLocaleString('nl-NL')}
-                          <span className="text-sm font-normal text-amber-700 ml-2">(90% van vraagprijs)</span>
+                          €{minBidAmount.toLocaleString("nl-NL")}
+                          <span className="text-sm font-normal text-amber-700 ml-2">
+                            (90% van vraagprijs)
+                          </span>
                         </p>
                       </div>
                     </div>
                   </div>
                 )}
-                {yacht.status === 'Sold' ? (
+                {yacht.status === "Sold" ? (
                   <div className="text-center py-4 bg-red-50 border border-red-100 rounded-md">
-                    <p className="text-red-600 font-medium">Dit schip is verkocht</p>
+                    <p className="text-red-600 font-medium">
+                      Dit schip is verkocht
+                    </p>
                   </div>
                 ) : (
                   <div className="space-y-4 mt-6">
@@ -1095,13 +1358,18 @@ export default function YachtTerminalPage() {
                       <input
                         type="number"
                         value={bidAmount}
-                        onChange={(e) => { setBidAmount(e.target.value); setBidError(""); }}
-                        placeholder={`Minimaal €${minBidAmount.toLocaleString('nl-NL')}`}
+                        onChange={(e) => {
+                          setBidAmount(e.target.value);
+                          setBidError("");
+                        }}
+                        placeholder={`Minimaal €${minBidAmount.toLocaleString("nl-NL")}`}
                         className="w-full border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-gray-500 rounded-none"
                         step="100"
                         min={minBidAmount}
                       />
-                      {bidError && <p className="text-red-500 text-xs mt-1">{bidError}</p>}
+                      {bidError && (
+                        <p className="text-red-500 text-xs mt-1">{bidError}</p>
+                      )}
                     </div>
                     {isAuthenticated ? (
                       <button
@@ -1109,8 +1377,12 @@ export default function YachtTerminalPage() {
                         disabled={placingBid}
                         className="w-full bg-gray-900 hover:bg-black text-white py-3 font-medium transition-colors flex items-center justify-center gap-2 disabled:bg-gray-400"
                       >
-                        {placingBid ? <Loader2 className="animate-spin" size={16} /> : <Gavel size={16} />}
-                        {placingBid ? 'Plaatsen...' : 'Bod plaatsen'}
+                        {placingBid ? (
+                          <Loader2 className="animate-spin" size={16} />
+                        ) : (
+                          <Gavel size={16} />
+                        )}
+                        {placingBid ? "Plaatsen..." : "Bod plaatsen"}
                       </button>
                     ) : (
                       <button
@@ -1120,7 +1392,11 @@ export default function YachtTerminalPage() {
                         Inloggen om te bieden
                       </button>
                     )}
-                    {user && <p className="text-xs text-gray-500 text-center">Ingelogd als: {user.name}</p>}
+                    {user && (
+                      <p className="text-xs text-gray-500 text-center">
+                        Ingelogd als: {user.name}
+                      </p>
+                    )}
                   </div>
                 )}
               </div>
@@ -1128,18 +1404,27 @@ export default function YachtTerminalPage() {
               {/* ----- CONTACT FORM – EXACT REPLICA + AUTO‑FILL ----- */}
               <div className="bg-gray-50 border border-gray-200 p-6">
                 <h4 className="text-lg font-serif italic text-gray-900 mb-4">
-                  Meer informatie over de<br />
-                  <span className="notranslate text-[#2a77b1]">{yacht.boat_name}</span>
+                  Meer informatie over de
+                  <br />
+                  <span className="notranslate text-[#2a77b1]">
+                    {yacht.boat_name}
+                  </span>
                 </h4>
                 <form onSubmit={handleContactSubmit} className="space-y-4">
-                  <input type="hidden" name="g-recaptcha-response" className="g-recaptcha-response" />
+                  <input
+                    type="hidden"
+                    name="g-recaptcha-response"
+                    className="g-recaptcha-response"
+                  />
                   <input
                     type="text"
                     placeholder="Your first and last name*"
                     className="w-full border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-gray-500 rounded-none"
                     required
                     value={contactForm.name}
-                    onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })}
+                    onChange={(e) =>
+                      setContactForm({ ...contactForm, name: e.target.value })
+                    }
                   />
                   <input
                     type="text"
@@ -1147,7 +1432,9 @@ export default function YachtTerminalPage() {
                     className="w-full border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-gray-500 rounded-none"
                     required
                     value={contactForm.phone}
-                    onChange={(e) => setContactForm({ ...contactForm, phone: e.target.value })}
+                    onChange={(e) =>
+                      setContactForm({ ...contactForm, phone: e.target.value })
+                    }
                   />
                   <input
                     type="email"
@@ -1155,17 +1442,28 @@ export default function YachtTerminalPage() {
                     className="w-full border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-gray-500 rounded-none"
                     required
                     value={contactForm.email}
-                    onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
+                    onChange={(e) =>
+                      setContactForm({ ...contactForm, email: e.target.value })
+                    }
                   />
-                  <p className="text-sm text-gray-700">I would like the following... *</p>
+                  <p className="text-sm text-gray-700">
+                    I would like the following... *
+                  </p>
                   <select
                     className="w-full border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-gray-500 rounded-none bg-white"
                     value={contactForm.requestType}
-                    onChange={(e) => setContactForm({ ...contactForm, requestType: e.target.value })}
+                    onChange={(e) =>
+                      setContactForm({
+                        ...contactForm,
+                        requestType: e.target.value,
+                      })
+                    }
                   >
                     <option value="" disabled hidden></option>
                     <option value="Teruggebeld worden">Get a call back</option>
-                    <option value="Een vrijblijvende afspraak maken">Make a no-obligation appointment</option>
+                    <option value="Een vrijblijvende afspraak maken">
+                      Make a no-obligation appointment
+                    </option>
                     <option value="Anders">Other</option>
                   </select>
                   <textarea
@@ -1173,7 +1471,12 @@ export default function YachtTerminalPage() {
                     rows={4}
                     className="w-full border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-gray-500 rounded-none"
                     value={contactForm.comment}
-                    onChange={(e) => setContactForm({ ...contactForm, comment: e.target.value })}
+                    onChange={(e) =>
+                      setContactForm({
+                        ...contactForm,
+                        comment: e.target.value,
+                      })
+                    }
                   ></textarea>
                   <button
                     type="submit"
@@ -1191,7 +1494,9 @@ export default function YachtTerminalPage() {
                 className="w-full border border-gray-300 hover:bg-gray-50 text-gray-700 py-4 font-medium text-center transition-colors flex items-center justify-center gap-2 bg-white"
               >
                 <Anchor size={18} />
-                {showTestSailForm ? 'Proefvaart formulier verbergen' : 'Proefvaart boeken'}
+                {showTestSailForm
+                  ? "Proefvaart formulier verbergen"
+                  : "Proefvaart boeken"}
               </button>
 
               {/* TEST SAIL FORM (inline) – auto‑filled already via bookingForm state */}
@@ -1225,24 +1530,41 @@ export default function YachtTerminalPage() {
                 <div className="space-y-3 max-h-60 overflow-y-auto">
                   {bids.length > 0 ? (
                     bids.map((bid, i) => (
-                      <div key={bid.id} className={cn(
-                        "flex justify-between items-center py-3 px-3 rounded border",
-                        i === 0 ? "bg-blue-50 border-blue-200 text-blue-900 font-medium" : "border-gray-100 text-gray-600"
-                      )}>
+                      <div
+                        key={bid.id}
+                        className={cn(
+                          "flex justify-between items-center py-3 px-3 rounded border",
+                          i === 0
+                            ? "bg-blue-50 border-blue-200 text-blue-900 font-medium"
+                            : "border-gray-100 text-gray-600",
+                        )}
+                      >
                         <div>
-                          <span className="text-sm">{bid.user?.name || "Anonieme bieder"}</span>
-                          {bid.status === 'active' && i === 0 && (
-                            <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded ml-2">Actief</span>
+                          <span className="text-sm">
+                            {bid.user?.name || "Anonieme bieder"}
+                          </span>
+                          {bid.status === "active" && i === 0 && (
+                            <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded ml-2">
+                              Actief
+                            </span>
                           )}
                         </div>
                         <div className="text-right">
-                          <span className="text-sm font-medium">€{Number(bid.amount).toLocaleString('nl-NL')}</span>
-                          <p className="text-xs text-gray-400">{new Date(bid.created_at).toLocaleDateString('nl-NL')}</p>
+                          <span className="text-sm font-medium">
+                            €{Number(bid.amount).toLocaleString("nl-NL")}
+                          </span>
+                          <p className="text-xs text-gray-400">
+                            {new Date(bid.created_at).toLocaleDateString(
+                              "nl-NL",
+                            )}
+                          </p>
                         </div>
                       </div>
                     ))
                   ) : (
-                    <p className="text-sm text-gray-500 italic text-center py-4">Nog geen biedingen geregistreerd</p>
+                    <p className="text-sm text-gray-500 italic text-center py-4">
+                      Nog geen biedingen geregistreerd
+                    </p>
                   )}
                 </div>
               </div>
@@ -1252,10 +1574,16 @@ export default function YachtTerminalPage() {
 
         {/* ----- MOBILE ACTION BAR (PHONE / EMAIL) ----- */}
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t-2 border-[#2a77b1] flex md:hidden z-50">
-          <a href={`tel:+31(0)475315661`} className="flex-1 flex items-center justify-center py-4 text-[#2a77b1] border-r border-gray-200">
+          <a
+            href={`tel:+31(0)475315661`}
+            className="flex-1 flex items-center justify-center py-4 text-[#2a77b1] border-r border-gray-200"
+          >
             <Phone size={24} />
           </a>
-          <a href={`mailto:roermond@schepenkring.nl`} className="flex-1 flex items-center justify-center py-4 text-[#2a77b1]">
+          <a
+            href={`mailto:roermond@schepenkring.nl`}
+            className="flex-1 flex items-center justify-center py-4 text-[#2a77b1]"
+          >
             <Mail size={24} />
           </a>
         </div>
@@ -1272,10 +1600,17 @@ export default function YachtTerminalPage() {
           >
             <div className="flex items-center justify-between p-6 text-white">
               <div>
-                <h2 className="text-xl font-medium notranslate">{yacht.boat_name}</h2>
-                <p className="text-sm text-gray-300">{currentPhotoIndex + 1} van {allImages.length}</p>
+                <h2 className="text-xl font-medium notranslate">
+                  {yacht.boat_name}
+                </h2>
+                <p className="text-sm text-gray-300">
+                  {currentPhotoIndex + 1} van {allImages.length}
+                </p>
               </div>
-              <button onClick={() => setShowPhotoGallery(false)} className="p-2 hover:bg-white/10 rounded-full transition-colors">
+              <button
+                onClick={() => setShowPhotoGallery(false)}
+                className="p-2 hover:bg-white/10 rounded-full transition-colors"
+              >
                 <X size={24} />
               </button>
             </div>
@@ -1288,10 +1623,16 @@ export default function YachtTerminalPage() {
               />
               {allImages.length > 1 && (
                 <>
-                  <button onClick={() => navigateGallery('prev')} className="absolute left-8 top-1/2 -translate-y-1/2 p-3 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors">
+                  <button
+                    onClick={() => navigateGallery("prev")}
+                    className="absolute left-8 top-1/2 -translate-y-1/2 p-3 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors"
+                  >
                     <ChevronRight size={24} className="rotate-180" />
                   </button>
-                  <button onClick={() => navigateGallery('next')} className="absolute right-8 top-1/2 -translate-y-1/2 p-3 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors">
+                  <button
+                    onClick={() => navigateGallery("next")}
+                    className="absolute right-8 top-1/2 -translate-y-1/2 p-3 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors"
+                  >
                     <ChevronRight size={24} />
                   </button>
                 </>
@@ -1300,11 +1641,25 @@ export default function YachtTerminalPage() {
             <div className="p-6 border-t border-white/10">
               <div className="flex gap-2 overflow-x-auto pb-2">
                 {allImages.map((img, idx) => (
-                  <button key={idx} onClick={() => { setSelectedGalleryImage(img); setCurrentPhotoIndex(idx); }} className={cn(
-                    "w-20 h-20 flex-shrink-0 border-2 transition-all",
-                    idx === currentPhotoIndex ? "border-white" : "border-transparent hover:border-white/50"
-                  )}>
-                    <img src={img} onError={handleImageError} className="w-full h-full object-cover" alt="" />
+                  <button
+                    key={idx}
+                    onClick={() => {
+                      setSelectedGalleryImage(img);
+                      setCurrentPhotoIndex(idx);
+                    }}
+                    className={cn(
+                      "w-20 h-20 flex-shrink-0 border-2 transition-all",
+                      idx === currentPhotoIndex
+                        ? "border-white"
+                        : "border-transparent hover:border-white/50",
+                    )}
+                  >
+                    <img
+                      src={img}
+                      onError={handleImageError}
+                      className="w-full h-full object-cover"
+                      alt=""
+                    />
                   </button>
                 ))}
               </div>
@@ -1330,33 +1685,70 @@ export default function YachtTerminalPage() {
               {paymentStatus === "idle" && (
                 <div className="space-y-6">
                   <div className="text-center">
-                    <h2 className="text-2xl font-serif italic mb-2 text-gray-900">Directe Aankoop</h2>
-                    <p className="text-3xl font-bold text-gray-900">€{yacht.price.toLocaleString('nl-NL')}</p>
-                    <p className="text-sm text-gray-600 mt-2">Volledig bedrag: €{yacht.price.toLocaleString('nl-NL')}</p>
+                    <h2 className="text-2xl font-serif italic mb-2 text-gray-900">
+                      Directe Aankoop
+                    </h2>
+                    <p className="text-3xl font-bold text-gray-900">
+                      €{yacht.price.toLocaleString("nl-NL")}
+                    </p>
+                    <p className="text-sm text-gray-600 mt-2">
+                      Volledig bedrag: €{yacht.price.toLocaleString("nl-NL")}
+                    </p>
                   </div>
                   <div className="p-4 bg-red-50 border border-red-100 rounded-lg">
-                    <p className="text-sm text-red-800"><span className="font-bold">Let op:</span> Door direct te kopen wordt de veiling beëindigd en kunnen andere bieders geen bod meer plaatsen.</p>
+                    <p className="text-sm text-red-800">
+                      <span className="font-bold">Let op:</span> Door direct te
+                      kopen wordt de veiling beëindigd en kunnen andere bieders
+                      geen bod meer plaatsen.
+                    </p>
                   </div>
                   <div className="space-y-4">
                     <div>
-                      <label className="text-sm font-medium text-gray-700 block mb-2">Uw naam *</label>
-                      <input type="text" className="w-full border border-gray-300 px-4 py-3 text-sm rounded focus:outline-none focus:border-gray-500" placeholder="Vul uw naam in" />
+                      <label className="text-sm font-medium text-gray-700 block mb-2">
+                        Uw naam *
+                      </label>
+                      <input
+                        type="text"
+                        className="w-full border border-gray-300 px-4 py-3 text-sm rounded focus:outline-none focus:border-gray-500"
+                        placeholder="Vul uw naam in"
+                      />
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-700 block mb-2">Uw e-mail *</label>
-                      <input type="email" className="w-full border border-gray-300 px-4 py-3 text-sm rounded focus:outline-none focus:border-gray-500" placeholder="Vul uw e-mail in" />
+                      <label className="text-sm font-medium text-gray-700 block mb-2">
+                        Uw e-mail *
+                      </label>
+                      <input
+                        type="email"
+                        className="w-full border border-gray-300 px-4 py-3 text-sm rounded focus:outline-none focus:border-gray-500"
+                        placeholder="Vul uw e-mail in"
+                      />
                     </div>
                   </div>
                   <div className="flex gap-4">
-                    <button onClick={() => setPaymentMode(null)} className="flex-1 border border-gray-300 py-3 text-gray-700 font-medium hover:bg-gray-50 transition-colors">Annuleren</button>
-                    <button onClick={handleBuyNow} className="flex-2 bg-red-600 hover:bg-red-700 text-white py-3 font-medium transition-colors">Direct Kopen</button>
+                    <button
+                      onClick={() => setPaymentMode(null)}
+                      className="flex-1 border border-gray-300 py-3 text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+                    >
+                      Annuleren
+                    </button>
+                    <button
+                      onClick={handleBuyNow}
+                      className="flex-2 bg-red-600 hover:bg-red-700 text-white py-3 font-medium transition-colors"
+                    >
+                      Direct Kopen
+                    </button>
                   </div>
                 </div>
               )}
               {paymentStatus === "processing" && (
                 <div className="py-20 text-center flex flex-col items-center">
-                  <Loader2 className="animate-spin text-gray-900 mb-4" size={32} />
-                  <p className="text-sm font-medium">Aankoop wordt verwerkt...</p>
+                  <Loader2
+                    className="animate-spin text-gray-900 mb-4"
+                    size={32}
+                  />
+                  <p className="text-sm font-medium">
+                    Aankoop wordt verwerkt...
+                  </p>
                 </div>
               )}
               {paymentStatus === "success" && (
@@ -1364,8 +1756,12 @@ export default function YachtTerminalPage() {
                   <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6">
                     <CheckCircle2 size={32} />
                   </div>
-                  <h3 className="text-xl font-serif mb-2 text-gray-900">Aankoop Aanvraag Verzonden!</h3>
-                  <p className="text-sm text-gray-600">Ons team neemt binnen 24 uur contact met u op.</p>
+                  <h3 className="text-xl font-serif mb-2 text-gray-900">
+                    Aankoop Aanvraag Verzonden!
+                  </h3>
+                  <p className="text-sm text-gray-600">
+                    Ons team neemt binnen 24 uur contact met u op.
+                  </p>
                 </div>
               )}
             </motion.div>
@@ -1388,7 +1784,13 @@ function SpecItem({ label, value }: { label: string; value?: string | null }) {
   );
 }
 
-function SpecCard({ title, children }: { title: string; children: React.ReactNode }) {
+function SpecCard({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
   return (
     <div className="bg-white border border-[#eaeef5] p-6">
       <h3 className="text-xl font-serif italic text-[#2a77b1] mb-5 pb-3 border-b border-[#eaeef5]">
@@ -1399,8 +1801,18 @@ function SpecCard({ title, children }: { title: string; children: React.ReactNod
   );
 }
 
-function SpecSection({ title, subtitle, specs }: { title: string; subtitle: string; specs: { label: string; value: string | boolean | null | undefined }[] }) {
-  const filtered = specs.filter(s => s.value !== null && s.value !== undefined && s.value !== '');
+function SpecSection({
+  title,
+  subtitle,
+  specs,
+}: {
+  title: string;
+  subtitle: string;
+  specs: { label: string; value: string | boolean | null | undefined }[];
+}) {
+  const filtered = specs.filter(
+    (s) => s.value !== null && s.value !== undefined && s.value !== "",
+  );
   if (filtered.length === 0) return null;
   return (
     <div className="bg-white border border-[#eaeef5] p-6">
@@ -1416,14 +1828,20 @@ function SpecSection({ title, subtitle, specs }: { title: string; subtitle: stri
   );
 }
 
-function SpecRow({ label, value }: { label: string; value: string | boolean | null | undefined }) {
-  if (value === null || value === undefined || value === '') return null;
-  const hasText = typeof value === 'string' && value.trim().length > 0;
+function SpecRow({
+  label,
+  value,
+}: {
+  label: string;
+  value: string | boolean | null | undefined;
+}) {
+  if (value === null || value === undefined || value === "") return null;
+  const hasText = typeof value === "string" && value.trim().length > 0;
   return (
     <div className="flex py-2 border-b border-dashed border-gray-200 last:border-0">
       <span className="w-2/5 text-sm text-gray-700 font-medium">{label}</span>
       <div className="w-3/5 text-sm text-gray-800 flex items-center gap-2">
-        {typeof value === 'boolean' ? (
+        {typeof value === "boolean" ? (
           <Check size={16} className="text-green-600 check-icon" />
         ) : hasText ? (
           <>
@@ -1457,21 +1875,40 @@ function TestSailForm({
   return (
     <div className="bg-white border border-gray-200 p-6 mt-2 space-y-6">
       <div className="text-center">
-        <h3 className="text-lg font-medium text-gray-900 mb-2">Proefvaart Boeken</h3>
-        <p className="text-sm text-gray-600">Borg Vereist: €{depositAmount.toLocaleString('nl-NL')}</p>
+        <h3 className="text-lg font-medium text-gray-900 mb-2">
+          Proefvaart Boeken
+        </h3>
+        <p className="text-sm text-gray-600">
+          Borg Vereist: €{depositAmount.toLocaleString("nl-NL")}
+        </p>
       </div>
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <button onClick={onPrevMonth} className="text-gray-400 hover:text-gray-900 p-2">←</button>
+          <button
+            onClick={onPrevMonth}
+            className="text-gray-400 hover:text-gray-900 p-2"
+          >
+            ←
+          </button>
           <h4 className="text-base font-semibold text-gray-900">
             {DUTCH_MONTHS[currentMonth.getMonth()]} {currentMonth.getFullYear()}
           </h4>
-          <button onClick={onNextMonth} className="text-gray-400 hover:text-gray-900 p-2">→</button>
+          <button
+            onClick={onNextMonth}
+            className="text-gray-400 hover:text-gray-900 p-2"
+          >
+            →
+          </button>
         </div>
         <div className="grid grid-cols-7 gap-1 text-center text-xs">
-          {DUTCH_DAYS.map(d => <span key={d} className="font-medium text-gray-500">{d}</span>)}
+          {DUTCH_DAYS.map((d) => (
+            <span key={d} className="font-medium text-gray-500">
+              {d}
+            </span>
+          ))}
           {calendarDays.map((day: any, i: number) => {
-            const isSelected = selectedDate?.toDateString() === day.date.toDateString();
+            const isSelected =
+              selectedDate?.toDateString() === day.date.toDateString();
             return (
               <button
                 key={i}
@@ -1479,11 +1916,15 @@ function TestSailForm({
                 disabled={!day.available || !day.isCurrentMonth}
                 className={cn(
                   "aspect-square flex items-center justify-center text-sm transition-all",
-                  !day.isCurrentMonth ? "text-gray-300" :
-                  isSelected ? "bg-gray-900 text-white" :
-                  isToday(day.date) ? "bg-gray-100 text-gray-900 font-bold border-2 border-blue-500" :
-                  day.available ? "bg-emerald-50 text-emerald-900 border border-emerald-200 hover:bg-emerald-100" :
-                  "bg-gray-50 text-gray-400 border border-gray-100 cursor-not-allowed"
+                  !day.isCurrentMonth
+                    ? "text-gray-300"
+                    : isSelected
+                      ? "bg-gray-900 text-white"
+                      : isToday(day.date)
+                        ? "bg-gray-100 text-gray-900 font-bold border-2 border-blue-500"
+                        : day.available
+                          ? "bg-emerald-50 text-emerald-900 border border-emerald-200 hover:bg-emerald-100"
+                          : "bg-gray-50 text-gray-400 border border-gray-100 cursor-not-allowed",
                 )}
               >
                 {day.date.getDate()}
@@ -1493,7 +1934,12 @@ function TestSailForm({
         </div>
         {selectedDate && (
           <div className="p-3 bg-blue-50 border border-blue-100 rounded-lg text-sm text-blue-900">
-            Geselecteerd: {selectedDate.toLocaleDateString('nl-NL', { weekday: 'long', day: 'numeric', month: 'long' })}
+            Geselecteerd:{" "}
+            {selectedDate.toLocaleDateString("nl-NL", {
+              weekday: "long",
+              day: "numeric",
+              month: "long",
+            })}
           </div>
         )}
         {availableSlots.length > 0 ? (
@@ -1504,27 +1950,42 @@ function TestSailForm({
                 onClick={() => onTimeSelect(time)}
                 className={cn(
                   "py-2 rounded text-sm font-medium transition-all",
-                  selectedTime === time ? "bg-gray-900 text-white" : "bg-emerald-100 text-emerald-900 hover:bg-emerald-200"
+                  selectedTime === time
+                    ? "bg-gray-900 text-white"
+                    : "bg-emerald-100 text-emerald-900 hover:bg-emerald-200",
                 )}
               >
                 {time}
               </button>
             ))}
           </div>
-        ) : selectedDate && (
-          <p className="text-sm text-gray-500 text-center py-4 border border-dashed">Geen beschikbare slots</p>
+        ) : (
+          selectedDate && (
+            <p className="text-sm text-gray-500 text-center py-4 border border-dashed">
+              Geen beschikbare slots
+            </p>
+          )
         )}
         {selectedTime && (
           <div className="space-y-4">
             <div className="p-4 bg-gray-50 border border-dashed border-gray-200 rounded-lg">
-              <p className="text-sm font-medium text-gray-700">Geselecteerd tijdslot</p>
+              <p className="text-sm font-medium text-gray-700">
+                Geselecteerd tijdslot
+              </p>
               <p className="text-lg font-serif text-gray-900">
-                {selectedTime} - {(() => {
-                  const [h, m] = selectedTime.split(':').map(Number);
-                  const end = new Date(); end.setHours(h + 1, m);
-                  return end.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' });
+                {selectedTime} -{" "}
+                {(() => {
+                  const [h, m] = selectedTime.split(":").map(Number);
+                  const end = new Date();
+                  end.setHours(h + 1, m);
+                  return end.toLocaleTimeString("nl-NL", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  });
                 })()}
-                <span className="text-sm text-gray-500 ml-2">(+15m buffer)</span>
+                <span className="text-sm text-gray-500 ml-2">
+                  (+15m buffer)
+                </span>
               </p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1532,44 +1993,64 @@ function TestSailForm({
                 type="text"
                 placeholder="Naam *"
                 value={bookingForm.name}
-                onChange={(e) => onBookingFormChange({ ...bookingForm, name: e.target.value })}
+                onChange={(e) =>
+                  onBookingFormChange({ ...bookingForm, name: e.target.value })
+                }
                 className="border border-gray-300 px-4 py-2 text-sm rounded-none"
               />
               <input
                 type="email"
                 placeholder="E-mail *"
                 value={bookingForm.email}
-                onChange={(e) => onBookingFormChange({ ...bookingForm, email: e.target.value })}
+                onChange={(e) =>
+                  onBookingFormChange({ ...bookingForm, email: e.target.value })
+                }
                 className="border border-gray-300 px-4 py-2 text-sm rounded-none"
               />
               <input
                 type="tel"
                 placeholder="Telefoonnummer"
                 value={bookingForm.phone}
-                onChange={(e) => onBookingFormChange({ ...bookingForm, phone: e.target.value })}
+                onChange={(e) =>
+                  onBookingFormChange({ ...bookingForm, phone: e.target.value })
+                }
                 className="border border-gray-300 px-4 py-2 text-sm rounded-none md:col-span-2"
               />
               <textarea
                 placeholder="Opmerkingen"
                 rows={3}
                 value={bookingForm.notes}
-                onChange={(e) => onBookingFormChange({ ...bookingForm, notes: e.target.value })}
+                onChange={(e) =>
+                  onBookingFormChange({ ...bookingForm, notes: e.target.value })
+                }
                 className="border border-gray-300 px-4 py-2 text-sm rounded-none md:col-span-2"
               />
             </div>
             <div className="flex gap-4">
-              <button onClick={onCancel} className="flex-1 border border-gray-300 py-3 text-gray-700 font-medium hover:bg-gray-50 transition-colors">
+              <button
+                onClick={onCancel}
+                className="flex-1 border border-gray-300 py-3 text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+              >
                 Annuleren
               </button>
               <button
                 onClick={onBook}
-                disabled={!selectedDate || !selectedTime || !bookingForm.name || !bookingForm.email || testSailStatus === "processing"}
+                disabled={
+                  !selectedDate ||
+                  !selectedTime ||
+                  !bookingForm.name ||
+                  !bookingForm.email ||
+                  testSailStatus === "processing"
+                }
                 className="flex-2 bg-gray-900 hover:bg-black text-white py-3 font-medium disabled:bg-gray-300 transition-colors"
               >
                 {testSailStatus === "processing" ? (
-                  <><Loader2 className="animate-spin inline mr-2" size={16} /> Verwerken...</>
+                  <>
+                    <Loader2 className="animate-spin inline mr-2" size={16} />{" "}
+                    Verwerken...
+                  </>
                 ) : (
-                  'Bevestigen & Borg Betalen'
+                  "Bevestigen & Borg Betalen"
                 )}
               </button>
             </div>
@@ -1577,8 +2058,12 @@ function TestSailForm({
               <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-lg flex items-center gap-3">
                 <CheckCircle2 className="text-emerald-600" size={24} />
                 <div>
-                  <h4 className="font-medium text-emerald-800">Proefvaart Ingepland!</h4>
-                  <p className="text-sm text-emerald-700">Een bevestiging is naar uw e-mail verzonden.</p>
+                  <h4 className="font-medium text-emerald-800">
+                    Proefvaart Ingepland!
+                  </h4>
+                  <p className="text-sm text-emerald-700">
+                    Een bevestiging is naar uw e-mail verzonden.
+                  </p>
                 </div>
               </div>
             )}
@@ -1592,7 +2077,9 @@ function TestSailForm({
 // Helper to check if date is today (used in calendar)
 function isToday(date: Date) {
   const today = new Date();
-  return date.getDate() === today.getDate() &&
+  return (
+    date.getDate() === today.getDate() &&
     date.getMonth() === today.getMonth() &&
-    date.getFullYear() === today.getFullYear();
+    date.getFullYear() === today.getFullYear()
+  );
 }
