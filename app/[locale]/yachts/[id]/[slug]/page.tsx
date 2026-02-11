@@ -1296,21 +1296,8 @@ export default function YachtTerminalPage() {
           <h3 className="text-lg font-serif italic text-gray-900">
             Bod uitbrengen
           </h3>
-          <span
-            className={cn(
-              "text-xs font-medium px-3 py-1.5 rounded-full",
-              yacht.status === "Sold"
-                ? "bg-red-100 text-red-800"
-                : yacht.status === "For Bid"
-                  ? "bg-blue-100 text-blue-800"
-                  : "bg-green-100 text-green-800",
-            )}
-          >
-            {yacht.status === "For Sale"
-              ? "Te Koop"
-              : yacht.status === "For Bid"
-                ? "Veiling Actief"
-                : "Verkocht"}
+          <span className="text-xs font-medium px-3 py-1.5 rounded-full bg-blue-100 text-blue-800">
+            Veiling Actief
           </span>
         </div>
         <div className="mb-5">
@@ -1324,84 +1311,71 @@ export default function YachtTerminalPage() {
               : Number(yacht.price)
             ).toLocaleString("nl-NL")}
           </p>
-          {yacht.status === "For Sale" && (
-            <p className="text-xs text-gray-500 mt-1">Startprijs</p>
+        </div>
+        <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-md">
+          <div className="flex items-start gap-2">
+            <AlertCircle
+              size={16}
+              className="text-amber-600 mt-0.5 shrink-0"
+            />
+            <div>
+              <p className="text-sm font-medium text-amber-800">
+                Minimaal bod vereist:
+              </p>
+              <p className="text-lg font-bold text-amber-900">
+                €{minBidAmount.toLocaleString("nl-NL")}
+                <span className="text-sm font-normal text-amber-700 ml-2">
+                  (90% van vraagprijs)
+                </span>
+              </p>
+            </div>
+          </div>
+        </div>
+        <div className="space-y-4 mt-6">
+          <div>
+            <input
+              type="number"
+              value={bidAmount}
+              onChange={(e) => {
+                setBidAmount(e.target.value);
+                setBidError("");
+              }}
+              placeholder={`Minimaal €${minBidAmount.toLocaleString("nl-NL")}`}
+              className="w-full border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-gray-500 rounded-none"
+              step="100"
+              min={minBidAmount}
+            />
+            {bidError && (
+              <p className="text-red-500 text-xs mt-1">{bidError}</p>
+            )}
+          </div>
+          {isAuthenticated ? (
+            <button
+              onClick={placeBid}
+              disabled={placingBid}
+              className="w-full bg-gray-900 hover:bg-black text-white py-3 font-medium transition-colors flex items-center justify-center gap-2 disabled:bg-gray-400"
+            >
+              {placingBid ? (
+                <Loader2 className="animate-spin" size={16} />
+              ) : (
+                <Gavel size={16} />
+              )}
+              {placingBid ? "Plaatsen..." : "Bod plaatsen"}
+            </button>
+          ) : (
+            <button
+              onClick={handleLoginRedirect}
+              className="w-full bg-gray-900 hover:bg-black text-white py-3 font-medium transition-colors"
+            >
+              Inloggen om te bieden
+            </button>
+          )}
+          {user && (
+            <p className="text-xs text-gray-500 text-center">
+              Ingelogd als: {user.name}
+            </p>
           )}
         </div>
-        {yacht.status !== "Sold" && (
-          <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-md">
-            <div className="flex items-start gap-2">
-              <AlertCircle
-                size={16}
-                className="text-amber-600 mt-0.5 flex-shrink-0"
-              />
-              <div>
-                <p className="text-sm font-medium text-amber-800">
-                  Minimaal bod vereist:
-                </p>
-                <p className="text-lg font-bold text-amber-900">
-                  €{minBidAmount.toLocaleString("nl-NL")}
-                  <span className="text-sm font-normal text-amber-700 ml-2">
-                    (90% van vraagprijs)
-                  </span>
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-        {yacht.status === "Sold" ? (
-          <div className="text-center py-4 bg-red-50 border border-red-100 rounded-md">
-            <p className="text-red-600 font-medium">
-              Dit schip is verkocht
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-4 mt-6">
-            <div>
-              <input
-                type="number"
-                value={bidAmount}
-                onChange={(e) => {
-                  setBidAmount(e.target.value);
-                  setBidError("");
-                }}
-                placeholder={`Minimaal €${minBidAmount.toLocaleString("nl-NL")}`}
-                className="w-full border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-gray-500 rounded-none"
-                step="100"
-                min={minBidAmount}
-              />
-              {bidError && (
-                <p className="text-red-500 text-xs mt-1">{bidError}</p>
-              )}
-            </div>
-            {isAuthenticated ? (
-              <button
-                onClick={placeBid}
-                disabled={placingBid}
-                className="w-full bg-gray-900 hover:bg-black text-white py-3 font-medium transition-colors flex items-center justify-center gap-2 disabled:bg-gray-400"
-              >
-                {placingBid ? (
-                  <Loader2 className="animate-spin" size={16} />
-                ) : (
-                  <Gavel size={16} />
-                )}
-                {placingBid ? "Plaatsen..." : "Bod plaatsen"}
-              </button>
-            ) : (
-              <button
-                onClick={handleLoginRedirect}
-                className="w-full bg-gray-900 hover:bg-black text-white py-3 font-medium transition-colors"
-              >
-                Inloggen om te bieden
-              </button>
-            )}
-            {user && (
-              <p className="text-xs text-gray-500 text-center">
-                Ingelogd als: {user.name}
-              </p>
-            )}
-          </div>
-        )}
       </div>
 
       {/* 📜 BID HISTORY – ONLY SHOW IF STATUS IS "For Bid" */}
@@ -1437,9 +1411,7 @@ export default function YachtTerminalPage() {
                     €{Number(bid.amount).toLocaleString("nl-NL")}
                   </span>
                   <p className="text-xs text-gray-400">
-                    {new Date(bid.created_at).toLocaleDateString(
-                      "nl-NL",
-                    )}
+                    {new Date(bid.created_at).toLocaleDateString("nl-NL")}
                   </p>
                 </div>
               </div>
