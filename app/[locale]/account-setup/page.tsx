@@ -207,114 +207,122 @@ export default function OnboardingYachtSetup() {
   };
 
   // Submit ----------------------------------------------------------------
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setErrors(null);
+const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  e.preventDefault();
+  setIsSubmitting(true);
+  setErrors(null);
 
-    const formData = new FormData(e.currentTarget);
+  const formData = new FormData();
 
-    // 1. Main image
-    if (mainFile) formData.set("main_image", mainFile);
+  // 1. Required field
+  const boatName = (document.querySelector('input[name="boat_name"]') as HTMLInputElement)?.value;
+  if (!boatName) {
+    toast.error("Vessel name is required");
+    setIsSubmitting(false);
+    return;
+  }
+  formData.append("boat_name", boatName);
 
-    // 2. Boolean fields – convert "on" → "true", missing → "false"
-    const booleanFields = [
-      "allow_bidding",
-      "flybridge",
-      "oven",
-      "microwave",
-      "fridge",
-      "freezer",
-      "air_conditioning",
-      "navigation_lights",
-      "compass",
-      "depth_instrument",
-      "wind_instrument",
-      "autopilot",
-      "gps",
-      "vhf",
-      "plotter",
-      "speed_instrument",
-      "radar",
-      "life_raft",
-      "epirb",
-      "bilge_pump",
-      "fire_extinguisher",
-      "mob_system",
-      "spinnaker",
-      "battery",
-      "battery_charger",
-      "generator",
-      "inverter",
-      "television",
-      "cd_player",
-      "dvd_player",
-      "anchor",
-      "spray_hood",
-      "bimini",
-      "stern_thruster",
-      "bow_thruster",
-    ];
+  // 2. Main image (only if provided)
+  if (mainFile) {
+    formData.append("main_image", mainFile);
+  }
 
-    booleanFields.forEach((field) => {
-      const checkbox = document.querySelector(
-        `[name="${field}"]`
-      ) as HTMLInputElement;
-      formData.set(field, checkbox?.checked ? "true" : "false");
-    });
+  // 3. Text / numeric fields – only add if they have a value
+  const fields = [
+    "price", "min_bid_amount", "year", "status", "loa", "lwl", "where",
+    "passenger_capacity", "beam", "draft", "air_draft", "displacement",
+    "ballast", "hull_type", "hull_construction", "hull_colour", "hull_number",
+    "designer", "builder", "engine_manufacturer", "horse_power", "hours",
+    "fuel", "max_speed", "cruising_speed", "gallons_per_hour", "tankage",
+    "cabins", "berths", "toilet", "shower", "bath", "heating",
+    "cockpit_type", "control_type", "external_url", "print_url",
+    "owners_comment", "reg_details", "known_defects", "last_serviced",
+    "super_structure_colour", "super_structure_construction",
+    "deck_colour", "deck_construction", "starting_type", "drive_type",
+  ];
 
-    // 3. Availability rules
-    if (availabilityRules.length > 0) {
-      formData.append("availability_rules", JSON.stringify(availabilityRules));
+  fields.forEach((field) => {
+    const element = document.querySelector(`[name="${field}"]`) as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
+    if (element && element.value !== undefined && element.value.trim() !== "") {
+      formData.append(field, element.value);
     }
+  });
 
-    // 4. Display specs – collect checked fields
-    const selectedSpecs = Object.keys(displaySpecs).filter(
-      (key) => displaySpecs[key]
-    );
-    if (selectedSpecs.length > 0) {
-      formData.append("display_specs", JSON.stringify(selectedSpecs));
+  // 4. Boolean fields – always append "true"/"false"
+  const booleanFields = [
+    "allow_bidding", "flybridge", "oven", "microwave", "fridge", "freezer",
+    "air_conditioning", "navigation_lights", "compass", "depth_instrument",
+    "wind_instrument", "autopilot", "gps", "vhf", "plotter", "speed_instrument",
+    "radar", "life_raft", "epirb", "bilge_pump", "fire_extinguisher",
+    "mob_system", "spinnaker", "battery", "battery_charger", "generator",
+    "inverter", "television", "cd_player", "dvd_player", "anchor",
+    "spray_hood", "bimini", "stern_thruster", "bow_thruster",
+  ];
+
+  booleanFields.forEach((field) => {
+    const checkbox = document.querySelector(`[name="${field}"]`) as HTMLInputElement;
+    formData.append(field, checkbox?.checked ? "true" : "false");
+  });
+
+  // 5. Availability rules – only if at least one rule exists
+  if (availabilityRules.length > 0) {
+    formData.append("availability_rules", JSON.stringify(availabilityRules));
+  }
+
+  // 6. Display specs – only if at least one spec is selected
+  const selectedSpecs = Object.keys(displaySpecs).filter((key) => displaySpecs[key]);
+  if (selectedSpecs.length > 0) {
+    formData.append("display_specs", JSON.stringify(selectedSpecs));
+  }
+
+  // 7. Auto‑calculate min_bid_amount if price exists but min_bid_amount is empty
+  const price = formData.get("price");
+  if (!formData.has("min_bid_amount") && price) {
+    const priceVal = parseFloat(price as string);
+    if (!isNaN(priceVal)) {
+      formData.append("min_bid_amount", (priceVal * 0.9).toString());
     }
+  }
 
-    // 5. Auto-calculate min_bid_amount if not provided
-    if (!formData.get("min_bid_amount") && formData.get("price")) {
-      const price = parseFloat(formData.get("price") as string);
-      if (!isNaN(price)) {
-        formData.set("min_bid_amount", (price * 0.9).toString());
+  try {
+    // Create yacht
+    const res = await api.post("/partner/yachts", formData);
+    const newYachtId = res.data.id;
+
+    // Upload gallery images
+    for (const cat of Object.keys(galleryState)) {
+      const newFiles = galleryState[cat];
+      if (newFiles.length > 0) {
+        const gData = new FormData();
+        newFiles.forEach((file) => gData.append("images[]", file));
+        gData.append("category", cat);
+        await api.post(`/partner/yachts/${newYachtId}/gallery`, gData);
       }
     }
 
-    try {
-      // Create yacht
-      const res = await api.post("/partner/yachts", formData);
-      const newYachtId = res.data.id;
-
-      // Upload gallery images
-      for (const cat of Object.keys(galleryState)) {
-        const newFiles = galleryState[cat];
-        if (newFiles.length > 0) {
-          const gData = new FormData();
-          newFiles.forEach((file) => gData.append("images[]", file));
-          gData.append("category", cat);
-          await api.post(`/partner/yachts/${newYachtId}/gallery`, gData);
-        }
-      }
-
-      toast.success("Vessel Registered! Welcome Aboard.");
-      router.push("/nl/dashboard/partner");
-    } catch (err: any) {
-      console.error("Submission error:", err);
-      if (err.response?.status === 422) {
-        setErrors(err.response.data.errors);
-        toast.error("Please fix validation errors");
-        window.scrollTo({ top: 0, behavior: "smooth" });
-      } else {
-        toast.error(err.response?.data?.message || "System Error during registration");
-      }
-    } finally {
-      setIsSubmitting(false);
+    toast.success("Vessel Registered! Welcome Aboard.");
+    router.push("/nl/dashboard/partner");
+  } catch (err: any) {
+    console.error("Submission error:", err);
+    
+    // 🔍 Show actual server error message
+    if (err.response) {
+      const serverMessage = err.response.data?.message || err.response.data?.error || "Unknown server error";
+      toast.error(`Server error: ${serverMessage}`);
+      console.error("Server response:", err.response.data);
+    } else {
+      toast.error("Network error – please try again");
     }
-  };
+    
+    if (err.response?.status === 422) {
+      setErrors(err.response.data.errors);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] pb-20">
