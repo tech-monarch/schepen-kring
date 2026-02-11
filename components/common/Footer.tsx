@@ -32,6 +32,27 @@ const Footer = () => {
       console.error("Error loading legal pages for footer:", error);
     }
   };
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+
+useEffect(() => {
+  const handler = (e: any) => {
+    e.preventDefault();
+    setDeferredPrompt(e);
+  };
+
+  window.addEventListener("beforeinstallprompt", handler);
+
+  return () => window.removeEventListener("beforeinstallprompt", handler);
+}, []);
+
+const handleInstallClick = async () => {
+  if (!deferredPrompt) return;
+
+  deferredPrompt.prompt();
+  await deferredPrompt.userChoice;
+  setDeferredPrompt(null);
+};
+
 
   const currentYear = new Date().getFullYear();
 
@@ -161,9 +182,19 @@ const Footer = () => {
           </div>
 
           <div className="flex gap-8 text-[10px] font-black tracking-widest text-white/20 uppercase">
-            <span>Fleet Sync v4.2</span>
-            <span>Data Sovereignty</span>
+            <span>Schepen Kring</span>
+            <span>Ocean Sovereignty</span>
+
+            {deferredPrompt && (
+              <button
+                onClick={handleInstallClick}
+                className="hover:text-white transition-colors"
+              >
+                Install App
+              </button>
+            )}
           </div>
+
         </div>
       </div>
 
