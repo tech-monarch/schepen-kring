@@ -92,6 +92,10 @@ export default function PartnerFleetManagementPage() {
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("boat_name");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+
+  // Sidebar State
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+
   const [stats, setStats] = useState({
     total: 0,
     forSale: 0,
@@ -104,9 +108,6 @@ export default function PartnerFleetManagementPage() {
     avgPrice: 0,
   });
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  
-        // Sidebar State
-        const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   // ------------------------------------------------------------------------
   // Fetch partner's fleet
@@ -130,7 +131,7 @@ export default function PartnerFleetManagementPage() {
       const draft = yachts.filter((y: any) => y.status === "Draft" || !y.status).length;
       const active = yachts.filter((y: any) => y.status === "Active").length;
       const inactive = yachts.filter((y: any) => y.status === "Inactive").length;
-      
+
       const totalValue = yachts.reduce((sum: number, y: any) => {
         const price = parseFloat(y.price) || 0;
         return sum + price;
@@ -228,10 +229,10 @@ export default function PartnerFleetManagementPage() {
   };
 
   // ------------------------------------------------------------------------
-  // ✅ CLEAN NAME RESOLVER – no scary warnings, just sensible fallback
+  // ✅ CLEAN VESSEL NAME RESOLVER – no warnings, just reliable fallback
   // ------------------------------------------------------------------------
   const getDisplayName = (yacht: any): string => {
-    // Prefer boat_name, fallback to name, then vessel_id, then id
+    // Priority: boat_name → name → vessel_id → generic fallback
     if (yacht.boat_name && yacht.boat_name.trim() !== "") {
       return yacht.boat_name.trim();
     }
@@ -239,7 +240,7 @@ export default function PartnerFleetManagementPage() {
       return yacht.name.trim();
     }
     if (yacht.vessel_id) {
-      return yacht.vessel_id; // Already includes "SK-2026-..." etc.
+      return yacht.vessel_id;
     }
     if (yacht.id) {
       return `Vessel #${yacht.id}`;
@@ -393,7 +394,7 @@ export default function PartnerFleetManagementPage() {
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
       <Toaster position="top-right" />
-                    <Sidebar onCollapse={setIsSidebarCollapsed} />
+      <Sidebar onCollapse={setIsSidebarCollapsed} />
 
       {/* HEADER */}
       <div className="bg-white border-b border-slate-200 sticky top-0 z-30">
@@ -670,13 +671,15 @@ export default function PartnerFleetManagementPage() {
                   </div>
                 </div>
 
-                {/* DETAILS SECTION */}
+                {/* DETAILS SECTION – NAME ABOVE PRICE */}
                 <div className="p-5 space-y-3 flex-1 flex flex-col">
                   <div className="flex justify-between items-start">
                     <div>
+                      {/* ✅ Vessel name – always shown, clean fallback */}
                       <h3 className="text-lg font-serif italic mb-1 line-clamp-1">
                         {getDisplayName(yacht)}
                       </h3>
+                      {/* ✅ Price directly below name */}
                       <p className="text-lg font-bold text-blue-900">{formatCurrency(yacht.price)}</p>
                       {yacht.min_bid_amount && (
                         <p className="text-[9px] text-slate-500 mt-1">
@@ -792,7 +795,6 @@ export default function PartnerFleetManagementPage() {
         {/* LIST VIEW */}
         {!loading && viewMode === "list" && filteredAndSortedFleet.length > 0 && (
           <div className="bg-white border border-slate-200">
-            {/* ... (list view remains unchanged – already uses getDisplayName) ... */}
             <div className="grid grid-cols-12 gap-4 p-4 border-b border-slate-200 bg-slate-50 text-[10px] font-black uppercase tracking-widest text-slate-500">
               <div className="col-span-3">Vessel</div>
               <div className="col-span-2">Price / Bid</div>
