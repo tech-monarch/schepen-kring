@@ -8,33 +8,14 @@ import {
   CheckCircle2,
   History,
   Anchor,
-  Box,
-  Droplets,
-  Fuel,
-  Share2,
   Loader2,
-  Zap,
-  Wind,
-  Compass,
-  Ship,
-  Bed,
-  Waves,
-  FileText,
-  CheckSquare,
-  Thermometer,
-  MapPin,
-  Calendar,
-  Clock,
-  User,
   Mail,
   Phone,
   Printer,
   Image as ImageIcon,
-  File,
   Share,
   GalleryHorizontal,
   ChevronRight,
-  Maximize2,
   X,
   Plus,
   Minus,
@@ -45,12 +26,19 @@ import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { api } from "@/lib/api";
-import { Button } from "@/components/ui/button";
 import { toast, Toaster } from "react-hot-toast";
 
 const STORAGE_URL = "https://schepen-kring.nl/storage/";
 const PLACEHOLDER_IMAGE =
   "https://images.unsplash.com/photo-1569263979104-865ab7cd8d13?auto=format&fit=crop&w=1200&q=80";
+const BROKER_LOGO_FALLBACK = "/schepenkring-logo.png"; // your local logo
+
+// ----- Roboto font (exact match) -----
+const fontLink = document.createElement("link");
+fontLink.href =
+  "https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap";
+fontLink.rel = "stylesheet";
+document.head.appendChild(fontLink);
 
 interface Yacht {
   id: number;
@@ -165,10 +153,7 @@ interface Bid {
   amount: number;
   status: string;
   created_at: string;
-  user: {
-    id: number;
-    name: string;
-  };
+  user: { id: number; name: string };
 }
 
 function generateSlug(text: string): string {
@@ -224,7 +209,7 @@ export default function YachtTerminalPage() {
       if (userDataStr) {
         try {
           return JSON.parse(userDataStr);
-        } catch (error) {
+        } catch {
           return null;
         }
       }
@@ -259,9 +244,7 @@ export default function YachtTerminalPage() {
   }, [yacht, slug, id, router]);
 
   useEffect(() => {
-    if (showTestSailForm) {
-      generateCalendarDays();
-    }
+    if (showTestSailForm) generateCalendarDays();
   }, [showTestSailForm, currentMonth]);
 
   const generateCalendarDays = () => {
@@ -300,9 +283,7 @@ export default function YachtTerminalPage() {
     }
   };
 
-  const formatDate = (date: Date): string => {
-    return date.toISOString().split('T')[0];
-  };
+  const formatDate = (date: Date): string => date.toISOString().split('T')[0];
 
   const fetchVesselData = async () => {
     try {
@@ -326,12 +307,8 @@ export default function YachtTerminalPage() {
     e.currentTarget.src = PLACEHOLDER_IMAGE;
   };
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('nl-NL', {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(price);
-  };
+  const formatPrice = (price: number) =>
+    new Intl.NumberFormat('nl-NL', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(price);
 
   const openPhotoGallery = (imageUrl: string, index: number) => {
     setSelectedGalleryImage(imageUrl);
@@ -522,11 +499,9 @@ export default function YachtTerminalPage() {
     try {
       const dateStr = formatDate(date);
       const res = await api.get(`https://schepen-kring.nl/api/yachts/${id}/available-slots?date=${dateStr}`);
-      setAvailableSlots(res.data.timeSlots || [
-        '09:00', '10:30', '12:00', '13:30', '15:00', '16:30'
-      ]);
+      setAvailableSlots(res.data.timeSlots || ['09:00', '10:30', '12:00', '13:30', '15:00', '16:30']);
       setSelectedTime(null);
-    } catch (e) {
+    } catch {
       setAvailableSlots(['09:00', '10:30', '12:00', '13:30', '15:00', '16:30']);
     }
   };
@@ -576,7 +551,7 @@ export default function YachtTerminalPage() {
     try {
       await navigator.clipboard.writeText(url);
       toast.success("Link gekopieerd naar klembord");
-    } catch (err) {
+    } catch {
       toast.error("Kan link niet kopiëren");
     }
   };
@@ -587,7 +562,7 @@ export default function YachtTerminalPage() {
 
   if (loading || !yacht) {
     return (
-      <div className="h-screen flex flex-col items-center justify-center bg-white">
+      <div className="h-screen flex flex-col items-center justify-center bg-white font-roboto">
         <Loader2 className="animate-spin text-[#2a77b1]" size={40} />
         <p className="mt-4 text-[10px] font-black uppercase tracking-[0.4em] text-slate-400">
           Manifest synchroniseren...
@@ -608,20 +583,21 @@ export default function YachtTerminalPage() {
   const formattedPrice = `€ ${formatPrice(yacht.price)}`;
   const minBidAmount = yacht.min_bid_amount || yacht.price * 0.9;
 
-  // Helper to conditionally hide checkmark when text exists
-  const showCheckIcon = (value?: string | boolean) => {
-    if (typeof value === 'boolean') return value;
-    if (typeof value === 'string' && value.trim().length > 0) return false;
-    return true;
-  };
-
   return (
-    <div className="min-h-screen bg-white text-[#333] selection:bg-blue-100">
+    <div className="min-h-screen bg-white text-[#333] selection:bg-blue-100 font-roboto antialiased">
       <Toaster position="top-center" />
 
-      {/* ------ CUSTOM CSS FOR PHOTO GRID & CHECK ICON BEHAVIOUR ------ */}
+      {/* ----- EXACT PHOTO GRID CSS (from original) ----- */}
       <style>{`
-        .photos-holder-grid { position: relative; overflow: hidden; }
+        .photos-holder-grid {
+          position: relative;
+          overflow: hidden;
+          max-width: 1400px;
+          margin-left: auto;
+          margin-right: auto;
+          padding-left: 1.5rem;
+          padding-right: 1.5rem;
+        }
         .inner-photo-holder {
           display: grid;
           grid-template-columns: repeat(12, 1fr);
@@ -663,26 +639,26 @@ export default function YachtTerminalPage() {
           display: none;
         }
         @media screen and (max-width: 767px) {
+          .photos-holder-grid { padding-left: 0; padding-right: 0; }
           .inner-photo-holder { grid-template-columns: 1fr; }
           .photo-of-object:nth-last-of-type(n+1):first-of-type:nth-child(n+2),
           .photo-of-object:nth-last-of-type(n+1):first-of-type~:nth-child(n+2) {
             display: none !important;
           }
         }
-        /* hide check icon if there is text next to it */
+        /* Hide check icon when adjacent text exists */
         .vibp_spec_value .check-icon {
           display: inline-block;
           margin-right: 4px;
         }
-        .vibp_spec_value:has(> :not(img):not(svg):not(.check-icon):not(span):not(div):not(:empty):not(br):not(p)) .check-icon,
-        .vibp_spec_value:has(span:not(:empty)) .check-icon,
+        .vibp_spec_value:has(span:not(:empty):not(.check-icon)) .check-icon,
         .vibp_spec_value:has(p:not(:empty)) .check-icon {
           display: none !important;
         }
       `}</style>
 
-      <main>
-        {/* ------ PHOTO GRID (EXACT REPLICA) ------ */}
+      <main className="font-roboto">
+        {/* ----- PHOTO GRID – EXACT LAYOUT ----- */}
         <div className="photos-holder-grid">
           <div className="inner-photo-holder">
             {allImages.slice(0, 5).map((img, idx) => (
@@ -693,6 +669,7 @@ export default function YachtTerminalPage() {
                     onError={handleImageError}
                     alt={`${yacht.boat_name} ${idx + 1}`}
                     loading="lazy"
+                    className="w-full h-full object-cover"
                   />
                 </a>
               </div>
@@ -700,7 +677,7 @@ export default function YachtTerminalPage() {
           </div>
         </div>
 
-        {/* ------ TOP ACTION BAR (TITLE + PRICE + BUTTONS) ------ */}
+        {/* ----- TOP ACTION BAR (EXACT) ----- */}
         <div className="bg-gray-50 py-4 px-6 border-y border-gray-200 mt-2">
           <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="flex items-baseline gap-3 flex-wrap">
@@ -744,7 +721,7 @@ export default function YachtTerminalPage() {
           </div>
         </div>
 
-        {/* ------ BACK LINK & BREADCRUMBS (ABOVE SPECS) ------ */}
+        {/* ----- BREADCRUMBS & BACK LINK (EXACT) ----- */}
         <div className="max-w-7xl mx-auto px-6 lg:px-8 mt-8">
           <div className="flex flex-wrap justify-between items-center text-sm">
             <Link
@@ -761,17 +738,14 @@ export default function YachtTerminalPage() {
           </div>
         </div>
 
-        {/* ------ TWO COLUMN LAYOUT (LEFT 8 / RIGHT 4) ------ */}
+        {/* ----- TWO‑COLUMN LAYOUT ----- */}
         <div className="max-w-7xl mx-auto px-6 lg:px-8 mt-8">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
-            {/* LEFT COLUMN – MAIN CONTENT */}
-            <div className="lg:col-span-2 space-y-10">
 
+            {/* ----- LEFT COLUMN (8/12) ----- */}
+            <div className="lg:col-span-2 space-y-10">
               {/* GENERAL SPECIFICATIONS */}
-              <div className="bg-white border border-[#eaeef5] p-6">
-                <h3 className="text-xl font-serif italic text-[#2a77b1] mb-5 pb-3 border-b border-[#eaeef5]">
-                  General specifications
-                </h3>
+              <SpecCard title="General specifications">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2">
                   <SpecItem label="Asking price" value={formattedPrice} />
                   <SpecItem label="VAT status" value="Including VAT" />
@@ -785,29 +759,25 @@ export default function YachtTerminalPage() {
                   <SpecItem label="L x W x D approx." value={`${yacht.loa || yacht.length || ''} x ${yacht.beam || ''} x ${yacht.draft || ''}`.replace(/x\s*x/g, '').trim()} />
                   <SpecItem label="Sleeps" value={yacht.berths} />
                 </div>
-              </div>
+              </SpecCard>
 
               {/* COMMENTS */}
               {yacht.owners_comment && (
-                <div className="bg-white border border-[#eaeef5] p-6">
-                  <h3 className="text-xl font-serif italic text-[#2a77b1] mb-3 pb-3 border-b border-[#eaeef5]">
-                    Comments
-                  </h3>
+                <SpecCard title="Comments">
                   <p className="text-gray-700 leading-relaxed">{yacht.owners_comment}</p>
-                </div>
+                </SpecCard>
               )}
 
-              {/* BROKER INFO – SCHEPENKRING ROERMOND */}
+              {/* BROKER CARD – EXACT REPLICA */}
               <div className="bg-[#f9fafc] border border-[#eaeef5] p-6 flex flex-wrap items-start gap-6">
                 <div className="flex-shrink-0">
                   <img
-                    src="https://schepen-kring.nl/storage/logos/schepenkring-roermond.png"
-                    onError={(e) => (e.currentTarget.style.display = 'none')}
+                    src={BROKER_LOGO_FALLBACK}
+                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
                     alt="Schepenkring Roermond"
                     className="h-16 w-auto object-contain"
                   />
-                  {/* fallback logo */}
-                  <div className="text-[#2a77b1] font-bold text-xl notranslate">Schepenkring</div>
+                  <div className="text-[#2a77b1] font-bold text-xl notranslate mt-1">Schepenkring</div>
                 </div>
                 <div className="space-y-2 text-sm">
                   <h2 className="text-lg font-serif italic text-[#2a77b1] notranslate">Makelaar - Schepenkring Roermond</h2>
@@ -818,96 +788,120 @@ export default function YachtTerminalPage() {
                 </div>
               </div>
 
-              {/* ------ DETAILED SPEC SECTIONS ------ */}
-              {renderSpecSection("More information about the", "General", [
-                { label: "werf", value: yacht.builder || yacht.make },
-                { label: "CE", value: "C" }, // placeholder
-                { label: "CE max weight", value: null },
-                { label: "Hull shape", value: yacht.hull_type },
-                { label: "Hull color", value: yacht.hull_colour },
-                { label: "Deck and superstructure colour", value: yacht.super_structure_colour },
-                { label: "Deck and superstructure construction", value: yacht.super_structure_construction },
-                { label: "Open Cockpit (OK)", value: yacht.cockpit_type ? true : null },
-                { label: "Normal clearance height", value: yacht.air_draft },
-                { label: "Draught", value: yacht.draft },
-                { label: "Waterline length", value: yacht.lwl },
-                { label: "Water displacement", value: yacht.displacement },
-                { label: "Control", value: yacht.control_type ? `Steering wheel` : null },
-                { label: "Place control", value: yacht.control_type },
-                { label: "Trim flaps", value: null }, // placeholder
-              ])}
+              {/* DETAILED SPEC SECTIONS */}
+              <SpecSection
+                title="More information about the"
+                subtitle="General"
+                specs={[
+                  { label: "werf", value: yacht.builder || yacht.make },
+                  { label: "CE", value: "C" },
+                  { label: "CE max weight", value: null },
+                  { label: "Hull shape", value: yacht.hull_type },
+                  { label: "Hull color", value: yacht.hull_colour },
+                  { label: "Deck and superstructure colour", value: yacht.super_structure_colour },
+                  { label: "Deck and superstructure construction", value: yacht.super_structure_construction },
+                  { label: "Open Cockpit (OK)", value: yacht.cockpit_type ? true : null },
+                  { label: "Normal clearance height", value: yacht.air_draft },
+                  { label: "Draught", value: yacht.draft },
+                  { label: "Waterline length", value: yacht.lwl },
+                  { label: "Water displacement", value: yacht.displacement },
+                  { label: "Control", value: yacht.control_type ? `Steering wheel` : null },
+                  { label: "Place control", value: yacht.control_type },
+                  { label: "Trim flaps", value: null },
+                ]}
+              />
 
-              {renderSpecSection("Accommodation", "Accommodatie", [
-                { label: "cabins", value: yacht.cabins },
-                { label: "Sleeps", value: yacht.berths },
-                { label: "Type of interior", value: "Modern, light" },
-                { label: "Mattresses", value: true },
-                { label: "Water tank & material", value: yacht.tankage ? `${yacht.tankage} liters Plastic` : null },
-                { label: "Water system", value: "Pressure system Electric pump" },
-                { label: "Number of showers", value: yacht.shower ? true : null },
-                { label: "Radio CD player", value: yacht.cd_player ? "Fusion stereo system" : null },
-                { label: "Refrigerator & food", value: yacht.fridge ? "Electric 12V cool box" : null },
-              ])}
+              <SpecSection
+                title="Accommodation"
+                subtitle="Accommodatie"
+                specs={[
+                  { label: "cabins", value: yacht.cabins },
+                  { label: "Sleeps", value: yacht.berths },
+                  { label: "Type of interior", value: "Modern, light" },
+                  { label: "Mattresses", value: true },
+                  { label: "Water tank & material", value: yacht.tankage ? `${yacht.tankage} liters Plastic` : null },
+                  { label: "Water system", value: "Pressure system Electric pump" },
+                  { label: "Number of showers", value: yacht.shower ? true : null },
+                  { label: "Radio CD player", value: yacht.cd_player ? "Fusion stereo system" : null },
+                  { label: "Refrigerator & food", value: yacht.fridge ? "Electric 12V cool box" : null },
+                ]}
+              />
 
-              {renderSpecSection("Engine and electrics", "Motor & Elektra", [
-                { label: "Number of identical engines", value: "1" },
-                { label: "Start type", value: yacht.starting_type },
-                { label: "Type", value: yacht.drive_type },
-                { label: "Brand", value: yacht.engine_manufacturer },
-                { label: "Door Design", value: null },
-                { label: "Serial Number", value: null },
-                { label: "Year of construction", value: yacht.year?.toString() },
-                { label: "Amount of cilinders", value: null },
-                { label: "Power", value: yacht.horse_power },
-                { label: "Hour meter", value: true },
-                { label: "Running hours", value: yacht.hours },
-                { label: "Fuel", value: yacht.fuel },
-                { label: "Consumption", value: yacht.gallons_per_hour },
-                { label: "Propulsion", value: "screw" },
-                { label: "Fuel tank quantity", value: true },
-                { label: "Max speed", value: yacht.max_speed },
-                { label: "Tachometer", value: true },
-                { label: "Battery", value: yacht.battery ? `2 Capacity: 95 Ah` : null },
-                { label: "Dynamo", value: true },
-                { label: "Voltmeter", value: true },
-                { label: "Voltage", value: "12 volt" },
-                { label: "Comments", value: "Motor with tracker" },
-              ])}
+              <SpecSection
+                title="Engine and electrics"
+                subtitle="Motor & Elektra"
+                specs={[
+                  { label: "Number of identical engines", value: "1" },
+                  { label: "Start type", value: yacht.starting_type },
+                  { label: "Type", value: yacht.drive_type },
+                  { label: "Brand", value: yacht.engine_manufacturer },
+                  { label: "Door Design", value: null },
+                  { label: "Serial Number", value: null },
+                  { label: "Year of construction", value: yacht.year?.toString() },
+                  { label: "Amount of cilinders", value: null },
+                  { label: "Power", value: yacht.horse_power },
+                  { label: "Hour meter", value: true },
+                  { label: "Running hours", value: yacht.hours },
+                  { label: "Fuel", value: yacht.fuel },
+                  { label: "Consumption", value: yacht.gallons_per_hour },
+                  { label: "Propulsion", value: "screw" },
+                  { label: "Fuel tank quantity", value: true },
+                  { label: "Max speed", value: yacht.max_speed },
+                  { label: "Tachometer", value: true },
+                  { label: "Battery", value: yacht.battery ? `2 Capacity: 95 Ah` : null },
+                  { label: "Dynamo", value: true },
+                  { label: "Voltmeter", value: true },
+                  { label: "Voltage", value: "12 volt" },
+                  { label: "Comments", value: "Motor with tracker" },
+                ]}
+              />
 
-              {renderSpecSection("Navigation and electronics", "Navigatie & Elektronica", [
-                { label: "Kompas", value: yacht.compass ? true : null },
-                { label: "Log/speed", value: yacht.speed_instrument ? true : null },
-                { label: "Depth gauge", value: yacht.depth_instrument ? true : null },
-                { label: "Navigation lights", value: yacht.navigation_lights ? true : null },
-                { label: "Rudder angle indicator", value: null },
-                { label: "GPS", value: yacht.gps ? "Simrad Evo 3" : null },
-                { label: "chart plotter", value: yacht.plotter ? "Simrad Evo 3 with Europe map from Navionics" : null },
-                { label: "Fishfinder", value: yacht.plotter ? "Simrad Evo 3" : null },
-              ])}
+              <SpecSection
+                title="Navigation and electronics"
+                subtitle="Navigatie & Elektronica"
+                specs={[
+                  { label: "Kompas", value: yacht.compass ? true : null },
+                  { label: "Log/speed", value: yacht.speed_instrument ? true : null },
+                  { label: "Depth gauge", value: yacht.depth_instrument ? true : null },
+                  { label: "Navigation lights", value: yacht.navigation_lights ? true : null },
+                  { label: "Rudder angle indicator", value: null },
+                  { label: "GPS", value: yacht.gps ? "Simrad Evo 3" : null },
+                  { label: "chart plotter", value: yacht.plotter ? "Simrad Evo 3 with Europe map from Navionics" : null },
+                  { label: "Fishfinder", value: yacht.plotter ? "Simrad Evo 3" : null },
+                ]}
+              />
 
-              {renderSpecSection("Outside equipment", "Uitrusting buitenom", [
-                { label: "Anchors & Material", value: yacht.anchor ? "Delta anchor 4kg" : null },
-                { label: "Anchor rod", value: true },
-                { label: "Sprayhood", value: yacht.spray_hood ? true : null },
-                { label: "Cockpit tent", value: yacht.bimini ? true : null },
-                { label: "Tarpaulin(s)", value: "Winter tent and transport hood" },
-                { label: "Pulpit and bastion(s)", value: true },
-                { label: "Swimming platform", value: true },
-                { label: "Swimming ladder", value: true },
-                { label: "Trailer", value: "Harbeck 2200 KG" },
-                { label: "Teak deck", value: true },
-                { label: "Fenders, lines", value: true },
-                { label: "cockpit table", value: true },
-                { label: "Comments", value: "Water ski pole" },
-              ])}
+              <SpecSection
+                title="Outside equipment"
+                subtitle="Uitrusting buitenom"
+                specs={[
+                  { label: "Anchors & Material", value: yacht.anchor ? "Delta anchor 4kg" : null },
+                  { label: "Anchor rod", value: true },
+                  { label: "Sprayhood", value: yacht.spray_hood ? true : null },
+                  { label: "Cockpit tent", value: yacht.bimini ? true : null },
+                  { label: "Tarpaulin(s)", value: "Winter tent and transport hood" },
+                  { label: "Pulpit and bastion(s)", value: true },
+                  { label: "Swimming platform", value: true },
+                  { label: "Swimming ladder", value: true },
+                  { label: "Trailer", value: "Harbeck 2200 KG" },
+                  { label: "Teak deck", value: true },
+                  { label: "Fenders, lines", value: true },
+                  { label: "cockpit table", value: true },
+                  { label: "Comments", value: "Water ski pole" },
+                ]}
+              />
 
-              {renderSpecSection("Safety", "Veiligheid", [
-                { label: "Lifebuoy", value: true },
-                { label: "Bilge pump", value: yacht.bilge_pump ? "Electric 2x" : null },
-                { label: "Fire extinguisher", value: yacht.fire_extinguisher ? true : null },
-                { label: "Self-draining cockpit", value: true },
-                { label: "Comments", value: "1x windshield wiper" },
-              ])}
+              <SpecSection
+                title="Safety"
+                subtitle="Veiligheid"
+                specs={[
+                  { label: "Lifebuoy", value: true },
+                  { label: "Bilge pump", value: yacht.bilge_pump ? "Electric 2x" : null },
+                  { label: "Fire extinguisher", value: yacht.fire_extinguisher ? true : null },
+                  { label: "Self-draining cockpit", value: true },
+                  { label: "Comments", value: "1x windshield wiper" },
+                ]}
+              />
 
               {/* MEDIA CONTAINER */}
               <div id="fotos" className="bg-white border border-[#eaeef5] p-6">
@@ -925,7 +919,7 @@ export default function YachtTerminalPage() {
                       />
                     </a>
                   ))}
-                  {allImages.slice(4, 19).map((img, idx) => (
+                  {allImages.slice(4).map((img, idx) => (
                     <a key={idx + 4} href="#" onClick={(e) => { e.preventDefault(); openPhotoGallery(img, idx + 4); }} className="vibp_hidden_image hidden">
                       <img
                         src={img}
@@ -975,7 +969,7 @@ export default function YachtTerminalPage() {
                 </a>
               </div>
 
-              {/* BACK TO OVERVIEW BOTTOM */}
+              {/* BACK LINK (bottom) */}
               <Link
                 href="/nl/yachts"
                 className="inline-flex items-center gap-2 text-[#2a77b1] hover:text-[#e0332d] transition-colors font-medium"
@@ -984,9 +978,8 @@ export default function YachtTerminalPage() {
               </Link>
             </div>
 
-            {/* ------ RIGHT COLUMN – SIDEBAR ------ */}
+            {/* ----- RIGHT COLUMN (4/12) ----- */}
             <div className="lg:col-span-1 space-y-8">
-
               {/* BIDDING CARD */}
               <div className="bg-gray-50 border border-gray-200 p-6">
                 <div className="flex justify-between items-center mb-4">
@@ -1063,7 +1056,7 @@ export default function YachtTerminalPage() {
                 )}
               </div>
 
-              {/* CONTACT FORM – EXACT REPLICA OF ORIGINAL */}
+              {/* CONTACT FORM – EXACT REPLICA */}
               <div className="bg-gray-50 border border-gray-200 p-6">
                 <h4 className="text-lg font-serif italic text-gray-900 mb-4">
                   Meer informatie over de<br />
@@ -1111,7 +1104,7 @@ export default function YachtTerminalPage() {
                 </form>
               </div>
 
-              {/* TEST SAIL TOGGLE BUTTON */}
+              {/* TEST SAIL TOGGLE */}
               <button
                 onClick={() => setShowTestSailForm(!showTestSailForm)}
                 className="w-full border border-gray-300 hover:bg-gray-50 text-gray-700 py-4 font-medium text-center transition-colors flex items-center justify-center gap-2 bg-white"
@@ -1120,105 +1113,25 @@ export default function YachtTerminalPage() {
                 {showTestSailForm ? 'Proefvaart formulier verbergen' : 'Proefvaart boeken'}
               </button>
 
-              {/* INLINE TEST SAIL BOOKING FORM (restyled) */}
-              {showTestSailForm && (
-                <div className="bg-white border border-gray-200 p-6 mt-2 space-y-6">
-                  <div className="text-center">
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">Proefvaart Boeken</h3>
-                    <p className="text-sm text-gray-600">Borg Vereist: €{depositAmount.toLocaleString('nl-NL')}</p>
-                  </div>
-                  {/* Calendar, time slots, booking form – kept as is but with refined styling */}
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <button onClick={handlePrevMonth} className="text-gray-400 hover:text-gray-900 p-2">←</button>
-                      <h4 className="text-base font-semibold text-gray-900">
-                        {DUTCH_MONTHS[currentMonth.getMonth()]} {currentMonth.getFullYear()}
-                      </h4>
-                      <button onClick={handleNextMonth} className="text-gray-400 hover:text-gray-900 p-2">→</button>
-                    </div>
-                    <div className="grid grid-cols-7 gap-1 text-center text-xs">
-                      {DUTCH_DAYS.map(d => <span key={d} className="font-medium text-gray-500">{d}</span>)}
-                      {calendarDays.map((day, i) => {
-                        const isSelected = selectedDate?.toDateString() === day.date.toDateString();
-                        return (
-                          <button
-                            key={i}
-                            onClick={() => handleDateSelect(day.date, day.available)}
-                            disabled={!day.available || !day.isCurrentMonth}
-                            className={cn(
-                              "aspect-square flex items-center justify-center text-sm transition-all",
-                              !day.isCurrentMonth ? "text-gray-300" :
-                              isSelected ? "bg-gray-900 text-white" :
-                              isToday(day.date) ? "bg-gray-100 text-gray-900 font-bold border-2 border-blue-500" :
-                              day.available ? "bg-emerald-50 text-emerald-900 border border-emerald-200 hover:bg-emerald-100" :
-                              "bg-gray-50 text-gray-400 border border-gray-100 cursor-not-allowed"
-                            )}
-                          >
-                            {day.date.getDate()}
-                          </button>
-                        );
-                      })}
-                    </div>
-                    {selectedDate && (
-                      <div className="p-3 bg-blue-50 border border-blue-100 rounded-lg text-sm text-blue-900">
-                        Geselecteerd: {selectedDate.toLocaleDateString('nl-NL', { weekday: 'long', day: 'numeric', month: 'long' })}
-                      </div>
-                    )}
-                    {availableSlots.length > 0 ? (
-                      <div className="grid grid-cols-3 gap-2">
-                        {availableSlots.map(time => (
-                          <button
-                            key={time}
-                            onClick={() => setSelectedTime(time)}
-                            className={cn(
-                              "py-2 rounded text-sm font-medium transition-all",
-                              selectedTime === time ? "bg-gray-900 text-white" : "bg-emerald-100 text-emerald-900 hover:bg-emerald-200"
-                            )}
-                          >
-                            {time}
-                          </button>
-                        ))}
-                      </div>
-                    ) : selectedDate && (
-                      <p className="text-sm text-gray-500 text-center py-4 border border-dashed">Geen beschikbare slots</p>
-                    )}
-                    {selectedTime && (
-                      <div className="space-y-4">
-                        <div className="p-4 bg-gray-50 border border-dashed border-gray-200 rounded-lg">
-                          <p className="text-sm font-medium text-gray-700">Geselecteerd tijdslot</p>
-                          <p className="text-lg font-serif text-gray-900">{selectedTime} - {(() => {
-                            const [h, m] = selectedTime.split(':').map(Number);
-                            const end = new Date(); end.setHours(h + 1, m);
-                            return end.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' });
-                          })()} <span className="text-sm text-gray-500 ml-2">(+15m buffer)</span></p>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <input type="text" placeholder="Naam *" value={bookingForm.name} onChange={e => setBookingForm({...bookingForm, name: e.target.value})} className="border border-gray-300 px-4 py-2 text-sm rounded-none" />
-                          <input type="email" placeholder="E-mail *" value={bookingForm.email} onChange={e => setBookingForm({...bookingForm, email: e.target.value})} className="border border-gray-300 px-4 py-2 text-sm rounded-none" />
-                          <input type="tel" placeholder="Telefoonnummer" value={bookingForm.phone} onChange={e => setBookingForm({...bookingForm, phone: e.target.value})} className="border border-gray-300 px-4 py-2 text-sm rounded-none md:col-span-2" />
-                          <textarea placeholder="Opmerkingen" rows={3} value={bookingForm.notes} onChange={e => setBookingForm({...bookingForm, notes: e.target.value})} className="border border-gray-300 px-4 py-2 text-sm rounded-none md:col-span-2" />
-                        </div>
-                        <div className="flex gap-4">
-                          <button onClick={() => setShowTestSailForm(false)} className="flex-1 border border-gray-300 py-3 text-gray-700 font-medium hover:bg-gray-50 transition-colors">Annuleren</button>
-                          <button onClick={handleTestSailBooking} disabled={!selectedDate || !selectedTime || !bookingForm.name || !bookingForm.email || testSailStatus === "processing"} className="flex-2 bg-gray-900 hover:bg-black text-white py-3 font-medium disabled:bg-gray-300 transition-colors">
-                            {testSailStatus === "processing" ? <Loader2 className="animate-spin inline mr-2" size={16} /> : null}
-                            {testSailStatus === "processing" ? 'Verwerken...' : 'Bevestigen & Borg Betalen'}
-                          </button>
-                        </div>
-                        {testSailStatus === "success" && (
-                          <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-lg flex items-center gap-3">
-                            <CheckCircle2 className="text-emerald-600" size={24} />
-                            <div>
-                              <h4 className="font-medium text-emerald-800">Proefvaart Ingepland!</h4>
-                              <p className="text-sm text-emerald-700">Een bevestiging is naar uw e-mail verzonden.</p>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
+              {/* TEST SAIL FORM (inline) */}
+              {showTestSailForm && <TestSailForm
+                yacht={yacht}
+                depositAmount={depositAmount}
+                currentMonth={currentMonth}
+                calendarDays={calendarDays}
+                selectedDate={selectedDate}
+                selectedTime={selectedTime}
+                availableSlots={availableSlots}
+                bookingForm={bookingForm}
+                testSailStatus={testSailStatus}
+                onPrevMonth={handlePrevMonth}
+                onNextMonth={handleNextMonth}
+                onDateSelect={handleDateSelect}
+                onTimeSelect={setSelectedTime}
+                onBookingFormChange={setBookingForm}
+                onBook={handleTestSailBooking}
+                onCancel={() => setShowTestSailForm(false)}
+              />}
 
               {/* BID HISTORY */}
               <div className="bg-gray-50 border border-gray-200 p-6">
@@ -1254,7 +1167,7 @@ export default function YachtTerminalPage() {
           </div>
         </div>
 
-        {/* ------ MOBILE ACTION BAR (PHONE / EMAIL) ------ */}
+        {/* ----- MOBILE ACTION BAR (PHONE / EMAIL) ----- */}
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t-2 border-[#2a77b1] flex md:hidden z-50">
           <a href={`tel:+31(0)475315661`} className="flex-1 flex items-center justify-center py-4 text-[#2a77b1] border-r border-gray-200">
             <Phone size={24} />
@@ -1263,124 +1176,125 @@ export default function YachtTerminalPage() {
             <Mail size={24} />
           </a>
         </div>
-
-        {/* ------ FULL SCREEN GALLERY MODAL (KEPT AS IS, RESTYLED LIGHTLY) ------ */}
-        <AnimatePresence>
-          {showPhotoGallery && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-md flex flex-col"
-            >
-              <div className="flex items-center justify-between p-6 text-white">
-                <div>
-                  <h2 className="text-xl font-medium notranslate">{yacht.boat_name}</h2>
-                  <p className="text-sm text-gray-300">{currentPhotoIndex + 1} van {allImages.length}</p>
-                </div>
-                <button onClick={() => setShowPhotoGallery(false)} className="p-2 hover:bg-white/10 rounded-full transition-colors">
-                  <X size={24} />
-                </button>
-              </div>
-              <div className="flex-1 relative flex items-center justify-center p-4">
-                <img
-                  src={selectedGalleryImage || allImages[0]}
-                  onError={handleImageError}
-                  className="max-h-[70vh] max-w-full object-contain"
-                  alt=""
-                />
-                {allImages.length > 1 && (
-                  <>
-                    <button onClick={() => navigateGallery('prev')} className="absolute left-8 top-1/2 -translate-y-1/2 p-3 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors">
-                      <ChevronRight size={24} className="rotate-180" />
-                    </button>
-                    <button onClick={() => navigateGallery('next')} className="absolute right-8 top-1/2 -translate-y-1/2 p-3 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors">
-                      <ChevronRight size={24} />
-                    </button>
-                  </>
-                )}
-              </div>
-              <div className="p-6 border-t border-white/10">
-                <div className="flex gap-2 overflow-x-auto pb-2">
-                  {allImages.map((img, idx) => (
-                    <button key={idx} onClick={() => { setSelectedGalleryImage(img); setCurrentPhotoIndex(idx); }} className={cn(
-                      "w-20 h-20 flex-shrink-0 border-2 transition-all",
-                      idx === currentPhotoIndex ? "border-white" : "border-transparent hover:border-white/50"
-                    )}>
-                      <img src={img} onError={handleImageError} className="w-full h-full object-cover" alt="" />
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* ------ BUY NOW MODAL (KEPT AS IS) ------ */}
-        <AnimatePresence>
-          {paymentMode === "buy_now" && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-md flex items-center justify-center p-4"
-            >
-              <motion.div
-                initial={{ y: 50 }}
-                animate={{ y: 0 }}
-                className="bg-white max-w-md w-full p-8"
-              >
-                {paymentStatus === "idle" && (
-                  <div className="space-y-6">
-                    <div className="text-center">
-                      <h2 className="text-2xl font-serif italic mb-2 text-gray-900">Directe Aankoop</h2>
-                      <p className="text-3xl font-bold text-gray-900">€{yacht.price.toLocaleString('nl-NL')}</p>
-                      <p className="text-sm text-gray-600 mt-2">Volledig bedrag: €{yacht.price.toLocaleString('nl-NL')}</p>
-                    </div>
-                    <div className="p-4 bg-red-50 border border-red-100 rounded-lg">
-                      <p className="text-sm text-red-800"><span className="font-bold">Let op:</span> Door direct te kopen wordt de veiling beëindigd en kunnen andere bieders geen bod meer plaatsen.</p>
-                    </div>
-                    <div className="space-y-4">
-                      <div>
-                        <label className="text-sm font-medium text-gray-700 block mb-2">Uw naam *</label>
-                        <input type="text" className="w-full border border-gray-300 px-4 py-3 text-sm rounded focus:outline-none focus:border-gray-500" placeholder="Vul uw naam in" />
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium text-gray-700 block mb-2">Uw e-mail *</label>
-                        <input type="email" className="w-full border border-gray-300 px-4 py-3 text-sm rounded focus:outline-none focus:border-gray-500" placeholder="Vul uw e-mail in" />
-                      </div>
-                    </div>
-                    <div className="flex gap-4">
-                      <button onClick={() => setPaymentMode(null)} className="flex-1 border border-gray-300 py-3 text-gray-700 font-medium hover:bg-gray-50 transition-colors">Annuleren</button>
-                      <button onClick={handleBuyNow} className="flex-2 bg-red-600 hover:bg-red-700 text-white py-3 font-medium transition-colors">Direct Kopen</button>
-                    </div>
-                  </div>
-                )}
-                {paymentStatus === "processing" && (
-                  <div className="py-20 text-center flex flex-col items-center">
-                    <Loader2 className="animate-spin text-gray-900 mb-4" size={32} />
-                    <p className="text-sm font-medium">Aankoop wordt verwerkt...</p>
-                  </div>
-                )}
-                {paymentStatus === "success" && (
-                  <div className="py-12 text-center">
-                    <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6">
-                      <CheckCircle2 size={32} />
-                    </div>
-                    <h3 className="text-xl font-serif mb-2 text-gray-900">Aankoop Aanvraag Verzonden!</h3>
-                    <p className="text-sm text-gray-600">Ons team neemt binnen 24 uur contact met u op.</p>
-                  </div>
-                )}
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </main>
+
+      {/* ----- PHOTO GALLERY MODAL (unchanged) ----- */}
+      <AnimatePresence>
+        {showPhotoGallery && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-md flex flex-col"
+          >
+            <div className="flex items-center justify-between p-6 text-white">
+              <div>
+                <h2 className="text-xl font-medium notranslate">{yacht.boat_name}</h2>
+                <p className="text-sm text-gray-300">{currentPhotoIndex + 1} van {allImages.length}</p>
+              </div>
+              <button onClick={() => setShowPhotoGallery(false)} className="p-2 hover:bg-white/10 rounded-full transition-colors">
+                <X size={24} />
+              </button>
+            </div>
+            <div className="flex-1 relative flex items-center justify-center p-4">
+              <img
+                src={selectedGalleryImage || allImages[0]}
+                onError={handleImageError}
+                className="max-h-[70vh] max-w-full object-contain"
+                alt=""
+              />
+              {allImages.length > 1 && (
+                <>
+                  <button onClick={() => navigateGallery('prev')} className="absolute left-8 top-1/2 -translate-y-1/2 p-3 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors">
+                    <ChevronRight size={24} className="rotate-180" />
+                  </button>
+                  <button onClick={() => navigateGallery('next')} className="absolute right-8 top-1/2 -translate-y-1/2 p-3 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors">
+                    <ChevronRight size={24} />
+                  </button>
+                </>
+              )}
+            </div>
+            <div className="p-6 border-t border-white/10">
+              <div className="flex gap-2 overflow-x-auto pb-2">
+                {allImages.map((img, idx) => (
+                  <button key={idx} onClick={() => { setSelectedGalleryImage(img); setCurrentPhotoIndex(idx); }} className={cn(
+                    "w-20 h-20 flex-shrink-0 border-2 transition-all",
+                    idx === currentPhotoIndex ? "border-white" : "border-transparent hover:border-white/50"
+                  )}>
+                    <img src={img} onError={handleImageError} className="w-full h-full object-cover" alt="" />
+                  </button>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ----- BUY NOW MODAL (unchanged) ----- */}
+      <AnimatePresence>
+        {paymentMode === "buy_now" && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-md flex items-center justify-center p-4"
+          >
+            <motion.div
+              initial={{ y: 50 }}
+              animate={{ y: 0 }}
+              className="bg-white max-w-md w-full p-8"
+            >
+              {paymentStatus === "idle" && (
+                <div className="space-y-6">
+                  <div className="text-center">
+                    <h2 className="text-2xl font-serif italic mb-2 text-gray-900">Directe Aankoop</h2>
+                    <p className="text-3xl font-bold text-gray-900">€{yacht.price.toLocaleString('nl-NL')}</p>
+                    <p className="text-sm text-gray-600 mt-2">Volledig bedrag: €{yacht.price.toLocaleString('nl-NL')}</p>
+                  </div>
+                  <div className="p-4 bg-red-50 border border-red-100 rounded-lg">
+                    <p className="text-sm text-red-800"><span className="font-bold">Let op:</span> Door direct te kopen wordt de veiling beëindigd en kunnen andere bieders geen bod meer plaatsen.</p>
+                  </div>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-sm font-medium text-gray-700 block mb-2">Uw naam *</label>
+                      <input type="text" className="w-full border border-gray-300 px-4 py-3 text-sm rounded focus:outline-none focus:border-gray-500" placeholder="Vul uw naam in" />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-700 block mb-2">Uw e-mail *</label>
+                      <input type="email" className="w-full border border-gray-300 px-4 py-3 text-sm rounded focus:outline-none focus:border-gray-500" placeholder="Vul uw e-mail in" />
+                    </div>
+                  </div>
+                  <div className="flex gap-4">
+                    <button onClick={() => setPaymentMode(null)} className="flex-1 border border-gray-300 py-3 text-gray-700 font-medium hover:bg-gray-50 transition-colors">Annuleren</button>
+                    <button onClick={handleBuyNow} className="flex-2 bg-red-600 hover:bg-red-700 text-white py-3 font-medium transition-colors">Direct Kopen</button>
+                  </div>
+                </div>
+              )}
+              {paymentStatus === "processing" && (
+                <div className="py-20 text-center flex flex-col items-center">
+                  <Loader2 className="animate-spin text-gray-900 mb-4" size={32} />
+                  <p className="text-sm font-medium">Aankoop wordt verwerkt...</p>
+                </div>
+              )}
+              {paymentStatus === "success" && (
+                <div className="py-12 text-center">
+                  <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <CheckCircle2 size={32} />
+                  </div>
+                  <h3 className="text-xl font-serif mb-2 text-gray-900">Aankoop Aanvraag Verzonden!</h3>
+                  <p className="text-sm text-gray-600">Ons team neemt binnen 24 uur contact met u op.</p>
+                </div>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
 
-// Helper components
+/* ----- HELPER COMPONENTS (exact style) ----- */
+
 function SpecItem({ label, value }: { label: string; value?: string | null }) {
   if (!value) return null;
   return (
@@ -1391,7 +1305,18 @@ function SpecItem({ label, value }: { label: string; value?: string | null }) {
   );
 }
 
-function renderSpecSection(title: string, subtitle: string, specs: { label: string; value: string | boolean | null | undefined }[]) {
+function SpecCard({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="bg-white border border-[#eaeef5] p-6">
+      <h3 className="text-xl font-serif italic text-[#2a77b1] mb-5 pb-3 border-b border-[#eaeef5]">
+        {title}
+      </h3>
+      {children}
+    </div>
+  );
+}
+
+function SpecSection({ title, subtitle, specs }: { title: string; subtitle: string; specs: { label: string; value: string | boolean | null | undefined }[] }) {
   const filtered = specs.filter(s => s.value !== null && s.value !== undefined && s.value !== '');
   if (filtered.length === 0) return null;
   return (
@@ -1420,11 +1345,171 @@ function SpecRow({ label, value }: { label: string; value: string | boolean | nu
         ) : hasText ? (
           <>
             {value}
-            {/* hidden check icon – will be hidden by CSS if sibling text exists */}
             <Check size={16} className="text-green-600 check-icon hidden" />
           </>
         ) : null}
       </div>
     </div>
   );
+}
+
+function TestSailForm({
+  yacht,
+  depositAmount,
+  currentMonth,
+  calendarDays,
+  selectedDate,
+  selectedTime,
+  availableSlots,
+  bookingForm,
+  testSailStatus,
+  onPrevMonth,
+  onNextMonth,
+  onDateSelect,
+  onTimeSelect,
+  onBookingFormChange,
+  onBook,
+  onCancel,
+}: any) {
+  return (
+    <div className="bg-white border border-gray-200 p-6 mt-2 space-y-6">
+      <div className="text-center">
+        <h3 className="text-lg font-medium text-gray-900 mb-2">Proefvaart Boeken</h3>
+        <p className="text-sm text-gray-600">Borg Vereist: €{depositAmount.toLocaleString('nl-NL')}</p>
+      </div>
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <button onClick={onPrevMonth} className="text-gray-400 hover:text-gray-900 p-2">←</button>
+          <h4 className="text-base font-semibold text-gray-900">
+            {DUTCH_MONTHS[currentMonth.getMonth()]} {currentMonth.getFullYear()}
+          </h4>
+          <button onClick={onNextMonth} className="text-gray-400 hover:text-gray-900 p-2">→</button>
+        </div>
+        <div className="grid grid-cols-7 gap-1 text-center text-xs">
+          {DUTCH_DAYS.map(d => <span key={d} className="font-medium text-gray-500">{d}</span>)}
+          {calendarDays.map((day: any, i: number) => {
+            const isSelected = selectedDate?.toDateString() === day.date.toDateString();
+            return (
+              <button
+                key={i}
+                onClick={() => onDateSelect(day.date, day.available)}
+                disabled={!day.available || !day.isCurrentMonth}
+                className={cn(
+                  "aspect-square flex items-center justify-center text-sm transition-all",
+                  !day.isCurrentMonth ? "text-gray-300" :
+                  isSelected ? "bg-gray-900 text-white" :
+                  isToday(day.date) ? "bg-gray-100 text-gray-900 font-bold border-2 border-blue-500" :
+                  day.available ? "bg-emerald-50 text-emerald-900 border border-emerald-200 hover:bg-emerald-100" :
+                  "bg-gray-50 text-gray-400 border border-gray-100 cursor-not-allowed"
+                )}
+              >
+                {day.date.getDate()}
+              </button>
+            );
+          })}
+        </div>
+        {selectedDate && (
+          <div className="p-3 bg-blue-50 border border-blue-100 rounded-lg text-sm text-blue-900">
+            Geselecteerd: {selectedDate.toLocaleDateString('nl-NL', { weekday: 'long', day: 'numeric', month: 'long' })}
+          </div>
+        )}
+        {availableSlots.length > 0 ? (
+          <div className="grid grid-cols-3 gap-2">
+            {availableSlots.map((time: string) => (
+              <button
+                key={time}
+                onClick={() => onTimeSelect(time)}
+                className={cn(
+                  "py-2 rounded text-sm font-medium transition-all",
+                  selectedTime === time ? "bg-gray-900 text-white" : "bg-emerald-100 text-emerald-900 hover:bg-emerald-200"
+                )}
+              >
+                {time}
+              </button>
+            ))}
+          </div>
+        ) : selectedDate && (
+          <p className="text-sm text-gray-500 text-center py-4 border border-dashed">Geen beschikbare slots</p>
+        )}
+        {selectedTime && (
+          <div className="space-y-4">
+            <div className="p-4 bg-gray-50 border border-dashed border-gray-200 rounded-lg">
+              <p className="text-sm font-medium text-gray-700">Geselecteerd tijdslot</p>
+              <p className="text-lg font-serif text-gray-900">
+                {selectedTime} - {(() => {
+                  const [h, m] = selectedTime.split(':').map(Number);
+                  const end = new Date(); end.setHours(h + 1, m);
+                  return end.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' });
+                })()}
+                <span className="text-sm text-gray-500 ml-2">(+15m buffer)</span>
+              </p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <input
+                type="text"
+                placeholder="Naam *"
+                value={bookingForm.name}
+                onChange={(e) => onBookingFormChange({ ...bookingForm, name: e.target.value })}
+                className="border border-gray-300 px-4 py-2 text-sm rounded-none"
+              />
+              <input
+                type="email"
+                placeholder="E-mail *"
+                value={bookingForm.email}
+                onChange={(e) => onBookingFormChange({ ...bookingForm, email: e.target.value })}
+                className="border border-gray-300 px-4 py-2 text-sm rounded-none"
+              />
+              <input
+                type="tel"
+                placeholder="Telefoonnummer"
+                value={bookingForm.phone}
+                onChange={(e) => onBookingFormChange({ ...bookingForm, phone: e.target.value })}
+                className="border border-gray-300 px-4 py-2 text-sm rounded-none md:col-span-2"
+              />
+              <textarea
+                placeholder="Opmerkingen"
+                rows={3}
+                value={bookingForm.notes}
+                onChange={(e) => onBookingFormChange({ ...bookingForm, notes: e.target.value })}
+                className="border border-gray-300 px-4 py-2 text-sm rounded-none md:col-span-2"
+              />
+            </div>
+            <div className="flex gap-4">
+              <button onClick={onCancel} className="flex-1 border border-gray-300 py-3 text-gray-700 font-medium hover:bg-gray-50 transition-colors">
+                Annuleren
+              </button>
+              <button
+                onClick={onBook}
+                disabled={!selectedDate || !selectedTime || !bookingForm.name || !bookingForm.email || testSailStatus === "processing"}
+                className="flex-2 bg-gray-900 hover:bg-black text-white py-3 font-medium disabled:bg-gray-300 transition-colors"
+              >
+                {testSailStatus === "processing" ? (
+                  <><Loader2 className="animate-spin inline mr-2" size={16} /> Verwerken...</>
+                ) : (
+                  'Bevestigen & Borg Betalen'
+                )}
+              </button>
+            </div>
+            {testSailStatus === "success" && (
+              <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-lg flex items-center gap-3">
+                <CheckCircle2 className="text-emerald-600" size={24} />
+                <div>
+                  <h4 className="font-medium text-emerald-800">Proefvaart Ingepland!</h4>
+                  <p className="text-sm text-emerald-700">Een bevestiging is naar uw e-mail verzonden.</p>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Helper to check if date is today (used in calendar)
+function isToday(date: Date) {
+  const today = new Date();
+  return date.getDate() === today.getDate() &&
+    date.getMonth() === today.getMonth() &&
+    date.getFullYear() === today.getFullYear();
 }
