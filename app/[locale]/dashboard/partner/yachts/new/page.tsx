@@ -30,6 +30,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { toast, Toaster } from "react-hot-toast";
+import { Sidebar } from "@/components/dashboard/Sidebar";
+
 
 const PLACEHOLDER_IMAGE =
   "https://images.unsplash.com/photo-1569263979104-865ab7cd8d13?auto=format&fit=crop&w=600&q=80";
@@ -94,6 +96,8 @@ export default function PartnerCreateYachtPage() {
   // State ----------------------------------------------------------------
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<any>(null);
+      // Sidebar State
+      const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   const [aiStaging, setAiStaging] = useState<AiStagedImage[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -324,6 +328,7 @@ export default function PartnerCreateYachtPage() {
     <div className="min-h-screen bg-[#F8FAFC] pb-20">
       <Toaster position="top-right" />
 
+                    <Sidebar onCollapse={setIsSidebarCollapsed} />
       {/* ========== ADMIN‑STYLE STICKY HEADER ========== */}
       <div className="bg-[#003566] text-white p-8 sticky top-0 z-40 shadow-xl flex justify-between items-center">
         <div className="flex items-center gap-6">

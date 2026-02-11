@@ -29,6 +29,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { toast, Toaster } from "react-hot-toast";
+import { Sidebar } from "@/components/dashboard/Sidebar";
+
 
 // Configuration
 const STORAGE_URL = "https://schepen-kring.nl/storage/";
@@ -50,7 +52,9 @@ type AvailabilityRule = {
   end_time: string;
 };
 
-// Spec Checkbox Component
+// ----------------------------------------------------------------------
+// Display Spec Checkbox (identical to admin)
+// ----------------------------------------------------------------------
 function SpecCheckbox({ field, label, selectedYacht, onSpecChange }: { 
   field: string; 
   label: string; 
@@ -61,7 +65,7 @@ function SpecCheckbox({ field, label, selectedYacht, onSpecChange }: {
     if (selectedYacht?.display_specs) {
       return selectedYacht.display_specs.includes(field);
     }
-    return true;
+    return true; // default true for new yachts
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -90,12 +94,14 @@ function SpecCheckbox({ field, label, selectedYacht, onSpecChange }: {
   );
 }
 
-export default function YachtEditorPage() {
+export default function PartnerYachtEditorPage() {
   const params = useParams();
   const router = useRouter();
   const isNewMode = params.id === "new";
   const yachtId = params.id;
 
+    // Sidebar State
+    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   // Form State
   const [selectedYacht, setSelectedYacht] = useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -121,13 +127,16 @@ export default function YachtEditorPage() {
   // Display Specs State
   const [displaySpecs, setDisplaySpecs] = useState<Record<string, boolean>>({});
 
-  // --- 1. FETCH DATA (IF EDITING) ---
+  // ----------------------------------------------------------------------
+  // 1. FETCH EXISTING YACHT (if editing)
+  // ----------------------------------------------------------------------
   useEffect(() => {
     if (isNewMode) return;
 
     const fetchYachtDetails = async () => {
       try {
         setLoading(true);
+        // Partners can view their own yachts via the public endpoint
         const res = await api.get(`/yachts/${yachtId}`);
         const yacht = res.data;
         setSelectedYacht(yacht);
@@ -187,7 +196,7 @@ export default function YachtEditorPage() {
       } catch (err) {
         console.error("Failed to fetch yacht details", err);
         toast.error("Could not load vessel data.");
-        router.push("/nl/dashboard/admin/yachts");
+        router.push("/nl/dashboard/partner"); // Redirect to partner dashboard
       } finally {
         setLoading(false);
       }
@@ -196,8 +205,9 @@ export default function YachtEditorPage() {
     fetchYachtDetails();
   }, [yachtId, isNewMode, router]);
 
-  // --- 2. HANDLERS ---
-
+  // ----------------------------------------------------------------------
+  // 2. HANDLERS
+  // ----------------------------------------------------------------------
   const handleImageError = (e: SyntheticEvent<HTMLImageElement, Event>) => {
     e.currentTarget.src = PLACEHOLDER_IMAGE;
     e.currentTarget.classList.add("opacity-50", "grayscale");
@@ -230,42 +240,42 @@ export default function YachtEditorPage() {
     }
   };
 
-const handleAiCategorizer = async (files: FileList | null) => {
-  if (!files || files.length === 0) return;
-  setIsAnalyzing(true);
-  const formData = new FormData();
-  const fileArray = Array.from(files);
-  fileArray.forEach((file) => formData.append("images[]", file));
-  try {
-    toast.loading("Gemini is analyzing assets...", { id: "ai-loading" });
-    
-    let res;
+  const handleAiCategorizer = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    setIsAnalyzing(true);
+    const formData = new FormData();
+    const fileArray = Array.from(files);
+    fileArray.forEach((file) => formData.append("images[]", file));
     try {
-      res = await api.post("/partner/yachts/ai-classify", formData);
-    } catch (aiErr: any) {
-      if (aiErr.response?.status === 403 || aiErr.response?.status === 404) {
-        res = await api.post("/yachts/ai-classify", formData);
-      } else {
-        throw aiErr;
+      toast.loading("Gemini is analyzing assets...", { id: "ai-loading" });
+      
+      let res;
+      try {
+        res = await api.post("/partner/yachts/ai-classify", formData);
+      } catch (aiErr: any) {
+        if (aiErr.response?.status === 403 || aiErr.response?.status === 404) {
+          res = await api.post("/yachts/ai-classify", formData);
+        } else {
+          throw aiErr;
+        }
       }
+      
+      const analyzedData: AiStagedImage[] = res.data.map(
+        (item: any, index: number) => ({
+          file: fileArray[index],
+          preview: item.preview,
+          category: item.category,
+          originalName: item.originalName,
+        }),
+      );
+      setAiStaging((prev) => [...prev, ...analyzedData]);
+      toast.success("AI Classification complete", { id: "ai-loading" });
+    } catch (err) {
+      toast.error("AI Analysis failed", { id: "ai-loading" });
+    } finally {
+      setIsAnalyzing(false);
     }
-    
-    const analyzedData: AiStagedImage[] = res.data.map(
-      (item: any, index: number) => ({
-        file: fileArray[index],
-        preview: item.preview,
-        category: item.category,
-        originalName: item.originalName,
-      }),
-    );
-    setAiStaging((prev) => [...prev, ...analyzedData]);
-    toast.success("AI Classification complete", { id: "ai-loading" });
-  } catch (err) {
-    toast.error("AI Analysis failed", { id: "ai-loading" });
-  } finally {
-    setIsAnalyzing(false);
-  }
-};
+  };
 
   const approveAiImage = (index: number) => {
     const item = aiStaging[index];
@@ -312,150 +322,155 @@ const handleAiCategorizer = async (files: FileList | null) => {
     }));
   };
 
-  // --- 3. SIMPLIFIED SUBMIT LOGIC ---
-const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-  e.preventDefault();
-  setIsSubmitting(true);
-  setErrors(null);
-  
-  // Create form data directly without validation
-  const formData = new FormData();
-
-  // Collect all form data
-  const formElements = e.currentTarget.elements;
-  
-  // Add boat name and price first
-  const boatName = (document.querySelector('input[name="boat_name"]') as HTMLInputElement)?.value;
-  const price = (document.querySelector('input[name="price"]') as HTMLInputElement)?.value;
-  const minBidAmount = (document.querySelector('input[name="min_bid_amount"]') as HTMLInputElement)?.value;
-  
-  if (boatName) formData.append('boat_name', boatName);
-  if (price) formData.append('price', price);
-  if (minBidAmount) formData.append('min_bid_amount', minBidAmount);
-
-  // Add main image if exists
-  if (mainFile) {
-    formData.append('main_image', mainFile);
-  }
-
-  // Add all other fields from form
-  const fields = [
-    'year', 'status', 'loa', 'lwl', 'where', 'passenger_capacity',
-    'beam', 'draft', 'air_draft', 'displacement', 'hull_type', 'hull_construction',
-    'hull_colour', 'hull_number', 'designer', 'builder',
-    'engine_manufacturer', 'horse_power', 'hours', 'fuel', 'max_speed',
-    'cruising_speed', 'gallons_per_hour', 'tankage', 'cabins', 'berths',
-    'toilet', 'shower', 'bath', 'heating', 'cockpit_type', 'control_type',
-    'external_url', 'print_url', 'owners_comment', 'reg_details', 
-    'known_defects', 'last_serviced', 'super_structure_colour',
-    'super_structure_construction', 'deck_colour', 'deck_construction',
-    'ballast', 'stern_thruster', 'bow_thruster', 'starting_type', 'drive_type'
-  ];
-
-  fields.forEach(field => {
-    const element = document.querySelector(`[name="${field}"]`) as HTMLInputElement;
-    if (element && element.value !== undefined && element.value !== '') {
-      formData.append(field, element.value);
-    }
-  });
-
-  // Handle boolean fields - SIMPLIFIED
-  const booleanFields = [
-    'allow_bidding', 'flybridge', 'oven', 'microwave', 'fridge', 'freezer',
-    'air_conditioning', 'navigation_lights', 'compass', 'depth_instrument',
-    'wind_instrument', 'autopilot', 'gps', 'vhf', 'plotter', 'speed_instrument',
-    'radar', 'life_raft', 'epirb', 'bilge_pump', 'fire_extinguisher',
-    'mob_system', 'spinnaker', 'battery', 'battery_charger', 'generator',
-    'inverter', 'television', 'cd_player', 'dvd_player', 'anchor',
-    'spray_hood', 'bimini'
-  ];
-
-  booleanFields.forEach(field => {
-    const checkbox = document.querySelector(`[name="${field}"]`) as HTMLInputElement;
-    if (checkbox) {
-      formData.append(field, checkbox.checked ? 'true' : 'false');
-    } else {
-      formData.append(field, 'false');
-    }
-  });
-
-  // Add availability rules
-  if (availabilityRules.length > 0) {
-    formData.append("availability_rules", JSON.stringify(availabilityRules));
-  }
-
-  // Add display specs
-  const selectedSpecs = Object.keys(displaySpecs).filter(key => displaySpecs[key]);
-  if (selectedSpecs.length > 0) {
-    formData.append("display_specs", JSON.stringify(selectedSpecs));
-  }
-
-  try {
-    let finalYachtId = selectedYacht?.id;
+  // ----------------------------------------------------------------------
+  // 3. SUBMIT – Only send fields with values (admin‑style)
+  // ----------------------------------------------------------------------
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setErrors(null);
     
-    if (!isNewMode && selectedYacht) {
-      // UPDATE
-      await api.put(`/yachts/${selectedYacht.id}`, formData);
-    } else {
-      // CREATE NEW
-      try {
-        const res = await api.post("/partner/yachts", formData);
-        finalYachtId = res.data.id;
-      } catch (partnerErr: any) {
-        if (partnerErr.response?.status === 403 || partnerErr.response?.status === 404) {
-          const res = await api.post("/yachts", formData);
-          finalYachtId = res.data.id;
-        } else {
-          throw partnerErr;
-        }
+    const formData = new FormData();
+
+    // 1. Required field
+    const boatName = (document.querySelector('input[name="boat_name"]') as HTMLInputElement)?.value;
+    if (!boatName) {
+      toast.error("Vessel name is required");
+      setIsSubmitting(false);
+      return;
+    }
+    formData.append('boat_name', boatName);
+
+    // 2. Main image (only if provided)
+    if (mainFile) {
+      formData.append('main_image', mainFile);
+    }
+
+    // 3. Text / numeric fields – only if they have a value
+    const fields = [
+      'price', 'min_bid_amount', 'year', 'status', 'loa', 'lwl', 'where',
+      'passenger_capacity', 'beam', 'draft', 'air_draft', 'displacement',
+      'ballast', 'hull_type', 'hull_construction', 'hull_colour', 'hull_number',
+      'designer', 'builder', 'model', // 👈 model added
+      'engine_manufacturer', 'horse_power', 'hours', 'fuel', 'max_speed',
+      'cruising_speed', 'gallons_per_hour', 'tankage', 'cabins', 'berths',
+      'toilet', 'shower', 'bath', 'heating', 'cockpit_type', 'control_type',
+      'external_url', 'print_url', 'owners_comment', 'reg_details', 
+      'known_defects', 'last_serviced', 'super_structure_colour',
+      'super_structure_construction', 'deck_colour', 'deck_construction',
+      'starting_type', 'drive_type'
+    ];
+
+    fields.forEach(field => {
+      const element = document.querySelector(`[name="${field}"]`) as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
+      if (element && element.value !== undefined && element.value.trim() !== '') {
+        formData.append(field, element.value);
+      }
+    });
+
+    // 4. Boolean fields – always append "true" / "false"
+    const booleanFields = [
+      'allow_bidding', 'flybridge', 'oven', 'microwave', 'fridge', 'freezer',
+      'air_conditioning', 'navigation_lights', 'compass', 'depth_instrument',
+      'wind_instrument', 'autopilot', 'gps', 'vhf', 'plotter', 'speed_instrument',
+      'radar', 'life_raft', 'epirb', 'bilge_pump', 'fire_extinguisher',
+      'mob_system', 'spinnaker', 'battery', 'battery_charger', 'generator',
+      'inverter', 'television', 'cd_player', 'dvd_player', 'anchor',
+      'spray_hood', 'bimini', 'stern_thruster', 'bow_thruster' // 👈 added
+    ];
+
+    booleanFields.forEach(field => {
+      const checkbox = document.querySelector(`[name="${field}"]`) as HTMLInputElement;
+      formData.append(field, checkbox?.checked ? 'true' : 'false');
+    });
+
+    // 5. Availability rules – only if at least one rule exists
+    if (availabilityRules.length > 0) {
+      formData.append("availability_rules", JSON.stringify(availabilityRules));
+    }
+
+    // 6. Display specs – only if at least one spec is selected
+    const selectedSpecs = Object.keys(displaySpecs).filter(key => displaySpecs[key]);
+    if (selectedSpecs.length > 0) {
+      formData.append("display_specs", JSON.stringify(selectedSpecs));
+    }
+
+    // 7. Auto‑calculate min_bid_amount if price exists but min_bid_amount is empty
+    const price = formData.get("price");
+    if (!formData.has("min_bid_amount") && price) {
+      const priceVal = parseFloat(price as string);
+      if (!isNaN(priceVal)) {
+        formData.append("min_bid_amount", (priceVal * 0.9).toString());
       }
     }
 
-    // Bulk gallery submission (new files only)
-    for (const cat of Object.keys(galleryState)) {
-      const newFiles = galleryState[cat].filter(
-        (item) => item instanceof File,
-      );
-      if (newFiles.length > 0) {
-        const gData = new FormData();
-        newFiles.forEach((file) => gData.append("images[]", file));
-        gData.append("category", cat);
-        
+    try {
+      let finalYachtId = selectedYacht?.id;
+      
+      if (!isNewMode && selectedYacht) {
+        // UPDATE – use same endpoint as admin (protected)
+        await api.put(`/yachts/${selectedYacht.id}`, formData);
+      } else {
+        // CREATE NEW – use partner endpoint with fallback
         try {
-          await api.post(`/partner/yachts/${finalYachtId}/gallery`, gData);
-        } catch (galleryErr: any) {
-          if (galleryErr.response?.status === 403 || galleryErr.response?.status === 404) {
-            await api.post(`/yachts/${finalYachtId}/gallery`, gData);
+          const res = await api.post("/partner/yachts", formData);
+          finalYachtId = res.data.id;
+        } catch (partnerErr: any) {
+          if (partnerErr.response?.status === 403 || partnerErr.response?.status === 404) {
+            const res = await api.post("/yachts", formData);
+            finalYachtId = res.data.id;
           } else {
-            throw galleryErr;
+            throw partnerErr;
           }
         }
       }
-    }
 
-    toast.success(
-      isNewMode
-        ? "Vessel Registered Successfully"
-        : "Manifest Updated Successfully",
-    );
-    router.push("/nl/dashboard/admin/yachts");
-  } catch (err: any) {
-    console.error("Submission error:", err);
-    
-    if (err.response?.status === 422) {
-      setErrors(err.response.data.errors);
-      toast.error("Please check required fields");
-    } else if (err.response?.status === 403) {
-      toast.error("Permission denied.");
-    } else if (err.response?.status === 500) {
-      toast.error("Server error. Please try again.");
-    } else {
-      toast.error(`Error: ${err.response?.data?.message || "System Error"}`);
+      // Bulk gallery submission (new files only)
+      for (const cat of Object.keys(galleryState)) {
+        const newFiles = galleryState[cat].filter(
+          (item) => item instanceof File,
+        );
+        if (newFiles.length > 0) {
+          const gData = new FormData();
+          newFiles.forEach((file) => gData.append("images[]", file));
+          gData.append("category", cat);
+          
+          try {
+            await api.post(`/partner/yachts/${finalYachtId}/gallery`, gData);
+          } catch (galleryErr: any) {
+            if (galleryErr.response?.status === 403 || galleryErr.response?.status === 404) {
+              await api.post(`/yachts/${finalYachtId}/gallery`, gData);
+            } else {
+              throw galleryErr;
+            }
+          }
+        }
+      }
+
+      toast.success(
+        isNewMode
+          ? "Vessel Registered Successfully"
+          : "Manifest Updated Successfully",
+      );
+      // ✅ Redirect to partner dashboard (not admin)
+      router.push("/nl/dashboard/partner");
+    } catch (err: any) {
+      console.error("Submission error:", err);
+      
+      if (err.response?.status === 422) {
+        setErrors(err.response.data.errors);
+        toast.error("Please check required fields");
+      } else if (err.response?.status === 403) {
+        toast.error("Permission denied.");
+      } else if (err.response?.status === 500) {
+        toast.error("Server error. Please try again.");
+      } else {
+        toast.error(`Error: ${err.response?.data?.message || "System Error"}`);
+      }
+    } finally {
+      setIsSubmitting(false);
     }
-  } finally {
-    setIsSubmitting(false);
-  }
-};
+  };
 
   if (loading) {
     return (
@@ -469,7 +484,8 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     <div className="min-h-screen bg-[#F8FAFC] pb-20">
       <Toaster position="top-right" />
 
-      {/* PAGE HEADER */}
+                    <Sidebar onCollapse={setIsSidebarCollapsed} />
+      {/* ========== PARTNER‑STYLE STICKY HEADER ========== */}
       <div className="bg-[#003566] text-white p-8 sticky top-0 z-40 shadow-xl flex justify-between items-center">
         <div className="flex items-center gap-6">
           <button
@@ -485,7 +501,7 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                 : `Manifest: ${selectedYacht?.boat_name || "Loading..."}`}
             </h1>
             <p className="text-blue-400 text-[10px] font-black uppercase tracking-[0.4em] mt-1">
-              Registry Auth: Admin
+              Registry Auth: Partner {/* ✅ Changed from Admin */}
             </p>
           </div>
         </div>
@@ -588,6 +604,9 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                   placeholder="Auto-calculates 90% of price if empty"
                   step="1000"
                 />
+                <p className="text-[8px] text-slate-400 italic mt-1">
+                  Leave empty to auto‑calculate
+                </p>
               </div>
               <div className="space-y-2">
                 <Label>Year Built</Label>
@@ -596,6 +615,14 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                   type="number"
                   defaultValue={selectedYacht?.year}
                   placeholder="2024"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Model</Label> {/* ✅ Added model field */}
+                <Input
+                  name="model"
+                  defaultValue={selectedYacht?.model}
+                  placeholder="e.g. 62' Skylounge"
                 />
               </div>
               <div className="space-y-2">
@@ -806,6 +833,24 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                       className="bg-white"
                     />
                   </div>
+                  <div className="space-y-1">
+                    <Label>Starting Type</Label>
+                    <Input
+                      name="starting_type"
+                      defaultValue={selectedYacht?.starting_type}
+                      placeholder="e.g. Electric"
+                      className="bg-white"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label>Drive Type</Label>
+                    <Input
+                      name="drive_type"
+                      defaultValue={selectedYacht?.drive_type}
+                      placeholder="e.g. Shaft"
+                      className="bg-white"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -885,10 +930,122 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
               </div>
             </div>
 
-            {/* Sub-Section: Equipment Checkboxes */}
+            {/* Sub-Section: Additional / Broker Fields */}
+            <div className="space-y-6">
+              <SectionHeader icon={<Box size={14} />} title="Additional Details" />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-1">
+                  <Label>Designer</Label>
+                  <Input
+                    name="designer"
+                    defaultValue={selectedYacht?.designer}
+                    placeholder="e.g. Naval Architect"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label>Builder</Label>
+                  <Input
+                    name="builder"
+                    defaultValue={selectedYacht?.builder}
+                    placeholder="e.g. Ferretti"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label>Superstructure Colour</Label>
+                  <Input
+                    name="super_structure_colour"
+                    defaultValue={selectedYacht?.super_structure_colour}
+                    placeholder="White"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label>Superstructure Construction</Label>
+                  <Input
+                    name="super_structure_construction"
+                    defaultValue={selectedYacht?.super_structure_construction}
+                    placeholder="GRP"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label>Deck Colour</Label>
+                  <Input
+                    name="deck_colour"
+                    defaultValue={selectedYacht?.deck_colour}
+                    placeholder="Teak"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label>Deck Construction</Label>
+                  <Input
+                    name="deck_construction"
+                    defaultValue={selectedYacht?.deck_construction}
+                    placeholder="Teak"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label>Ballast</Label>
+                  <Input
+                    name="ballast"
+                    defaultValue={selectedYacht?.ballast}
+                    placeholder="e.g. 4000 kg"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label>External URL</Label>
+                  <Input
+                    name="external_url"
+                    defaultValue={selectedYacht?.external_url}
+                    placeholder="https://..."
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label>Print URL</Label>
+                  <Input
+                    name="print_url"
+                    defaultValue={selectedYacht?.print_url}
+                    placeholder="https://..."
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label>Registration Details</Label>
+                  <Input
+                    name="reg_details"
+                    defaultValue={selectedYacht?.reg_details}
+                    placeholder="Registration number, flag, etc."
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label>Known Defects</Label>
+                  <Input
+                    name="known_defects"
+                    defaultValue={selectedYacht?.known_defects}
+                    placeholder="Any known issues"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label>Last Serviced</Label>
+                  <Input
+                    name="last_serviced"
+                    defaultValue={selectedYacht?.last_serviced}
+                    placeholder="2024-05-01"
+                  />
+                </div>
+                <div className="space-y-1 col-span-2">
+                  <Label>Owner's Comments</Label>
+                  <textarea
+                    name="owners_comment"
+                    defaultValue={selectedYacht?.owners_comment}
+                    className="w-full h-24 bg-slate-50 border border-slate-200 p-3 text-xs text-[#003566] font-medium outline-none focus:border-blue-600 transition-all resize-none"
+                    placeholder="Any additional comments about the vessel..."
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Sub-Section: Equipment Checkboxes (full list) */}
             <div className="space-y-6">
               <SectionHeader
-                icon={<Box size={14} />}
+                icon={<CheckSquare size={14} />}
                 title="Equipment & Features"
               />
               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
@@ -899,7 +1056,8 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                   'radar', 'life_raft', 'epirb', 'bilge_pump', 'fire_extinguisher',
                   'mob_system', 'spinnaker', 'battery', 'battery_charger', 'generator',
                   'inverter', 'television', 'cd_player', 'dvd_player', 'anchor',
-                  'spray_hood', 'bimini'
+                  'spray_hood', 'bimini',
+                  'stern_thruster', 'bow_thruster' // 👈 added
                 ].map((field) => (
                   <div key={field} className="flex items-center gap-2 bg-slate-50/50 p-3">
                     <input
@@ -1014,7 +1172,7 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
             </div>
           </div>
 
-          {/* NEW SECTION: SCHEDULING AUTHORITY */}
+          {/* --- SCHEDULING AUTHORITY (Availability Rules) --- */}
           <div className="space-y-8 bg-slate-50 p-10 border border-slate-200 shadow-sm">
              <div className="flex justify-between items-center border-b border-slate-200 pb-4">
                <h3 className="text-[12px] font-black uppercase text-[#003566] tracking-[0.4em] flex items-center gap-3 italic">
@@ -1098,7 +1256,7 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
              </div>
           </div>
 
-          {/* 05. AI CARGO DROP */}
+          {/* --- AI CARGO DROP (Gemini Classifier) --- */}
           <div className="space-y-8 bg-slate-900 p-12 border-l-8 border-blue-500 shadow-2xl">
             <div className="flex justify-between items-start">
               <div>
@@ -1154,6 +1312,7 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                       <img
                         src={item.preview}
                         className="h-40 w-full object-cover opacity-80"
+                        alt={item.originalName}
                       />
                       <div className="absolute top-2 left-2">
                         <span className="bg-blue-600 text-white text-[8px] font-black px-3 py-1 uppercase tracking-tighter">
@@ -1187,7 +1346,7 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
             )}
           </div>
 
-          {/* --- SECTION 6: GALLERY --- */}
+          {/* --- SECTION 6: GALLERY (existing + new) --- */}
           {Object.keys(galleryState).map((category) => (
             <div key={category} className="space-y-8">
               <h3 className="text-[11px] font-black uppercase text-[#003566] tracking-widest flex items-center gap-2 italic border-b border-slate-200 pb-4">
@@ -1227,6 +1386,7 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                           src={src}
                           onError={handleImageError}
                           className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity"
+                          alt={`${category} ${i}`}
                         />
                         <button
                           type="button"
@@ -1262,7 +1422,7 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
             </div>
           ))}
 
-          {/* SAVE ACTION BAR */}
+          {/* --- SAVE ACTION BAR --- */}
           <div className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-md border-t border-slate-200 p-6 flex justify-between items-center z-50">
             <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 hidden lg:block">
               Unsaved changes will be lost
@@ -1288,7 +1448,9 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
   );
 }
 
-// ---------------- Helper Components ---------------- //
+// ----------------------------------------------------------------------
+// Helper Components
+// ----------------------------------------------------------------------
 
 function Label({ children }: { children: React.ReactNode }) {
   return (
