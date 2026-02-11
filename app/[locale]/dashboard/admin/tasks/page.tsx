@@ -882,9 +882,9 @@ export default function AdminTaskBoardPage() {
       <DashboardHeader />
       <Toaster position="top-right" />
       
-      <div className="flex pt-20">
+      <div className="flex">
         <motion.main
-          className="flex-1 p-6 bg-white min-h-[calc(100vh-80px)] z-30 -mt-20"
+          className="fixed top-0 left-0 w-full p-6 bg-white min-h-screen z-30"
         >
           <div className="max-w-7xl mx-auto space-y-6">
             {/* Header */}
