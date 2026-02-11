@@ -25,12 +25,12 @@ import {
   Calendar,
   Clock,
   Eye,
+  ArrowLeft,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { toast, Toaster } from "react-hot-toast";
 
-// Configuration
 const PLACEHOLDER_IMAGE =
   "https://images.unsplash.com/photo-1569263979104-865ab7cd8d13?auto=format&fit=crop&w=600&q=80";
 
@@ -43,14 +43,15 @@ type AiStagedImage = {
 
 type GalleryState = { [key: string]: any[] };
 
-// Availability Rule Type
 type AvailabilityRule = {
   day_of_week: number;
   start_time: string;
   end_time: string;
 };
 
-// Spec Checkbox Component (identical to admin)
+// ----------------------------------------------------------------------
+// Display Spec Checkbox (identical to admin)
+// ----------------------------------------------------------------------
 function SpecCheckbox({
   field,
   label,
@@ -87,14 +88,13 @@ function SpecCheckbox({
   );
 }
 
-export default function OnboardingYachtSetup() {
+export default function PartnerCreateYachtPage() {
   const router = useRouter();
 
-  // Form state
+  // State ----------------------------------------------------------------
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<any>(null);
 
-  // Media state
   const [aiStaging, setAiStaging] = useState<AiStagedImage[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [mainPreview, setMainPreview] = useState<string | null>(null);
@@ -107,14 +107,10 @@ export default function OnboardingYachtSetup() {
     General: [],
   });
 
-  // Availability rules
   const [availabilityRules, setAvailabilityRules] = useState<AvailabilityRule[]>([]);
-
-  // Display specs
   const [displaySpecs, setDisplaySpecs] = useState<Record<string, boolean>>({});
 
-  // Handlers ----------------------------------------------------------------
-
+  // Handlers -------------------------------------------------------------
   const handleImageError = (e: SyntheticEvent<HTMLImageElement, Event>) => {
     e.currentTarget.src = PLACEHOLDER_IMAGE;
     e.currentTarget.classList.add("opacity-50", "grayscale");
@@ -176,7 +172,6 @@ export default function OnboardingYachtSetup() {
     toast.success("All assets approved");
   };
 
-  // Availability handlers
   const addAvailabilityRule = () => {
     setAvailabilityRules([
       ...availabilityRules,
@@ -198,135 +193,156 @@ export default function OnboardingYachtSetup() {
     setAvailabilityRules(newRules);
   };
 
-  // Display specs handler
   const handleSpecChange = (field: string, isChecked: boolean) => {
-    setDisplaySpecs((prev) => ({
-      ...prev,
-      [field]: isChecked,
-    }));
+    setDisplaySpecs((prev) => ({ ...prev, [field]: isChecked }));
   };
 
-  // Submit ----------------------------------------------------------------
-const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-  e.preventDefault();
-  setIsSubmitting(true);
-  setErrors(null);
+  // ----------------------------------------------------------------------
+  // ✅ SUBMIT – Only send fields with values (admin‑style)
+  // ----------------------------------------------------------------------
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setErrors(null);
 
-  const formData = new FormData();
+    const formData = new FormData();
 
-  // 1. Required field
-  const boatName = (document.querySelector('input[name="boat_name"]') as HTMLInputElement)?.value;
-  if (!boatName) {
-    toast.error("Vessel name is required");
-    setIsSubmitting(false);
-    return;
-  }
-  formData.append("boat_name", boatName);
-
-  // 2. Main image (only if provided)
-  if (mainFile) {
-    formData.append("main_image", mainFile);
-  }
-
-  // 3. Text / numeric fields – only add if they have a value
-  const fields = [
-    "price", "min_bid_amount", "year", "status", "loa", "lwl", "where",
-    "passenger_capacity", "beam", "draft", "air_draft", "displacement",
-    "ballast", "hull_type", "hull_construction", "hull_colour", "hull_number",
-    "designer", "builder", "engine_manufacturer", "horse_power", "hours",
-    "fuel", "max_speed", "cruising_speed", "gallons_per_hour", "tankage",
-    "cabins", "berths", "toilet", "shower", "bath", "heating",
-    "cockpit_type", "control_type", "external_url", "print_url",
-    "owners_comment", "reg_details", "known_defects", "last_serviced",
-    "super_structure_colour", "super_structure_construction",
-    "deck_colour", "deck_construction", "starting_type", "drive_type",
-  ];
-
-  fields.forEach((field) => {
-    const element = document.querySelector(`[name="${field}"]`) as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
-    if (element && element.value !== undefined && element.value.trim() !== "") {
-      formData.append(field, element.value);
+    // 1. Required field
+    const boatName = (document.querySelector('input[name="boat_name"]') as HTMLInputElement)?.value;
+    if (!boatName) {
+      toast.error("Vessel name is required");
+      setIsSubmitting(false);
+      return;
     }
-  });
+    formData.append("boat_name", boatName);
 
-  // 4. Boolean fields – always append "true"/"false"
-  const booleanFields = [
-    "allow_bidding", "flybridge", "oven", "microwave", "fridge", "freezer",
-    "air_conditioning", "navigation_lights", "compass", "depth_instrument",
-    "wind_instrument", "autopilot", "gps", "vhf", "plotter", "speed_instrument",
-    "radar", "life_raft", "epirb", "bilge_pump", "fire_extinguisher",
-    "mob_system", "spinnaker", "battery", "battery_charger", "generator",
-    "inverter", "television", "cd_player", "dvd_player", "anchor",
-    "spray_hood", "bimini", "stern_thruster", "bow_thruster",
-  ];
-
-  booleanFields.forEach((field) => {
-    const checkbox = document.querySelector(`[name="${field}"]`) as HTMLInputElement;
-    formData.append(field, checkbox?.checked ? "true" : "false");
-  });
-
-  // 5. Availability rules – only if at least one rule exists
-  if (availabilityRules.length > 0) {
-    formData.append("availability_rules", JSON.stringify(availabilityRules));
-  }
-
-  // 6. Display specs – only if at least one spec is selected
-  const selectedSpecs = Object.keys(displaySpecs).filter((key) => displaySpecs[key]);
-  if (selectedSpecs.length > 0) {
-    formData.append("display_specs", JSON.stringify(selectedSpecs));
-  }
-
-  // 7. Auto‑calculate min_bid_amount if price exists but min_bid_amount is empty
-  const price = formData.get("price");
-  if (!formData.has("min_bid_amount") && price) {
-    const priceVal = parseFloat(price as string);
-    if (!isNaN(priceVal)) {
-      formData.append("min_bid_amount", (priceVal * 0.9).toString());
+    // 2. Main image (only if provided)
+    if (mainFile) {
+      formData.append("main_image", mainFile);
     }
-  }
 
-  try {
-    // Create yacht
-    const res = await api.post("/partner/yachts", formData);
-    const newYachtId = res.data.id;
+    // 3. Text / numeric fields – only if they have a value
+    const fields = [
+      "price", "min_bid_amount", "year", "status", "loa", "lwl", "where",
+      "passenger_capacity", "beam", "draft", "air_draft", "displacement",
+      "ballast", "hull_type", "hull_construction", "hull_colour", "hull_number",
+      "designer", "builder", "engine_manufacturer", "horse_power", "hours",
+      "fuel", "max_speed", "cruising_speed", "gallons_per_hour", "tankage",
+      "cabins", "berths", "toilet", "shower", "bath", "heating",
+      "cockpit_type", "control_type", "external_url", "print_url",
+      "owners_comment", "reg_details", "known_defects", "last_serviced",
+      "super_structure_colour", "super_structure_construction",
+      "deck_colour", "deck_construction", "starting_type", "drive_type",
+    ];
 
-    // Upload gallery images
-    for (const cat of Object.keys(galleryState)) {
-      const newFiles = galleryState[cat];
-      if (newFiles.length > 0) {
-        const gData = new FormData();
-        newFiles.forEach((file) => gData.append("images[]", file));
-        gData.append("category", cat);
-        await api.post(`/partner/yachts/${newYachtId}/gallery`, gData);
+    fields.forEach((field) => {
+      const element = document.querySelector(`[name="${field}"]`) as
+        | HTMLInputElement
+        | HTMLSelectElement
+        | HTMLTextAreaElement;
+      if (element && element.value !== undefined && element.value.trim() !== "") {
+        formData.append(field, element.value);
+      }
+    });
+
+    // 4. Boolean fields – always send "true" or "false"
+    const booleanFields = [
+      "allow_bidding", "flybridge", "oven", "microwave", "fridge", "freezer",
+      "air_conditioning", "navigation_lights", "compass", "depth_instrument",
+      "wind_instrument", "autopilot", "gps", "vhf", "plotter", "speed_instrument",
+      "radar", "life_raft", "epirb", "bilge_pump", "fire_extinguisher",
+      "mob_system", "spinnaker", "battery", "battery_charger", "generator",
+      "inverter", "television", "cd_player", "dvd_player", "anchor",
+      "spray_hood", "bimini", "stern_thruster", "bow_thruster",
+    ];
+
+    booleanFields.forEach((field) => {
+      const checkbox = document.querySelector(`[name="${field}"]`) as HTMLInputElement;
+      formData.append(field, checkbox?.checked ? "true" : "false");
+    });
+
+    // 5. Availability rules – only if at least one rule exists
+    if (availabilityRules.length > 0) {
+      formData.append("availability_rules", JSON.stringify(availabilityRules));
+    }
+
+    // 6. Display specs – only if at least one spec is selected
+    const selectedSpecs = Object.keys(displaySpecs).filter((key) => displaySpecs[key]);
+    if (selectedSpecs.length > 0) {
+      formData.append("display_specs", JSON.stringify(selectedSpecs));
+    }
+
+    // 7. Auto‑calculate min_bid_amount if price exists but min_bid_amount is empty
+    const price = formData.get("price");
+    if (!formData.has("min_bid_amount") && price) {
+      const priceVal = parseFloat(price as string);
+      if (!isNaN(priceVal)) {
+        formData.append("min_bid_amount", (priceVal * 0.9).toString());
       }
     }
 
-    toast.success("Vessel Registered! Welcome Aboard.");
-    router.push("/nl/dashboard/partner");
-  } catch (err: any) {
-    console.error("Submission error:", err);
-    
-    // 🔍 Show actual server error message
-    if (err.response) {
-      const serverMessage = err.response.data?.message || err.response.data?.error || "Unknown server error";
-      toast.error(`Server error: ${serverMessage}`);
-      console.error("Server response:", err.response.data);
-    } else {
-      toast.error("Network error – please try again");
-    }
-    
-    if (err.response?.status === 422) {
-      setErrors(err.response.data.errors);
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
-  } finally {
-    setIsSubmitting(false);
-  }
-};
+    try {
+      // Create yacht
+      const res = await api.post("/partner/yachts", formData);
+      const newYachtId = res.data.id;
 
+      // Upload gallery images
+      for (const cat of Object.keys(galleryState)) {
+        const newFiles = galleryState[cat];
+        if (newFiles.length > 0) {
+          const gData = new FormData();
+          newFiles.forEach((file) => gData.append("images[]", file));
+          gData.append("category", cat);
+          await api.post(`/partner/yachts/${newYachtId}/gallery`, gData);
+        }
+      }
+
+      toast.success("Vessel Registered Successfully");
+      router.push("/nl/dashboard/partner");
+    } catch (err: any) {
+      console.error("Submission error:", err);
+      if (err.response) {
+        const serverMessage = err.response.data?.message || err.response.data?.error || "Unknown server error";
+        toast.error(`Server error: ${serverMessage}`);
+        console.error("Server response:", err.response.data);
+      } else {
+        toast.error("Network error – please try again");
+      }
+      if (err.response?.status === 422) {
+        setErrors(err.response.data.errors);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // ----------------------------------------------------------------------
+  // Render
+  // ----------------------------------------------------------------------
   return (
     <div className="min-h-screen bg-[#F8FAFC] pb-20">
       <Toaster position="top-right" />
+
+      {/* ========== ADMIN‑STYLE STICKY HEADER ========== */}
+      <div className="bg-[#003566] text-white p-8 sticky top-0 z-40 shadow-xl flex justify-between items-center">
+        <div className="flex items-center gap-6">
+          <button
+            onClick={() => router.back()}
+            className="hover:bg-white/10 p-2 rounded-full transition-colors"
+          >
+            <ArrowLeft size={24} />
+          </button>
+          <div>
+            <h1 className="text-2xl lg:text-3xl font-serif italic">
+              New Vessel Registration
+            </h1>
+            <p className="text-blue-400 text-[10px] font-black uppercase tracking-[0.4em] mt-1">
+              Registry Auth: Partner
+            </p>
+          </div>
+        </div>
+      </div>
 
       <div className="max-w-7xl mx-auto p-6 lg:p-12">
         <form onSubmit={handleSubmit} className="space-y-16">
@@ -352,9 +368,7 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
               <Camera size={16} /> 01. Primary Vessel Photo
             </label>
             <div
-              onClick={() =>
-                document.getElementById("main_image_input")?.click()
-              }
+              onClick={() => document.getElementById("main_image_input")?.click()}
               className="h-80 lg:h-96 bg-white border-2 border-dashed border-slate-200 relative flex items-center justify-center cursor-pointer overflow-hidden shadow-inner group transition-all hover:border-blue-400"
             >
               <input
@@ -410,9 +424,12 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                 <Input
                   name="min_bid_amount"
                   type="number"
-                  placeholder="Auto-calculates 90% of price if empty"
+                  placeholder="Auto‑calculates 90% of price if empty"
                   step="1000"
                 />
+                <p className="text-[8px] text-slate-400 italic mt-1">
+                  Leave empty to auto‑calculate
+                </p>
               </div>
               <div className="space-y-2">
                 <Label>Year Built</Label>
@@ -1047,7 +1064,7 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
               ) : (
                 <Save className="mr-2 w-5 h-5" />
               )}
-              Complete & Go to Dashboard <ArrowRight size={14} className="ml-2" />
+              Register Vessel <ArrowRight size={14} className="ml-2" />
             </Button>
           </div>
         </form>
