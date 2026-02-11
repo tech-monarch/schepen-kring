@@ -676,11 +676,8 @@ export default function PartnerFleetManagementPage() {
                   <div className="flex justify-between items-start">
                     <div>
                       {/* ✅ Vessel name – always shown, clean fallback */}
-                      <h3 className="text-lg font-serif italic mb-1 line-clamp-1">
+                      <h3 className="text-lg font-serif italic mb-1 line-clamp-1 text-blue-900">
                         {getDisplayName(yacht)}
-                        <span className="ml-2 text-[8px] text-red-400 font-mono">
-                          (raw: {JSON.stringify(yacht.boat_name)})
-                        </span>
                       </h3>
                       {/* ✅ Price directly below name */}
                       <p className="text-lg font-bold text-blue-900">{formatCurrency(yacht.price)}</p>
