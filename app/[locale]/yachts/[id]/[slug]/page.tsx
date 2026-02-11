@@ -185,12 +185,23 @@ export default function YachtTerminalPage() {
   const [paymentStatus, setPaymentStatus] = useState<"idle" | "processing" | "success">("idle");
   const [showTestSailForm, setShowTestSailForm] = useState(false);
   const [testSailStatus, setTestSailStatus] = useState<"idle" | "processing" | "success">("idle");
+  
+  // ---------- FORM STATES (auto-filled from localStorage) ----------
   const [bookingForm, setBookingForm] = useState({
     name: '',
     email: '',
     phone: '',
     notes: ''
   });
+  
+  const [contactForm, setContactForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    requestType: '',
+    comment: ''
+  });
+
   const [placingBid, setPlacingBid] = useState(false);
   const [bidError, setBidError] = useState<string>("");
   const [user, setUser] = useState<any>(null);
@@ -217,16 +228,38 @@ export default function YachtTerminalPage() {
     return null;
   };
 
+  // ----- Pre-fill forms when auth state changes -----
   useEffect(() => {
     const token = getAuthToken();
     const userData = getUserData();
     if (token && userData) {
       setIsAuthenticated(true);
       setUser(userData);
+      
+      // Pre-fill contact form
+      setContactForm({
+        name: userData.name || '',
+        email: userData.email || '',
+        phone: userData.phone_number || '',
+        requestType: '',
+        comment: ''
+      });
+      
+      // Pre-fill test sail booking form
+      setBookingForm({
+        name: userData.name || '',
+        email: userData.email || '',
+        phone: userData.phone_number || '',
+        notes: ''
+      });
     } else {
       setIsAuthenticated(false);
+      setUser(null);
+      // Clear forms when logged out
+      setContactForm({ name: '', email: '', phone: '', requestType: '', comment: '' });
+      setBookingForm({ name: '', email: '', phone: '', notes: '' });
     }
-  }, []);
+  }, []); // runs once on mount
 
   useEffect(() => {
     fetchVesselData();
@@ -403,6 +436,39 @@ export default function YachtTerminalPage() {
     }
   };
 
+  // ----- Contact form submission (creates a task for admin) -----
+  const handleContactSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!contactForm.name || !contactForm.email || !contactForm.phone) {
+      toast.error("Vul uw naam, e-mail en telefoonnummer in");
+      return;
+    }
+    try {
+      const token = getAuthToken();
+      const headers: any = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      await fetch('https://schepen-kring.nl/api/tasks', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          title: `INFORMATIE AANVRAAG: ${yacht?.boat_name}`,
+          description: `Klant vraagt meer informatie over ${yacht?.boat_name} (${yacht?.vessel_id}).\n\nNaam: ${contactForm.name}\nEmail: ${contactForm.email}\nTelefoon: ${contactForm.phone}\nAanvraag type: ${contactForm.requestType || 'Niet gespecificeerd'}\nOpmerking: ${contactForm.comment || 'Geen'}`,
+          priority: "Medium",
+          status: "To Do",
+          yacht_id: yacht?.id,
+        })
+      });
+      toast.success("Informatie aanvraag verzonden!");
+      setContactForm(prev => ({ ...prev, requestType: '', comment: '' })); // keep name/email/phone
+    } catch {
+      toast.error("Verzenden mislukt.");
+    }
+  };
+
   const handleTestSailBooking = async () => {
     if (!selectedDate || !selectedTime) {
       toast.error("Selecteer een datum en tijd voor uw proefvaart");
@@ -454,7 +520,8 @@ export default function YachtTerminalPage() {
         setSelectedDate(null);
         setSelectedTime(null);
         setAvailableSlots([]);
-        setBookingForm({ name: '', email: '', phone: '', notes: '' });
+        // Keep the pre-filled user data, only clear notes
+        setBookingForm(prev => ({ ...prev, notes: '' }));
       }, 3000);
     } catch (error) {
       setTestSailStatus("idle");
@@ -1056,35 +1123,45 @@ export default function YachtTerminalPage() {
                 )}
               </div>
 
-              {/* CONTACT FORM – EXACT REPLICA */}
+              {/* ----- CONTACT FORM – EXACT REPLICA + AUTO‑FILL ----- */}
               <div className="bg-gray-50 border border-gray-200 p-6">
                 <h4 className="text-lg font-serif italic text-gray-900 mb-4">
                   Meer informatie over de<br />
                   <span className="notranslate text-[#2a77b1]">{yacht.boat_name}</span>
                 </h4>
-                <form className="space-y-4">
+                <form onSubmit={handleContactSubmit} className="space-y-4">
                   <input type="hidden" name="g-recaptcha-response" className="g-recaptcha-response" />
                   <input
                     type="text"
                     placeholder="Your first and last name*"
                     className="w-full border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-gray-500 rounded-none"
                     required
+                    value={contactForm.name}
+                    onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })}
                   />
                   <input
                     type="text"
                     placeholder="Phone number*"
                     className="w-full border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-gray-500 rounded-none"
                     required
+                    value={contactForm.phone}
+                    onChange={(e) => setContactForm({ ...contactForm, phone: e.target.value })}
                   />
                   <input
                     type="email"
                     placeholder="Email address*"
                     className="w-full border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-gray-500 rounded-none"
                     required
+                    value={contactForm.email}
+                    onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
                   />
                   <p className="text-sm text-gray-700">I would like the following... *</p>
-                  <select className="w-full border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-gray-500 rounded-none bg-white">
-                    <option value="" disabled selected hidden></option>
+                  <select
+                    className="w-full border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-gray-500 rounded-none bg-white"
+                    value={contactForm.requestType}
+                    onChange={(e) => setContactForm({ ...contactForm, requestType: e.target.value })}
+                  >
+                    <option value="" disabled hidden></option>
                     <option value="Teruggebeld worden">Get a call back</option>
                     <option value="Een vrijblijvende afspraak maken">Make a no-obligation appointment</option>
                     <option value="Anders">Other</option>
@@ -1093,6 +1170,8 @@ export default function YachtTerminalPage() {
                     placeholder="Your comment or question about the Quicksilver 645 Cruiser *"
                     rows={4}
                     className="w-full border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-gray-500 rounded-none"
+                    value={contactForm.comment}
+                    onChange={(e) => setContactForm({ ...contactForm, comment: e.target.value })}
                   ></textarea>
                   <button
                     type="submit"
@@ -1113,25 +1192,27 @@ export default function YachtTerminalPage() {
                 {showTestSailForm ? 'Proefvaart formulier verbergen' : 'Proefvaart boeken'}
               </button>
 
-              {/* TEST SAIL FORM (inline) */}
-              {showTestSailForm && <TestSailForm
-                yacht={yacht}
-                depositAmount={depositAmount}
-                currentMonth={currentMonth}
-                calendarDays={calendarDays}
-                selectedDate={selectedDate}
-                selectedTime={selectedTime}
-                availableSlots={availableSlots}
-                bookingForm={bookingForm}
-                testSailStatus={testSailStatus}
-                onPrevMonth={handlePrevMonth}
-                onNextMonth={handleNextMonth}
-                onDateSelect={handleDateSelect}
-                onTimeSelect={setSelectedTime}
-                onBookingFormChange={setBookingForm}
-                onBook={handleTestSailBooking}
-                onCancel={() => setShowTestSailForm(false)}
-              />}
+              {/* TEST SAIL FORM (inline) – auto‑filled already via bookingForm state */}
+              {showTestSailForm && (
+                <TestSailForm
+                  yacht={yacht}
+                  depositAmount={depositAmount}
+                  currentMonth={currentMonth}
+                  calendarDays={calendarDays}
+                  selectedDate={selectedDate}
+                  selectedTime={selectedTime}
+                  availableSlots={availableSlots}
+                  bookingForm={bookingForm}
+                  testSailStatus={testSailStatus}
+                  onPrevMonth={handlePrevMonth}
+                  onNextMonth={handleNextMonth}
+                  onDateSelect={handleDateSelect}
+                  onTimeSelect={setSelectedTime}
+                  onBookingFormChange={setBookingForm}
+                  onBook={handleTestSailBooking}
+                  onCancel={() => setShowTestSailForm(false)}
+                />
+              )}
 
               {/* BID HISTORY */}
               <div className="bg-gray-50 border border-gray-200 p-6">
