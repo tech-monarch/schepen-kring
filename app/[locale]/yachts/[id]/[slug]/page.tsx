@@ -664,6 +664,7 @@ export default function YachtTerminalPage() {
           margin-right: auto;
           padding-left: 1.5rem;
           padding-right: 1.5rem;
+          height: 500px;
         }
         .inner-photo-holder {
           display: grid;
