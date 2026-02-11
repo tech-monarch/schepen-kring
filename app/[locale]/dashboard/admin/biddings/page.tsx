@@ -248,11 +248,11 @@ export default function GlobalBidManagementPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white text-[#333] font-roboto antialiased">
-      <Toaster position="top-center" />
+  <div className="min-h-screen bg-white text-[#333] font-roboto antialiased flex flex-col">
+    <Toaster position="top-center" />
 
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-white border-b border-gray-200 h-16 flex items-center px-6 justify-between">
+    {/* Header */}
+    <header className="w-full bg-white border-b border-gray-200 h-16 flex items-center px-6 justify-between">
         <Link
           href="/dashboard" // change to your own dashboard link
           className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-black transition-colors"
