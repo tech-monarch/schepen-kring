@@ -672,6 +672,7 @@ export default function YachtTerminalPage() {
           grid-gap: 10px;
           padding-top: 10px;
           background-color: #f3f4fa;
+          height: 500px;
         }
         .photo-of-object {
           overflow: hidden;

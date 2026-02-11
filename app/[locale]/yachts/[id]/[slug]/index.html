@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>Quicksilver 645 Cruiser - 2017 for sale - Schepenkring yacht brokers</title>
+  <!-- Bootstrap 5.3 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Font Awesome 6 (free) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <!-- Google Fonts Roboto -->
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <!-- Fancybox 5 CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.css">
+  <!-- Custom styles – exact UI replication -->
+  <style>
+    /* ----- global reset / base ----- */
+    body {
+      font-family: 'Roboto', sans-serif;
+      color: #666;
+      line-height: 1.7em;
+      font-weight: 500;
+      background: #fff;
+    }
+    a {
+      text-decoration: none;
+      color: #2a77b1;
+      transition: 0.2s;
+    }
+    a:hover {
+      color: #e0332d;
+    }
+    .bg-primary-custom { background-color: #2a77b1 !important; }
+    .bg-light-custom { background-color: #f5f5f5 !important; }
+    .btn-primary-custom {
+      background-color: #2a77b1;
+      color: #fff;
+      border-radius: 30px;
+      border: 0;
+      padding: 0.5rem 1.5rem;
+      font-size: 18px;
+      font-weight: 500;
+      transition: 0.3s;
+    }
+    .btn-primary-custom:hover {
+      background-color: #e0332d;
+      color: #fff;
+    }
+    .text-primary-custom { color: #2a77b1 !important; }
+    
+    /* ----- top bar (exact replica) ----- */
+    .top-bar {
+      background-color: #f5f5f5;
+      padding: 10px 0;
+    }
+    .top-bar .top-bar-content {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+    .top-bar iframe {
+      display: inline-block;
+      width: auto;
+      height: 50px;
+      border: 0;
+    }
+    .top-bar .language-flags img {
+      width: 16px;
+      height: 16px;
+      margin: 0 2px;
+    }
+    .top-bar a {
+      margin-left: 10px;
+      color: #7a7776;
+    }
+    @media (max-width: 768px) {
+      .top-bar iframe { display: none !important; }
+      .top-bar .top-bar-content { justify-content: center; }
+    }
+
+    /* ----- sticky header with logo shrink ----- */
+    .navbar-sticky {
+      border-bottom: 1px solid #f4f4f4;
+      box-shadow: 0 1px 7px rgba(10,10,10,0.09);
+      background: #fff;
+      transition: all 0.3s;
+      padding: 0 5%;
+    }
+    .navbar-brand img {
+      height: 110px;
+      width: auto;
+      transition: height 0.3s ease;
+    }
+    .navbar-sticky.shrink .navbar-brand img {
+      height: 70px;
+    }
+    .navbar-nav .nav-link {
+      font-size: 17px;
+      color: rgba(0,0,0,0.6);
+      padding: 31px 11px !important;
+      font-weight: 500;
+    }
+    .navbar-nav .nav-link:hover {
+      opacity: 0.7;
+    }
+    .navbar-nav .current-menu-item .nav-link {
+      color: #2a77b1 !important;
+    }
+    .dropdown-menu {
+      background: #fff;
+      border-top: 3px solid #2a77b1;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      padding: 20px 0;
+      border-radius: 0;
+      border: none;
+      border-top: 3px solid #2a77b1;
+    }
+    .dropdown-item {
+      padding: 6px 20px;
+      font-size: 14px;
+      white-space: nowrap;
+    }
+    .dropdown-item:hover {
+      background-color: rgba(0,0,0,0.03);
+      opacity: 0.7;
+    }
+    .menu-home-icon img {
+      width: 24px;
+      height: 19px;
+    }
+    .navbar .btn-sell {
+      position: absolute;
+      right: 0;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+    @media (max-width: 1215px) {
+      .navbar .btn-sell { display: none !important; }
+    }
+    @media (max-width: 991px) {
+      .navbar-brand img { height: 80px; }
+      .navbar-nav .nav-link { padding: 15px 0 !important; }
+      .navbar .btn-sell { position: static; transform: none; margin-top: 10px; }
+    }
+
+    /* ----- photo grid (exact replica from original) ----- */
+    .photos-holder-grid {
+      position: relative;
+      overflow: hidden;
+    }
+    .inner-photo-holder {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      grid-gap: 10px;
+      padding-top: 10px;
+      background-color: #f3f4fa;
+    }
+    .photo-of-object {
+      overflow: hidden;
+      background-color: #ededed;
+      position: relative;
+      transition: 0.4s;
+    }
+    .photo-of-object:hover { opacity: 0.7; }
+    .photo-of-object img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      aspect-ratio: 16/9;
+    }
+    .photo-of-object:nth-last-of-type(n+5):first-of-type:first-child,
+    .photo-of-object:nth-last-of-type(n+5):first-of-type~:first-child {
+      grid-row: span 2;
+      grid-column: span 6;
+    }
+    .photo-of-object:nth-last-of-type(n+5):first-of-type:nth-child(2),
+    .photo-of-object:nth-last-of-type(n+5):first-of-type~:nth-child(2),
+    .photo-of-object:nth-last-of-type(n+5):first-of-type:nth-child(3),
+    .photo-of-object:nth-last-of-type(n+5):first-of-type~:nth-child(3),
+    .photo-of-object:nth-last-of-type(n+5):first-of-type:nth-child(4),
+    .photo-of-object:nth-last-of-type(n+5):first-of-type~:nth-child(4),
+    .photo-of-object:nth-last-of-type(n+5):first-of-type:nth-child(5),
+    .photo-of-object:nth-last-of-type(n+5):first-of-type~:nth-child(5) {
+      grid-column: span 3;
+    }
+    .photo-of-object:nth-last-of-type(n+5):first-of-type:nth-child(n+6),
+    .photo-of-object:nth-last-of-type(n+5):first-of-type~:nth-child(n+6) {
+      display: none;
+    }
+    @media screen and (max-width: 767px) {
+      .inner-photo-holder { grid-template-columns: 1fr; }
+      .photo-of-object:nth-last-of-type(n+1):first-of-type:nth-child(n+2),
+      .photo-of-object:nth-last-of-type(n+1):first-of-type~:nth-child(n+2) {
+        display: none !important;
+      }
+    }
+
+    /* ----- topbar title & actions (sticky replica) ----- */
+    .vibp_topbar {
+      background: #fff;
+      border-bottom: 1px solid #e5e5e5;
+      padding: 15px 0;
+    }
+    .vibp_topbar_wrapper {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .vibp_topbar_title_price_wrapper {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .vibp_topbar_title {
+      font-size: 24px;
+      font-weight: 600;
+      color: #2a77b1;
+      margin: 0;
+    }
+    .vibp_topbar_actions {
+      display: flex;
+      gap: 15px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .vibp_topbar_actions a {
+      color: #666;
+      font-size: 15px;
+      text-decoration: underline;
+    }
+    .between-line {
+      width: 1px;
+      height: 20px;
+      background: #ccc;
+    }
+    @media (max-width: 768px) {
+      .vibp_topbar_wrapper { flex-direction: column; align-items: flex-start; }
+    }
+
+    /* ----- main container left/right (bootstap grid used) ----- */
+    .vibp_container {
+      margin-top: 30px;
+    }
+    .vibp_spec_container, .vibp_advert_opmerking_container, .vibp_makelaar_container,
+    .vibp_specs_container, .vibp_more_media_container, .vibp_pdf_container {
+      background: #fff;
+      padding: 20px;
+      margin-bottom: 25px;
+      border: 1px solid #eaeef5;
+      border-radius: 4px;
+    }
+    .vibp_title_of_specs {
+      font-size: 20px;
+      color: #2a77b1;
+      margin-bottom: 20px;
+      font-weight: 600;
+      border-bottom: 1px solid #eaeef5;
+      padding-bottom: 10px;
+    }
+    .vibp_algemene_specs_wrapper {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 30px;
+    }
+    .vibp_algemene_specs {
+      flex: 1 1 45%;
+    }
+    .vibp_spec_wrapper {
+      display: flex;
+      justify-content: space-between;
+      border-bottom: 1px dashed #eaeef5;
+      padding: 10px 0;
+    }
+    .vibp_spec_wrapper label {
+      font-weight: 600;
+      color: #333;
+    }
+    .vibp_spec_row {
+      display: flex;
+      padding: 8px 0;
+      border-bottom: 1px dashed #eaeef5;
+    }
+    .vibp_spec_name {
+      width: 40%;
+      font-weight: 600;
+      color: #333;
+    }
+    .vibp_spec_value {
+      width: 60%;
+    }
+    .vibp_makelaar_container {
+      background: #f9fafc;
+      display: flex;
+    }
+    .vibp_bedrijfslogo img {
+      max-width: 100%;
+      height: auto;
+      margin-right: 20px;
+    }
+    .vibp_makelaar_wrapper h2 {
+      font-size: 20px;
+      color: #2a77b1;
+    }
+    .vibp_makelaar_wrapper p {
+      margin-bottom: 5px;
+    }
+    .vibp_more_images {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 15px;
+      margin-bottom: 15px;
+    }
+    .vibp_more_images img {
+      width: 100%;
+      aspect-ratio: 16/9;
+      object-fit: cover;
+    }
+    .vibp_hidden_image { display: none; }
+    .vibp_load_more_images_btn {
+      cursor: pointer;
+      background: #2a77b1;
+      color: #fff;
+      padding: 10px 20px;
+      border: 0;
+      border-radius: 30px;
+      display: inline-block;
+    }
+    .vibp_back_to_archive {
+      color: #2a77b1;
+      font-size: 16px;
+      font-weight: 600;
+    }
+    .vibp_pdf_container a {
+      background: #2a77b1;
+      color: #fff;
+      padding: 10px 25px;
+      border-radius: 30px;
+      display: inline-block;
+    }
+    /* contact form */
+    .vibp_contact_container {
+      background: #f5f5f5;
+      padding: 25px;
+      border-radius: 8px;
+    }
+    .vibp_contact_form input, .vibp_contact_form select, .vibp_contact_form textarea {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 15px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    .vibp_contact_form input[type="submit"] {
+      background: #2a77b1;
+      color: #fff;
+      border: 0;
+      font-size: 18px;
+      border-radius: 30px;
+      cursor: pointer;
+    }
+    .vibp_contact_form input[type="submit"]:hover {
+      background: #e0332d;
+    }
+    /* mobile actions */
+    .vibp_mobile_actions {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background: #fff;
+      display: flex;
+      border-top: 2px solid #2a77b1;
+      z-index: 999;
+    }
+    .vibp_mobile_actions > div {
+      flex: 1;
+      text-align: center;
+      padding: 15px;
+    }
+    .mobile_action__phone:before,
+    .mobile_action__email:before {
+      font-family: "Font Awesome 6 Free";
+      font-weight: 900;
+      font-size: 24px;
+      color: #2a77b1;
+    }
+    .mobile_action__phone:before { content: "\f095"; }
+    .mobile_action__email:before { content: "\f0e0"; }
+    @media (min-width: 769px) {
+      .vibp_mobile_actions { display: none; }
+    }
+
+    /* footer exact */
+    .footer-section {
+      background-color: #f5f5f5;
+      padding: 50px 0 40px;
+    }
+    .footer-logo img {
+      width: 251px;
+      height: auto;
+    }
+    .footer-social a {
+      background-color: #2a77b1;
+      color: white;
+      display: inline-block;
+      width: 32px;
+      height: 32px;
+      border-radius: 3px;
+      text-align: center;
+      line-height: 32px;
+      margin-right: 8px;
+    }
+    .footer-social a:hover {
+      background-color: #e0332d;
+    }
+    .footer-copyright {
+      border-top: 1px solid #ddd;
+      margin-top: 30px;
+      padding-top: 30px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ========== TOP BAR (exact) ========== -->
+<div class="top-bar">
+  <div class="container-fluid" style="width: 90%;">
+    <div class="top-bar-content">
+      <!-- iframe klantenvertellen -->
+      <iframe class="lazy-loaded-iframe" frameborder="0" allowtransparency="true" 
+              data-src="https://www.klantenvertellen.nl/retrieve-widget.html?color=white&amp;allowTransparency=true&amp;button=true&amp;lang=nl&amp;tenantId=99&amp;locationId=1030253" 
+              height="50" width="auto" loading="lazy" style="display: inline-block;"></iframe>
+      <div class="top-text d-flex align-items-center gap-2">
+        <div class="gtranslate_wrapper"></div>
+        <div class="language-flags">
+          <a href="https://www.schepenkring.nl/boats-offer/2006391/quicksilver-645-cruiser/" title="Dutch NL" class="glink nturl notranslate"><img loading="lazy" src="https://www.schepenkring.nl/wp-content/plugins/gtranslate/flags/svg/nl.svg" width="16" height="16" alt="nl"></a>
+          <a href="https://www.schepenkring.com/boats-offer/2006391/quicksilver-645-cruiser/" title="EN" class="glink nturl notranslate"><img loading="lazy" src="https://www.schepenkring.nl/wp-content/plugins/gtranslate/flags/svg/en.svg" width="16" height="16" alt="en"></a>
+          <a href="https://www.schepenkring.de/bootsangebot/2006391/quicksilver-645-cruiser/" title="German DE" class="glink nturl notranslate"><img loading="lazy" src="https://www.schepenkring.nl/wp-content/plugins/gtranslate/flags/svg/de.svg" width="16" height="16" alt="de"></a>
+          <a href="https://www.schepenkring.fr/annoncesbateau/2006391/quicksilver-645-cruiser/" title="French FR" class="glink nturl notranslate"><img loading="lazy" src="https://www.schepenkring.nl/wp-content/plugins/gtranslate/flags/svg/fr.svg" width="16" height="16" alt="fr"></a>
+        </div>
+        <a href="https://www.schepenkring.com/blog/">News & updates</a>
+        <a href="https://www.schepenkring.com/contact/openingstijden/">Opening hours</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== STICKY NAVIGATION (BOOTSTRAP NAVBAR) ========== -->
+<nav class="navbar navbar-expand-lg navbar-light navbar-sticky sticky-top" id="mainNav">
+  <div class="container-fluid" style="width: 90%; position: relative;">
+    <a class="navbar-brand" href="https://www.schepenkring.com/">
+      <img src="https://www.schepenkring.nl/wp-content/uploads/2024/05/schepenkring-logo.png" alt="Schepenkring" width="233" height="110">
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain" aria-controls="navbarMain" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarMain">
+      <ul class="navbar-nav ms-auto align-items-lg-center">
+        <!-- Home icon -->
+        <li class="nav-item">
+          <a class="nav-link" href="https://www.schepenkring.com/">
+            <span class="menu-image-title-hide">Home</span>
+            <img width="24" height="19" src="https://www.schepenkring.nl/wp-content/uploads/2024/05/home_icon-24x19.png" class="menu-image" alt="">
+          </a>
+        </li>
+        <!-- Boat offer dropdown -->
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="https://www.schepenkring.com/boats-offer/" id="navbarDropdown1" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            Boat offer
+          </a>
+          <ul class="dropdown-menu" aria-labelledby="navbarDropdown1">
+            <li><a class="dropdown-item" href="/boats-offer/">Current boat offer</a></li>
+            <li><a class="dropdown-item" href="https://www.schepenkring.com/verkochte-boten/">Sold boats</a></li>
+            <li><a class="dropdown-item" href="https://www.schepenkring.com/boot-kopen/">Buying a boat</a></li>
+          </ul>
+        </li>
+        <!-- Sell your boat dropdown -->
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="https://www.schepenkring.com/boot-verkopen/" id="navbarDropdown2" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            Sell ​​your boat
+          </a>
+          <ul class="dropdown-menu" aria-labelledby="navbarDropdown2">
+            <li><a class="dropdown-item" href="https://www.schepenkring.com/boot-verkopen/schip-verkopen/">Why go to Schepenkring</a></li>
+            <li><a class="dropdown-item" href="https://www.schepenkring.com/actie/">Promotion at Schepenkring: FREE berth</a></li>
+          </ul>
+        </li>
+        <!-- DEALS -->
+        <li class="nav-item">
+          <a class="nav-link" href="https://www.schepenkring.com/actie/">DEALS</a>
+        </li>
+        <!-- Locations dropdown -->
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="https://www.schepenkring.com/vestigingen/" id="navbarDropdown3" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            Locations
+          </a>
+          <ul class="dropdown-menu" aria-labelledby="navbarDropdown3">
+            <li><a class="dropdown-item" href="https://www.schepenkring.com/vestigingen/vereniging-schepenkring/">Association of Schepenkring</a></li>
+            <li><a class="dropdown-item" href="https://www.schepenkring.com/vestigingen/jachtmakelaardij-lelystad/">Schepenkring Lelystad</a></li>
+            <li><a class="dropdown-item" href="https://www.schepenkring.com/vestigingen/jachtmakelaardij-gelderland/">Schepenkring Gelderland</a></li>
+            <li><a class="dropdown-item" href="https://www.schepenkring.com/vestigingen/jachtmakelaardij-dordrecht/">Schepenkring Dordrecht</a></li>
+            <li><a class="dropdown-item" href="https://www.schepenkring.com/vestigingen/jachtmakelaardij-limburg/">Schepenkring Roermond</a></li>
+            <li><a class="dropdown-item" href="https://www.schepenkring.com/vestigingen/jachtmakelaardij-zeeland/">Schepenkring Kortgene</a></li>
+            <li><a class="dropdown-item" href="https://www.schepenkring.com/vestigingen/jachtmakelaardij-randmeren/">Schepenkring Randmeren</a></li>
+            <li><a class="dropdown-item" href="https://www.schepenkring.com/jachtmakelaardij-heeg/">Schepenkring Heeg</a></li>
+          </ul>
+        </li>
+        <!-- Contact dropdown with submenu -->
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="https://www.schepenkring.com/contact/" id="navbarDropdown4" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            Contact
+          </a>
+          <ul class="dropdown-menu" aria-labelledby="navbarDropdown4">
+            <li><a class="dropdown-item" href="https://www.schepenkring.com/contact/openingstijden/">Opening hours</a></li>
+            <li class="dropdown dropend">
+              <a class="dropdown-item dropdown-toggle" href="https://www.schepenkring.com/services/" id="navbarDropdownServices" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                Services
+              </a>
+              <ul class="dropdown-menu" aria-labelledby="navbarDropdownServices">
+                <li><a class="dropdown-item" href="https://www.schepenkring.com/services/jachtexperts/">Hunting experts</a></li>
+                <li><a class="dropdown-item" href="https://www.schepenkring.com/services/jachthavens/">Marinas</a></li>
+                <li><a class="dropdown-item" href="https://www.schepenkring.com/services/jachttransport/">Yacht transport</a></li>
+                <li><a class="dropdown-item" href="https://www.schepenkring.com/taxatie/">Taxation</a></li>
+                <li><a class="dropdown-item" href="https://www.schepenkring.com/services/vaarberichten/">Sailing reports</a></li>
+                <li><a class="dropdown-item" href="https://www.schepenkring.com/services/hiswa-vereniging/">Hiswa association</a></li>
+              </ul>
+            </li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+    <!-- Button "Selling your boat" -->
+    <a id="header_verkopen" class="btn btn-primary-custom btn-sell" href="https://www.schepenkring.com/boot-verkopen/verkoop-uw-boot/#verkoop">Selling your boat</a>
+  </div>
+</nav>
+
+<!-- ========== MAIN CONTENT ========== -->
+<main class="container-fluid" style="width: 90%; max-width: 1400px;">
+
+  <!-- PHOTO GALLERY GRID (exact) -->
+  <div class="photos-holder-grid mt-3">
+    <div class="inner-photo-holder">
+      <!-- 19 photos from original -->
+      <div class="photo-of-object"><a href="https://images.botenwebmanager.nl/89536b3e-f72b-4cf8-992c-ec7fc549091b.jpg" data-fancybox="gallery"><img src="https://images.botenwebmanager.nl/89536b3e-f72b-4cf8-992c-ec7fc549091b.jpg" alt="Quicksilver 645 Cruiser 1" loading="lazy"></a></div>
+      <div class="photo-of-object"><a href="https://images.botenwebmanager.nl/f08c1196-f560-4315-a04e-975bafe44c62.jpg" data-fancybox="gallery"><img src="https://images.botenwebmanager.nl/f08c1196-f560-4315-a04e-975bafe44c62.jpg" alt="Quicksilver 645 Cruiser 2" loading="lazy"></a></div>
+      <div class="photo-of-object"><a href="https://images.botenwebmanager.nl/538e6360-fc1e-4146-9fb9-387054c62a14.jpg" data-fancybox="gallery"><img src="https://images.botenwebmanager.nl/538e6360-fc1e-4146-9fb9-387054c62a14.jpg" alt="Quicksilver 645 Cruiser 3" loading="lazy"></a></div>
+      <div class="photo-of-object"><a href="https://images.botenwebmanager.nl/02533780-75a6-4850-a990-5d67d88d1d77.jpg" data-fancybox="gallery"><img src="https://images.botenwebmanager.nl/02533780-75a6-4850-a990-5d67d88d1d77.jpg" alt="Quicksilver 645 Cruiser 4" loading="lazy"></a></div>
+      <div class="photo-of-object"><a href="https://images.botenwebmanager.nl/0b5abf9a-449a-4957-893b-9e0212977c25.jpg" data-fancybox="gallery"><img src="https://images.botenwebmanager.nl/0b5abf9a-449a-4957-893b-9e0212977c25.jpg" alt="Quicksilver 645 Cruiser 5" loading="lazy"></a></div>
+      <div class="photo-of-object"><a href="https://images.botenwebmanager.nl/8b0ec6e5-0f66-42a7-b733-ea2d72410c0a.jpg" data-fancybox="gallery"><img src="https://images.botenwebmanager.nl/8b0ec6e5-0f66-42a7-b733-ea2d72410c0a.jpg" alt="Quicksilver 645 Cruiser 6" loading="lazy"></a></div>
+      <div class="photo-of-object"><a href="https://images.botenwebmanager.nl/9d1877b4-7085-4190-b18a-83d94560590f.jpg" data-fancybox="gallery"><img src="https://images.botenwebmanager.nl/9d1877b4-7085-4190-b18a-83d94560590f.jpg" alt="Quicksilver 645 Cruiser 7" loading="lazy"></a></div>
+      <div class="photo-of-object"><a href="https://images.botenwebmanager.nl/05198222-270f-480f-942e-935ebd1b8dbc.jpg" data-fancybox="gallery"><img src="https://images.botenwebmanager.nl/05198222-270f-480f-942e-935ebd1b8dbc.jpg" alt="Quicksilver 645 Cruiser 8" loading="lazy"></a></div>
+      <div class="photo-of-object"><a href="https://images.botenwebmanager.nl/ea88027c-35a8-4ca2-8698-a26a6cdebf70.jpg" data-fancybox="gallery"><img src="https://images.botenwebmanager.nl/ea88027c-35a8-4ca2-8698-a26a6cdebf70.jpg" alt="Quicksilver 645 Cruiser 9" loading="lazy"></a></div>
+      <div class="photo-of-object"><a href="https://images.botenwebmanager.nl/33d62ca5-3ac7-42f9-887c-1d7053cb2b35.jpg" data-fancybox="gallery"><img src="https://images.botenwebmanager.nl/33d62ca5-3ac7-42f9-887c-1d7053cb2b35.jpg" alt="Quicksilver 645 Cruiser 10" loading="lazy"></a></div>
+      <div class="photo-of-object"><a href="https://images.botenwebmanager.nl/8ad54012-e935-4a39-8ecc-55462bad9f64.jpg" data-fancybox="gallery"><img src="https://images.botenwebmanager.nl/8ad54012-e935-4a39-8ecc-55462bad9f64.jpg" alt="Quicksilver 645 Cruiser 11" loading="lazy"></a></div>
+      <div class="photo-of-object"><a href="https://images.botenwebmanager.nl/5e9783ff-5837-4273-afd3-3a622cf6919a.jpg" data-fancybox="gallery"><img src="https://images.botenwebmanager.nl/5e9783ff-5837-4273-afd3-3a622cf6919a.jpg" alt="Quicksilver 645 Cruiser 12" loading="lazy"></a></div>
+      <div class="photo-of-object"><a href="https://images.botenwebmanager.nl/bbf34b87-883d-4cdf-9f38-22f5400d8b33.jpg" data-fancybox="gallery"><img src="https://images.botenwebmanager.nl/bbf34b87-883d-4cdf-9f38-22f5400d8b33.jpg" alt="Quicksilver 645 Cruiser 13" loading="lazy"></a></div>
+      <div class="photo-of-object"><a href="https://images.botenwebmanager.nl/ce27dd23-d210-450f-86f9-0b606b19d5be.jpg" data-fancybox="gallery"><img src="https://images.botenwebmanager.nl/ce27dd23-d210-450f-86f9-0b606b19d5be.jpg" alt="Quicksilver 645 Cruiser 14" loading="lazy"></a></div>
+      <div class="photo-of-object"><a href="https://images.botenwebmanager.nl/fadfb13e-7824-40a0-89e3-53871f36048f.jpg" data-fancybox="gallery"><img src="https://images.botenwebmanager.nl/fadfb13e-7824-40a0-89e3-53871f36048f.jpg" alt="Quicksilver 645 Cruiser 15" loading="lazy"></a></div>
+      <div class="photo-of-object"><a href="https://images.botenwebmanager.nl/14b08e33-c46a-495b-a5de-49def8a4b249.jpg" data-fancybox="gallery"><img src="https://images.botenwebmanager.nl/14b08e33-c46a-495b-a5de-49def8a4b249.jpg" alt="Quicksilver 645 Cruiser 16" loading="lazy"></a></div>
+      <div class="photo-of-object"><a href="https://images.botenwebmanager.nl/986b5ee6-d9c1-4942-8d3c-353daa1d58c1.jpg" data-fancybox="gallery"><img src="https://images.botenwebmanager.nl/986b5ee6-d9c1-4942-8d3c-353daa1d58c1.jpg" alt="Quicksilver 645 Cruiser 17" loading="lazy"></a></div>
+      <div class="photo-of-object"><a href="https://images.botenwebmanager.nl/ade43ce5-f3b9-469d-9df7-1f650ef71765.jpg" data-fancybox="gallery"><img src="https://images.botenwebmanager.nl/ade43ce5-f3b9-469d-9df7-1f650ef71765.jpg" alt="Quicksilver 645 Cruiser 18" loading="lazy"></a></div>
+      <div class="photo-of-object"><a href="https://images.botenwebmanager.nl/6c79e66c-42f3-4161-a487-be77dc2d041a.jpg" data-fancybox="gallery"><img src="https://images.botenwebmanager.nl/6c79e66c-42f3-4161-a487-be77dc2d041a.jpg" alt="Quicksilver 645 Cruiser 19" loading="lazy"></a></div>
+    </div>
+  </div>
+
+  <!-- BOAT TITLE & ACTION BAR (exact replica) -->
+  <div class="vibp_topbar">
+    <div class="vibp_topbar_wrapper">
+      <div class="vibp_topbar_title_price_wrapper">
+        <h1 class="vibp_topbar_title notranslate">Quicksilver 645 Cruiser</h1>
+        <span class="vibp_topbar_title">€ 36.500, -</span>
+      </div>
+      <div class="vibp_topbar_actions">
+        <a class="vibp_topbar_action_meerinfo" href="#">More information</a>
+        <span class="between-line"></span>
+        <a target="_blank" download="Quicksilver 645 Cruiser - PDF" href="https://krekelberg.yachtshift.nl/yachtshift/export/brochure-html/key/c053RWkwZUdKT2VNaWE2akFLRWR5dz09/language/en/act/force" class="vibp_topbar_action_pdfprinten">Print PDF</a>
+        <a class="vibp_topbar_action_fotos" href="#fotos">Photos</a>
+        <a class="vibp_topbar_action_documenten" href="#documenten">Documents</a>
+        <a class="vibp_topbar_action_delen a2a_dd" id="shareButton">Share</a>
+        <a class="vibp_topbar_action_media" href="#fotos">All media</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap row: left 8 / right 4 -->
+  <div class="row vibp_container">
+    <!-- LEFT COLUMN (8) -->
+    <div class="col-lg-8">
+      
+      <!-- Back to archive + breadcrumbs -->
+      <div class="d-flex justify-content-between align-items-center flex-wrap mb-3">
+        <a class="vibp_back_to_archive" href="/boats-offer">❮ Back to overview</a>
+        <div class="vibp_breadcrumbs">
+          <a href="/">Home</a> ❯
+          <a href="/boats-offer">Boat offer</a> ❯
+          <span class="notranslate">Quicksilver 645 Cruiser</span>
+        </div>
+      </div>
+
+      <!-- General specifications -->
+      <div class="vibp_spec_container">
+        <h3 class="vibp_title_of_specs">General specifications</h3>
+        <div class="vibp_algemene_specs_wrapper">
+          <div class="vibp_algemene_specs">
+            <div class="vibp_spec_wrapper"><label>Asking price</label><span>€ 36.500, -</span></div>
+            <div class="vibp_spec_wrapper"><label>VAT status</label><span>Including VAT</span></div>
+            <div class="vibp_spec_wrapper"><label>Categories</label><span>Speedboats and sports boats</span></div>
+            <div class="vibp_spec_wrapper"><label>Brand / Model</label><span>Quicksilver 645 Cruiser</span></div>
+            <div class="vibp_spec_wrapper"><label>Year of construction</label><span>2017</span></div>
+            <div class="vibp_spec_wrapper"><label>Motor</label><span>150 hp Mercury gasoline outboard</span></div>
+            <div class="vibp_spec_wrapper"><label>berth</label><span class="notranslate" translate="no">in verkoophaven Schepenkring Roermond</span></div>
+          </div>
+          <div class="vibp_algemene_specs">
+            <div class="vibp_spec_wrapper"><label>Reference code</label><span>0402260002</span></div>
+            <div class="vibp_spec_wrapper"><label>building material</label><span>Polyester</span></div>
+            <div class="vibp_spec_wrapper"><label>L x W x D approx.</label><span>6,45 m x 2,37 m x 0,49 m</span></div>
+            <div class="vibp_spec_wrapper"><label>Sleeps</label><span>2 solid</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Comments -->
+      <div class="vibp_advert_opmerking_container">
+        <p class="vibp_title_of_specs">Comments</p>
+        <div id="vibp_advert_description" style="max-height: none;" class="vibp_advert_description">
+          Quickzilver 645 Cruiser – May Nik compact and versatile sports cruiser with a 150 hp Mercury outboard engine and Harbeck road trailer, comfortable cabin for two, spacious cockpit with lounge/dining facilities, and excellent handling and safety features.
+        </div>
+      </div>
+
+      <!-- Broker info (Makelaar) -->
+      <div class="vibp_makelaar_container d-flex flex-wrap align-items-center">
+        <div class="vibp_bedrijfslogo me-4">
+          <img src="https://www.schepenkring.nl/wp-content/uploads/2024/05/schepenkring-logo.png" alt="Schepenkring logo" loading="lazy">
+        </div>
+        <div class="vibp_makelaar_wrapper">
+          <h2 class="notranslate">Makelaar - Schepenkring Roermond</h2>
+          <div><p class="gt-block"><span>Phone number</span> <a href="tel:+31(0)475315661">+31(0)475 315661</a></p></div>
+          <div><p class="gt-block"><span>Email</span> <a href="mailto:roermond@schepenkring.nl">roermond@schepenkring.nl</a></p></div>
+          <div><p class="gt-block"><span>Address</span> <span>Hertenerweg 2, Roermond 6049 AA<br><strong class="show-eng">The Netherlands</strong><strong class="show-de"> The Netherlands</strong></span></p></div>
+          <div><p class="gt-block"><span>Route</span> <a title="View route on Google maps" target="_blank" href="https://www.google.nl/maps/dir//51.1862287,5.9717313">calculate route</a></p></div>
+        </div>
+      </div>
+
+      <!-- More information specs (detailed) -->
+      <div class="vibp_specs_container">
+        <h3 class="vibp_title_of_specs">More information about the <span class="notranslate">Quicksilver 645 Cruiser</span></h3>
+        <div class="vibp_spec_row"><div class="vibp_spec_name">werf</div><div class="vibp_spec_value">Quicksilver</div></div>
+        <div class="vibp_spec_row"><div class="vibp_spec_name">CE</div><div class="vibp_spec_value">C</div></div>
+        <div class="vibp_spec_row"><div class="vibp_spec_name">CE max weight</div><div class="vibp_spec_value">845 kg</div></div>
+        <div class="vibp_spec_row"><div class="vibp_spec_name">Hull shape</div><div class="vibp_spec_value">V-bottom</div></div>
+        <div class="vibp_spec_row"><div class="vibp_spec_name">Hull color</div><div class="vibp_spec_value">Black</div></div>
+        <div class="vibp_spec_row"><div class="vibp_spec_name">Deck and superstructure colour</div><div class="vibp_spec_value">White</div></div>
+        <div class="vibp_spec_row"><div class="vibp_spec_name">Deck and superstructure construction</div><div class="vibp_spec_value">Grp (Polyester) Anti-slip and teak</div></div>
+        <div class="vibp_spec_row"><div class="vibp_spec_name">Open Cockpit (OK)</div><div class="vibp_spec_value"><img src="https://www.schepenkring.nl/wp-content/plugins/vibp/assets/views/frontend/themes/thema_one/check.png" loading="lazy"></div></div>
+        <div class="vibp_spec_row"><div class="vibp_spec_name">Normal clearance height</div><div class="vibp_spec_value">179 0</div></div>
+        <div class="vibp_spec_row"><div class="vibp_spec_name">Draught</div><div class="vibp_spec_value">49 cm</div></div>
+        <div class="vibp_spec_row"><div class="vibp_spec_name">Waterline length</div><div class="vibp_spec_value">612 cm</div></div>
+        <div class="vibp_spec_row"><div class="vibp_spec_name">Water displacement</div><div class="vibp_spec_value">1060 kg</div></div>
+        <div class="vibp_spec_row"><div class="vibp_spec_name">Control</div><div class="vibp_spec_value"><img src="https://www.schepenkring.nl/wp-content/plugins/vibp/assets/views/frontend/themes/thema_one/check.png" loading="lazy"> Steering wheel</div></div>
+        <div class="vibp_spec_row"><div class="vibp_spec_name">Place control</div><div class="vibp_spec_value">Outside</div></div>
+        <div class="vibp_spec_row"><div class="vibp_spec_name">Trim flaps</div><div class="vibp_spec_value"><img src="https://www.schepenkring.nl/wp-content/plugins/vibp/assets/views/frontend/themes/thema_one/check.png" loading="lazy"></div></div>
+      </div>
+
+      <!-- Accommodation -->
+      <div class="vibp_specs_container">
+        <h3 class="vibp_title_of_specs">Accommodation</h3>
+        <div class="vibp_spec_row"><div class="vibp_spec_name">cabins</div><div class="vibp_spec_value">1</div></div>
+        <div class="vibp_spec_row"><div class="vibp_spec_name">Sleeps</div><div class="vibp_spec_value">2 solid</div></div>
+        <div class="vibp_spec_row"><div class="vibp_spec_name">Type of interior</div><div class="vibp_spec_value">Modern, light</div></div>
+        <div class="vibp_spec_row"><div class="vibp_spec_name">Mattresses</div><div class="vibp_spec_value"><img src="https://www.schepenkring.nl/wp-content/plugins/vibp/assets/views/frontend/themes/thema_one/check.png" loading="lazy"></div></div>
+        <div class="vibp_spec_row"><div class="vibp_spec_name">Water tank & material</div><div class="vibp_spec_value"><img src="https://www.schepenkring.nl/wp-content/plugins/vibp/assets/views/frontend/themes/thema_one/check.png" loading="lazy"> 45 liters Plastic</div></div>
+        <div class="vibp_spec_row"><div class="vibp_spec_name">Water system</div><div class="vibp_spec_value">Pressure system Electric pump</div></div>
+        <div class="vibp_spec_row"><div class="vibp_spec_name">Number of showers</div><div class="vibp_spec_value"><img src="https://www.schepenkring.nl/wp-content/plugins/vibp/assets/views/frontend/themes/thema_one/check.png" loading="lazy"></div></div>
+        <div class="vibp_spec_row"><div class="vibp_spec_name">Radio CD player</div><div class="vibp_spec_value"><img src="https://www.schepenkring.nl/wp-content/plugins/vibp/assets/views/frontend/themes/thema_one/check.png" loading="lazy"> Fusion stereo system</div></div>
+        <div class="vibp_spec_row"><div class="vibp_spec_name">Refrigerator & food</div><div class="vibp_spec_value"><img src="https://www.schepenkring.nl/wp-content/plugins/vibp/assets/views/frontend/themes/thema_one/check.png" loading="lazy"> Electric 12V cool box</div></div>
+      </div>
+
+      <!-- Engine and electrics -->
+      <div class="vibp_specs_container">
+        <h3 class="vibp_title_of_specs">Engine and electrics</h3>
+        <div class="vibp_spec_row"><div class="vibp_spec_name">Number of identical engines</div><div class="vibp_spec_value">1</div></div>
+        <div class="vibp_spec_row"><div class="vibp_spec_name">Start type</div><div class="vibp_spec_value">Electric</div></div>
+        <div class="vibp_spec_row"><div class="vibp_spec_name">Type</div><div class="vibp_spec_value">Outboard</div></div>
+        <div class="vibp_spec_row"><div class="vibp_spec_name">Brand</div><div class="vibp_spec_value">Mercury</div></div>
+        <div class="vibp_spec_row"><div class="vibp_spec_name">Door Design</div><div class="vibp_spec_value">ME F150 XLEFI-4266</div></div>
+        <div class="vibp_spec_row"><div class="vibp_spec_name">Serial Number</div><div class="vibp_spec_value">2B44366</div></div>
+        <div class="vibp_spec_row"><div class="vibp_spec_name">Year of construction</div><div class="vibp_spec_value">2018</div></div>
+        <div class="vibp_spec_row"><div class="vibp_spec_name">Amount of cilinders</div><div class="vibp_spec_value">4</div></div>
+        <div class="vibp_spec_row"><div class="vibp_spec_name">Power</div><div class="vibp_spec_value">150 hp</div></div>
+        <div class="vibp_spec_row"><div class="vibp_spec_name">Hour meter</div><div class="vibp_spec_value"><img src="https://www.schepenkring.nl/wp-content/plugins/vibp/assets/views/frontend/themes/thema_one/check.png" loading="lazy"></div></div>
+        <div class="vibp_spec_row"><div class="vibp_spec_name">Running hours</div><div class="vibp_spec_value">80 ( +/-)</div></div>
+        <div class="vibp_spec_row"><div class="vibp_spec_name">Fuel</div><div class="vibp_spec_value">Petrol Euro 95</div></div>
+        <div class="vibp_spec_row"><div class="vibp_spec_name">Consumption</div><div class="vibp_spec_value">7 liters/hour</div></div>
+        <div class="vibp_spec_row"><div class="vibp_spec_name">Propulsion</div><div class="vibp_spec_value">screw</div></div>
+        <div class="vibp_spec_row"><div class="vibp_spec_name">Fuel tank quantity</div><div class="vibp_spec_value"><img src="https://www.schepenkring.nl/wp-content/plugins/vibp/assets/views/frontend/themes/thema_one/check.png" loading="lazy"></div></div>
+        <div class="vibp_spec_row"><div class="vibp_spec_name">Max speed</div><div class="vibp_spec_value">65 km/h</div></div>
+        <div class="vibp_spec_row"><div class="vibp_spec_name">Tachometer</div><div class="vibp_spec_value"><img src="https://www.schepenkring.nl/wp-content/plugins/vibp/assets/views/frontend/themes/thema_one/check.png" loading="lazy"></div></div>
+        <div class="vibp_spec_row"><div class="vibp_spec_name">Battery</div><div class="vibp_spec_value"><img src="https://www.schepenkring.nl/wp-content/plugins/vibp/assets/views/frontend/themes/thema_one/check.png" loading="lazy">2 Capacity: 95 Ah</div></div>
+        <div class="vibp_spec_row"><div class="vibp_spec_name">Dynamo</div><div class="vibp_spec_value"><img src="https://www.schepenkring.nl/wp-content/plugins/vibp/assets/views/frontend/themes/thema_one/check.png" loading="lazy"></div></div>
+        <div class="vibp_spec_row"><div class="vibp_spec_name">Voltmeter</div><div class="vibp_spec_value"><img src="https://www.schepenkring.nl/wp-content/plugins/vibp/assets/views/frontend/themes/thema_one/check.png" loading="lazy"></div></div>
+        <div class="vibp_spec_row"><div class="vibp_spec_name">Voltage</div><div class="vibp_spec_value"><img src="https://www.schepenkring.nl/wp-content/plugins/vibp/assets/views/frontend/themes/thema_one/check.png" loading="lazy">12 volt</div></div>
+        <div class="vibp_spec_row"><div class="vibp_spec_name">Comments</div><div class="vibp_spec_value"><p>Motor with tracker</p></div></div>
+      </div>
+
+      <!-- Navigation and electronics -->
+      <div class="vibp_specs_container">
+        <h3 class="vibp_title_of_specs">Navigation and electronics</h3>
+        <div class="vibp_spec_row"><div class="vibp_spec_name">Kompas</div><div class="vibp_spec_value"><img src="https://www.schepenkring.nl/wp-content/plugins/vibp/assets/views/frontend/themes/thema_one/check.png" loading="lazy"></div></div>
+        <div class="vibp_spec_row"><div class="vibp_spec_name">Log/speed</div><div class="vibp_spec_value"><img src="https://www.schepenkring.nl/wp-content/plugins/vibp/assets/views/frontend/themes/thema_one/check.png" loading="lazy"></div></div>
+        <div class="vibp_spec_row"><div class="vibp_spec_name">Depth gauge</div><div class="vibp_spec_value"><img src="https://www.schepenkring.nl/wp-content/plugins/vibp/assets/views/frontend/themes/thema_one/check.png" loading="lazy"></div></div>
+        <div class="vibp_spec_row"><div class="vibp_spec_name">Navigation lights</div><div class="vibp_spec_value"><img src="https://www.schepenkring.nl/wp-content/plugins/vibp/assets/views/frontend/themes/thema_one/check.png" loading="lazy"></div></div>
+        <div class="vibp_spec_row"><div class="vibp_spec_name">Rudder angle indicator</div><div class="vibp_spec_value"><img src="https://www.schepenkring.nl/wp-content/plugins/vibp/assets/views/frontend/themes/thema_one/check.png" loading="lazy"></div></div>
+        <div class="vibp_spec_row"><div class="vibp_spec_name">GPS</div><div class="vibp_spec_value"><img src="https://www.schepenkring.nl/wp-content/plugins/vibp/assets/views/frontend/themes/thema_one/check.png" loading="lazy"> Simrad Evo 3</div></div>
+        <div class="vibp_spec_row"><div class="vibp_spec_name">chart plotter</div><div class="vibp_spec_value"><img src="https://www.schepenkring.nl/wp-content/plugins/vibp/assets/views/frontend/themes/thema_one/check.png" loading="lazy"> Simrad Evo 3 with Europe map from Navionics</div></div>
+        <div class="vibp_spec_row"><div class="vibp_spec_name">Fishfinder</div><div class="vibp_spec_value"><img src="https://www.schepenkring.nl/wp-content/plugins/vibp/assets/views/frontend/themes/thema_one/check.png" loading="lazy"> Simrad Evo 3</div></div>
+      </div>
+
+      <!-- Outside equipment -->
+      <div class="vibp_specs_container">
+        <h3 class="vibp_title_of_specs">Outside equipment</h3>
+        <div class="vibp_spec_row"><div class="vibp_spec_name">Anchors & Material</div><div class="vibp_spec_value"><img src="https://www.schepenkring.nl/wp-content/plugins/vibp/assets/views/frontend/themes/thema_one/check.png" loading="lazy"> Delta anchor 4kg</div></div>
+        <div class="vibp_spec_row"><div class="vibp_spec_name">Anchor rod</div><div class="vibp_spec_value"><img src="https://www.schepenkring.nl/wp-content/plugins/vibp/assets/views/frontend/themes/thema_one/check.png" loading="lazy"></div></div>
+        <div class="vibp_spec_row"><div class="vibp_spec_name">Sprayhood</div><div class="vibp_spec_value"><img src="https://www.schepenkring.nl/wp-content/plugins/vibp/assets/views/frontend/themes/thema_one/check.png" loading="lazy"></div></div>
+        <div class="vibp_spec_row"><div class="vibp_spec_name">Cockpit tent</div><div class="vibp_spec_value"><img src="https://www.schepenkring.nl/wp-content/plugins/vibp/assets/views/frontend/themes/thema_one/check.png" loading="lazy"></div></div>
+        <div class="vibp_spec_row"><div class="vibp_spec_name">Tarpaulin(s)</div><div class="vibp_spec_value"><img src="https://www.schepenkring.nl/wp-content/plugins/vibp/assets/views/frontend/themes/thema_one/check.png" loading="lazy"> Winter tent and transport hood</div></div>
+        <div class="vibp_spec_row"><div class="vibp_spec_name">Pulpit and bastion(s)</div><div class="vibp_spec_value"><img src="https://www.schepenkring.nl/wp-content/plugins/vibp/assets/views/frontend/themes/thema_one/check.png" loading="lazy"></div></div>
+        <div class="vibp_spec_row"><div class="vibp_spec_name">Swimming platform</div><div class="vibp_spec_value"><img src="https://www.schepenkring.nl/wp-content/plugins/vibp/assets/views/frontend/themes/thema_one/check.png" loading="lazy"></div></div>
+        <div class="vibp_spec_row"><div class="vibp_spec_name">Swimming ladder</div><div class="vibp_spec_value"><img src="https://www.schepenkring.nl/wp-content/plugins/vibp/assets/views/frontend/themes/thema_one/check.png" loading="lazy"></div></div>
+        <div class="vibp_spec_row"><div class="vibp_spec_name">Trailer</div><div class="vibp_spec_value"><img src="https://www.schepenkring.nl/wp-content/plugins/vibp/assets/views/frontend/themes/thema_one/check.png" loading="lazy"> Harbeck 2200 KG</div></div>
+        <div class="vibp_spec_row"><div class="vibp_spec_name">Teak deck</div><div class="vibp_spec_value"><img src="https://www.schepenkring.nl/wp-content/plugins/vibp/assets/views/frontend/themes/thema_one/check.png" loading="lazy"></div></div>
+        <div class="vibp_spec_row"><div class="vibp_spec_name">Fenders, lines</div><div class="vibp_spec_value"><img src="https://www.schepenkring.nl/wp-content/plugins/vibp/assets/views/frontend/themes/thema_one/check.png" loading="lazy"></div></div>
+        <div class="vibp_spec_row"><div class="vibp_spec_name">cockpit table</div><div class="vibp_spec_value"><img src="https://www.schepenkring.nl/wp-content/plugins/vibp/assets/views/frontend/themes/thema_one/check.png" loading="lazy"></div></div>
+        <div class="vibp_spec_row"><div class="vibp_spec_name">Comments</div><div class="vibp_spec_value"><p>Water ski pole</p></div></div>
+      </div>
+
+      <!-- Safety -->
+      <div class="vibp_specs_container">
+        <h3 class="vibp_title_of_specs">Safety</h3>
+        <div class="vibp_spec_row"><div class="vibp_spec_name">Lifebuoy</div><div class="vibp_spec_value"><img src="https://www.schepenkring.nl/wp-content/plugins/vibp/assets/views/frontend/themes/thema_one/check.png" loading="lazy"></div></div>
+        <div class="vibp_spec_row"><div class="vibp_spec_name">Bilge pump</div><div class="vibp_spec_value"><img src="https://www.schepenkring.nl/wp-content/plugins/vibp/assets/views/frontend/themes/thema_one/check.png" loading="lazy"> Electric 2x</div></div>
+        <div class="vibp_spec_row"><div class="vibp_spec_name">Fire extinguisher</div><div class="vibp_spec_value"><img src="https://www.schepenkring.nl/wp-content/plugins/vibp/assets/views/frontend/themes/thema_one/check.png" loading="lazy"></div></div>
+        <div class="vibp_spec_row"><div class="vibp_spec_name">Self-draining cockpit</div><div class="vibp_spec_value"><img src="https://www.schepenkring.nl/wp-content/plugins/vibp/assets/views/frontend/themes/thema_one/check.png" loading="lazy"></div></div>
+        <div class="vibp_spec_row"><div class="vibp_spec_name">Comments</div><div class="vibp_spec_value"><p>1x windshield wiper</p></div></div>
+      </div>
+
+      <!-- Media container -->
+      <div class="vibp_more_media_container" id="fotos">
+        <h3 class="vibp_title_of_specs">Media of the Quicksilver 645 Cruiser</h3>
+        <div class="vibp_more_images">
+          <a href="#gallery-1"><img src="https://images.botenwebmanager.nl/89536b3e-f72b-4cf8-992c-ec7fc549091b.jpg" alt="Quicksilver 645 Cruiser" loading="lazy"></a>
+          <a href="#gallery-2"><img src="https://images.botenwebmanager.nl/f08c1196-f560-4315-a04e-975bafe44c62.jpg" alt="Quicksilver 645 Cruiser" loading="lazy"></a>
+          <a href="#gallery-3"><img src="https://images.botenwebmanager.nl/538e6360-fc1e-4146-9fb9-387054c62a14.jpg" alt="Quicksilver 645 Cruiser" loading="lazy"></a>
+          <a href="#gallery-4"><img src="https://images.botenwebmanager.nl/02533780-75a6-4850-a990-5d67d88d1d77.jpg" alt="Quicksilver 645 Cruiser" loading="lazy"></a>
+          <a class="vibp_hidden_image" href="#gallery-5"><img src="https://images.botenwebmanager.nl/0b5abf9a-449a-4957-893b-9e0212977c25.jpg" alt="Quicksilver 645 Cruiser" loading="lazy"></a>
+          <a class="vibp_hidden_image" href="#gallery-6"><img src="https://images.botenwebmanager.nl/8b0ec6e5-0f66-42a7-b733-ea2d72410c0a.jpg" alt="Quicksilver 645 Cruiser" loading="lazy"></a>
+          <a class="vibp_hidden_image" href="#gallery-7"><img src="https://images.botenwebmanager.nl/9d1877b4-7085-4190-b18a-83d94560590f.jpg" alt="Quicksilver 645 Cruiser" loading="lazy"></a>
+          <a class="vibp_hidden_image" href="#gallery-8"><img src="https://images.botenwebmanager.nl/05198222-270f-480f-942e-935ebd1b8dbc.jpg" alt="Quicksilver 645 Cruiser" loading="lazy"></a>
+          <a class="vibp_hidden_image" href="#gallery-9"><img src="https://images.botenwebmanager.nl/ea88027c-35a8-4ca2-8698-a26a6cdebf70.jpg" alt="Quicksilver 645 Cruiser" loading="lazy"></a>
+          <a class="vibp_hidden_image" href="#gallery-10"><img src="https://images.botenwebmanager.nl/33d62ca5-3ac7-42f9-887c-1d7053cb2b35.jpg" alt="Quicksilver 645 Cruiser" loading="lazy"></a>
+          <a class="vibp_hidden_image" href="#gallery-11"><img src="https://images.botenwebmanager.nl/8ad54012-e935-4a39-8ecc-55462bad9f64.jpg" alt="Quicksilver 645 Cruiser" loading="lazy"></a>
+          <a class="vibp_hidden_image" href="#gallery-12"><img src="https://images.botenwebmanager.nl/5e9783ff-5837-4273-afd3-3a622cf6919a.jpg" alt="Quicksilver 645 Cruiser" loading="lazy"></a>
+          <a class="vibp_hidden_image" href="#gallery-13"><img src="https://images.botenwebmanager.nl/bbf34b87-883d-4cdf-9f38-22f5400d8b33.jpg" alt="Quicksilver 645 Cruiser" loading="lazy"></a>
+          <a class="vibp_hidden_image" href="#gallery-14"><img src="https://images.botenwebmanager.nl/ce27dd23-d210-450f-86f9-0b606b19d5be.jpg" alt="Quicksilver 645 Cruiser" loading="lazy"></a>
+          <a class="vibp_hidden_image" href="#gallery-15"><img src="https://images.botenwebmanager.nl/fadfb13e-7824-40a0-89e3-53871f36048f.jpg" alt="Quicksilver 645 Cruiser" loading="lazy"></a>
+          <a class="vibp_hidden_image" href="#gallery-16"><img src="https://images.botenwebmanager.nl/14b08e33-c46a-495b-a5de-49def8a4b249.jpg" alt="Quicksilver 645 Cruiser" loading="lazy"></a>
+          <a class="vibp_hidden_image" href="#gallery-17"><img src="https://images.botenwebmanager.nl/986b5ee6-d9c1-4942-8d3c-353daa1d58c1.jpg" alt="Quicksilver 645 Cruiser" loading="lazy"></a>
+          <a class="vibp_hidden_image" href="#gallery-18"><img src="https://images.botenwebmanager.nl/ade43ce5-f3b9-469d-9df7-1f650ef71765.jpg" alt="Quicksilver 645 Cruiser" loading="lazy"></a>
+          <a class="vibp_hidden_image" href="#gallery-19"><img src="https://images.botenwebmanager.nl/6c79e66c-42f3-4161-a487-be77dc2d041a.jpg" alt="Quicksilver 645 Cruiser" loading="lazy"></a>
+        </div>
+        <a id="vibp_load_more_images_btn" class="vibp_load_more_images_btn show-images" onclick="vibp_toggle_images()">Show more photos</a>
+      </div>
+
+      <!-- Documents -->
+      <div id="documenten" class="vibp_pdf_container">
+        <h3 class="vibp_title_of_specs">Documents</h3>
+        <a target="_blank" download="Quicksilver 645 Cruiser - PDF Boot specificaties" href="https://krekelberg.yachtshift.nl/yachtshift/export/brochure-html/key/c053RWkwZUdKT2VNaWE2akFLRWR5dz09/language/en/act/force" class="vibp_topbar_action_pdfprinten">Boat specifications</a>
+      </div>
+
+      <!-- Back to overview -->
+      <a class="vibp_back_to_archive vibp_back_to_archive_bottom" href="/boats-offer">❮ Back to overview</a>
+    </div>
+
+    <!-- RIGHT COLUMN (4) - CONTACT FORM -->
+    <div class="col-lg-4">
+      <div class="vibp_contact_container sticky-top" style="top: 150px;">
+        <div id="vibp_contact_wrapper" class="vibp_contact_wrapper">
+          <h4>More information about the<br><span class="notranslate">Quicksilver 645 Cruiser</span></h4>
+          <form method="POST" class="vibp_contact_form">
+            <input type="hidden" name="g-recaptcha-response" class="g-recaptcha-response" id="g-recaptcha-response">
+            <input name="vibp_voornaam_achternaam" type="text" placeholder="Your first and last name*" required>
+            <input name="vibp_telefoonnummer" type="text" placeholder="Phone number*" required>
+            <input name="vibp_emailadres" type="email" placeholder="Email address*" required>
+            <p>I would like the following... *</p>
+            <select name="vibp_soortafspraak">
+              <option style="display: none;" disabled selected value=""></option>
+              <option value="Teruggebeld worden">Get a call back</option>
+              <option value="Een vrijblijvende afspraak maken">Make a no-obligation appointment</option>
+              <option value="Anders">Other</option>
+            </select>
+            <textarea name="vibp_opmerking" placeholder="Your comment or question about the Quicksilver 645 Cruiser *"></textarea>
+            <input type="submit" value="Send" name="vibp_contact_submit">
+            <span>* Required field</span>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div> <!-- row -->
+
+  <!-- mobile actions (fixed bottom) -->
+  <div class="vibp_mobile_actions">
+    <div><a href="tel:+31(0)475315661" class="mobile_action__phone"></a></div>
+    <div><a href="#vibp_contact_wrapper" class="mobile_action__email"></a></div>
+  </div>
+</main>
+
+<!-- ========== FOOTER (exact replica) ========== -->
+<footer class="footer-section bg-light-custom">
+  <div class="container" style="width: 90%;">
+    <div class="row g-4">
+      <!-- column 1 -->
+      <div class="col-md-6 col-lg-3">
+        <div class="footer-logo mb-3">
+          <img src="https://www.schepenkring.nl/wp-content/uploads/2024/05/logo-footer.png" alt="Schepenkring" class="img-fluid" width="251" height="87">
+        </div>
+        <div class="footer-text">
+          <p class="fw-bold fs-5">Schepenkring Yachtbrokers</p>
+          <p>Secretariat<br>Parkhaven 3<br>8242 PE Lelystad</p>
+          <p>Email: <a href="mailto:lelystad@schepenkring.nl">lelystad@schepenkring.nl</a><br>Phone: <a href="tel:0031320711340">+31 (0)320 711340</a></p>
+        </div>
+        <div class="footer-social">
+          <a href="https://www.facebook.com/SchepenkringJachtmakelaars" target="_blank"><i class="fab fa-facebook-f"></i></a>
+          <a href="https://www.youtube.com/channel/UCrL66HrE1qsoSsq9s9uItlg/videos" target="_blank"><i class="fab fa-youtube"></i></a>
+        </div>
+      </div>
+      <!-- column 2 - locations -->
+      <div class="col-md-6 col-lg-3">
+        <h5 class="text-primary-custom">District of Ships locations</h5>
+        <p>Schepenkring is divided over 7 branches that are spread throughout the Netherlands. Contact a branch directly.</p>
+        <p class="gt-block">
+          <a class="notranslate" href="/vestigingen/jachtmakelaardij-lelystad/">Schepenkring Lelystad</a><br>
+          <a class="notranslate" href="/vestigingen/jachtmakelaardij-gelderland/">Schepenkring Gelderland</a><br>
+          <a class="notranslate" href="/vestigingen/jachtmakelaardij-limburg/">Schepenkring Roermond</a><br>
+          <a class="notranslate" href="/vestigingen/jachtmakelaardij-zeeland/">Schepenkring Kortgene</a><br>
+          <a class="notranslate" href="/vestigingen/jachtmakelaardij-randmeren/">Schepenkring Randmeren</a><br>
+          <a class="notranslate" href="/vestigingen/jachtmakelaardij-dordrecht/">Schepenkring Dordrecht</a><br>
+          <a class="notranslate" href="/vestigingen/jachtmakelaardij-heeg/">Schepenkring Heeg</a>
+        </p>
+      </div>
+      <!-- column 3 - services -->
+      <div class="col-md-6 col-lg-3">
+        <h5 class="text-primary-custom">Services</h5>
+        <p>Schepenkring has grown into a full service center and can help you with various services. Services such as:</p>
+        <p>
+          <a href="https://www.schepenkring.com/services/jachtexperts/">Advice from Experts</a><br>
+          <a href="https://www.schepenkring.com/services/jachthavens/">Rent a berth</a><br>
+          <a href="https://www.schepenkring.com/services/jachttransport/">Yacht transport</a><br>
+          <a href="https://www.schepenkring.com/services/taxatie/">Valuation of your boat</a><br>
+          <a href="https://www.schepenkring.com/services/vaarberichten/">Sailing reports</a><br>
+          <a href="https://www.schepenkring.com/services/hiswa-vereniging/">hiswa</a><br>
+          <a href="https://www.schepenkring.com/zeiljacht-verkopen/">Sell sailing yacht</a><br>
+          <a href="https://www.schepenkring.com/motorboot-verkopen/">Sell motor yacht</a>
+        </p>
+      </div>
+      <!-- column 4 - memberships & review -->
+      <div class="col-md-6 col-lg-3">
+        <h5 class="text-primary-custom">Memberships</h5>
+        <p>Every Schepenkring broker is affiliated with the HISWA-RECRON association and the NBMS association of brokers.</p>
+        <div class="d-flex gap-3 align-items-center mb-3">
+          <a href="https://www.hiswa.nl/bedrijven/hiswa-erkende-bedrijven" target="_blank"><img src="https://www.schepenkring.nl/wp-content/uploads/2024/05/hiswa-footer-logo.png" alt="HISWA" width="155" height="90" loading="lazy"></a>
+          <a href="https://www.nbms.nl/leden/jacht-makelaars/" target="_blank"><img src="https://www.schepenkring.nl/wp-content/uploads/2024/05/NBMS-footer-logo.png" alt="NBMS" width="90" height="90" loading="lazy"></a>
+        </div>
+        <!-- klantenvertellen widget -->
+        <iframe class="lazy-loaded-iframe" frameborder="0" allowtransparency="true" data-src="https://www.klantenvertellen.nl/retrieve-widget.html?color=white&amp;allowTransparency=true&amp;button=true&amp;lang=nl&amp;tenantId=99&amp;locationId=1030253" height="100" style="width:100%; border:0;"></iframe>
+      </div>
+    </div>
+    <!-- copyright row -->
+    <div class="footer-copyright d-flex flex-wrap justify-content-between align-items-center">
+      <span>© 2026 Schepenkring Yachtbrokers. All rights reserved.</span>
+      <span><a href="https://www.schepenkring.com/privacy-cookies/">Privacy and cookies</a> | Created by: <a href="https://arimpex.nl/" target="_blank">Arimpex</a></span>
+    </div>
+  </div>
+</footer>
+
+<!-- ========== SCRIPTS ========== -->
+<!-- Bootstrap 5 JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<!-- jQuery (required for some original scripts) -->
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<!-- Fancybox 5 -->
+<script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.umd.js"></script>
+<!-- Google ReCaptcha -->
+<script src="https://www.google.com/recaptcha/api.js?render=6LcjMOQqAAAAAPSsV1mHjz8hf7s2FxPbF7FwyEYt"></script>
+
+<!-- Custom scripts: sticky nav shrink, fancybox, toggle images, recaptcha, iframe lazy, etc. -->
+<script>
+  // sticky header logo shrink (exact like original)
+  window.addEventListener('scroll', function() {
+    var nav = document.getElementById('mainNav');
+    if (window.scrollY > 50) {
+      nav.classList.add('shrink');
+    } else {
+      nav.classList.remove('shrink');
+    }
+  });
+
+  // Fancybox init (exact options from original)
+  document.addEventListener('DOMContentLoaded', function() {
+    Fancybox.bind('[data-fancybox]', {
+      Images: { zoom: true, Panzoom: { maxScale: 3 } }
+    });
+  });
+
+  // ReCaptcha (exact original)
+  function gReCaptcha() {
+    grecaptcha.ready(function() {
+      grecaptcha.execute('6LcjMOQqAAAAAPSsV1mHjz8hf7s2FxPbF7FwyEYt', { action: 'validate_captcha' })
+        .then(function(token) {
+          var inputs = document.getElementsByClassName('g-recaptcha-response');
+          for (var i = 0; i < inputs.length; i++) inputs[i].value = token;
+          var input = document.getElementById('g-recaptcha-response');
+          if (input) input.value = token;
+        });
+    });
+  }
+  document.addEventListener("DOMContentLoaded", function() {
+    gReCaptcha();
+    setInterval(gReCaptcha, 60000);
+  });
+
+  // Toggle more photos (exact)
+  window.vibp_toggle_images = function() {
+    var btn = document.getElementById('vibp_load_more_images_btn');
+    if (btn.classList.contains('show-images')) {
+      var hidden = document.querySelectorAll('.vibp_hidden_image');
+      hidden.forEach(function(el) { el.classList.remove('vibp_hidden_image'); });
+      btn.textContent = "Toon minder foto's";
+      btn.classList.remove('show-images');
+    } else {
+      var images = document.querySelectorAll('.vibp_more_images > a');
+      var counter = 1;
+      images.forEach(function(el) {
+        if (counter > 4) el.classList.add('vibp_hidden_image');
+        counter++;
+      });
+      btn.textContent = "Toon meer foto's";
+      btn.classList.add('show-images');
+    }
+  };
+
+  // lazy load iframes (exact original)
+  document.addEventListener("DOMContentLoaded", function() {
+    var iframes = document.querySelectorAll('.lazy-loaded-iframe[data-src]');
+    var observer = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting) {
+          setTimeout(function() {
+            var iframe = entry.target;
+            iframe.src = iframe.dataset.src;
+            iframe.addEventListener("load", function() {
+              var placeholder = iframe.previousElementSibling;
+              if (placeholder && placeholder.classList.contains('iframe-placeholder')) {
+                placeholder.remove();
+              }
+            });
+            observer.unobserve(iframe);
+          }, 500);
+        }
+      });
+    });
+    iframes.forEach(function(iframe) { observer.observe(iframe); });
+  });
+
+  // jQuery from original to hide check images when text present
+  jQuery(document).ready(function($) {
+    $('.vibp_spec_value img').each(function() {
+      var parent = $(this).parent();
+      if ($.trim(parent.text()).length > 0) {
+        $(this).css('display', 'none');
+      }
+    });
+    $('.vibp_specs_container:not(:has(>.vibp_spec_row))').css('display', 'none');
+  });
+</script>
+
+<!-- AddToAny for share button (optional) -->
+<script async src="https://static.addtoany.com/menu/page.js"></script>
+<script>
+  document.getElementById('shareButton')?.addEventListener('click', function(e) {
+    e.preventDefault();
+    var a2a = window.a2a;
+    if (a2a) a2a.init('page');
+  });
+</script>
+</body>
+</html>
