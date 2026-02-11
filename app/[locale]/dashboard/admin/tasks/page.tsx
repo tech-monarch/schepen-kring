@@ -884,7 +884,6 @@ export default function AdminTaskBoardPage() {
       
       <div className="flex pt-20">
         <motion.main
-          animate={{ marginLeft: isSidebarCollapsed ? 80 : 256 }}
           className="flex-1 p-6 bg-white min-h-[calc(100vh-80px)] z-30 -mt-20"
         >
           <div className="max-w-7xl mx-auto space-y-6">
