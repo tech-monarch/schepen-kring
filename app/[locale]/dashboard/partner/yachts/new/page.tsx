@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, SyntheticEvent } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useState, SyntheticEvent } from "react";
+import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import {
   Camera,
@@ -21,16 +21,16 @@ import {
   Zap,
   Bed,
   Save,
-  ArrowLeft,
+  ArrowRight,
   Calendar,
-  Clock
+  Clock,
+  Eye,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { toast, Toaster } from "react-hot-toast";
 
 // Configuration
-const STORAGE_URL = "https://schepen-kring.nl/storage/";
 const PLACEHOLDER_IMAGE =
   "https://images.unsplash.com/photo-1569263979104-865ab7cd8d13?auto=format&fit=crop&w=600&q=80";
 
@@ -40,6 +40,7 @@ type AiStagedImage = {
   category: string;
   originalName: string;
 };
+
 type GalleryState = { [key: string]: any[] };
 
 // Availability Rule Type
@@ -49,19 +50,51 @@ type AvailabilityRule = {
   end_time: string;
 };
 
-export default function YachtEditorPage() {
-  const params = useParams();
-  const router = useRouter();
-  const isNewMode = params.id === "new";
-  const yachtId = params.id;
+// Spec Checkbox Component (identical to admin)
+function SpecCheckbox({
+  field,
+  label,
+  onSpecChange,
+}: {
+  field: string;
+  label: string;
+  onSpecChange: (field: string, isChecked: boolean) => void;
+}) {
+  const [isChecked, setIsChecked] = useState(true); // default true for new yachts
 
-  // Form State
-  const [selectedYacht, setSelectedYacht] = useState<any>(null);
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newChecked = e.target.checked;
+    setIsChecked(newChecked);
+    onSpecChange(field, newChecked);
+  };
+
+  return (
+    <div className="flex items-center gap-2 bg-slate-50/50 p-2 rounded">
+      <input
+        type="checkbox"
+        id={`display_spec_${field}`}
+        checked={isChecked}
+        onChange={handleChange}
+        className="w-3 h-3 accent-[#003566] cursor-pointer"
+      />
+      <label
+        htmlFor={`display_spec_${field}`}
+        className="text-[8px] font-medium uppercase tracking-wider text-slate-600 cursor-pointer select-none flex-1"
+      >
+        {label}
+      </label>
+    </div>
+  );
+}
+
+export default function OnboardingYachtSetup() {
+  const router = useRouter();
+
+  // Form state
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [loading, setLoading] = useState(!isNewMode);
   const [errors, setErrors] = useState<any>(null);
-  
-  // AI & Media State
+
+  // Media state
   const [aiStaging, setAiStaging] = useState<AiStagedImage[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [mainPreview, setMainPreview] = useState<string | null>(null);
@@ -74,66 +107,13 @@ export default function YachtEditorPage() {
     General: [],
   });
 
-  // Availability State
+  // Availability rules
   const [availabilityRules, setAvailabilityRules] = useState<AvailabilityRule[]>([]);
 
-  // --- 1. FETCH DATA (IF EDITING) ---
-  useEffect(() => {
-    if (isNewMode) return;
+  // Display specs
+  const [displaySpecs, setDisplaySpecs] = useState<Record<string, boolean>>({});
 
-    const fetchYachtDetails = async () => {
-      try {
-        setLoading(true);
-        const res = await api.get(`/yachts/${yachtId}`);
-        const yacht = res.data;
-        setSelectedYacht(yacht);
-
-        // Populate Main Image
-        setMainPreview(
-          yacht.main_image ? `${STORAGE_URL}${yacht.main_image}` : null,
-        );
-
-        // Populate Gallery
-        const initialGallery: GalleryState = {
-          Exterior: [],
-          Interior: [],
-          "Engine Room": [],
-          Bridge: [],
-          General: [],
-        };
-
-        if (yacht.images) {
-          yacht.images.forEach((img: any) => {
-            const category = img.category || "General";
-            if (initialGallery[category]) {
-              initialGallery[category].push(img);
-            } else {
-              initialGallery["General"].push(img);
-            }
-          });
-        }
-        setGalleryState(initialGallery);
-
-        // Load existing availability rules
-        if (yacht.availability_rules) {
-          setAvailabilityRules(yacht.availability_rules);
-        } else if (yacht.availabilityRules) {
-          setAvailabilityRules(yacht.availabilityRules);
-        }
-
-      } catch (err) {
-        console.error("Failed to fetch yacht details", err);
-        toast.error("Could not load vessel data.");
-        router.push("/nl/dashboard/admin/yachts");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchYachtDetails();
-  }, [yachtId, isNewMode, router]);
-
-  // --- 2. HANDLERS ---
+  // Handlers ----------------------------------------------------------------
 
   const handleImageError = (e: SyntheticEvent<HTMLImageElement, Event>) => {
     e.currentTarget.src = PLACEHOLDER_IMAGE;
@@ -148,63 +128,31 @@ export default function YachtEditorPage() {
     }));
   };
 
-  const deleteExistingImage = async (
-    id: number,
-    category: string,
-    index: number,
-  ) => {
-    if (!confirm("Remove this image permanently?")) return;
+  const handleAiCategorizer = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    setIsAnalyzing(true);
+    const formData = new FormData();
+    const fileArray = Array.from(files);
+    fileArray.forEach((file) => formData.append("images[]", file));
     try {
-      await api.delete(`/gallery/${id}`);
-      setGalleryState((prev) => ({
-        ...prev,
-        [category]: prev[category].filter((_, i) => i !== index),
-      }));
-      toast.success("Image removed");
+      toast.loading("Gemini is analyzing assets...", { id: "ai-loading" });
+      const res = await api.post("/partner/yachts/ai-classify", formData);
+      const analyzedData: AiStagedImage[] = res.data.map(
+        (item: any, index: number) => ({
+          file: fileArray[index],
+          preview: item.preview,
+          category: item.category,
+          originalName: item.originalName,
+        })
+      );
+      setAiStaging((prev) => [...prev, ...analyzedData]);
+      toast.success("AI Classification complete", { id: "ai-loading" });
     } catch (err) {
-      console.error("Delete failed", err);
-      toast.error("Failed to delete image");
+      toast.error("AI Analysis failed", { id: "ai-loading" });
+    } finally {
+      setIsAnalyzing(false);
     }
   };
-
-const handleAiCategorizer = async (files: FileList | null) => {
-  if (!files || files.length === 0) return;
-  setIsAnalyzing(true);
-  const formData = new FormData();
-  const fileArray = Array.from(files);
-  fileArray.forEach((file) => formData.append("images[]", file));
-  try {
-    toast.loading("Gemini is analyzing assets...", { id: "ai-loading" });
-    
-    // Try partner route first
-    let res;
-    try {
-      res = await api.post("/partner/yachts/ai-classify", formData);
-    } catch (aiErr: any) {
-      // If partner route fails, try regular route
-      if (aiErr.response?.status === 403 || aiErr.response?.status === 404) {
-        res = await api.post("/yachts/ai-classify", formData);
-      } else {
-        throw aiErr;
-      }
-    }
-    
-    const analyzedData: AiStagedImage[] = res.data.map(
-      (item: any, index: number) => ({
-        file: fileArray[index],
-        preview: item.preview,
-        category: item.category,
-        originalName: item.originalName,
-      }),
-    );
-    setAiStaging((prev) => [...prev, ...analyzedData]);
-    toast.success("AI Classification complete", { id: "ai-loading" });
-  } catch (err) {
-    toast.error("AI Analysis failed", { id: "ai-loading" });
-  } finally {
-    setIsAnalyzing(false);
-  }
-};
 
   const approveAiImage = (index: number) => {
     const item = aiStaging[index];
@@ -228,182 +176,165 @@ const handleAiCategorizer = async (files: FileList | null) => {
     toast.success("All assets approved");
   };
 
-  // Availability Handlers
+  // Availability handlers
   const addAvailabilityRule = () => {
-    setAvailabilityRules([...availabilityRules, { day_of_week: 1, start_time: "09:00", end_time: "17:00" }]);
+    setAvailabilityRules([
+      ...availabilityRules,
+      { day_of_week: 1, start_time: "09:00", end_time: "17:00" },
+    ]);
   };
 
   const removeAvailabilityRule = (index: number) => {
     setAvailabilityRules(availabilityRules.filter((_, i) => i !== index));
   };
 
-  const updateAvailabilityRule = (index: number, field: keyof AvailabilityRule, value: any) => {
+  const updateAvailabilityRule = (
+    index: number,
+    field: keyof AvailabilityRule,
+    value: any
+  ) => {
     const newRules = [...availabilityRules];
     newRules[index] = { ...newRules[index], [field]: value };
     setAvailabilityRules(newRules);
   };
 
-  // --- 3. SUBMIT LOGIC ---
-// --- 3. SUBMIT LOGIC ---
+  // Display specs handler
+  const handleSpecChange = (field: string, isChecked: boolean) => {
+    setDisplaySpecs((prev) => ({
+      ...prev,
+      [field]: isChecked,
+    }));
+  };
+
+  // Submit ----------------------------------------------------------------
 const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
   e.preventDefault();
   setIsSubmitting(true);
   setErrors(null);
-  const formData = new FormData(e.currentTarget);
 
-  if (mainFile) formData.set("main_image", mainFile);
+  const formData = new FormData();
 
-  // Handle boolean fields
-  const booleanFields = [
-    'allow_bidding', 'flybridge', 'oven', 'microwave', 'fridge', 'freezer',
-    'air_conditioning', 'navigation_lights', 'compass', 'depth_instrument',
-    'wind_instrument', 'autopilot', 'gps', 'vhf', 'plotter', 'speed_instrument',
-    'radar', 'life_raft', 'epirb', 'bilge_pump', 'fire_extinguisher',
-    'mob_system', 'spinnaker', 'battery', 'battery_charger', 'generator',
-    'inverter', 'television', 'cd_player', 'dvd_player', 'anchor',
-    'spray_hood', 'bimini'
+  // 1. Required field
+  const boatName = (document.querySelector('input[name="boat_name"]') as HTMLInputElement)?.value;
+  if (!boatName) {
+    toast.error("Vessel name is required");
+    setIsSubmitting(false);
+    return;
+  }
+  formData.append("boat_name", boatName);
+
+  // 2. Main image (only if provided)
+  if (mainFile) {
+    formData.append("main_image", mainFile);
+  }
+
+  // 3. Text / numeric fields – only add if they have a value
+  const fields = [
+    "price", "min_bid_amount", "year", "status", "loa", "lwl", "where",
+    "passenger_capacity", "beam", "draft", "air_draft", "displacement",
+    "ballast", "hull_type", "hull_construction", "hull_colour", "hull_number",
+    "designer", "builder", "engine_manufacturer", "horse_power", "hours",
+    "fuel", "max_speed", "cruising_speed", "gallons_per_hour", "tankage",
+    "cabins", "berths", "toilet", "shower", "bath", "heating",
+    "cockpit_type", "control_type", "external_url", "print_url",
+    "owners_comment", "reg_details", "known_defects", "last_serviced",
+    "super_structure_colour", "super_structure_construction",
+    "deck_colour", "deck_construction", "starting_type", "drive_type",
   ];
 
-  booleanFields.forEach(field => {
-    if (!formData.has(field)) {
-      formData.append(field, 'false');
-    } else {
-      const value = formData.get(field);
-      formData.set(field, value === 'on' || value === 'true' || value === '1' ? 'true' : 'false');
+  fields.forEach((field) => {
+    const element = document.querySelector(`[name="${field}"]`) as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
+    if (element && element.value !== undefined && element.value.trim() !== "") {
+      formData.append(field, element.value);
     }
   });
 
-  // Clean empty fields
-  const allFields = [
-    'boat_name', 'price', 'status', 'year',
-    'beam', 'draft', 'loa', 'lwl', 'air_draft', 'passenger_capacity',
-    'designer', 'builder', 'where', 'hull_colour', 'hull_construction',
-    'hull_number', 'hull_type', 'super_structure_colour', 'super_structure_construction',
-    'deck_colour', 'deck_construction', 'cockpit_type', 'control_type', 'ballast',
-    'displacement', 'cabins', 'berths', 'toilet', 'shower', 'bath', 'heating',
-    'stern_thruster', 'bow_thruster', 'fuel', 'hours', 'cruising_speed', 'max_speed',
-    'horse_power', 'engine_manufacturer', 'tankage', 'gallons_per_hour',
-    'starting_type', 'drive_type'
+  // 4. Boolean fields – always append "true"/"false"
+  const booleanFields = [
+    "allow_bidding", "flybridge", "oven", "microwave", "fridge", "freezer",
+    "air_conditioning", "navigation_lights", "compass", "depth_instrument",
+    "wind_instrument", "autopilot", "gps", "vhf", "plotter", "speed_instrument",
+    "radar", "life_raft", "epirb", "bilge_pump", "fire_extinguisher",
+    "mob_system", "spinnaker", "battery", "battery_charger", "generator",
+    "inverter", "television", "cd_player", "dvd_player", "anchor",
+    "spray_hood", "bimini", "stern_thruster", "bow_thruster",
   ];
 
-  allFields.forEach(field => {
-    const val = formData.get(field);
-    if (!val || val === '') formData.delete(field);
+  booleanFields.forEach((field) => {
+    const checkbox = document.querySelector(`[name="${field}"]`) as HTMLInputElement;
+    formData.append(field, checkbox?.checked ? "true" : "false");
   });
 
-  // Append Availability Rules
+  // 5. Availability rules – only if at least one rule exists
   if (availabilityRules.length > 0) {
     formData.append("availability_rules", JSON.stringify(availabilityRules));
   }
 
-  try {
-    let finalYachtId = selectedYacht?.id;
-    
-    if (!isNewMode && selectedYacht) {
-      // UPDATE - Use PUT method
-      await api.put(`/yachts/${selectedYacht.id}`, formData);
-    } else {
-      // CREATE NEW - Try partner route first (which doesn't require 'manage yachts' permission)
-      try {
-        const res = await api.post("/partner/yachts", formData);
-        finalYachtId = res.data.id;
-      } catch (partnerErr: any) {
-        // If partner route fails, try regular route (for admins)
-        if (partnerErr.response?.status === 403 || partnerErr.response?.status === 404) {
-          const res = await api.post("/yachts", formData);
-          finalYachtId = res.data.id;
-        } else {
-          throw partnerErr;
-        }
-      }
-    }
+  // 6. Display specs – only if at least one spec is selected
+  const selectedSpecs = Object.keys(displaySpecs).filter((key) => displaySpecs[key]);
+  if (selectedSpecs.length > 0) {
+    formData.append("display_specs", JSON.stringify(selectedSpecs));
+  }
 
-    // Bulk gallery submission (new files only)
+  // 7. Auto‑calculate min_bid_amount if price exists but min_bid_amount is empty
+  const price = formData.get("price");
+  if (!formData.has("min_bid_amount") && price) {
+    const priceVal = parseFloat(price as string);
+    if (!isNaN(priceVal)) {
+      formData.append("min_bid_amount", (priceVal * 0.9).toString());
+    }
+  }
+
+  try {
+    // Create yacht
+    const res = await api.post("/partner/yachts", formData);
+    const newYachtId = res.data.id;
+
+    // Upload gallery images
     for (const cat of Object.keys(galleryState)) {
-      const newFiles = galleryState[cat].filter(
-        (item) => item instanceof File,
-      );
+      const newFiles = galleryState[cat];
       if (newFiles.length > 0) {
         const gData = new FormData();
         newFiles.forEach((file) => gData.append("images[]", file));
         gData.append("category", cat);
-        
-        // Try partner route first for gallery upload
-        try {
-          await api.post(`/partner/yachts/${finalYachtId}/gallery`, gData);
-        } catch (galleryErr: any) {
-          // If partner route fails, try regular route
-          if (galleryErr.response?.status === 403 || galleryErr.response?.status === 404) {
-            await api.post(`/yachts/${finalYachtId}/gallery`, gData);
-          } else {
-            throw galleryErr;
-          }
-        }
+        await api.post(`/partner/yachts/${newYachtId}/gallery`, gData);
       }
     }
 
-    toast.success(
-      isNewMode
-        ? "Vessel Registered Successfully"
-        : "Manifest Updated Successfully",
-    );
-    router.push("/nl/dashboard/admin/yachts");
+    toast.success("Vessel Registered! Welcome Aboard.");
+    router.push("/nl/dashboard/partner");
   } catch (err: any) {
+    console.error("Submission error:", err);
+    
+    // 🔍 Show actual server error message
+    if (err.response) {
+      const serverMessage = err.response.data?.message || err.response.data?.error || "Unknown server error";
+      toast.error(`Server error: ${serverMessage}`);
+      console.error("Server response:", err.response.data);
+    } else {
+      toast.error("Network error – please try again");
+    }
+    
     if (err.response?.status === 422) {
       setErrors(err.response.data.errors);
-      toast.error("Please fix validation errors");
-    } else if (err.response?.status === 403) {
-      toast.error("Permission denied. You don't have access to perform this action.");
-    } else {
-      console.error(err);
-      toast.error(`Error ${err.response?.status}: ${err.response?.data?.message || "Critical System Error"}`);
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   } finally {
     setIsSubmitting(false);
   }
 };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC]">
-        <Loader2 className="animate-spin text-[#003566]" size={40} />
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-[#F8FAFC] pb-20">
       <Toaster position="top-right" />
-
-      {/* PAGE HEADER */}
-      <div className="bg-[#003566] text-white p-8 sticky top-0 z-40 shadow-xl flex justify-between items-center">
-        <div className="flex items-center gap-6">
-          <button
-            onClick={() => router.back()}
-            className="hover:bg-white/10 p-2 rounded-full transition-colors"
-          >
-            <ArrowLeft size={24} />
-          </button>
-          <div>
-            <h1 className="text-2xl lg:text-3xl font-serif italic">
-              {isNewMode
-                ? "New Vessel Registration"
-                : `Manifest: ${selectedYacht?.boat_name || "Loading..."}`}
-            </h1>
-            <p className="text-blue-400 text-[10px] font-black uppercase tracking-[0.4em] mt-1">
-              Registry Auth: Admin
-            </p>
-          </div>
-        </div>
-      </div>
 
       <div className="max-w-7xl mx-auto p-6 lg:p-12">
         <form onSubmit={handleSubmit} className="space-y-16">
           {/* ERROR SUMMARY */}
           {errors && (
-            <div className="p-6 bg-red-50 border-l-4 border-red-500 text-red-700">
+            <div className="p-6 bg-red-50 border-l-4 border-red-500 text-red-700 animate-pulse">
               <div className="flex items-center gap-2 mb-3 font-black uppercase text-[11px]">
-                <AlertCircle size={16} /> Data Conflict Detected
+                <AlertCircle size={16} /> Please Correct the Following
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 {Object.keys(errors).map((key) => (
@@ -415,10 +346,10 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
             </div>
           )}
 
-          {/* --- SECTION 1: PROFILE AUTHORITY --- */}
+          {/* --- SECTION 1: MAIN PHOTO --- */}
           <div className="space-y-4">
             <label className="text-[10px] font-black uppercase text-[#003566] tracking-widest flex items-center gap-2 italic">
-              <Camera size={16} /> 01. Profile Authority
+              <Camera size={16} /> 01. Primary Vessel Photo
             </label>
             <div
               onClick={() =>
@@ -453,76 +384,57 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                     size={48}
                   />
                   <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest group-hover:text-blue-600 transition-colors">
-                    Select Primary Identification Photo
+                    Click to Upload Main Photo
                   </p>
                 </div>
               )}
             </div>
           </div>
 
-          {/* --- SECTION 2: CORE SPECS --- */}
+          {/* --- SECTION 2: CORE SPECS (ESSENTIAL REGISTRY) --- */}
           <div className="bg-white p-8 lg:p-10 border border-slate-200 shadow-sm space-y-8">
             <h3 className="text-[10px] font-black text-slate-300 uppercase tracking-[0.4em] flex items-center gap-2 border-b border-slate-50 pb-4 italic">
               <Coins size={16} /> Essential Registry Data
             </h3>
-
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               <div className="space-y-2">
-                <Label>Vessel Name</Label>
-                <Input
-                  name="boat_name"
-                  defaultValue={selectedYacht?.boat_name}
-                  placeholder="e.g. M/Y NOBILITY"
-                  required
-                />
+                <Label>Vessel Name *</Label>
+                <Input name="boat_name" placeholder="e.g. M/Y NOBILITY" required />
               </div>
               <div className="space-y-2">
                 <Label>Price (€)</Label>
+                <Input name="price" type="number" placeholder="1500000" />
+              </div>
+              <div className="space-y-2">
+                <Label>Minimum Bid Amount (€)</Label>
                 <Input
-                  name="price"
+                  name="min_bid_amount"
                   type="number"
-                  defaultValue={selectedYacht?.price}
-                  placeholder="1500000"
+                  placeholder="Auto-calculates 90% of price if empty"
+                  step="1000"
                 />
               </div>
               <div className="space-y-2">
                 <Label>Year Built</Label>
-                <Input
-                  name="year"
-                  type="number"
-                  defaultValue={selectedYacht?.year}
-                  placeholder="2024"
-                />
+                <Input name="year" type="number" placeholder="2024" />
               </div>
               <div className="space-y-2">
-                <Label>LOA (Length Overall)</Label>
-                <Input
-                  name="loa"
-                  defaultValue={selectedYacht?.loa}
-                  placeholder="45.5"
-                />
+                <Label>LOA (m)</Label>
+                <Input name="loa" placeholder="45.5" />
               </div>
               <div className="space-y-2">
-                <Label>LWL (Waterline Length)</Label>
-                <Input
-                  name="lwl"
-                  defaultValue={selectedYacht?.lwl}
-                  placeholder="40.2"
-                />
+                <Label>LWL (m)</Label>
+                <Input name="lwl" placeholder="40.2" />
               </div>
               <div className="space-y-2">
                 <Label>Location</Label>
-                <Input
-                  name="where"
-                  defaultValue={selectedYacht?.where}
-                  placeholder="e.g. Monaco"
-                />
+                <Input name="where" placeholder="e.g. Monaco" />
               </div>
               <div className="space-y-2">
                 <Label>Status</Label>
                 <select
                   name="status"
-                  defaultValue={selectedYacht?.status || "Draft"}
+                  defaultValue="For Sale"
                   className="w-full bg-slate-50 p-3 border-b border-slate-200 text-[#003566] font-bold text-xs outline-none focus:border-blue-600 transition-all"
                 >
                   <option value="For Sale">For Sale</option>
@@ -533,283 +445,260 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
               </div>
               <div className="space-y-2">
                 <Label>Passenger Capacity</Label>
-                <Input
-                  name="passenger_capacity"
-                  type="number"
-                  defaultValue={selectedYacht?.passenger_capacity}
-                  placeholder="12"
-                />
+                <Input name="passenger_capacity" type="number" placeholder="12" />
               </div>
             </div>
           </div>
 
-          {/* --- SECTION 3: TECHNICAL DOSSIER --- */}
+          {/* --- SECTION 3: TECHNICAL DOSSIER (FULL) --- */}
           <div className="space-y-12">
             <h3 className="text-[12px] font-black text-[#003566] uppercase tracking-[0.3em] flex items-center gap-3 border-b-2 border-[#003566] pb-4">
               <Waves size={18} /> Technical Dossier
             </h3>
 
-            {/* Sub-Section: General & Hull */}
+            {/* Hull & Dimensions */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
               <div className="space-y-6">
-                <SectionHeader
-                  icon={<Ship size={14} />}
-                  title="Hull & Dimensions"
-                />
+                <SectionHeader icon={<Ship size={14} />} title="Hull & Dimensions" />
                 <div className="grid grid-cols-2 gap-6">
                   <div className="space-y-1">
-                    <Label>Beam (Width)</Label>
-                    <Input
-                      name="beam"
-                      defaultValue={selectedYacht?.beam}
-                      placeholder="e.g. 8.5m"
-                    />
+                    <Label>Beam (m)</Label>
+                    <Input name="beam" placeholder="8.5" />
                   </div>
                   <div className="space-y-1">
-                    <Label>Draft (Depth)</Label>
-                    <Input
-                      name="draft"
-                      defaultValue={selectedYacht?.draft}
-                      placeholder="e.g. 2.1m"
-                    />
+                    <Label>Draft (m)</Label>
+                    <Input name="draft" placeholder="2.1" />
                   </div>
                   <div className="space-y-1">
-                    <Label>Air Draft (Clearance)</Label>
-                    <Input
-                      name="air_draft"
-                      defaultValue={selectedYacht?.air_draft}
-                      placeholder="e.g. 4.5m"
-                    />
+                    <Label>Air Draft (m)</Label>
+                    <Input name="air_draft" placeholder="4.5" />
                   </div>
                   <div className="space-y-1">
-                    <Label>Displacement</Label>
-                    <Input
-                      name="displacement"
-                      defaultValue={selectedYacht?.displacement}
-                      placeholder="e.g. 12000 kg"
-                    />
+                    <Label>Displacement (kg)</Label>
+                    <Input name="displacement" placeholder="12000" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label>Ballast</Label>
+                    <Input name="ballast" placeholder="e.g. 4000 kg" />
                   </div>
                   <div className="space-y-1">
                     <Label>Hull Type</Label>
-                    <Input
-                      name="hull_type"
-                      defaultValue={selectedYacht?.hull_type}
-                      placeholder="e.g. Monohull"
-                    />
+                    <Input name="hull_type" placeholder="e.g. Monohull" />
                   </div>
                   <div className="space-y-1">
                     <Label>Hull Construction</Label>
-                    <Input
-                      name="hull_construction"
-                      defaultValue={selectedYacht?.hull_construction}
-                      placeholder="e.g. GRP / Polyester"
-                    />
+                    <Input name="hull_construction" placeholder="e.g. GRP" />
                   </div>
                   <div className="space-y-1">
                     <Label>Hull Colour</Label>
-                    <Input
-                      name="hull_colour"
-                      defaultValue={selectedYacht?.hull_colour}
-                      placeholder="White"
-                    />
+                    <Input name="hull_colour" placeholder="White" />
                   </div>
                   <div className="space-y-1">
                     <Label>Hull Number</Label>
-                    <Input
-                      name="hull_number"
-                      defaultValue={selectedYacht?.hull_number}
-                      placeholder="e.g. HULL001"
-                    />
+                    <Input name="hull_number" placeholder="HULL001" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label>Designer</Label>
+                    <Input name="designer" placeholder="e.g. Naval Architect" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label>Builder</Label>
+                    <Input name="builder" placeholder="e.g. Ferretti" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label>Superstructure Colour</Label>
+                    <Input name="super_structure_colour" placeholder="White" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label>Superstructure Construction</Label>
+                    <Input name="super_structure_construction" placeholder="GRP" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label>Deck Colour</Label>
+                    <Input name="deck_colour" placeholder="Teak" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label>Deck Construction</Label>
+                    <Input name="deck_construction" placeholder="Teak" />
                   </div>
                 </div>
               </div>
 
+              {/* Engine & Performance */}
               <div className="space-y-6">
-                <SectionHeader
-                  icon={<Zap size={14} />}
-                  title="Engine & Performance"
-                />
+                <SectionHeader icon={<Zap size={14} />} title="Engine & Performance" />
                 <div className="bg-slate-50 p-6 border border-slate-100 grid grid-cols-2 gap-6">
                   <div className="space-y-1">
                     <Label>Engine Manufacturer</Label>
-                    <Input
-                      name="engine_manufacturer"
-                      defaultValue={selectedYacht?.engine_manufacturer}
-                      placeholder="e.g. CAT / MTU"
-                      className="bg-white"
-                    />
+                    <Input name="engine_manufacturer" placeholder="e.g. CAT" className="bg-white" />
                   </div>
                   <div className="space-y-1">
                     <Label>Horse Power</Label>
-                    <Input
-                      name="horse_power"
-                      defaultValue={selectedYacht?.horse_power}
-                      placeholder="e.g. 2x 1500HP"
-                      className="bg-white"
-                    />
+                    <Input name="horse_power" placeholder="e.g. 2x1500HP" className="bg-white" />
                   </div>
                   <div className="space-y-1">
                     <Label>Engine Hours</Label>
-                    <Input
-                      name="hours"
-                      defaultValue={selectedYacht?.hours}
-                      placeholder="e.g. 450 hrs"
-                      className="bg-white"
-                    />
+                    <Input name="hours" placeholder="450" className="bg-white" />
                   </div>
                   <div className="space-y-1">
                     <Label>Fuel Type</Label>
-                    <Input
-                      name="fuel"
-                      defaultValue={selectedYacht?.fuel}
-                      placeholder="Diesel"
-                      className="bg-white"
-                    />
+                    <Input name="fuel" placeholder="Diesel" className="bg-white" />
                   </div>
                   <div className="space-y-1">
-                    <Label>Max Speed</Label>
-                    <Input
-                      name="max_speed"
-                      defaultValue={selectedYacht?.max_speed}
-                      placeholder="e.g. 35 kn"
-                      className="bg-white"
-                    />
+                    <Label>Max Speed (kn)</Label>
+                    <Input name="max_speed" placeholder="35" className="bg-white" />
                   </div>
                   <div className="space-y-1">
-                    <Label>Cruising Speed</Label>
-                    <Input
-                      name="cruising_speed"
-                      defaultValue={selectedYacht?.cruising_speed}
-                      placeholder="e.g. 25 kn"
-                      className="bg-white"
-                    />
+                    <Label>Cruising Speed (kn)</Label>
+                    <Input name="cruising_speed" placeholder="25" className="bg-white" />
                   </div>
                   <div className="space-y-1">
                     <Label>Gallons per Hour</Label>
-                    <Input
-                      name="gallons_per_hour"
-                      defaultValue={selectedYacht?.gallons_per_hour}
-                      placeholder="e.g. 50"
-                      className="bg-white"
-                    />
+                    <Input name="gallons_per_hour" placeholder="50" className="bg-white" />
                   </div>
                   <div className="space-y-1">
                     <Label>Tankage</Label>
-                    <Input
-                      name="tankage"
-                      defaultValue={selectedYacht?.tankage}
-                      placeholder="e.g. 2000L"
-                      className="bg-white"
-                    />
+                    <Input name="tankage" placeholder="2000L" className="bg-white" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label>Starting Type</Label>
+                    <Input name="starting_type" placeholder="e.g. Electric" className="bg-white" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label>Drive Type</Label>
+                    <Input name="drive_type" placeholder="e.g. Shaft" className="bg-white" />
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Sub-Section: Accommodation */}
+            {/* Accommodation & Facilities */}
             <div className="space-y-6">
-              <SectionHeader
-                icon={<Bed size={14} />}
-                title="Accommodation & Facilities"
-              />
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              <SectionHeader icon={<Bed size={14} />} title="Accommodation & Facilities" />
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
                 <div className="space-y-1">
                   <Label>Cabins</Label>
-                  <Input
-                    name="cabins"
-                    type="number"
-                    defaultValue={selectedYacht?.cabins}
-                    placeholder="3"
-                  />
+                  <Input name="cabins" type="number" placeholder="3" />
                 </div>
                 <div className="space-y-1">
                   <Label>Berths</Label>
-                  <Input
-                    name="berths"
-                    defaultValue={selectedYacht?.berths}
-                    placeholder="6"
-                  />
+                  <Input name="berths" placeholder="6" />
                 </div>
                 <div className="space-y-1">
                   <Label>Toilet</Label>
-                  <Input
-                    name="toilet"
-                    defaultValue={selectedYacht?.toilet}
-                    placeholder="2"
-                  />
+                  <Input name="toilet" placeholder="2" />
                 </div>
                 <div className="space-y-1">
                   <Label>Shower</Label>
-                  <Input
-                    name="shower"
-                    defaultValue={selectedYacht?.shower}
-                    placeholder="2"
-                  />
+                  <Input name="shower" placeholder="2" />
                 </div>
                 <div className="space-y-1">
                   <Label>Bath</Label>
-                  <Input
-                    name="bath"
-                    defaultValue={selectedYacht?.bath}
-                    placeholder="1"
-                  />
+                  <Input name="bath" placeholder="1" />
                 </div>
                 <div className="space-y-1">
                   <Label>Heating</Label>
-                  <Input
-                    name="heating"
-                    defaultValue={selectedYacht?.heating}
-                    placeholder="e.g. Central heating"
-                  />
+                  <Input name="heating" placeholder="Central heating" />
                 </div>
                 <div className="space-y-1">
                   <Label>Cockpit Type</Label>
-                  <Input
-                    name="cockpit_type"
-                    defaultValue={selectedYacht?.cockpit_type}
-                    placeholder="e.g. Open / Closed"
-                  />
+                  <Input name="cockpit_type" placeholder="Open/Closed" />
                 </div>
                 <div className="space-y-1">
                   <Label>Control Type</Label>
-                  <Input
-                    name="control_type"
-                    defaultValue={selectedYacht?.control_type}
-                    placeholder="e.g. Wheel / Joystick"
+                  <Input name="control_type" placeholder="Wheel/Joystick" />
+                </div>
+              </div>
+            </div>
+
+            {/* Additional / Broker Fields */}
+            <div className="space-y-6">
+              <SectionHeader icon={<Box size={14} />} title="Additional Details" />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-1">
+                  <Label>External URL</Label>
+                  <Input name="external_url" placeholder="https://..." />
+                </div>
+                <div className="space-y-1">
+                  <Label>Print URL</Label>
+                  <Input name="print_url" placeholder="https://..." />
+                </div>
+                <div className="space-y-1">
+                  <Label>Registration Details</Label>
+                  <Input name="reg_details" placeholder="Registration number, flag, etc." />
+                </div>
+                <div className="space-y-1">
+                  <Label>Known Defects</Label>
+                  <Input name="known_defects" placeholder="Any known issues" />
+                </div>
+                <div className="space-y-1">
+                  <Label>Last Serviced</Label>
+                  <Input name="last_serviced" placeholder="2024-05-01" />
+                </div>
+                <div className="space-y-1">
+                  <Label>Owner's Comments</Label>
+                  <textarea
+                    name="owners_comment"
+                    className="w-full h-24 bg-slate-50 border border-slate-200 p-3 text-xs text-[#003566] font-medium outline-none focus:border-blue-600 transition-all resize-none"
+                    placeholder="Any additional comments about the vessel..."
                   />
                 </div>
               </div>
             </div>
 
-            {/* Sub-Section: Equipment Checkboxes */}
+            {/* Equipment Checkboxes (full list) */}
             <div className="space-y-6">
-              <SectionHeader
-                icon={<Box size={14} />}
-                title="Equipment & Features"
-              />
+              <SectionHeader icon={<CheckSquare size={14} />} title="Equipment & Features" />
               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
                 {[
-                  'allow_bidding', 'flybridge', 'oven', 'microwave', 'fridge', 'freezer',
-                  'air_conditioning', 'navigation_lights', 'compass', 'depth_instrument',
-                  'wind_instrument', 'autopilot', 'gps', 'vhf', 'plotter', 'speed_instrument',
-                  'radar', 'life_raft', 'epirb', 'bilge_pump', 'fire_extinguisher',
-                  'mob_system', 'spinnaker', 'battery', 'battery_charger', 'generator',
-                  'inverter', 'television', 'cd_player', 'dvd_player', 'anchor',
-                  'spray_hood', 'bimini'
+                  "allow_bidding",
+                  "flybridge",
+                  "oven",
+                  "microwave",
+                  "fridge",
+                  "freezer",
+                  "air_conditioning",
+                  "navigation_lights",
+                  "compass",
+                  "depth_instrument",
+                  "wind_instrument",
+                  "autopilot",
+                  "gps",
+                  "vhf",
+                  "plotter",
+                  "speed_instrument",
+                  "radar",
+                  "life_raft",
+                  "epirb",
+                  "bilge_pump",
+                  "fire_extinguisher",
+                  "mob_system",
+                  "spinnaker",
+                  "battery",
+                  "battery_charger",
+                  "generator",
+                  "inverter",
+                  "television",
+                  "cd_player",
+                  "dvd_player",
+                  "anchor",
+                  "spray_hood",
+                  "bimini",
+                  "stern_thruster",
+                  "bow_thruster",
                 ].map((field) => (
                   <div key={field} className="flex items-center gap-2 bg-slate-50/50 p-3">
                     <input
                       type="checkbox"
                       name={field}
                       id={field}
-                      defaultChecked={selectedYacht?.[field]}
                       className="w-3 h-3 accent-[#003566] cursor-pointer"
                     />
                     <label
                       htmlFor={field}
                       className="text-[8px] font-black uppercase tracking-wider text-slate-600 cursor-pointer select-none flex-1"
                     >
-                      {field.replace('_', ' ')}
+                      {field.replace(/_/g, " ")}
                     </label>
                   </div>
                 ))}
@@ -817,110 +706,218 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
             </div>
           </div>
 
-          {/* NEW SECTION: SCHEDULING AUTHORITY */}
+          {/* --- SCHEDULING AUTHORITY (Availability Rules) --- */}
           <div className="space-y-8 bg-slate-50 p-10 border border-slate-200 shadow-sm">
-             <div className="flex justify-between items-center border-b border-slate-200 pb-4">
-               <h3 className="text-[12px] font-black uppercase text-[#003566] tracking-[0.4em] flex items-center gap-3 italic">
-                  <Calendar size={20} className="text-blue-600" /> 04. Scheduling Authority
-                </h3>
-                <Button 
-                  type="button" 
-                  onClick={addAvailabilityRule}
-                  className="bg-[#003566] text-white text-[8px] font-black uppercase tracking-widest px-6 h-8"
+            <div className="flex justify-between items-center border-b border-slate-200 pb-4">
+              <h3 className="text-[12px] font-black uppercase text-[#003566] tracking-[0.4em] flex items-center gap-3 italic">
+                <Calendar size={20} className="text-blue-600" /> 04. Scheduling Authority
+              </h3>
+              <Button
+                type="button"
+                onClick={addAvailabilityRule}
+                className="bg-[#003566] text-white text-[8px] font-black uppercase tracking-widest px-6 h-8"
+              >
+                Add Window
+              </Button>
+            </div>
+
+            <div className="space-y-4">
+              {availabilityRules.map((rule, idx) => (
+                <div
+                  key={idx}
+                  className="flex flex-wrap items-end gap-6 bg-white p-4 border border-slate-100 shadow-sm relative group"
                 >
-                  Add Window
-                </Button>
-             </div>
-
-             <div className="space-y-4">
-                {availabilityRules.map((rule, idx) => (
-                  <div key={idx} className="flex flex-wrap items-end gap-6 bg-white p-4 border border-slate-100 shadow-sm relative group">
-                    <div className="flex-1 min-w-[150px]">
-                      <Label>Day of Week</Label>
-                      <select
-                        value={rule.day_of_week}
-                        onChange={(e) => updateAvailabilityRule(idx, 'day_of_week', parseInt(e.target.value))}
-                        className="w-full bg-slate-50 p-2 border-b border-slate-200 text-[#003566] font-bold text-xs outline-none"
-                      >
-                        <option value={1}>Monday</option>
-                        <option value={2}>Tuesday</option>
-                        <option value={3}>Wednesday</option>
-                        <option value={4}>Thursday</option>
-                        <option value={5}>Friday</option>
-                        <option value={6}>Saturday</option>
-                        <option value={0}>Sunday</option>
-                      </select>
-                    </div>
-
-                    <div className="flex-1 min-w-[120px]">
-                      <Label>Start Time</Label>
-                      <div className="flex items-center gap-2 bg-slate-50 p-2 border-b border-slate-200">
-                        <Clock size={12} className="text-slate-400" />
-                        <input 
-                          type="time" 
-                          step="900" 
-                          value={rule.start_time}
-                          onChange={(e) => updateAvailabilityRule(idx, 'start_time', e.target.value)}
-                          className="bg-transparent text-xs font-bold text-[#003566] outline-none w-full"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="flex-1 min-w-[120px]">
-                      <Label>End Time</Label>
-                      <div className="flex items-center gap-2 bg-slate-50 p-2 border-b border-slate-200">
-                        <Clock size={12} className="text-slate-400" />
-                        <input 
-                          type="time" 
-                          step="900" 
-                          value={rule.end_time}
-                          onChange={(e) => updateAvailabilityRule(idx, 'end_time', e.target.value)}
-                          className="bg-transparent text-xs font-bold text-[#003566] outline-none w-full"
-                        />
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => removeAvailabilityRule(idx)}
-                      className="p-2 text-red-400 hover:text-red-600 transition-colors"
+                  <div className="flex-1 min-w-[150px]">
+                    <Label>Day of Week</Label>
+                    <select
+                      value={rule.day_of_week}
+                      onChange={(e) =>
+                        updateAvailabilityRule(idx, "day_of_week", parseInt(e.target.value))
+                      }
+                      className="w-full bg-slate-50 p-2 border-b border-slate-200 text-[#003566] font-bold text-xs outline-none"
                     >
-                      <Trash size={16} />
-                    </button>
+                      <option value={1}>Monday</option>
+                      <option value={2}>Tuesday</option>
+                      <option value={3}>Wednesday</option>
+                      <option value={4}>Thursday</option>
+                      <option value={5}>Friday</option>
+                      <option value={6}>Saturday</option>
+                      <option value={0}>Sunday</option>
+                    </select>
                   </div>
-                ))}
 
-                {availabilityRules.length === 0 && (
-                  <div className="text-center py-12 border-2 border-dashed border-slate-200 bg-white">
-                    <Calendar size={32} className="mx-auto text-slate-200 mb-2" />
-                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
-                      No Booking Windows Defined. Test Sails will be disabled.
-                    </p>
+                  <div className="flex-1 min-w-[120px]">
+                    <Label>Start Time</Label>
+                    <div className="flex items-center gap-2 bg-slate-50 p-2 border-b border-slate-200">
+                      <Clock size={12} className="text-slate-400" />
+                      <input
+                        type="time"
+                        step="900"
+                        value={rule.start_time}
+                        onChange={(e) => updateAvailabilityRule(idx, "start_time", e.target.value)}
+                        className="bg-transparent text-xs font-bold text-[#003566] outline-none w-full"
+                      />
+                    </div>
                   </div>
-                )}
-             </div>
+
+                  <div className="flex-1 min-w-[120px]">
+                    <Label>End Time</Label>
+                    <div className="flex items-center gap-2 bg-slate-50 p-2 border-b border-slate-200">
+                      <Clock size={12} className="text-slate-400" />
+                      <input
+                        type="time"
+                        step="900"
+                        value={rule.end_time}
+                        onChange={(e) => updateAvailabilityRule(idx, "end_time", e.target.value)}
+                        className="bg-transparent text-xs font-bold text-[#003566] outline-none w-full"
+                      />
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => removeAvailabilityRule(idx)}
+                    className="p-2 text-red-400 hover:text-red-600 transition-colors"
+                  >
+                    <Trash size={16} />
+                  </button>
+                </div>
+              ))}
+
+              {availabilityRules.length === 0 && (
+                <div className="text-center py-12 border-2 border-dashed border-slate-200 bg-white">
+                  <Calendar size={32} className="mx-auto text-slate-200 mb-2" />
+                  <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
+                    No Booking Windows Defined. Test Sails will be disabled.
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* 05. AI CARGO DROP */}
+          {/* --- DISPLAY SPECIFICATIONS (Public visibility) --- */}
+          <div className="space-y-6 bg-white p-6 border border-slate-200">
+            <SectionHeader icon={<Eye size={14} />} title="Display Specifications" />
+            <p className="text-[9px] text-gray-600 mb-4">
+              Select which specifications to show on the public yacht page
+            </p>
+
+            <div className="space-y-4">
+              {/* General */}
+              <div className="space-y-2">
+                <h4 className="text-[9px] font-black uppercase text-gray-700">General</h4>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                  {["builder", "model", "year", "designer", "where", "hull_number", "hull_type"].map(
+                    (field) => (
+                      <SpecCheckbox
+                        key={field}
+                        field={field}
+                        label={field.replace(/_/g, " ")}
+                        onSpecChange={handleSpecChange}
+                      />
+                    )
+                  )}
+                </div>
+              </div>
+
+              {/* Dimensions */}
+              <div className="space-y-2">
+                <h4 className="text-[9px] font-black uppercase text-gray-700">Dimensions</h4>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                  {["loa", "lwl", "beam", "draft", "air_draft", "displacement", "ballast", "passenger_capacity"].map(
+                    (field) => (
+                      <SpecCheckbox
+                        key={field}
+                        field={field}
+                        label={field.replace(/_/g, " ")}
+                        onSpecChange={handleSpecChange}
+                      />
+                    )
+                  )}
+                </div>
+              </div>
+
+              {/* Construction */}
+              <div className="space-y-2">
+                <h4 className="text-[9px] font-black uppercase text-gray-700">Construction</h4>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                  {[
+                    "hull_colour",
+                    "hull_construction",
+                    "super_structure_colour",
+                    "super_structure_construction",
+                    "deck_colour",
+                    "deck_construction",
+                    "cockpit_type",
+                    "control_type",
+                  ].map((field) => (
+                    <SpecCheckbox
+                      key={field}
+                      field={field}
+                      label={field.replace(/_/g, " ")}
+                      onSpecChange={handleSpecChange}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* Engine */}
+              <div className="space-y-2">
+                <h4 className="text-[9px] font-black uppercase text-gray-700">Engine & Performance</h4>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                  {[
+                    "engine_manufacturer",
+                    "horse_power",
+                    "fuel",
+                    "hours",
+                    "cruising_speed",
+                    "max_speed",
+                    "tankage",
+                    "gallons_per_hour",
+                    "starting_type",
+                    "drive_type",
+                  ].map((field) => (
+                    <SpecCheckbox
+                      key={field}
+                      field={field}
+                      label={field.replace(/_/g, " ")}
+                      onSpecChange={handleSpecChange}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* Accommodation */}
+              <div className="space-y-2">
+                <h4 className="text-[9px] font-black uppercase text-gray-700">Accommodation</h4>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                  {["cabins", "berths", "toilet", "shower", "bath", "heating"].map((field) => (
+                    <SpecCheckbox
+                      key={field}
+                      field={field}
+                      label={field.replace(/_/g, " ")}
+                      onSpecChange={handleSpecChange}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* --- AI CARGO DROP (Gemini Classifier) --- */}
           <div className="space-y-8 bg-slate-900 p-12 border-l-8 border-blue-500 shadow-2xl">
             <div className="flex justify-between items-start">
               <div>
                 <h3 className="text-[12px] font-black uppercase text-blue-400 tracking-[0.4em] flex items-center gap-3 italic">
-                  <Sparkles size={20} className="fill-blue-400" /> Gemini AI
-                  Categorizer
+                  <Sparkles size={20} className="fill-blue-400" /> Upload Media
                 </h3>
                 <p className="text-[9px] text-slate-500 font-bold uppercase mt-2 tracking-widest italic">
-                  Automated asset classification via Neural Engine
+                  Select all images. Our AI will sort them automatically.
                 </p>
               </div>
-
               <label className="cursor-pointer bg-blue-600 text-white px-10 py-4 text-[10px] font-black uppercase tracking-widest hover:bg-blue-500 transition-all flex items-center gap-2 shadow-xl">
-                {isAnalyzing ? (
-                  <Loader2 className="animate-spin" />
-                ) : (
-                  <Upload size={14} />
-                )}
-                {isAnalyzing ? "Processing..." : "Initiate AI Cargo Drop"}
+                {isAnalyzing ? <Loader2 className="animate-spin" /> : <Upload size={14} />}
+                {isAnalyzing ? "Analyzing..." : "Select Images"}
                 <input
                   type="file"
                   multiple
@@ -932,34 +929,34 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
               </label>
             </div>
 
-            {/* Staging Area Grid */}
+            {/* Staging Area */}
             {aiStaging.length > 0 && (
               <div className="space-y-8">
                 <div className="flex justify-between items-center border-b border-slate-800 pb-4">
                   <p className="text-[9px] font-black text-blue-300 uppercase tracking-widest">
-                    {aiStaging.length} Assets in Staging
+                    {aiStaging.length} Images Found
                   </p>
                   <button
                     type="button"
                     onClick={approveAllAi}
                     className="text-[9px] font-black text-emerald-400 hover:text-emerald-300 uppercase flex items-center gap-2"
                   >
-                    <CheckCircle size={14} /> Approve Entire Batch
+                    <CheckCircle size={14} /> Confirm All
                   </button>
                 </div>
-
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                   {aiStaging.map((item, idx) => (
                     <div
                       key={idx}
-                      className="relative group bg-slate-800 border border-slate-700 overflow-hidden shadow-lg"
+                      className="relative group bg-slate-800 border border-slate-700 overflow-hidden"
                     >
                       <img
                         src={item.preview}
-                        className="h-40 w-full object-cover opacity-80"
+                        className="h-32 w-full object-cover opacity-80"
+                        alt={item.originalName}
                       />
                       <div className="absolute top-2 left-2">
-                        <span className="bg-blue-600 text-white text-[8px] font-black px-3 py-1 uppercase tracking-tighter">
+                        <span className="bg-blue-600 text-white text-[8px] font-black px-2 py-1 uppercase">
                           AI: {item.category}
                         </span>
                       </div>
@@ -974,9 +971,7 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                         <button
                           type="button"
                           onClick={() =>
-                            setAiStaging((prev) =>
-                              prev.filter((_, i) => i !== idx),
-                            )
+                            setAiStaging((prev) => prev.filter((_, i) => i !== idx))
                           }
                           className="bg-red-600/20 text-red-400 border border-red-600/30 px-3 py-2 hover:bg-red-600 hover:text-white"
                         >
@@ -990,99 +985,69 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
             )}
           </div>
 
-          {/* --- SECTION 6: GALLERY --- */}
+          {/* --- GALLERY (Per category) --- */}
           {Object.keys(galleryState).map((category) => (
-            <div key={category} className="space-y-8">
-              <h3 className="text-[11px] font-black uppercase text-[#003566] tracking-widest flex items-center gap-2 italic border-b border-slate-200 pb-4">
-                <Images size={20} className="text-blue-600" /> {category}{" "}
-                Gallery
-              </h3>
+            <div key={category} className="space-y-4">
               <div className="bg-white border border-slate-200 rounded-sm overflow-hidden flex flex-col shadow-sm">
                 <div className="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
                   <span className="text-[10px] font-black uppercase tracking-widest text-[#003566]">
                     {category}
                   </span>
-                  <label className="cursor-pointer bg-[#003566] text-white px-4 py-1.5 text-[8px] font-black uppercase tracking-[0.2em] hover:bg-blue-600 transition-colors shadow-sm">
-                    Queue Files
+                  <label className="cursor-pointer text-[#003566] text-[8px] font-black uppercase hover:text-blue-600">
+                    + Add More
                     <input
                       type="file"
                       multiple
                       className="hidden"
                       accept="image/*"
-                      onChange={(e) =>
-                        handleGalleryAdd(category, e.target.files)
-                      }
+                      onChange={(e) => handleGalleryAdd(category, e.target.files)}
                     />
                   </label>
                 </div>
-                <div className="p-4 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 min-h-[120px]">
-                  {galleryState[category].map((item, i) => {
-                    const isFile = item instanceof File;
-                    const src = isFile
-                      ? URL.createObjectURL(item)
-                      : `${STORAGE_URL}${item.url}`;
-                    return (
-                      <div
-                        key={i}
-                        className="aspect-square bg-slate-50 relative group overflow-hidden border border-slate-100"
-                      >
+
+                {/* Image grid */}
+                {galleryState[category].length > 0 && (
+                  <div className="p-4 grid grid-cols-4 lg:grid-cols-8 gap-2">
+                    {galleryState[category].map((file, i) => (
+                      <div key={i} className="aspect-square bg-slate-100 relative group">
                         <img
-                          src={src}
-                          onError={handleImageError}
-                          className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity"
+                          src={URL.createObjectURL(file)}
+                          className="w-full h-full object-cover"
+                          alt={`${category} ${i}`}
                         />
                         <button
                           type="button"
-                          onClick={() => {
-                            if (isFile) {
-                              setGalleryState((prev) => ({
-                                ...prev,
-                                [category]: prev[category].filter(
-                                  (_, idx) => idx !== i,
-                                ),
-                              }));
-                            } else {
-                              deleteExistingImage(item.id, category, i);
-                            }
-                          }}
-                          className="absolute inset-0 bg-red-600/90 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-all backdrop-blur-sm"
+                          onClick={() =>
+                            setGalleryState((prev) => ({
+                              ...prev,
+                              [category]: prev[category].filter((_, idx) => idx !== i),
+                            }))
+                          }
+                          className="absolute inset-0 bg-red-600/80 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white"
                         >
-                          <Trash size={16} />
+                          <Trash size={12} />
                         </button>
                       </div>
-                    );
-                  })}
-                  {galleryState[category].length === 0 && (
-                    <div className="col-span-full flex flex-col items-center justify-center py-8 opacity-30 gap-2">
-                      <Images size={24} />
-                      <span className="text-[9px] uppercase font-bold">
-                        No Media
-                      </span>
-                    </div>
-                  )}
-                </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           ))}
 
-          {/* SAVE ACTION BAR */}
-          <div className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-md border-t border-slate-200 p-6 flex justify-between items-center z-50">
-            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 hidden lg:block">
-              Unsaved changes will be lost
-            </p>
+          {/* --- SUBMIT BUTTON --- */}
+          <div className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-slate-200 p-6 flex justify-end items-center z-50">
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="bg-[#003566] text-white hover:bg-blue-800 rounded-none h-14 px-12 font-black uppercase text-[10px] tracking-widest transition-all shadow-xl ml-auto"
+              className="bg-[#003566] text-white hover:bg-blue-800 rounded-none h-14 px-12 font-black uppercase text-[10px] tracking-widest transition-all shadow-xl"
             >
               {isSubmitting ? (
                 <Loader2 className="animate-spin mr-2 w-5 h-5" />
               ) : (
                 <Save className="mr-2 w-5 h-5" />
               )}
-              {isNewMode
-                ? "Initialize Vessel Registry"
-                : "Save Manifest Changes"}
+              Complete & Go to Dashboard <ArrowRight size={14} className="ml-2" />
             </Button>
           </div>
         </form>
@@ -1091,13 +1056,18 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
   );
 }
 
-// ---------------- Helper Components ---------------- //
+// ----------------------------------------------------------------------
+// Helper Components
+// ----------------------------------------------------------------------
 
-function Label({ children }: { children: React.ReactNode }) {
+function Label({ children, htmlFor }: { children: React.ReactNode; htmlFor?: string }) {
   return (
-    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 pl-0.5">
+    <label
+      htmlFor={htmlFor}
+      className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 pl-0.5 block cursor-pointer"
+    >
       {children}
-    </p>
+    </label>
   );
 }
 
@@ -1107,19 +1077,13 @@ function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
       {...props}
       className={cn(
         "w-full bg-transparent border-b border-slate-200 py-2.5 text-xs font-bold text-[#003566] outline-none focus:border-blue-600 focus:bg-white/50 transition-all placeholder:text-slate-300",
-        props.className,
+        props.className
       )}
     />
   );
 }
 
-function SectionHeader({
-  icon,
-  title,
-}: {
-  icon: React.ReactNode;
-  title: string;
-}) {
+function SectionHeader({ icon, title }: { icon: React.ReactNode; title: string }) {
   return (
     <h4 className="text-[10px] font-black uppercase tracking-widest text-blue-600 flex items-center gap-2 mb-4">
       {icon} {title}

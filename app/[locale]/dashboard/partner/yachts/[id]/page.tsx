@@ -23,7 +23,8 @@ import {
   Save,
   ArrowLeft,
   Calendar,
-  Clock
+  Clock,
+  Eye
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -48,6 +49,46 @@ type AvailabilityRule = {
   start_time: string;
   end_time: string;
 };
+
+// Spec Checkbox Component
+function SpecCheckbox({ field, label, selectedYacht, onSpecChange }: { 
+  field: string; 
+  label: string; 
+  selectedYacht: any;
+  onSpecChange: (field: string, isChecked: boolean) => void;
+}) {
+  const [isChecked, setIsChecked] = useState(() => {
+    if (selectedYacht?.display_specs) {
+      return selectedYacht.display_specs.includes(field);
+    }
+    return true;
+  });
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newChecked = e.target.checked;
+    setIsChecked(newChecked);
+    onSpecChange(field, newChecked);
+  };
+
+  return (
+    <div className="flex items-center gap-2 bg-slate-50/50 p-2 rounded">
+      <input
+        type="checkbox"
+        name={`display_specs[${field}]`}
+        id={`display_spec_${field}`}
+        checked={isChecked}
+        onChange={handleChange}
+        className="w-3 h-3 accent-[#003566] cursor-pointer"
+      />
+      <label
+        htmlFor={`display_spec_${field}`}
+        className="text-[8px] font-medium uppercase tracking-wider text-slate-600 cursor-pointer select-none flex-1"
+      >
+        {label}
+      </label>
+    </div>
+  );
+}
 
 export default function YachtEditorPage() {
   const params = useParams();
@@ -76,6 +117,9 @@ export default function YachtEditorPage() {
 
   // Availability State
   const [availabilityRules, setAvailabilityRules] = useState<AvailabilityRule[]>([]);
+  
+  // Display Specs State
+  const [displaySpecs, setDisplaySpecs] = useState<Record<string, boolean>>({});
 
   // --- 1. FETCH DATA (IF EDITING) ---
   useEffect(() => {
@@ -119,6 +163,25 @@ export default function YachtEditorPage() {
           setAvailabilityRules(yacht.availability_rules);
         } else if (yacht.availabilityRules) {
           setAvailabilityRules(yacht.availabilityRules);
+        }
+
+        // Initialize display specs state
+        if (yacht.display_specs) {
+          const specsState: Record<string, boolean> = {};
+          const allSpecs = [
+            'builder', 'model', 'year', 'designer', 'where', 'hull_number', 'hull_type',
+            'loa', 'lwl', 'beam', 'draft', 'air_draft', 'displacement', 'ballast', 'passenger_capacity',
+            'hull_colour', 'hull_construction', 'super_structure_colour', 'super_structure_construction',
+            'deck_colour', 'deck_construction', 'cockpit_type', 'control_type',
+            'engine_manufacturer', 'horse_power', 'fuel', 'hours', 'cruising_speed', 'max_speed',
+            'tankage', 'gallons_per_hour', 'starting_type', 'drive_type',
+            'cabins', 'berths', 'toilet', 'shower', 'bath', 'heating'
+          ];
+          
+          allSpecs.forEach(spec => {
+            specsState[spec] = yacht.display_specs.includes(spec);
+          });
+          setDisplaySpecs(specsState);
         }
 
       } catch (err) {
@@ -176,12 +239,10 @@ const handleAiCategorizer = async (files: FileList | null) => {
   try {
     toast.loading("Gemini is analyzing assets...", { id: "ai-loading" });
     
-    // Try partner route first
     let res;
     try {
       res = await api.post("/partner/yachts/ai-classify", formData);
     } catch (aiErr: any) {
-      // If partner route fails, try regular route
       if (aiErr.response?.status === 403 || aiErr.response?.status === 404) {
         res = await api.post("/yachts/ai-classify", formData);
       } else {
@@ -243,17 +304,62 @@ const handleAiCategorizer = async (files: FileList | null) => {
     setAvailabilityRules(newRules);
   };
 
-  // --- 3. SUBMIT LOGIC ---
-// --- 3. SUBMIT LOGIC ---
+  // Display Specs Handler
+  const handleSpecChange = (field: string, isChecked: boolean) => {
+    setDisplaySpecs(prev => ({
+      ...prev,
+      [field]: isChecked
+    }));
+  };
+
+  // --- 3. SIMPLIFIED SUBMIT LOGIC ---
 const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
   e.preventDefault();
   setIsSubmitting(true);
   setErrors(null);
-  const formData = new FormData(e.currentTarget);
+  
+  // Create form data directly without validation
+  const formData = new FormData();
 
-  if (mainFile) formData.set("main_image", mainFile);
+  // Collect all form data
+  const formElements = e.currentTarget.elements;
+  
+  // Add boat name and price first
+  const boatName = (document.querySelector('input[name="boat_name"]') as HTMLInputElement)?.value;
+  const price = (document.querySelector('input[name="price"]') as HTMLInputElement)?.value;
+  const minBidAmount = (document.querySelector('input[name="min_bid_amount"]') as HTMLInputElement)?.value;
+  
+  if (boatName) formData.append('boat_name', boatName);
+  if (price) formData.append('price', price);
+  if (minBidAmount) formData.append('min_bid_amount', minBidAmount);
 
-  // Handle boolean fields
+  // Add main image if exists
+  if (mainFile) {
+    formData.append('main_image', mainFile);
+  }
+
+  // Add all other fields from form
+  const fields = [
+    'year', 'status', 'loa', 'lwl', 'where', 'passenger_capacity',
+    'beam', 'draft', 'air_draft', 'displacement', 'hull_type', 'hull_construction',
+    'hull_colour', 'hull_number', 'designer', 'builder',
+    'engine_manufacturer', 'horse_power', 'hours', 'fuel', 'max_speed',
+    'cruising_speed', 'gallons_per_hour', 'tankage', 'cabins', 'berths',
+    'toilet', 'shower', 'bath', 'heating', 'cockpit_type', 'control_type',
+    'external_url', 'print_url', 'owners_comment', 'reg_details', 
+    'known_defects', 'last_serviced', 'super_structure_colour',
+    'super_structure_construction', 'deck_colour', 'deck_construction',
+    'ballast', 'stern_thruster', 'bow_thruster', 'starting_type', 'drive_type'
+  ];
+
+  fields.forEach(field => {
+    const element = document.querySelector(`[name="${field}"]`) as HTMLInputElement;
+    if (element && element.value !== undefined && element.value !== '') {
+      formData.append(field, element.value);
+    }
+  });
+
+  // Handle boolean fields - SIMPLIFIED
   const booleanFields = [
     'allow_bidding', 'flybridge', 'oven', 'microwave', 'fridge', 'freezer',
     'air_conditioning', 'navigation_lights', 'compass', 'depth_instrument',
@@ -265,50 +371,37 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
   ];
 
   booleanFields.forEach(field => {
-    if (!formData.has(field)) {
-      formData.append(field, 'false');
+    const checkbox = document.querySelector(`[name="${field}"]`) as HTMLInputElement;
+    if (checkbox) {
+      formData.append(field, checkbox.checked ? 'true' : 'false');
     } else {
-      const value = formData.get(field);
-      formData.set(field, value === 'on' || value === 'true' || value === '1' ? 'true' : 'false');
+      formData.append(field, 'false');
     }
   });
 
-  // Clean empty fields
-  const allFields = [
-    'boat_name', 'price', 'status', 'year',
-    'beam', 'draft', 'loa', 'lwl', 'air_draft', 'passenger_capacity',
-    'designer', 'builder', 'where', 'hull_colour', 'hull_construction',
-    'hull_number', 'hull_type', 'super_structure_colour', 'super_structure_construction',
-    'deck_colour', 'deck_construction', 'cockpit_type', 'control_type', 'ballast',
-    'displacement', 'cabins', 'berths', 'toilet', 'shower', 'bath', 'heating',
-    'stern_thruster', 'bow_thruster', 'fuel', 'hours', 'cruising_speed', 'max_speed',
-    'horse_power', 'engine_manufacturer', 'tankage', 'gallons_per_hour',
-    'starting_type', 'drive_type'
-  ];
-
-  allFields.forEach(field => {
-    const val = formData.get(field);
-    if (!val || val === '') formData.delete(field);
-  });
-
-  // Append Availability Rules
+  // Add availability rules
   if (availabilityRules.length > 0) {
     formData.append("availability_rules", JSON.stringify(availabilityRules));
+  }
+
+  // Add display specs
+  const selectedSpecs = Object.keys(displaySpecs).filter(key => displaySpecs[key]);
+  if (selectedSpecs.length > 0) {
+    formData.append("display_specs", JSON.stringify(selectedSpecs));
   }
 
   try {
     let finalYachtId = selectedYacht?.id;
     
     if (!isNewMode && selectedYacht) {
-      // UPDATE - Use PUT method
+      // UPDATE
       await api.put(`/yachts/${selectedYacht.id}`, formData);
     } else {
-      // CREATE NEW - Try partner route first (which doesn't require 'manage yachts' permission)
+      // CREATE NEW
       try {
         const res = await api.post("/partner/yachts", formData);
         finalYachtId = res.data.id;
       } catch (partnerErr: any) {
-        // If partner route fails, try regular route (for admins)
         if (partnerErr.response?.status === 403 || partnerErr.response?.status === 404) {
           const res = await api.post("/yachts", formData);
           finalYachtId = res.data.id;
@@ -328,11 +421,9 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         newFiles.forEach((file) => gData.append("images[]", file));
         gData.append("category", cat);
         
-        // Try partner route first for gallery upload
         try {
           await api.post(`/partner/yachts/${finalYachtId}/gallery`, gData);
         } catch (galleryErr: any) {
-          // If partner route fails, try regular route
           if (galleryErr.response?.status === 403 || galleryErr.response?.status === 404) {
             await api.post(`/yachts/${finalYachtId}/gallery`, gData);
           } else {
@@ -349,14 +440,17 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     );
     router.push("/nl/dashboard/admin/yachts");
   } catch (err: any) {
+    console.error("Submission error:", err);
+    
     if (err.response?.status === 422) {
       setErrors(err.response.data.errors);
-      toast.error("Please fix validation errors");
+      toast.error("Please check required fields");
     } else if (err.response?.status === 403) {
-      toast.error("Permission denied. You don't have access to perform this action.");
+      toast.error("Permission denied.");
+    } else if (err.response?.status === 500) {
+      toast.error("Server error. Please try again.");
     } else {
-      console.error(err);
-      toast.error(`Error ${err.response?.status}: ${err.response?.data?.message || "Critical System Error"}`);
+      toast.error(`Error: ${err.response?.data?.message || "System Error"}`);
     }
   } finally {
     setIsSubmitting(false);
@@ -468,7 +562,7 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               <div className="space-y-2">
-                <Label>Vessel Name</Label>
+                <Label>Vessel Name *</Label>
                 <Input
                   name="boat_name"
                   defaultValue={selectedYacht?.boat_name}
@@ -483,6 +577,16 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                   type="number"
                   defaultValue={selectedYacht?.price}
                   placeholder="1500000"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Minimum Bid Amount (€)</Label>
+                <Input
+                  name="min_bid_amount"
+                  type="number"
+                  defaultValue={selectedYacht?.min_bid_amount || ''}
+                  placeholder="Auto-calculates 90% of price if empty"
+                  step="1000"
                 />
               </div>
               <div className="space-y-2">
@@ -813,6 +917,99 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                     </label>
                   </div>
                 ))}
+              </div>
+            </div>
+
+            {/* --- Display Specifications Control --- */}
+            <div className="space-y-6 bg-white p-6 border border-slate-200">
+              <SectionHeader
+                icon={<Eye size={14} />}
+                title="Display Specifications"
+              />
+              <p className="text-[9px] text-gray-600 mb-4">
+                Select which specifications to show on the public yacht page
+              </p>
+              
+              <div className="space-y-4">
+                {/* General Specs */}
+                <div className="space-y-2">
+                  <h4 className="text-[9px] font-black uppercase text-gray-700">General</h4>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                    {['builder', 'model', 'year', 'designer', 'where', 'hull_number', 'hull_type'].map((field) => (
+                      <SpecCheckbox
+                        key={field}
+                        field={field}
+                        label={field.replace('_', ' ')}
+                        selectedYacht={selectedYacht}
+                        onSpecChange={handleSpecChange}
+                      />
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Dimensions */}
+                <div className="space-y-2">
+                  <h4 className="text-[9px] font-black uppercase text-gray-700">Dimensions</h4>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                    {['loa', 'lwl', 'beam', 'draft', 'air_draft', 'displacement', 'ballast', 'passenger_capacity'].map((field) => (
+                      <SpecCheckbox
+                        key={field}
+                        field={field}
+                        label={field.replace('_', ' ')}
+                        selectedYacht={selectedYacht}
+                        onSpecChange={handleSpecChange}
+                      />
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Construction */}
+                <div className="space-y-2">
+                  <h4 className="text-[9px] font-black uppercase text-gray-700">Construction</h4>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                    {['hull_colour', 'hull_construction', 'super_structure_colour', 'super_structure_construction', 'deck_colour', 'deck_construction', 'cockpit_type', 'control_type'].map((field) => (
+                      <SpecCheckbox
+                        key={field}
+                        field={field}
+                        label={field.replace('_', ' ')}
+                        selectedYacht={selectedYacht}
+                        onSpecChange={handleSpecChange}
+                      />
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Engine */}
+                <div className="space-y-2">
+                  <h4 className="text-[9px] font-black uppercase text-gray-700">Engine & Performance</h4>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                    {['engine_manufacturer', 'horse_power', 'fuel', 'hours', 'cruising_speed', 'max_speed', 'tankage', 'gallons_per_hour', 'starting_type', 'drive_type'].map((field) => (
+                      <SpecCheckbox
+                        key={field}
+                        field={field}
+                        label={field.replace('_', ' ')}
+                        selectedYacht={selectedYacht}
+                        onSpecChange={handleSpecChange}
+                      />
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Accommodation */}
+                <div className="space-y-2">
+                  <h4 className="text-[9px] font-black uppercase text-gray-700">Accommodation</h4>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                    {['cabins', 'berths', 'toilet', 'shower', 'bath', 'heating'].map((field) => (
+                      <SpecCheckbox
+                        key={field}
+                        field={field}
+                        label={field.replace('_', ' ')}
+                        selectedYacht={selectedYacht}
+                        onSpecChange={handleSpecChange}
+                      />
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
