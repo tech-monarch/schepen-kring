@@ -155,7 +155,12 @@ export default function PartnerFleetManagementPage() {
   useEffect(() => {
     fetchFleet();
   }, []);
-
+useEffect(() => {
+  if (fleet.length > 0) {
+    console.log("🚤 First yacht in fleet:", fleet[0]);
+    console.log("🔑 All keys:", Object.keys(fleet[0]));
+  }
+}, [fleet]);
   // --- Utilities ------------------------------------------------------------
   const handleImageError = (e: SyntheticEvent<HTMLImageElement, Event>) => {
     e.currentTarget.src = PLACEHOLDER_IMAGE;
@@ -223,7 +228,21 @@ export default function PartnerFleetManagementPage() {
     return `${loa} m`;
   };
 
-  const getYachtName = (yacht: any): string => yacht.boat_name || yacht.name || "Unnamed Vessel";
+const getYachtName = (yacht: any): string => {
+  // Try multiple possible field names
+  const possibleNames = [
+    yacht.boat_name,
+    yacht.name,
+    yacht.title,
+    yacht.vessel_name,
+    yacht.display_name,
+  ].find((val) => val && typeof val === "string" && val.trim() !== "");
+
+  if (possibleNames) return possibleNames.trim();
+  if (yacht.vessel_id) return `Vessel ${yacht.vessel_id}`;
+  if (yacht.id) return `Vessel #${yacht.id}`;
+  return "Unnamed Vessel";
+};
   const getYachtStatus = (yacht: any): string => yacht.status || "Draft";
   const getStatusConfig = (status: string | null | undefined) =>
     statusConfig[status || "Draft"] || statusConfig.Draft;
@@ -615,7 +634,9 @@ export default function PartnerFleetManagementPage() {
                 <div className="p-5 space-y-3 flex-1 flex flex-col">
                   <div className="flex justify-between items-start">
                     <div>
-                      <h3 className="text-lg font-serif italic mb-1 line-clamp-1">{getYachtName(yacht)}</h3>
+                      <h3 className="text-lg font-serif italic mb-1 line-clamp-1">
+                        {getYachtName(yacht) || <span className="text-red-500">⚠️ Missing name</span>}
+                      </h3>
                       <p className="text-lg font-bold text-blue-900">{formatCurrency(yacht.price)}</p>
                       {yacht.min_bid_amount && (
                         <p className="text-[9px] text-slate-500 mt-1">
