@@ -15,7 +15,7 @@ export default function BoatUploader() {
 
     try {
       // Replace with your actual VPS IP or domain
-      const res = await fetch('http://YOUR_VPS_IP/api/upload-boat', {
+      const res = await fetch('https://schepen-kring.nl/api/upload-boat', {
         method: 'POST',
         body: formData,
       });
