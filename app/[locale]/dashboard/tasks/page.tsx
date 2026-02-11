@@ -186,6 +186,7 @@ function CalendarView({ tasks, onTaskClick }: CalendarViewProps) {
 
   return (
     <div className="bg-white p-6 rounded-lg border border-slate-200">
+      
       {/* Calendar Header */}
       <div className="flex flex-col md:flex-row justify-between items-center mb-6">
         <div className="flex items-center gap-4 mb-4 md:mb-0">

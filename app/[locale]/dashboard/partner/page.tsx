@@ -41,13 +41,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { toast, Toaster } from "react-hot-toast";
 import { cn } from "@/lib/utils";
-import {Sidebar} from "@/components/dashboard/Sidebar";
+import { Sidebar } from "@/components/dashboard/Sidebar";
 
 const STORAGE_URL = "https://schepen-kring.nl/storage/";
 const PLACEHOLDER_IMAGE =
   "https://images.unsplash.com/photo-1569263979104-865ab7cd8d13?auto=format&fit=crop&w=600&q=80";
 
-// Status badge configuration (extended)
 const statusConfig: Record<string, { color: string; bg: string; border: string; label: string }> = {
   "For Sale": { color: "text-emerald-600", bg: "bg-emerald-50", border: "border-emerald-100", label: "For Sale" },
   "For Bid": { color: "text-blue-600", bg: "bg-blue-50", border: "border-blue-100", label: "For Bid" },
@@ -58,7 +57,6 @@ const statusConfig: Record<string, { color: string; bg: string; border: string; 
   Maintenance: { color: "text-orange-600", bg: "bg-orange-50", border: "border-orange-100", label: "Maintenance" },
 };
 
-// Status filter options
 const statusOptions = [
   { value: "all", label: "All Status" },
   { value: "For Sale", label: "For Sale" },
@@ -70,7 +68,6 @@ const statusOptions = [
   { value: "Maintenance", label: "Maintenance" },
 ];
 
-// Sort options
 const sortOptions = [
   { value: "boat_name-asc", label: "Name (A-Z)" },
   { value: "boat_name-desc", label: "Name (Z-A)" },
@@ -95,10 +92,6 @@ export default function PartnerFleetManagementPage() {
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("boat_name");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
-  
-    // Sidebar State
-    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  
   const [stats, setStats] = useState({
     total: 0,
     forSale: 0,
@@ -111,6 +104,9 @@ export default function PartnerFleetManagementPage() {
     avgPrice: 0,
   });
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  
+        // Sidebar State
+        const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   // ------------------------------------------------------------------------
   // Fetch partner's fleet
@@ -122,22 +118,19 @@ export default function PartnerFleetManagementPage() {
       const yachts = res.data || [];
       setFleet(yachts);
 
-      // 🔍 DEBUG: Log the first yacht and its keys
-      if (yachts.length > 0) {
-        console.log("🚤 First yacht (full object):", yachts[0]);
-        console.log("🔑 Available keys:", Object.keys(yachts[0]));
-        console.log("📛 boat_name value:", yachts[0].boat_name);
-        console.log("📛 name value:", yachts[0].name);
-      }
+      // 🔍 DEBUG – uncomment to inspect API response
+      // if (yachts.length > 0) {
+      //   console.log("🚤 First yacht:", yachts[0]);
+      //   console.log("🔑 Keys:", Object.keys(yachts[0]));
+      // }
 
-      // Calculate enhanced stats
       const forSale = yachts.filter((y: any) => y.status === "For Sale").length;
       const forBid = yachts.filter((y: any) => y.status === "For Bid").length;
       const sold = yachts.filter((y: any) => y.status === "Sold").length;
       const draft = yachts.filter((y: any) => y.status === "Draft" || !y.status).length;
       const active = yachts.filter((y: any) => y.status === "Active").length;
       const inactive = yachts.filter((y: any) => y.status === "Inactive").length;
-
+      
       const totalValue = yachts.reduce((sum: number, y: any) => {
         const price = parseFloat(y.price) || 0;
         return sum + price;
@@ -183,7 +176,7 @@ export default function PartnerFleetManagementPage() {
   };
 
   const handleDelete = async (yacht: any) => {
-    const yachtName = getYachtName(yacht);
+    const yachtName = getDisplayName(yacht);
     const confirmed = window.confirm(`Are you sure you want to permanently remove "${yachtName}" from your fleet?`);
     if (!confirmed) return;
 
@@ -204,14 +197,9 @@ export default function PartnerFleetManagementPage() {
     try {
       toast.loading("Duplicating vessel...", { id: "duplicate" });
 
-      // Omit id, vessel_id, timestamps – everything else can be copied
       const { id, vessel_id, created_at, updated_at, ...yachtData } = yacht;
-
-      // Append " (Copy)" to the name
       const baseName = yachtData.boat_name || yachtData.name || "Vessel";
       yachtData.boat_name = `${baseName} (Copy)`;
-
-      // Always set new copy as Draft
       yachtData.status = "Draft";
 
       const res = await api.post("/partner/yachts", yachtData);
@@ -240,27 +228,23 @@ export default function PartnerFleetManagementPage() {
   };
 
   // ------------------------------------------------------------------------
-  // 🔥 ULTIMATE VESSEL NAME RESOLVER – tries every possible field
+  // ✅ CLEAN NAME RESOLVER – no scary warnings, just sensible fallback
   // ------------------------------------------------------------------------
-  const getYachtName = (yacht: any): string => {
-    // All possible fields that might contain the name
-    const candidates = [
-      yacht.boat_name,
-      yacht.name,
-      yacht.title,
-      yacht.vessel_name,
-      yacht.display_name,
-      yacht.vessel_id,
-      yacht.id ? `Vessel #${yacht.id}` : null,
-    ];
-
-    for (const candidate of candidates) {
-      if (candidate && typeof candidate === "string" && candidate.trim() !== "") {
-        return candidate.trim();
-      }
+  const getDisplayName = (yacht: any): string => {
+    // Prefer boat_name, fallback to name, then vessel_id, then id
+    if (yacht.boat_name && yacht.boat_name.trim() !== "") {
+      return yacht.boat_name.trim();
     }
-
-    return "⚠️ Unnamed Vessel";
+    if (yacht.name && yacht.name.trim() !== "") {
+      return yacht.name.trim();
+    }
+    if (yacht.vessel_id) {
+      return yacht.vessel_id; // Already includes "SK-2026-..." etc.
+    }
+    if (yacht.id) {
+      return `Vessel #${yacht.id}`;
+    }
+    return "Unnamed Vessel";
   };
 
   const getYachtStatus = (yacht: any): string => yacht.status || "Draft";
@@ -291,7 +275,7 @@ export default function PartnerFleetManagementPage() {
     .filter((yacht) => {
       if (!yacht) return false;
 
-      const boatName = safeString(getYachtName(yacht)).toLowerCase();
+      const displayName = safeString(getDisplayName(yacht)).toLowerCase();
       const vesselId = safeString(yacht.vessel_id).toLowerCase();
       const location = safeString(yacht.where).toLowerCase();
       const builder = safeString(yacht.builder).toLowerCase();
@@ -299,7 +283,7 @@ export default function PartnerFleetManagementPage() {
       const query = searchQuery.toLowerCase();
 
       const matchesSearch =
-        boatName.includes(query) ||
+        displayName.includes(query) ||
         vesselId.includes(query) ||
         location.includes(query) ||
         builder.includes(query) ||
@@ -323,21 +307,18 @@ export default function PartnerFleetManagementPage() {
         bValue = b[sortBy] || "";
       }
 
-      // Numeric fields
       if (["price", "year", "loa", "beam", "draft", "horse_power", "hours"].includes(sortBy)) {
         const aNum = parseFloat(aValue) || 0;
         const bNum = parseFloat(bValue) || 0;
         return sortOrder === "asc" ? aNum - bNum : bNum - aNum;
       }
 
-      // Date fields
       if (sortBy.includes("_at")) {
         const aDate = new Date(aValue || 0).getTime();
         const bDate = new Date(bValue || 0).getTime();
         return sortOrder === "asc" ? aDate - bDate : bDate - aDate;
       }
 
-      // String fields
       const aStr = safeString(aValue);
       const bStr = safeString(bValue);
       return sortOrder === "asc" ? aStr.localeCompare(bStr) : bStr.localeCompare(aStr);
@@ -375,7 +356,6 @@ export default function PartnerFleetManagementPage() {
     </div>
   );
 
-  // Tooltip – shows extra specs on hover
   const SpecTooltip = ({ yacht }: { yacht: any }) => {
     const specs = [];
 
@@ -414,7 +394,6 @@ export default function PartnerFleetManagementPage() {
     <div className="min-h-screen bg-[#F8FAFC]">
       <Toaster position="top-right" />
                     <Sidebar onCollapse={setIsSidebarCollapsed} />
-      
 
       {/* HEADER */}
       <div className="bg-white border-b border-slate-200 sticky top-0 z-30">
@@ -447,7 +426,7 @@ export default function PartnerFleetManagementPage() {
       </div>
 
       <div className="max-w-7xl mx-auto p-6 lg:p-12 space-y-8">
-        {/* ENHANCED STATS CARDS */}
+        {/* STATS CARDS */}
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
           <div className="bg-white p-4 border border-slate-200 shadow-sm">
             <div className="flex items-center justify-between">
@@ -622,7 +601,7 @@ export default function PartnerFleetManagementPage() {
                   <img
                     src={getImageUrl(yacht.main_image)}
                     onError={handleImageError}
-                    alt={getYachtName(yacht)}
+                    alt={getDisplayName(yacht)}
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                   />
 
@@ -696,14 +675,7 @@ export default function PartnerFleetManagementPage() {
                   <div className="flex justify-between items-start">
                     <div>
                       <h3 className="text-lg font-serif italic mb-1 line-clamp-1">
-                        {getYachtName(yacht).startsWith("⚠️") ? (
-                          <span className="text-red-500 flex items-center gap-1">
-                            <AlertTriangle size={14} />
-                            {getYachtName(yacht)}
-                          </span>
-                        ) : (
-                          getYachtName(yacht)
-                        )}
+                        {getDisplayName(yacht)}
                       </h3>
                       <p className="text-lg font-bold text-blue-900">{formatCurrency(yacht.price)}</p>
                       {yacht.min_bid_amount && (
@@ -803,7 +775,6 @@ export default function PartnerFleetManagementPage() {
                       <ChevronRight size={12} />
                     </button>
 
-                    {/* Tooltip for extra specs */}
                     <SpecTooltip yacht={yacht} />
 
                     {yacht.updated_at && (
@@ -821,7 +792,7 @@ export default function PartnerFleetManagementPage() {
         {/* LIST VIEW */}
         {!loading && viewMode === "list" && filteredAndSortedFleet.length > 0 && (
           <div className="bg-white border border-slate-200">
-            {/* Table Header */}
+            {/* ... (list view remains unchanged – already uses getDisplayName) ... */}
             <div className="grid grid-cols-12 gap-4 p-4 border-b border-slate-200 bg-slate-50 text-[10px] font-black uppercase tracking-widest text-slate-500">
               <div className="col-span-3">Vessel</div>
               <div className="col-span-2">Price / Bid</div>
@@ -830,40 +801,28 @@ export default function PartnerFleetManagementPage() {
               <div className="col-span-2 text-right">Actions</div>
             </div>
 
-            {/* Table Rows */}
             {filteredAndSortedFleet.map((yacht) => (
               <div
                 key={yacht.id}
                 className="grid grid-cols-12 gap-4 p-4 border-b border-slate-100 hover:bg-slate-50 transition-colors items-center relative group"
               >
-                {/* Vessel */}
                 <div className="col-span-3 flex items-center gap-3">
                   <div className="w-16 h-12 bg-slate-100 overflow-hidden flex-shrink-0">
                     <img
                       src={getImageUrl(yacht.main_image)}
                       onError={handleImageError}
-                      alt={getYachtName(yacht)}
+                      alt={getDisplayName(yacht)}
                       className="w-full h-full object-cover"
                     />
                   </div>
                   <div>
-                    <p className="font-medium text-[#003566] flex items-center gap-1">
-                      {getYachtName(yacht).startsWith("⚠️") ? (
-                        <span className="text-red-500 flex items-center gap-1">
-                          <AlertTriangle size={12} />
-                          {getYachtName(yacht)}
-                        </span>
-                      ) : (
-                        getYachtName(yacht)
-                      )}
+                    <p className="font-medium text-[#003566]">
+                      {getDisplayName(yacht)}
                     </p>
                     {yacht.vessel_id && (
                       <p className="text-[9px] text-slate-500 font-medium flex items-center gap-1">
                         ID: {yacht.vessel_id}
-                        <button
-                          onClick={() => copyToClipboard(yacht.vessel_id)}
-                          className="hover:text-blue-600"
-                        >
+                        <button onClick={() => copyToClipboard(yacht.vessel_id)} className="hover:text-blue-600">
                           <Clipboard size={10} />
                         </button>
                       </p>
@@ -872,7 +831,6 @@ export default function PartnerFleetManagementPage() {
                   </div>
                 </div>
 
-                {/* Price */}
                 <div className="col-span-2">
                   <p className="font-bold text-blue-900">{formatCurrency(yacht.price)}</p>
                   {yacht.min_bid_amount && (
@@ -880,7 +838,6 @@ export default function PartnerFleetManagementPage() {
                   )}
                 </div>
 
-                {/* Specifications */}
                 <div className="col-span-3">
                   <div className="grid grid-cols-2 gap-2 text-[10px]">
                     <div className="space-y-1">
@@ -924,7 +881,6 @@ export default function PartnerFleetManagementPage() {
                   </div>
                 </div>
 
-                {/* Status & Location */}
                 <div className="col-span-2">
                   <div className="space-y-1.5">
                     <span
@@ -946,7 +902,6 @@ export default function PartnerFleetManagementPage() {
                   </div>
                 </div>
 
-                {/* Actions */}
                 <div className="col-span-2 flex items-center justify-end gap-2">
                   <button
                     onClick={() => router.push(`/nl/dashboard/partner/yachts/${yacht.id}/edit`)}
@@ -979,7 +934,6 @@ export default function PartnerFleetManagementPage() {
                   </button>
                 </div>
 
-                {/* Tooltip for extra specs in list view */}
                 <div className="absolute left-0 -bottom-2 translate-y-full hidden group-hover:block z-50">
                   <div className="bg-slate-900 text-white text-[9px] p-2 rounded shadow-lg max-w-xs">
                     {yacht.air_draft && <span>Air Draft: {yacht.air_draft}m • </span>}
@@ -1004,11 +958,7 @@ export default function PartnerFleetManagementPage() {
                 <span>{fleet.length}</span> vessels displayed
               </div>
               <div className="flex items-center gap-4">
-                <Button
-                  onClick={fetchFleet}
-                  variant="outline"
-                  className="h-9 px-4 text-[10px] font-black uppercase tracking-widest"
-                >
+                <Button onClick={fetchFleet} variant="outline" className="h-9 px-4 text-[10px] font-black uppercase tracking-widest">
                   <RefreshCw size={12} className="mr-2" />
                   Refresh
                 </Button>
