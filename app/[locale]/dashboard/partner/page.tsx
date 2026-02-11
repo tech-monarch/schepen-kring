@@ -36,6 +36,7 @@ import {
   Copy,
   Clock,
   Info,
+  Clipboard,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast, Toaster } from "react-hot-toast";
@@ -80,6 +81,8 @@ const sortOptions = [
   { value: "updated_at-desc", label: "Recently Updated" },
   { value: "loa-desc", label: "Length (Longest)" },
   { value: "loa-asc", label: "Length (Shortest)" },
+  { value: "horse_power-desc", label: "HP (High to Low)" },
+  { value: "hours-asc", label: "Hours (Low to High)" },
 ];
 
 export default function PartnerFleetManagementPage() {
@@ -104,13 +107,23 @@ export default function PartnerFleetManagementPage() {
   });
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
+  // ------------------------------------------------------------------------
   // Fetch partner's fleet
+  // ------------------------------------------------------------------------
   const fetchFleet = async () => {
     try {
       setLoading(true);
       const res = await api.get("/my-yachts");
       const yachts = res.data || [];
       setFleet(yachts);
+
+      // 🔍 DEBUG: Log the first yacht and its keys
+      if (yachts.length > 0) {
+        console.log("🚤 First yacht (full object):", yachts[0]);
+        console.log("🔑 Available keys:", Object.keys(yachts[0]));
+        console.log("📛 boat_name value:", yachts[0].boat_name);
+        console.log("📛 name value:", yachts[0].name);
+      }
 
       // Calculate enhanced stats
       const forSale = yachts.filter((y: any) => y.status === "For Sale").length;
@@ -155,20 +168,17 @@ export default function PartnerFleetManagementPage() {
   useEffect(() => {
     fetchFleet();
   }, []);
-useEffect(() => {
-  if (fleet.length > 0) {
-    console.log("🚤 First yacht in fleet:", fleet[0]);
-    console.log("🔑 All keys:", Object.keys(fleet[0]));
-  }
-}, [fleet]);
-  // --- Utilities ------------------------------------------------------------
+
+  // ------------------------------------------------------------------------
+  // Utilities
+  // ------------------------------------------------------------------------
   const handleImageError = (e: SyntheticEvent<HTMLImageElement, Event>) => {
     e.currentTarget.src = PLACEHOLDER_IMAGE;
     e.currentTarget.classList.add("opacity-50", "grayscale");
   };
 
   const handleDelete = async (yacht: any) => {
-    const yachtName = yacht.boat_name || yacht.name || "Unnamed Vessel";
+    const yachtName = getYachtName(yacht);
     const confirmed = window.confirm(`Are you sure you want to permanently remove "${yachtName}" from your fleet?`);
     if (!confirmed) return;
 
@@ -188,16 +198,29 @@ useEffect(() => {
   const handleDuplicate = async (yacht: any) => {
     try {
       toast.loading("Duplicating vessel...", { id: "duplicate" });
-      // Create a copy of the yacht (omit id, vessel_id, etc.)
+
+      // Omit id, vessel_id, timestamps – everything else can be copied
       const { id, vessel_id, created_at, updated_at, ...yachtData } = yacht;
-      yachtData.boat_name = `${yachtData.boat_name || "Copy"} (Copy)`;
+
+      // Append " (Copy)" to the name
+      const baseName = yachtData.boat_name || yachtData.name || "Vessel";
+      yachtData.boat_name = `${baseName} (Copy)`;
+
+      // Always set new copy as Draft
       yachtData.status = "Draft";
+
       const res = await api.post("/partner/yachts", yachtData);
       toast.success("Vessel duplicated successfully", { id: "duplicate" });
       fetchFleet();
-    } catch (err) {
-      toast.error("Failed to duplicate vessel", { id: "duplicate" });
+    } catch (err: any) {
+      console.error("Duplicate failed:", err);
+      toast.error(err.response?.data?.message || "Failed to duplicate vessel", { id: "duplicate" });
     }
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast.success("Copied to clipboard");
   };
 
   const getImageUrl = (imagePath: string | null | undefined) => {
@@ -210,6 +233,34 @@ useEffect(() => {
     if (value === null || value === undefined) return "";
     return String(value).trim();
   };
+
+  // ------------------------------------------------------------------------
+  // 🔥 ULTIMATE VESSEL NAME RESOLVER – tries every possible field
+  // ------------------------------------------------------------------------
+  const getYachtName = (yacht: any): string => {
+    // All possible fields that might contain the name
+    const candidates = [
+      yacht.boat_name,
+      yacht.name,
+      yacht.title,
+      yacht.vessel_name,
+      yacht.display_name,
+      yacht.vessel_id,
+      yacht.id ? `Vessel #${yacht.id}` : null,
+    ];
+
+    for (const candidate of candidates) {
+      if (candidate && typeof candidate === "string" && candidate.trim() !== "") {
+        return candidate.trim();
+      }
+    }
+
+    return "⚠️ Unnamed Vessel";
+  };
+
+  const getYachtStatus = (yacht: any): string => yacht.status || "Draft";
+  const getStatusConfig = (status: string | null | undefined) =>
+    statusConfig[status || "Draft"] || statusConfig.Draft;
 
   const formatCurrency = (amount: number | string | null | undefined) => {
     if (amount === null || amount === undefined || amount === "") return "€ --";
@@ -228,41 +279,26 @@ useEffect(() => {
     return `${loa} m`;
   };
 
-const getYachtName = (yacht: any): string => {
-  // Try multiple possible field names
-  const possibleNames = [
-    yacht.boat_name,
-    yacht.name,
-    yacht.title,
-    yacht.vessel_name,
-    yacht.display_name,
-  ].find((val) => val && typeof val === "string" && val.trim() !== "");
-
-  if (possibleNames) return possibleNames.trim();
-  if (yacht.vessel_id) return `Vessel ${yacht.vessel_id}`;
-  if (yacht.id) return `Vessel #${yacht.id}`;
-  return "Unnamed Vessel";
-};
-  const getYachtStatus = (yacht: any): string => yacht.status || "Draft";
-  const getStatusConfig = (status: string | null | undefined) =>
-    statusConfig[status || "Draft"] || statusConfig.Draft;
-
-  // --- Filtering & Sorting -------------------------------------------------
+  // ------------------------------------------------------------------------
+  // Filtering & Sorting
+  // ------------------------------------------------------------------------
   const filteredAndSortedFleet = fleet
     .filter((yacht) => {
       if (!yacht) return false;
 
-      const boatName = safeString(yacht.boat_name).toLowerCase();
+      const boatName = safeString(getYachtName(yacht)).toLowerCase();
       const vesselId = safeString(yacht.vessel_id).toLowerCase();
       const location = safeString(yacht.where).toLowerCase();
+      const builder = safeString(yacht.builder).toLowerCase();
+      const model = safeString(yacht.model).toLowerCase();
       const query = searchQuery.toLowerCase();
 
       const matchesSearch =
         boatName.includes(query) ||
         vesselId.includes(query) ||
         location.includes(query) ||
-        safeString(yacht.builder).toLowerCase().includes(query) ||
-        safeString(yacht.model).toLowerCase().includes(query);
+        builder.includes(query) ||
+        model.includes(query);
 
       const yachtStatus = yacht.status || "Draft";
       const matchesStatus = selectedStatus === "all" || yachtStatus === selectedStatus;
@@ -282,18 +318,21 @@ const getYachtName = (yacht: any): string => {
         bValue = b[sortBy] || "";
       }
 
+      // Numeric fields
       if (["price", "year", "loa", "beam", "draft", "horse_power", "hours"].includes(sortBy)) {
         const aNum = parseFloat(aValue) || 0;
         const bNum = parseFloat(bValue) || 0;
         return sortOrder === "asc" ? aNum - bNum : bNum - aNum;
       }
 
+      // Date fields
       if (sortBy.includes("_at")) {
         const aDate = new Date(aValue || 0).getTime();
         const bDate = new Date(bValue || 0).getTime();
         return sortOrder === "asc" ? aDate - bDate : bDate - aDate;
       }
 
+      // String fields
       const aStr = safeString(aValue);
       const bStr = safeString(bValue);
       return sortOrder === "asc" ? aStr.localeCompare(bStr) : bStr.localeCompare(aStr);
@@ -305,7 +344,9 @@ const getYachtName = (yacht: any): string => {
     setSortOrder(newSortOrder as "asc" | "desc");
   };
 
-  // --- UI Components -------------------------------------------------------
+  // ------------------------------------------------------------------------
+  // UI Components
+  // ------------------------------------------------------------------------
   const ViewToggle = () => (
     <div className="flex border border-slate-200 rounded-sm overflow-hidden">
       <button
@@ -329,7 +370,7 @@ const getYachtName = (yacht: any): string => {
     </div>
   );
 
-  // Tooltip component for extra specs
+  // Tooltip – shows extra specs on hover
   const SpecTooltip = ({ yacht }: { yacht: any }) => {
     const specs = [];
 
@@ -346,6 +387,8 @@ const getYachtName = (yacht: any): string => {
     if (yacht.air_draft) specs.push(`Air Draft: ${yacht.air_draft} m`);
     if (yacht.displacement) specs.push(`Displacement: ${yacht.displacement} kg`);
     if (yacht.ballast) specs.push(`Ballast: ${yacht.ballast}`);
+    if (yacht.hull_type) specs.push(`Hull: ${yacht.hull_type}`);
+    if (yacht.designer) specs.push(`Designer: ${yacht.designer}`);
 
     return specs.length > 0 ? (
       <div className="absolute bottom-full left-0 mb-2 w-64 p-3 bg-slate-900 text-white text-[9px] font-medium rounded shadow-xl z-50 hidden group-hover:block">
@@ -359,7 +402,9 @@ const getYachtName = (yacht: any): string => {
     ) : null;
   };
 
-  // --- Render --------------------------------------------------------------
+  // ------------------------------------------------------------------------
+  // Render
+  // ------------------------------------------------------------------------
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
       <Toaster position="top-right" />
@@ -575,8 +620,17 @@ const getYachtName = (yacht: any): string => {
                   />
 
                   {yacht.vessel_id && (
-                    <div className="absolute top-3 left-3 bg-black/80 text-white text-[8px] font-black uppercase tracking-widest px-2 py-1">
+                    <div className="absolute top-3 left-3 bg-black/80 text-white text-[8px] font-black uppercase tracking-widest px-2 py-1 flex items-center gap-1">
                       {yacht.vessel_id}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          copyToClipboard(yacht.vessel_id);
+                        }}
+                        className="ml-1 hover:text-blue-300"
+                      >
+                        <Clipboard size={10} />
+                      </button>
                     </div>
                   )}
 
@@ -635,7 +689,14 @@ const getYachtName = (yacht: any): string => {
                   <div className="flex justify-between items-start">
                     <div>
                       <h3 className="text-lg font-serif italic mb-1 line-clamp-1">
-                        {getYachtName(yacht) || <span className="text-red-500">⚠️ Missing name</span>}
+                        {getYachtName(yacht).startsWith("⚠️") ? (
+                          <span className="text-red-500 flex items-center gap-1">
+                            <AlertTriangle size={14} />
+                            {getYachtName(yacht)}
+                          </span>
+                        ) : (
+                          getYachtName(yacht)
+                        )}
                       </h3>
                       <p className="text-lg font-bold text-blue-900">{formatCurrency(yacht.price)}</p>
                       {yacht.min_bid_amount && (
@@ -702,7 +763,7 @@ const getYachtName = (yacht: any): string => {
                   </div>
 
                   {/* ACCOMMODATION QUICK VIEW */}
-                  {(yacht.cabins || yacht.berths) && (
+                  {(yacht.cabins || yacht.berths || yacht.toilet) && (
                     <div className="flex items-center gap-3 text-[9px] text-slate-600 border-t border-slate-100 pt-2">
                       {yacht.cabins && (
                         <div className="flex items-center gap-1">
@@ -719,7 +780,7 @@ const getYachtName = (yacht: any): string => {
                       {yacht.toilet && (
                         <div className="flex items-center gap-1">
                           <Bath size={12} className="text-blue-600" />
-                          <span>{yacht.toilet}</span>
+                          <span>{yacht.toilet} Toilet</span>
                         </div>
                       )}
                     </div>
@@ -779,9 +840,26 @@ const getYachtName = (yacht: any): string => {
                     />
                   </div>
                   <div>
-                    <p className="font-medium text-[#003566]">{getYachtName(yacht)}</p>
+                    <p className="font-medium text-[#003566] flex items-center gap-1">
+                      {getYachtName(yacht).startsWith("⚠️") ? (
+                        <span className="text-red-500 flex items-center gap-1">
+                          <AlertTriangle size={12} />
+                          {getYachtName(yacht)}
+                        </span>
+                      ) : (
+                        getYachtName(yacht)
+                      )}
+                    </p>
                     {yacht.vessel_id && (
-                      <p className="text-[9px] text-slate-500 font-medium">ID: {yacht.vessel_id}</p>
+                      <p className="text-[9px] text-slate-500 font-medium flex items-center gap-1">
+                        ID: {yacht.vessel_id}
+                        <button
+                          onClick={() => copyToClipboard(yacht.vessel_id)}
+                          className="hover:text-blue-600"
+                        >
+                          <Clipboard size={10} />
+                        </button>
+                      </p>
                     )}
                     {yacht.builder && <p className="text-[9px] text-slate-500">{yacht.builder}</p>}
                   </div>
