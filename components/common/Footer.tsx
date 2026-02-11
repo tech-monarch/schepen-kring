@@ -185,6 +185,15 @@ const handleInstallClick = async () => {
             <span>Schepen Kring</span>
             <span>Ocean Sovereignty</span>
 
+
+            
+              <button
+                onClick={handleInstallClick}
+                className="hover:text-white transition-colors"
+              >
+                Install App
+              </button>
+
             {deferredPrompt && (
               <button
                 onClick={handleInstallClick}
