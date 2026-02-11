@@ -16,9 +16,9 @@ function generateSlug(text: string): string {
   if (!text) return '';
   return text
     .toLowerCase()
-    .replace(/[^\w\s-]/g, '') // Remove special characters
-    .replace(/\s+/g, '-') // Replace spaces with hyphens
-    .replace(/--+/g, '-') // Replace multiple hyphens with single hyphen
+    .replace(/[^\w\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/--+/g, '-')
     .trim();
 }
 
@@ -30,16 +30,16 @@ export default function PublicFleetGallery() {
   const [sortBy, setSortBy] = useState<string>("default");
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000000]);
 
-  // Fetch fleet from API
+  // Fetch fleet from API – FILTER OUT DRAFTS
   useEffect(() => {
     const fetchFleet = async () => {
       try {
         const { data } = await api.get("/yachts");
-        // 🚫 FILTER OUT DRAFTS – public should never see them
+        // 🚫 Exclude any yacht with status "Draft" – public should never see them
         const publishedVessels = (data || []).filter((v: any) => v.status !== 'Draft');
         setVessels(publishedVessels);
 
-        // Recalculate price range using only published vessels
+        // Calculate price range using only published vessels
         if (publishedVessels.length > 0) {
           const prices = publishedVessels
             .filter((v: any) => v.price && !isNaN(v.price))
@@ -61,7 +61,6 @@ export default function PublicFleetGallery() {
 
   // Filter logic with updated field names
   const filteredVessels = vessels.filter((v: any) => {
-    // Get safe values with null checks
     const boatName = v.boat_name || '';
     const builder = v.builder || '';
     const designer = v.designer || '';
@@ -69,16 +68,15 @@ export default function PublicFleetGallery() {
     const vesselId = v.vessel_id || '';
     const status = v.status || '';
     const price = v.price || 0;
-    
+
     // Status filter
     const matchesFilter =
       filter === "All" ||
       (filter === "Auction" && status === "For Bid") ||
       (filter === "Sale" && status === "For Sale") ||
-      (filter === "Sold" && status === "Sold") ||
-      (filter === "Draft" && status === "Draft");
+      (filter === "Sold" && status === "Sold");
 
-    // Search filter (multiple fields)
+    // Search filter
     const searchLower = search.toLowerCase();
     const matchesSearch =
       boatName.toLowerCase().includes(searchLower) ||
@@ -137,7 +135,7 @@ export default function PublicFleetGallery() {
     e.currentTarget.classList.add("opacity-50", "grayscale");
   };
 
-  // Get yacht details safely
+  // Safe getters with explicit fallbacks
   const getYachtName = (yacht: any) => yacht.boat_name || 'Unnamed Vessel';
   const getYachtStatus = (yacht: any) => yacht.status || 'Draft';
   const getYachtLength = (yacht: any) => yacht.loa || yacht.length || '--';
@@ -149,6 +147,9 @@ export default function PublicFleetGallery() {
     const slug = generateSlug(yacht.boat_name || yacht.vessel_id || `yacht-${yacht.id}`);
     return `/nl/yachts/${yacht.id}/${slug}`;
   };
+
+  // Featured vessel – only if we have at least one published vessel
+  const featuredVessel = vessels.length > 0 ? vessels[0] : null;
 
   if (loading) {
     return (
@@ -203,7 +204,7 @@ export default function PublicFleetGallery() {
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search by name, builder, or location..."
-                  className="bg-white/10 backdrop-blur-md border border-white/10 pl-10 pr-4 py-2.5 text-[9px] uppercase font-bold tracking-widest text-white outline-none focus:bg-white focus:text-[#003566] transition-all w-full sm:w-64"
+                  className="bg-white/10 backdrop-blur-md border border-white/10 pl-10 pr-4 py-2.5 text-[9px] uppercase font-bold tracking-widest text-white outline-none focus:bg-white focus:text-[#003566] transition-all w-full sm:w-64 placeholder:text-white/50"
                 />
               </div>
 
@@ -308,7 +309,6 @@ export default function PublicFleetGallery() {
             <AnimatePresence mode="popLayout">
               {sortedVessels.map((v: any) => {
                 const detailUrl = getYachtDetailUrl(v);
-                
                 return (
                   <motion.div
                     layout
@@ -461,8 +461,8 @@ export default function PublicFleetGallery() {
         )}
       </section>
 
-      {/* FEATURED VESSEL SECTION */}
-      {vessels.length > 0 && (
+      {/* FEATURED VESSEL SECTION – only shown if we have a published vessel */}
+      {featuredVessel && (
         <section className="max-w-[1400px] mx-auto px-6 md:px-12 py-12 md:py-20">
           <div className="bg-slate-50 border border-slate-200 p-8 md:p-12">
             <div className="flex flex-col lg:flex-row gap-8 md:gap-12 items-center">
@@ -474,10 +474,10 @@ export default function PublicFleetGallery() {
                   </p>
                 </div>
                 <h2 className="text-3xl md:text-5xl font-serif text-[#003566] mb-6">
-                  {getYachtName(vessels[0])}
+                  {getYachtName(featuredVessel)}
                 </h2>
                 <p className="text-slate-600 mb-6">
-                  {vessels[0].owners_comment || "A premium vessel from our curated collection."}
+                  {featuredVessel.owners_comment || "A premium vessel from our curated collection."}
                 </p>
                 <div className="grid grid-cols-3 gap-4 mb-8">
                   <div>
@@ -485,7 +485,7 @@ export default function PublicFleetGallery() {
                       Price
                     </p>
                     <p className="text-2xl font-bold text-[#003566]">
-                      {formatCurrency(vessels[0].price)}
+                      {formatCurrency(featuredVessel.price)}
                     </p>
                   </div>
                   <div>
@@ -493,7 +493,7 @@ export default function PublicFleetGallery() {
                       Length
                     </p>
                     <p className="text-2xl font-bold text-[#003566]">
-                      {getYachtLength(vessels[0])}m
+                      {getYachtLength(featuredVessel)}m
                     </p>
                   </div>
                   <div>
@@ -501,12 +501,12 @@ export default function PublicFleetGallery() {
                       Year
                     </p>
                     <p className="text-2xl font-bold text-[#003566]">
-                      {vessels[0].year || '--'}
+                      {featuredVessel.year || '--'}
                     </p>
                   </div>
                 </div>
                 <Link 
-                  href={getYachtDetailUrl(vessels[0])}
+                  href={getYachtDetailUrl(featuredVessel)}
                   className="inline-flex items-center gap-2 bg-[#003566] text-white px-8 py-4 text-xs font-black uppercase tracking-widest hover:bg-blue-800 transition-all"
                 >
                   Explore This Vessel
@@ -515,9 +515,9 @@ export default function PublicFleetGallery() {
               </div>
               <div className="lg:w-1/3">
                 <img
-                  src={getImageUrl(vessels[0].main_image)}
+                  src={getImageUrl(featuredVessel.main_image)}
                   onError={handleImageError}
-                  alt={getYachtName(vessels[0])}
+                  alt={getYachtName(featuredVessel)}
                   className="w-full h-64 md:h-80 object-cover shadow-lg"
                 />
               </div>
@@ -557,53 +557,47 @@ export default function PublicFleetGallery() {
         </div>
       </section>
 
-      {/* FLEET STATS */}
-      <div className="max-w-[1400px] mx-auto px-6 md:px-12 pb-12">
-        <div className="border-t border-slate-200 pt-8">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <div className="text-center md:text-left">
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">
-                Total Vessels in Registry
-              </p>
-              <p className="text-3xl font-bold text-[#003566]">{vessels.length}</p>
-            </div>
-            <div className="grid grid-cols-4 gap-8 text-center">
-              <div>
-                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">
-                  For Sale
+      {/* FLEET STATS – now only counts published vessels (draft stat removed) */}
+      {vessels.length > 0 && (
+        <div className="max-w-[1400px] mx-auto px-6 md:px-12 pb-12">
+          <div className="border-t border-slate-200 pt-8">
+            <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+              <div className="text-center md:text-left">
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">
+                  Total Vessels in Registry
                 </p>
-                <p className="text-lg font-bold text-emerald-600">
-                  {vessels.filter((v: any) => v.status === "For Sale").length}
-                </p>
+                <p className="text-3xl font-bold text-[#003566]">{vessels.length}</p>
               </div>
-              <div>
-                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">
-                  For Bid
-                </p>
-                <p className="text-lg font-bold text-blue-600">
-                  {vessels.filter((v: any) => v.status === "For Bid").length}
-                </p>
-              </div>
-              <div>
-                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">
-                  Sold
-                </p>
-                <p className="text-lg font-bold text-red-600">
-                  {vessels.filter((v: any) => v.status === "Sold").length}
-                </p>
-              </div>
-              <div>
-                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">
-                  Draft
-                </p>
-                <p className="text-lg font-bold text-slate-500">
-                  {vessels.filter((v: any) => v.status === "Draft").length}
-                </p>
+              <div className="grid grid-cols-3 gap-8 text-center">
+                <div>
+                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">
+                    For Sale
+                  </p>
+                  <p className="text-lg font-bold text-emerald-600">
+                    {vessels.filter((v: any) => v.status === "For Sale").length}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">
+                    For Bid
+                  </p>
+                  <p className="text-lg font-bold text-blue-600">
+                    {vessels.filter((v: any) => v.status === "For Bid").length}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">
+                    Sold
+                  </p>
+                  <p className="text-lg font-bold text-red-600">
+                    {vessels.filter((v: any) => v.status === "Sold").length}
+                  </p>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
