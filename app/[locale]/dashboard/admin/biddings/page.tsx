@@ -248,7 +248,7 @@ export default function GlobalBidManagementPage() {
   }
 
   return (
-  <div className="min-h-screen bg-white text-[#333] font-roboto antialiased flex flex-col -top-20">
+  <div className="min-h-screen bg-white text-[#333] font-roboto antialiased flex flex-col -top-40 -left-10">
     <Toaster position="top-center" />
 
     {/* Header */}
