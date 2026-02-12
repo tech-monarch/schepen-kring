@@ -1,4 +1,3 @@
-"use client";
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { Metadata } from 'next';
@@ -8,7 +7,7 @@ type Props = {
 };
 
 // ─────────────────────────────────────────────────────────────
-// Hardcoded API URL – exactly as you requested
+// ✅ HARDCODED API URL – exactly as you requested
 // ─────────────────────────────────────────────────────────────
 const API_BASE_URL = 'https://schepen-kring.nl/api';
 
@@ -19,8 +18,7 @@ async function getPartnerFleet(token: string) {
     });
     if (!res.ok) return null;
     return res.json();
-  } catch (error) {
-    console.error('Fetch error:', error);
+  } catch {
     return null;
   }
 }
@@ -29,14 +27,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { token } = await params;
   const data = await getPartnerFleet(token);
   if (!data) {
-    return {
-      title: 'Fleet not found',
-      description: 'This partner fleet link is invalid or expired.',
-    };
+    return { title: 'Fleet not found' };
   }
   return {
     title: `${data.partner.name}'s Fleet | Schepen Kring`,
-    description: `Browse the exclusive fleet of ${data.partner.name}.`,
   };
 }
 
@@ -44,11 +38,10 @@ export default async function PartnerFleetPage({ params }: Props) {
   const { token } = await params;
   const data = await getPartnerFleet(token);
 
-  if (!data) {
-    notFound();
-  }
+  if (!data) notFound();
 
   const { partner, yachts } = data;
+  // ✅ Hardcoded storage URL
   const baseStorageUrl = 'https://schepen-kring.nl/storage/';
   const placeholderImage = 'https://images.unsplash.com/photo-1569263979104-865ab7cd8d13?auto=format&fit=crop&w=600&q=80';
 
@@ -66,8 +59,9 @@ export default async function PartnerFleetPage({ params }: Props) {
   };
 
   return (
+    // ✅ White background – exactly as requested
     <main className="min-h-screen bg-white text-[#003566]">
-      {/* Partner header */}
+      {/* Partner header – dark blue as before */}
       <div className="bg-[#001D3D] text-white py-12 px-6 md:px-12">
         <div className="max-w-[1400px] mx-auto">
           <h1 className="text-3xl md:text-5xl font-serif italic mb-2">
@@ -79,8 +73,8 @@ export default async function PartnerFleetPage({ params }: Props) {
         </div>
       </div>
 
-      {/* Fleet grid */}
-      <section className="max-w-[1400px] mx-auto px-6 md:px-12 py-16">
+      {/* Fleet grid – white background section */}
+      <section className="max-w-[1400px] mx-auto px-6 md:px-12 py-16 bg-white">
         {yachts.length === 0 ? (
           <div className="text-center py-20">
             <div className="text-6xl mb-4">⛵</div>
@@ -130,7 +124,7 @@ export default async function PartnerFleetPage({ params }: Props) {
                     </div>
                   </Link>
 
-                  <div className="pt-6">
+                  <div className="pt-6 bg-white">
                     <div className="grid grid-cols-4 gap-2 mb-6">
                       <div className="text-center">
                         <p className="text-[8px] font-black uppercase text-slate-400 mb-1">LOA</p>
