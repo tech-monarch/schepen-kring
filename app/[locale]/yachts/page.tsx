@@ -36,11 +36,12 @@ export default function PublicFleetGallery() {
       try {
         const { data } = await api.get("/yachts");
         // 🚫 Exclude any yacht with status "Draft" – public should never see them
-        const publishedVessels = (data || []).filter((v: any) => v.status !== 'Draft');
+        // const publishedVessels = (data || []).filter((v: any) => v.status !== 'Draft');
+        const publishedVessels = (data || []);
         setVessels(publishedVessels);
 
         // Calculate price range using only published vessels
-        if (publishedVessels.length > 0) {
+        if (publishedVessels.length > 0) {  
           const prices = publishedVessels
             .filter((v: any) => v.price && !isNaN(v.price))
             .map((v: any) => Number(v.price));
