@@ -125,7 +125,7 @@ export function Sidebar({ onCollapse }: { onCollapse?: (collapsed: boolean) => v
       title: "Overview", 
       href: userRole === "Admin" ? "/dashboard/admin" : "/dashboard", 
       icon: BarChart3, 
-      roles: ["Admin", "Employee", "Partner", "Customer"],
+      roles: ["Admin", "Employee"],
       page_key: "dashboard"
     },
     { 
