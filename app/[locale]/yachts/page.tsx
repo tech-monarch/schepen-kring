@@ -66,8 +66,10 @@ export default function PublicFleetGallery() {
         console.log("Raw API response:", data); // DEBUG – check in console
 
         // Store the raw array – keep EVERY yacht, even drafts, even incomplete
+        // const allVessels = Array.isArray(data) ? data : data?.data || [];
+        // setVessels(allVessels);
         const allVessels = Array.isArray(data) ? data : data?.data || [];
-        setVessels(allVessels);
+        setVessels(allVessels.filter((v: any) => v.status !== 'Draft'));
 
         // ----- Price range calculation – include all yachts -----
         // Use 0 as the lowest bound if ANY yacht has no price, otherwise use min price
