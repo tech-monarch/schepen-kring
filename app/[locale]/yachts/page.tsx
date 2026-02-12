@@ -679,7 +679,7 @@ export default function PublicFleetGallery() {
 }
 
 // ------------------------------------------------------------
-// Comparison View Component
+// Comparison View – fully restyled with Tailwind, no external CSS
 // ------------------------------------------------------------
 function ComparisonView({
   vessels,
@@ -706,9 +706,19 @@ function ComparisonView({
   getImageUrl: (p: string) => string;
   handleImageError: (e: SyntheticEvent<HTMLImageElement, Event>) => void;
 }) {
+  const [searchTerm, setSearchTerm] = useState("");
+
+  // Vessels that are NOT already selected and match the search term
+  const availableVessels = vessels.filter(
+    (v) =>
+      !selectedIds.includes(v.id) &&
+      (getYachtName(v).toLowerCase().includes(searchTerm.toLowerCase()) ||
+        getYachtBuilder(v).toLowerCase().includes(searchTerm.toLowerCase()) ||
+        v.vessel_id?.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
+
   const selectedVessels = vessels.filter((v) => selectedIds.includes(v.id));
 
-  // Attributes to display in the comparison table
   const comparisonAttributes = [
     { label: "Length", value: (v: any) => `${getYachtLength(v)}m` },
     { label: "Beam", value: (v: any) => `${v.beam || "--"}m` },
@@ -726,253 +736,205 @@ function ComparisonView({
 
   return (
     <section className="max-w-[1400px] mx-auto px-6 md:px-12 py-12">
-      {/* Exact CSS from the HTML file (rating stars removed) */}
-      <style>{`
-        :root {
-          --primary-blue: #1b5eab;
-          --header-text: #1a202c;
-          --border-color: #e2e8f0;
-          --bg-gray: #f8f9fa;
-          --button-blue: #2575dc;
-        }
-        * {
-          box-sizing: border-box;
-          margin: 0;
-          padding: 0;
-          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-        }
-        .container {
-          width: 100%;
-          max-width: 900px;
-          background: white;
-          margin: 0 auto;
-        }
-        .tabs {
-          display: flex;
-          justify-content: center;
-          border-bottom: 1px solid #d1d5db;
-          margin-bottom: 20px;
-          background-color: #f1f3f5;
-          border-radius: 8px 8px 0 0;
-          width: fit-content;
-          margin: 0 auto 30px auto;
-          overflow: hidden;
-          border: 1px solid #e0e0e0;
-        }
-        .tab {
-          padding: 10px 25px;
-          cursor: pointer;
-          color: #000;
-          font-size: 14px;
-          background-color: #f1f3f5;
-          border-right: 1px solid #e0e0e0;
-        }
-        .tab:last-child {
-          border-right: none;
-        }
-        .tab.active {
-          background-color: white;
-          color: #000;
-          font-weight: 500;
-          border-bottom: 3px solid #1b5eab;
-          margin-bottom: -1px;
-        }
-        table {
-          width: 100%;
-          border-collapse: collapse;
-          border: 1px solid #e2e8f0;
-          background-color: white;
-          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-          border-radius: 4px;
-        }
-        th, td {
-          padding: 12px 15px;
-          text-align: center;
-          border: 1px solid #e2e8f0;
-          font-size: 14px;
-          color: #333;
-        }
-        td:first-child {
-          text-align: left;
-          background-color: #f8f9fa;
-          font-weight: 500;
-          width: 20%;
-        }
-        .model-header {
-          background-color: #f1f5f9;
-          color: #1a202c;
-          font-weight: 600;
-          font-size: 16px;
-          padding: 10px;
-        }
-        .empty-header {
-          background-color: white;
-          border: none;
-          border-bottom: 1px solid #e2e8f0;
-          border-right: 1px solid #e2e8f0;
-        }
-        .image-cell {
-          padding: 0;
-          height: 140px;
-          vertical-align: middle;
-        }
-        .boat-img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-          display: block;
-        }
-        tbody tr:nth-child(odd) td {
-          background-color: #fff;
-        }
-        tbody tr:nth-child(even) td {
-          background-color: #f8f9fa;
-        }
-        tbody tr:nth-child(even) td:first-child {
-          background-color: #f1f3f5;
-        }
-        tbody tr:nth-child(odd) td:first-child {
-          background-color: #f8f9fa;
-        }
-        .action-area {
-          display: flex;
-          justify-content: center;
-          margin-top: 30px;
-        }
-        .compare-btn {
-          background: linear-gradient(180deg, #2b7be8 0%, #1e60c4 100%);
-          color: white;
-          border: none;
-          padding: 12px 60px;
-          font-size: 16px;
-          font-weight: 500;
-          border-radius: 4px;
-          cursor: pointer;
-          box-shadow: 0 4px 6px rgba(37, 117, 220, 0.3);
-          transition: transform 0.1s;
-        }
-        .compare-btn:hover {
-          transform: translateY(-1px);
-        }
-      `}</style>
-
-      {/* Selection header */}
-      <div className="mb-8 flex justify-between items-center">
-        <h2 className="text-xl font-serif text-[#003566]">
-          Select vessels to compare (minimum 2)
-        </h2>
+      {/* Header */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+        <div>
+          <div className="flex items-center gap-3 mb-2">
+            <span className="w-6 h-[1px] bg-blue-600" />
+            <p className="text-[10px] font-black uppercase tracking-[0.4em] text-blue-600">
+              Vessel Comparison
+            </p>
+          </div>
+          <h2 className="text-2xl md:text-3xl font-serif text-[#003566]">
+            Compare selected yachts
+          </h2>
+        </div>
         {selectedIds.length > 0 && (
           <button
             onClick={onClearSelection}
-            className="px-4 py-2 text-xs font-black uppercase tracking-widest border border-red-600 text-red-600 hover:bg-red-600 hover:text-white transition-all"
+            className="px-4 py-2 text-[9px] font-black uppercase tracking-widest border border-red-600 text-red-600 hover:bg-red-600 hover:text-white transition-all"
           >
-            Clear Selection
+            Clear all
           </button>
         )}
       </div>
 
-      {/* Selection grid – clickable cards */}
-      {vessels.length === 0 ? (
-        <p className="text-center py-8 text-slate-500">
-          No vessels available to compare.
-        </p>
-      ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-12">
-          {vessels.map((vessel) => (
-            <div
-              key={vessel.id}
-              onClick={() => onToggleSelect(vessel.id)}
-              className={cn(
-                "border p-3 cursor-pointer transition-all",
-                selectedIds.includes(vessel.id)
-                  ? "border-blue-600 bg-blue-50 shadow-md"
-                  : "border-slate-200 hover:border-slate-400"
-              )}
-            >
-              <div className="aspect-square bg-slate-100 mb-2 overflow-hidden">
-                <img
-                  src={getImageUrl(vessel.main_image)}
-                  onError={handleImageError}
-                  alt={getYachtName(vessel)}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <p className="text-xs font-bold truncate">
-                {getYachtName(vessel)}
-              </p>
-              <p className="text-[10px] text-slate-500 truncate">
-                {getYachtBuilder(vessel)}
-              </p>
-              <p className="text-xs font-bold mt-1">
-                {formatCurrency(vessel.price)}
-              </p>
-            </div>
-          ))}
+      {/* ----- Add vessels: search + dropdown ----- */}
+      <div className="bg-slate-50 border border-slate-200 p-6 mb-10">
+        <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">
+          Add yachts to compare
+        </label>
+        <div className="relative">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
+          <input
+            type="text"
+            placeholder="Search by name, builder or ID..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full bg-white border border-slate-200 pl-10 pr-4 py-3 text-sm outline-none focus:border-blue-600 transition-all"
+          />
         </div>
-      )}
 
-      {/* Comparison table – only if 2+ vessels selected */}
+        {/* Suggestions dropdown */}
+        {searchTerm && (
+          <div className="mt-2 bg-white border border-slate-200 divide-y divide-slate-100 max-h-60 overflow-y-auto shadow-lg">
+            {availableVessels.length === 0 ? (
+              <div className="p-4 text-xs text-slate-500 text-center">
+                No matching vessels found
+              </div>
+            ) : (
+              availableVessels.slice(0, 8).map((v) => (
+                <button
+                  key={v.id}
+                  onClick={() => {
+                    onToggleSelect(v.id);
+                    setSearchTerm("");
+                  }}
+                  className="w-full flex items-center justify-between p-3 hover:bg-slate-50 transition-all text-left"
+                >
+                  <div>
+                    <span className="text-sm font-bold text-[#003566]">
+                      {getYachtName(v)}
+                    </span>
+                    <span className="ml-2 text-[10px] uppercase text-slate-500">
+                      {getYachtBuilder(v)} • {v.year || "—"}
+                    </span>
+                  </div>
+                  <span className="text-xs font-bold text-[#003566]">
+                    {formatCurrency(v.price)}
+                  </span>
+                </button>
+              ))
+            )}
+          </div>
+        )}
+
+        {/* Selected vessels as tags */}
+        {selectedVessels.length > 0 && (
+          <div className="mt-6">
+            <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-3">
+              Currently comparing ({selectedVessels.length})
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {selectedVessels.map((v) => (
+                <div
+                  key={v.id}
+                  className="inline-flex items-center gap-2 bg-white border border-slate-200 px-3 py-1.5 group"
+                >
+                  <span className="text-xs font-bold text-[#003566]">
+                    {getYachtName(v)}
+                  </span>
+                  <button
+                    onClick={() => onToggleSelect(v.id)}
+                    className="text-slate-400 hover:text-red-600 transition-colors"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <line x1="18" y1="6" x2="6" y2="18" />
+                      <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ----- Comparison Table (only if 2+ vessels) ----- */}
       {selectedVessels.length >= 2 ? (
-        <div className="container">
-          <div className="tabs">
-            <div className="tab active">Specifications</div>
-            <div className="tab">Features</div>
-            <div className="tab">Photos</div>
-            <div className="tab">Pricing</div>
+        <div className="bg-white border border-slate-200 overflow-x-auto">
+          {/* Tabs – static for design consistency */}
+          <div className="flex border-b border-slate-200 bg-slate-50 px-4">
+            {["Specifications", "Features", "Photos", "Pricing"].map((tab, i) => (
+              <button
+                key={tab}
+                className={cn(
+                  "px-4 py-3 text-[9px] font-black uppercase tracking-widest transition-all",
+                  i === 0
+                    ? "bg-white text-[#003566] border-b-2 border-blue-600"
+                    : "text-slate-500 hover:text-[#003566]"
+                )}
+              >
+                {tab}
+              </button>
+            ))}
           </div>
 
-          <table>
+          {/* Table */}
+          <table className="w-full text-sm">
             <thead>
               <tr>
-                <th className="empty-header"></th>
+                <th className="bg-white border-r border-b border-slate-200 w-1/5 p-4"></th>
                 {selectedVessels.map((v) => (
-                  <th key={v.id} className="model-header">
-                    {getYachtName(v)}
+                  <th
+                    key={v.id}
+                    className="bg-slate-50 border-b border-r border-slate-200 p-4 text-left align-bottom"
+                  >
+                    <div className="flex flex-col gap-2">
+                      <div className="aspect-[4/3] w-full bg-slate-100 overflow-hidden">
+                        <img
+                          src={getImageUrl(v.main_image)}
+                          onError={handleImageError}
+                          alt={getYachtName(v)}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">
+                          {getYachtBuilder(v)}
+                        </p>
+                        <p className="text-base font-serif italic text-[#003566] leading-tight">
+                          {getYachtName(v)}
+                        </p>
+                      </div>
+                    </div>
                   </th>
-                ))}
-              </tr>
-              <tr>
-                <td
-                  style={{
-                    background: "white",
-                    border: "none",
-                    borderRight: "1px solid #e2e8f0",
-                  }}
-                ></td>
-                {selectedVessels.map((v) => (
-                  <td key={v.id} className="image-cell">
-                    <img
-                      src={getImageUrl(v.main_image)}
-                      onError={handleImageError}
-                      alt={getYachtName(v)}
-                      className="boat-img"
-                    />
-                  </td>
                 ))}
               </tr>
             </thead>
             <tbody>
               {comparisonAttributes.map((attr) => (
-                <tr key={attr.label}>
-                  <td>{attr.label}</td>
+                <tr key={attr.label} className="even:bg-slate-50">
+                  <td className="border-r border-b border-slate-200 p-4 font-bold text-[#003566]">
+                    {attr.label}
+                  </td>
                   {selectedVessels.map((v) => (
-                    <td key={v.id}>{attr.value(v)}</td>
+                    <td
+                      key={v.id}
+                      className="border-r border-b border-slate-200 p-4 text-slate-700"
+                    >
+                      {attr.value(v)}
+                    </td>
                   ))}
                 </tr>
               ))}
             </tbody>
           </table>
 
-          <div className="action-area">
-            <button className="compare-btn">Compare Now</button>
+          {/* Action button */}
+          <div className="flex justify-center py-8 bg-slate-50 border-t border-slate-200">
+            <button className="px-10 py-4 bg-[#003566] text-white text-xs font-black uppercase tracking-widest hover:bg-blue-800 transition-all shadow-md flex items-center gap-2">
+              Compare Now
+              <ArrowRight size={16} />
+            </button>
           </div>
         </div>
       ) : (
-        <p className="text-center text-slate-500 py-8">
-          {selectedIds.length === 0
-            ? "Click on any vessel above to start comparing."
-            : "Please select at least 2 vessels to display the comparison table."}
-        </p>
+        <div className="bg-slate-50 border border-slate-200 p-12 text-center">
+          <p className="text-slate-500 text-sm">
+            {selectedIds.length === 0
+              ? "Search and add at least two yachts to start comparing."
+              : "Please add one more yacht to enable the comparison table."}
+          </p>
+        </div>
       )}
     </section>
   );
