@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compare Boats</title>
+    <style>
+        :root {
+            --primary-blue: #1b5eab;
+            --header-text: #1a202c;
+            --border-color: #e2e8f0;
+            --bg-gray: #f8f9fa;
+            --star-color: #f6c23e;
+            --button-blue: #2575dc;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        body {
+            background-color: #fcfcfc;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            background: white;
+            /* No visible card border in main view, just centering content */
+        }
+
+        h1 {
+            text-align: center;
+            color: #1a1a3a;
+            margin-bottom: 25px;
+            font-weight: 600;
+            font-size: 28px;
+        }
+
+        /* Tabs Navigation */
+        .tabs {
+            display: flex;
+            justify-content: center;
+            border-bottom: 1px solid #d1d5db;
+            margin-bottom: 20px;
+            background-color: #f1f3f5;
+            border-radius: 8px 8px 0 0;
+            width: fit-content;
+            margin: 0 auto 30px auto;
+            overflow: hidden;
+            border: 1px solid #e0e0e0;
+        }
+
+        .tab {
+            padding: 10px 25px;
+            cursor: pointer;
+            color: #000;
+            font-size: 14px;
+            background-color: #f1f3f5;
+            border-right: 1px solid #e0e0e0;
+        }
+
+        .tab:last-child {
+            border-right: none;
+        }
+
+        .tab.active {
+            background-color: white;
+            color: #000;
+            font-weight: 500;
+            border-bottom: 3px solid #1b5eab;
+            margin-bottom: -1px; /* Overlaps bottom border */
+        }
+
+        /* Comparison Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1px solid #e2e8f0;
+            background-color: white;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            border-radius: 4px;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: center;
+            border: 1px solid #e2e8f0;
+            font-size: 14px;
+            color: #333;
+        }
+
+        /* First Column Alignment */
+        td:first-child {
+            text-align: left;
+            background-color: #f8f9fa;
+            font-weight: 500;
+            width: 20%;
+        }
+
+        /* Header Rows */
+        .model-header {
+            background-color: #f1f5f9;
+            color: #1a202c;
+            font-weight: 600;
+            font-size: 16px;
+            padding: 10px;
+        }
+        
+        /* Empty top-left corner */
+        .empty-header {
+            background-color: white;
+            border: none;
+            border-bottom: 1px solid #e2e8f0;
+            border-right: 1px solid #e2e8f0;
+        }
+
+        /* Image Row */
+        .image-cell {
+            padding: 0;
+            height: 140px;
+            vertical-align: middle;
+        }
+
+        .boat-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        /* Zebra Striping */
+        tbody tr:nth-child(odd) td {
+            background-color: #fff;
+        }
+        
+        tbody tr:nth-child(even) td {
+            background-color: #f8f9fa; /* Very light gray */
+        }
+        
+        /* Specific overrides for the first column background on zebra stripes */
+        tbody tr:nth-child(even) td:first-child {
+            background-color: #f1f3f5;
+        }
+        
+        tbody tr:nth-child(odd) td:first-child {
+            background-color: #f8f9fa;
+        }
+
+        /* Rating Stars */
+        .stars {
+            color: var(--star-color);
+            letter-spacing: 2px;
+            font-size: 18px;
+        }
+
+        /* Button Section */
+        .action-area {
+            display: flex;
+            justify-content: center;
+            margin-top: 30px;
+        }
+
+        .compare-btn {
+            background: linear-gradient(180deg, #2b7be8 0%, #1e60c4 100%);
+            color: white;
+            border: none;
+            padding: 12px 60px;
+            font-size: 16px;
+            font-weight: 500;
+            border-radius: 4px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(37, 117, 220, 0.3);
+            transition: transform 0.1s;
+        }
+
+        .compare-btn:hover {
+            transform: translateY(-1px);
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Compare Boats</h1>
+
+        <div class="tabs">
+            <div class="tab active">Specifications</div>
+            <div class="tab">Features</div>
+            <div class="tab">Photos</div>
+            <div class="tab">Pricing</div>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th class="empty-header"></th>
+                    <th class="model-header">Boat Model A</th>
+                    <th class="model-header">Boat Model B</th>
+                    <th class="model-header">Boat Model C</th>
+                </tr>
+                <tr>
+                    <td style="background:white; border:none; border-right: 1px solid #e2e8f0;"></td>
+                    <td class="image-cell">
+                        <img src="C:\Users\om291\Downloads\unnamed.jpg" alt="Boat Model A" class="boat-img">
+                    </td>
+                    <td class="image-cell">
+                        <img src="C:\Users\om291\Downloads\unnamed.jpg" alt="Boat Model B" class="boat-img">
+                    </td>
+                    <td class="image-cell">
+                        <img src="C:\Users\om291\Downloads\unnamed.jpg" alt="Boat Model C" class="boat-img">
+                    </td>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Length</td>
+                    <td>30 ft</td>
+                    <td>28 ft</td>
+                    <td>40 ft</td>
+                </tr>
+                <tr>
+                    <td>Beam</td>
+                    <td>10 ft</td>
+                    <td>8.5 ft</td>
+                    <td>22 ft</td>
+                </tr>
+                <tr>
+                    <td>Engine Type</td>
+                    <td>Inboard</td>
+                    <td>Outboard</td>
+                    <td>Twin Outboard</td>
+                </tr>
+                <tr>
+                    <td>Max Speed</td>
+                    <td>35 knots</td>
+                    <td>45 knots</td>
+                    <td>25 knots</td>
+                </tr>
+                <tr>
+                    <td>Passenger Capacity</td>
+                    <td>8 People</td>
+                    <td>6 People</td>
+                    <td>10 People</td>
+                </tr>
+                <tr>
+                    <td>Fuel Capacity</td>
+                    <td>150 Gallons</td>
+                    <td>100 Gallons</td>
+                    <td>200 Gallons</td>
+                </tr>
+                <tr>
+                    <td>Cabins</td>
+                    <td>1 Cabin</td>
+                    <td>No Cabin</td>
+                    <td>2 Cabins</td>
+                </tr>
+                <tr>
+                    <td>Price</td>
+                    <td>$120,000</td>
+                    <td>$90,000</td>
+                    <td>$250,000</td>
+                </tr>
+                <tr>
+                    <td style="border-bottom: none;">Rating</td>
+                    <td style="border-bottom: none;">
+                        <span class="stars">★★★★★</span>
+                    </td>
+                    <td style="border-bottom: none;">
+                        <span class="stars">★★★★☆</span>
+                    </td>
+                    <td style="border-bottom: none;">
+                        <span class="stars">★★★★★</span>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="action-area">
+            <button class="compare-btn">Compare Now</button>
+        </div>
+    </div>
+
+</body>
+</html>
