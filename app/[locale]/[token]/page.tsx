@@ -1,6 +1,5 @@
+"use client";
 import { notFound } from 'next/navigation';
-import { api } from '@/lib/api';
-import Image from 'next/image';
 import Link from 'next/link';
 import { Metadata } from 'next';
 
@@ -9,21 +8,23 @@ type Props = {
 };
 
 // ─────────────────────────────────────────────────────────────
-// 1. Fetch data on the server (SSR)
+// Hardcoded API URL – exactly as you requested
 // ─────────────────────────────────────────────────────────────
+const API_BASE_URL = 'https://schepen-kring.nl/api';
+
 async function getPartnerFleet(token: string) {
   try {
-    const { data } = await api.get(`/partner-fleet/${token}`);
-    return data;
-  } catch (error: any) {
-    if (error.response?.status === 404) return null;
-    throw new Error('Failed to load fleet');
+    const res = await fetch(`${API_BASE_URL}/partner-fleet/${token}`, {
+      cache: 'no-store',
+    });
+    if (!res.ok) return null;
+    return res.json();
+  } catch (error) {
+    console.error('Fetch error:', error);
+    return null;
   }
 }
 
-// ─────────────────────────────────────────────────────────────
-// 2. Generate metadata for the page
-// ─────────────────────────────────────────────────────────────
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { token } = await params;
   const data = await getPartnerFleet(token);
@@ -39,9 +40,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-// ─────────────────────────────────────────────────────────────
-// 3. Page component (server component)
-// ─────────────────────────────────────────────────────────────
 export default async function PartnerFleetPage({ params }: Props) {
   const { token } = await params;
   const data = await getPartnerFleet(token);
@@ -51,7 +49,7 @@ export default async function PartnerFleetPage({ params }: Props) {
   }
 
   const { partner, yachts } = data;
-  const baseStorageUrl = process.env.NEXT_PUBLIC_STORAGE_URL || 'https://schepen-kring.nl/storage/';
+  const baseStorageUrl = 'https://schepen-kring.nl/storage/';
   const placeholderImage = 'https://images.unsplash.com/photo-1569263979104-865ab7cd8d13?auto=format&fit=crop&w=600&q=80';
 
   const formatCurrency = (amount: number | null | undefined) => {
@@ -133,7 +131,6 @@ export default async function PartnerFleetPage({ params }: Props) {
                   </Link>
 
                   <div className="pt-6">
-                    {/* specs */}
                     <div className="grid grid-cols-4 gap-2 mb-6">
                       <div className="text-center">
                         <p className="text-[8px] font-black uppercase text-slate-400 mb-1">LOA</p>
@@ -170,7 +167,6 @@ export default async function PartnerFleetPage({ params }: Props) {
   );
 }
 
-// Helper slug generator
 function generateSlug(text: string): string {
   return text
     .toLowerCase()
