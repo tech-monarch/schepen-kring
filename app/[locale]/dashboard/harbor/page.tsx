@@ -57,7 +57,7 @@ export default function PartnerFleetLinkPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto py-12 px-6">
+    <div className="max-w-4xl mx-auto py-12 px-6 bg-white">
       <h1 className="text-3xl font-serif text-[#003566] mb-4">Your Shareable Fleet Link</h1>
       <p className="text-slate-600 mb-8">
         Share this unique URL with your customers to showcase all your published yachts.

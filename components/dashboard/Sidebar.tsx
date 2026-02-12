@@ -129,6 +129,13 @@ export function Sidebar({ onCollapse }: { onCollapse?: (collapsed: boolean) => v
       page_key: "dashboard"
     },
     { 
+      title: "Harbor", 
+      href: userRole === "Partner" ? "/dashboard/harbor" : "/dashboard/harbor", 
+      icon: BarChart3, 
+      roles: ["Partner"],
+      page_key: "dashboard"
+    },
+    { 
       title: "Tasks", 
       href: userRole === "Admin" ? "/dashboard/tasks" : "/dashboard/tasks", 
       icon: CheckSquare, 
