@@ -36,7 +36,7 @@ export default function PartnerFleetLinkPage() {
     fetchUser();
   }, [router]);
 
-  const fullUrl = token ? `${window.location.origin}/partner-fleet/${token}` : '';
+  const fullUrl = token ? `${window.location.origin}/nl/${token}` : '';
 
   const copyToClipboard = async () => {
     try {
