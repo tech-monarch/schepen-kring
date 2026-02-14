@@ -714,15 +714,22 @@ function ComparisonView({
 }) {
   const [searchTerm, setSearchTerm] = useState("");
 
+  // Safety: ensure vessels is an array
+  if (!Array.isArray(vessels)) {
+    console.error("ComparisonView received invalid vessels:", vessels);
+    return <div className="p-8 text-red-600">Error loading comparison data.</div>;
+  }
+
   const availableVessels = vessels.filter(
     (v) =>
+      v && // vessel exists
       !selectedIds.includes(v.id) &&
       (getYachtName(v).toLowerCase().includes(searchTerm.toLowerCase()) ||
         getYachtBuilder(v).toLowerCase().includes(searchTerm.toLowerCase()) ||
         v.vessel_id?.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
-  const selectedVessels = vessels.filter((v) => selectedIds.includes(v.id));
+  const selectedVessels = vessels.filter((v) => v && selectedIds.includes(v.id));
 
   const comparisonAttributes = [
     { label: "Length", value: (v: any) => `${getYachtLength(v)}m` },
@@ -740,7 +747,7 @@ function ComparisonView({
   ];
 
   return (
-    <section className="max-w-[1400px] mx-auto px-6 md:px-12 py-12">
+    <section className="max-w-[1400px] mx-auto px-6 md:px-12 py-12 relative" style={{ zIndex: 10 }}>
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
         <div>
@@ -854,7 +861,7 @@ function ComparisonView({
       {/* Comparison Table – only if 2+ vessels */}
       {selectedVessels.length >= 2 ? (
         <div className="bg-white border border-slate-200 overflow-x-auto">
-          {/* Simple Specifications heading – no tabs */}
+          {/* Simple Specifications heading */}
           <div className="px-6 py-4 border-b border-slate-200 bg-slate-50">
             <h3 className="text-xs font-black uppercase tracking-widest text-[#003566]">
               Specifications
@@ -930,7 +937,6 @@ function ComparisonView({
     </section>
   );
 }
-
 // ------------------------------------------------------------
 // Image error handler
 // ------------------------------------------------------------
