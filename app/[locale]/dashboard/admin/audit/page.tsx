@@ -17,10 +17,11 @@ import {
   Database,
   Server,
   ChevronRight,
-  Users,
   Settings,
-  Shield,
   X,
+  ChevronLeft,
+  ChevronsLeft,
+  ChevronsRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow, format, parseISO } from "date-fns";
@@ -66,10 +67,6 @@ interface PaginationMeta {
   to: number;
 }
 
-// ============================================
-// MAIN COMPONENT
-// ============================================
-
 export default function SystemAuditPage() {
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -111,7 +108,7 @@ export default function SystemAuditPage() {
       if (!response.ok) {
         const errorText = await response.text();
         console.error('Stats API error:', response.status, errorText);
-        throw new Error(`API Error: ${response.status} - ${errorText.substring(0, 100)}`);
+        throw new Error(`API Error: ${response.status}`);
       }
       
       const data = await response.json();
@@ -132,7 +129,6 @@ export default function SystemAuditPage() {
     try {
       console.log('Fetching system logs...');
       
-      // Build query parameters
       const params = new URLSearchParams();
       
       if (filters.event_type.length > 0) {
@@ -165,7 +161,7 @@ export default function SystemAuditPage() {
       if (!response.ok) {
         const errorText = await response.text();
         console.error('Logs API error:', response.status, errorText);
-        throw new Error(`API Error: ${response.status} - ${errorText.substring(0, 100)}`);
+        throw new Error(`API Error: ${response.status}`);
       }
       
       const data = await response.json();
@@ -239,6 +235,7 @@ export default function SystemAuditPage() {
 
   const changePage = (newPage: number) => {
     setFilters(prev => ({ ...prev, page: newPage }));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const formatEventType = (eventType: string) => {
@@ -340,6 +337,29 @@ export default function SystemAuditPage() {
   }, [filters]);
 
   // ============================================
+  // PAGINATION HELPERS
+  // ============================================
+
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxPagesToShow = 5;
+    const halfRange = Math.floor(maxPagesToShow / 2);
+    
+    let startPage = Math.max(1, pagination.current_page - halfRange);
+    let endPage = Math.min(pagination.last_page, startPage + maxPagesToShow - 1);
+    
+    if (endPage - startPage + 1 < maxPagesToShow) {
+      startPage = Math.max(1, endPage - maxPagesToShow + 1);
+    }
+    
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i);
+    }
+    
+    return pages;
+  };
+
+  // ============================================
   // RENDER
   // ============================================
 
@@ -351,538 +371,585 @@ export default function SystemAuditPage() {
     (filters.dateRange.to ? 1 : 0);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100">
-      {/* Main Container - Adjusted for sidebar and navbar */}
-      <div className="relative -top-25 -left-10">
-        <div className="absolute p-4 md:p-8 max-w-7xl mx-auto">
-          
-          {/* Header Section */}
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-8"
-          >
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100 p-6">
+      {/* Main Container */}
+      <div className="max-w-7xl mx-auto space-y-6">
+        
+        {/* Header Section */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl shadow-lg">
+                <ShieldCheck className="text-white" size={32} />
+              </div>
               <div>
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="p-3 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl shadow-lg">
-                    <ShieldCheck className="text-white" size={28} />
-                  </div>
-                  <div>
-                    <h1 className="text-3xl font-bold text-slate-900">System Audit Log</h1>
-                    <p className="text-slate-600 text-sm mt-1">
-                      Track all system activities and changes
-                    </p>
-                  </div>
+                <h1 className="text-3xl font-black text-slate-900 tracking-tight">System Audit Log</h1>
+                <p className="text-slate-600 text-sm mt-1">
+                  Track all system activities and changes in real-time
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className={cn(
+                  "flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold transition-all shadow-sm text-sm",
+                  showFilters 
+                    ? "bg-blue-600 text-white shadow-lg shadow-blue-200" 
+                    : "bg-white text-slate-700 hover:bg-slate-50 border border-slate-200 hover:border-blue-300"
+                )}
+              >
+                <Filter size={18} />
+                <span>Filters</span>
+                {activeFilterCount > 0 && (
+                  <span className="bg-white text-blue-600 px-2 py-0.5 rounded-full text-xs font-bold min-w-[20px] text-center">
+                    {activeFilterCount}
+                  </span>
+                )}
+              </button>
+              
+              <button
+                onClick={fetchSystemLogs}
+                disabled={isRefreshing}
+                className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-xl font-semibold hover:bg-slate-50 hover:border-blue-300 transition-all shadow-sm disabled:opacity-50 text-sm"
+              >
+                <RefreshCcw size={18} className={cn(isRefreshing && "animate-spin")} />
+                <span className="hidden sm:inline">Refresh</span>
+              </button>
+              
+              <button
+                onClick={handleExport}
+                disabled={filteredLogs.length === 0}
+                className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-xl font-semibold hover:from-green-700 hover:to-green-800 transition-all shadow-lg shadow-green-200 disabled:opacity-50 disabled:shadow-none text-sm"
+              >
+                <Download size={18} />
+                <span className="hidden sm:inline">Export CSV</span>
+              </button>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Stats Cards */}
+        {systemStats && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
+          >
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 hover:shadow-md transition-shadow">
+              <div className="flex items-center justify-between mb-3">
+                <div className="p-2.5 bg-blue-100 rounded-xl">
+                  <Database size={22} className="text-blue-600" />
                 </div>
               </div>
-              
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => setShowFilters(!showFilters)}
-                  className={cn(
-                    "flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-all shadow-sm",
-                    showFilters 
-                      ? "bg-blue-600 text-white shadow-blue-200" 
-                      : "bg-white text-slate-700 hover:bg-slate-50 border border-slate-200"
-                  )}
-                >
-                  <Filter size={18} />
-                  <span>Filters</span>
-                  {activeFilterCount > 0 && (
-                    <span className="bg-white text-blue-600 px-2 py-0.5 rounded-full text-xs font-bold">
-                      {activeFilterCount}
-                    </span>
-                  )}
-                </button>
-                
-                <button
-                  onClick={fetchSystemLogs}
-                  disabled={isRefreshing}
-                  className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-lg font-medium hover:bg-slate-50 transition-all shadow-sm disabled:opacity-50"
-                >
-                  <RefreshCcw size={18} className={cn(isRefreshing && "animate-spin")} />
-                  <span className="hidden sm:inline">Refresh</span>
-                </button>
-                
-                <button
-                  onClick={handleExport}
-                  disabled={filteredLogs.length === 0}
-                  className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg font-medium hover:from-green-700 hover:to-green-800 transition-all shadow-sm disabled:opacity-50"
-                >
-                  <Download size={18} />
-                  <span className="hidden sm:inline">Export</span>
-                </button>
+              <p className="text-3xl font-black text-slate-900 mb-1">
+                {systemStats.summary.total_logs.toLocaleString()}
+              </p>
+              <p className="text-sm text-slate-600 font-medium">Total Events</p>
+            </div>
+
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 hover:shadow-md transition-shadow">
+              <div className="flex items-center justify-between mb-3">
+                <div className="p-2.5 bg-green-100 rounded-xl">
+                  <Activity size={22} className="text-green-600" />
+                </div>
+              </div>
+              <p className="text-3xl font-black text-slate-900 mb-1">
+                {systemStats.summary.event_types.length}
+              </p>
+              <p className="text-sm text-slate-600 font-medium">Event Types</p>
+            </div>
+
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 hover:shadow-md transition-shadow">
+              <div className="flex items-center justify-between mb-3">
+                <div className="p-2.5 bg-purple-100 rounded-xl">
+                  <Server size={22} className="text-purple-600" />
+                </div>
+              </div>
+              <p className="text-3xl font-black text-slate-900 mb-1">
+                {systemStats.summary.entity_types.length}
+              </p>
+              <p className="text-sm text-slate-600 font-medium">Entity Types</p>
+            </div>
+
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 hover:shadow-md transition-shadow">
+              <div className="flex items-center justify-between mb-3">
+                <div className="p-2.5 bg-orange-100 rounded-xl">
+                  <Clock size={22} className="text-orange-600" />
+                </div>
+              </div>
+              <p className="text-3xl font-black text-slate-900 mb-1">
+                {systemStats.recent_activity.length}
+              </p>
+              <p className="text-sm text-slate-600 font-medium">Recent Activity</p>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Filters Panel */}
+        <AnimatePresence>
+          {showFilters && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="overflow-hidden"
+            >
+              <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-lg font-black text-slate-900">Advanced Filters</h3>
+                  <button
+                    onClick={() => setShowFilters(false)}
+                    className="p-2 hover:bg-slate-100 rounded-xl transition-colors"
+                  >
+                    <X size={20} className="text-slate-500" />
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                  {/* Search */}
+                  <div className="lg:col-span-2">
+                    <label className="block text-sm font-bold text-slate-700 mb-2">
+                      Search Logs
+                    </label>
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={18} />
+                      <input
+                        type="text"
+                        placeholder="Search descriptions, users, IPs..."
+                        value={filters.search}
+                        onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value, page: 1 }))}
+                        className="w-full pl-10 pr-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all font-medium"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Date Range */}
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 mb-2">
+                      From Date
+                    </label>
+                    <input
+                      type="date"
+                      value={filters.dateRange.from}
+                      onChange={(e) => setFilters(prev => ({ 
+                        ...prev, 
+                        dateRange: { ...prev.dateRange, from: e.target.value },
+                        page: 1 
+                      }))}
+                      className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all font-medium"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 mb-2">
+                      To Date
+                    </label>
+                    <input
+                      type="date"
+                      value={filters.dateRange.to}
+                      onChange={(e) => setFilters(prev => ({ 
+                        ...prev, 
+                        dateRange: { ...prev.dateRange, to: e.target.value },
+                        page: 1 
+                      }))}
+                      className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all font-medium"
+                    />
+                  </div>
+                </div>
+
+                {/* Event Types */}
+                <div className="mb-6">
+                  <label className="block text-sm font-bold text-slate-700 mb-3">
+                    Event Types
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {availableEventTypes.map(eventType => (
+                      <button
+                        key={eventType}
+                        onClick={() => toggleEventFilter(eventType)}
+                        className={cn(
+                          "px-4 py-2 rounded-xl text-sm font-semibold transition-all border-2",
+                          filters.event_type.includes(eventType)
+                            ? "bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-200"
+                            : "bg-white text-slate-700 border-slate-200 hover:border-blue-400 hover:bg-blue-50"
+                        )}
+                      >
+                        {formatEventType(eventType)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Entity Types */}
+                <div className="mb-6">
+                  <label className="block text-sm font-bold text-slate-700 mb-3">
+                    Entity Types
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {availableEntityTypes.map(entityType => (
+                      <button
+                        key={entityType}
+                        onClick={() => toggleEntityFilter(entityType)}
+                        className={cn(
+                          "px-4 py-2 rounded-xl text-sm font-semibold transition-all border-2",
+                          filters.entity_type.includes(entityType)
+                            ? "bg-green-600 text-white border-green-600 shadow-md shadow-green-200"
+                            : "bg-white text-slate-700 border-slate-200 hover:border-green-400 hover:bg-green-50"
+                        )}
+                      >
+                        {formatEventType(entityType)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Clear Filters */}
+                {activeFilterCount > 0 && (
+                  <div className="pt-4 border-t border-slate-200">
+                    <button
+                      onClick={clearFilters}
+                      className="text-sm text-red-600 hover:text-red-700 font-bold transition-colors flex items-center gap-2"
+                    >
+                      <X size={16} />
+                      Clear all filters ({activeFilterCount})
+                    </button>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Error State */}
+        {apiError && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-red-50 border-2 border-red-200 rounded-2xl p-4"
+          >
+            <div className="flex items-center gap-3">
+              <AlertCircle className="text-red-600 flex-shrink-0" size={24} />
+              <div>
+                <h3 className="font-black text-red-900">Error Loading Data</h3>
+                <p className="text-sm text-red-700 mt-1">{apiError}</p>
               </div>
             </div>
           </motion.div>
+        )}
 
-          {/* Stats Cards */}
-          {systemStats && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8"
-            >
-              <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="p-2 bg-blue-100 rounded-lg">
-                    <Database size={20} className="text-blue-600" />
-                  </div>
-                </div>
-                <p className="text-2xl font-bold text-slate-900">
-                  {systemStats.summary.total_logs.toLocaleString()}
-                </p>
-                <p className="text-sm text-slate-600 mt-1">Total Events</p>
-              </div>
-
-              <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="p-2 bg-green-100 rounded-lg">
-                    <Activity size={20} className="text-green-600" />
-                  </div>
-                </div>
-                <p className="text-2xl font-bold text-slate-900">
-                  {systemStats.summary.event_types.length}
-                </p>
-                <p className="text-sm text-slate-600 mt-1">Event Types</p>
-              </div>
-
-              <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="p-2 bg-purple-100 rounded-lg">
-                    <Server size={20} className="text-purple-600" />
-                  </div>
-                </div>
-                <p className="text-2xl font-bold text-slate-900">
-                  {systemStats.summary.entity_types.length}
-                </p>
-                <p className="text-sm text-slate-600 mt-1">Entity Types</p>
-              </div>
-
-              <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="p-2 bg-orange-100 rounded-lg">
-                    <Clock size={20} className="text-orange-600" />
-                  </div>
-                </div>
-                <p className="text-2xl font-bold text-slate-900">
-                  {systemStats.recent_activity.length}
-                </p>
-                <p className="text-sm text-slate-600 mt-1">Recent Activity</p>
-              </div>
-            </motion.div>
-          )}
-
-          {/* Filters Panel */}
-          <AnimatePresence>
-            {showFilters && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                className="mb-6 overflow-hidden"
-              >
-                <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-bold text-slate-900">Filters</h3>
-                    <button
-                      onClick={() => setShowFilters(false)}
-                      className="p-1 hover:bg-slate-100 rounded-lg transition-colors"
-                    >
-                      <X size={20} className="text-slate-500" />
-                    </button>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {/* Search */}
-                    <div className="lg:col-span-2">
-                      <label className="block text-sm font-medium text-slate-700 mb-2">
-                        Search
-                      </label>
-                      <div className="relative">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={18} />
-                        <input
-                          type="text"
-                          placeholder="Search descriptions, users, IPs..."
-                          value={filters.search}
-                          onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value, page: 1 }))}
-                          className="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Date Range */}
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-2">
-                        From Date
-                      </label>
-                      <input
-                        type="date"
-                        value={filters.dateRange.from}
-                        onChange={(e) => setFilters(prev => ({ 
-                          ...prev, 
-                          dateRange: { ...prev.dateRange, from: e.target.value },
-                          page: 1 
-                        }))}
-                        className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-2">
-                        To Date
-                      </label>
-                      <input
-                        type="date"
-                        value={filters.dateRange.to}
-                        onChange={(e) => setFilters(prev => ({ 
-                          ...prev, 
-                          dateRange: { ...prev.dateRange, to: e.target.value },
-                          page: 1 
-                        }))}
-                        className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Event Types */}
-                  <div className="mt-4">
-                    <label className="block text-sm font-medium text-slate-700 mb-2">
-                      Event Types
-                    </label>
-                    <div className="flex flex-wrap gap-2">
-                      {availableEventTypes.map(eventType => (
-                        <button
-                          key={eventType}
-                          onClick={() => toggleEventFilter(eventType)}
-                          className={cn(
-                            "px-4 py-2 rounded-lg text-sm font-medium transition-all border",
-                            filters.event_type.includes(eventType)
-                              ? "bg-blue-600 text-white border-blue-600 shadow-sm"
-                              : "bg-white text-slate-700 border-slate-300 hover:border-blue-400"
-                          )}
-                        >
-                          {formatEventType(eventType)}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Entity Types */}
-                  <div className="mt-4">
-                    <label className="block text-sm font-medium text-slate-700 mb-2">
-                      Entity Types
-                    </label>
-                    <div className="flex flex-wrap gap-2">
-                      {availableEntityTypes.map(entityType => (
-                        <button
-                          key={entityType}
-                          onClick={() => toggleEntityFilter(entityType)}
-                          className={cn(
-                            "px-4 py-2 rounded-lg text-sm font-medium transition-all border",
-                            filters.entity_type.includes(entityType)
-                              ? "bg-green-600 text-white border-green-600 shadow-sm"
-                              : "bg-white text-slate-700 border-slate-300 hover:border-green-400"
-                          )}
-                        >
-                          {formatEventType(entityType)}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Clear Filters */}
-                  {activeFilterCount > 0 && (
-                    <div className="mt-4 pt-4 border-t border-slate-200">
-                      <button
-                        onClick={clearFilters}
-                        className="text-sm text-red-600 hover:text-red-700 font-medium transition-colors"
-                      >
-                        Clear all filters ({activeFilterCount})
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Error State */}
-          {apiError && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mb-6 bg-red-50 border border-red-200 rounded-xl p-4"
-            >
-              <div className="flex items-center gap-3">
-                <AlertCircle className="text-red-600 flex-shrink-0" size={24} />
-                <div>
-                  <h3 className="font-bold text-red-900">Error Loading Data</h3>
-                  <p className="text-sm text-red-700 mt-1">{apiError}</p>
-                </div>
-              </div>
-            </motion.div>
-          )}
-
-          {/* Activity Logs */}
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-200 bg-slate-50">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-bold text-slate-900">Activity Logs</h2>
-                <p className="text-sm text-slate-600">
-                  {pagination.total > 0 && `${pagination.total.toLocaleString()} total entries`}
-                </p>
-              </div>
-            </div>
-
-            <div className="divide-y divide-slate-200">
-              {loading ? (
-                <div className="py-16 text-center">
-                  <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent mb-4"></div>
-                  <p className="text-slate-600">Loading activity logs...</p>
-                </div>
-              ) : filteredLogs.length > 0 ? (
-                filteredLogs.map((log, index) => {
-                  const isExpanded = selectedLog?.id === log.id;
-                  
-                  return (
-                    <motion.div
-                      key={log.id}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.03 }}
-                      className={cn(
-                        "hover:bg-slate-50 transition-colors cursor-pointer",
-                        isExpanded && "bg-blue-50"
-                      )}
-                      onClick={() => setSelectedLog(isExpanded ? null : log)}
-                    >
-                      <div className="p-6">
-                        <div className="flex items-start gap-4">
-                          {/* Icon */}
-                          <div className="flex-shrink-0 mt-1">
-                            {getEventIcon(log.event_type)}
-                          </div>
-
-                          {/* Content */}
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-start justify-between gap-4 mb-2">
-                              <div className="flex-1">
-                                <p className="text-slate-900 font-medium leading-relaxed">
-                                  {log.description}
-                                </p>
-                              </div>
-                              
-                              <div className="flex items-center gap-2 flex-shrink-0">
-                                <span className={cn(
-                                  "px-3 py-1 rounded-full text-xs font-semibold border whitespace-nowrap",
-                                  getEventColor(log.event_type)
-                                )}>
-                                  {formatEventType(log.event_type)}
-                                </span>
-                              </div>
-                            </div>
-
-                            {/* Meta Information */}
-                            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-slate-600">
-                              <span className="flex items-center gap-1.5">
-                                <Clock size={14} />
-                                {formatDistanceToNow(parseISO(log.created_at), { addSuffix: true })}
-                              </span>
-                              
-                              {log.user && (
-                                <span className="flex items-center gap-1.5">
-                                  <User size={14} />
-                                  {log.user.name}
-                                </span>
-                              )}
-                              
-                              <span className="flex items-center gap-1.5">
-                                <Database size={14} />
-                                {getEntityName(log)}
-                              </span>
-                              
-                              {log.ip_address && (
-                                <span className="font-mono text-xs bg-slate-100 px-2 py-1 rounded">
-                                  {log.ip_address}
-                                </span>
-                              )}
-
-                              <ChevronRight 
-                                size={16} 
-                                className={cn(
-                                  "ml-auto transition-transform",
-                                  isExpanded && "rotate-90"
-                                )}
-                              />
-                            </div>
-
-                            {/* Expanded Details */}
-                            <AnimatePresence>
-                              {isExpanded && (
-                                <motion.div
-                                  initial={{ opacity: 0, height: 0 }}
-                                  animate={{ opacity: 1, height: 'auto' }}
-                                  exit={{ opacity: 0, height: 0 }}
-                                  className="mt-4 pt-4 border-t border-slate-200"
-                                >
-                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    {/* User Information */}
-                                    <div>
-                                      <h4 className="text-sm font-bold text-slate-700 mb-3 flex items-center gap-2">
-                                        <User size={16} />
-                                        {log.user ? 'User Information' : 'System Action'}
-                                      </h4>
-                                      <div className="space-y-3">
-                                        {log.user ? (
-                                          <>
-                                            <div>
-                                              <p className="text-xs text-slate-500 uppercase tracking-wider font-medium mb-1">
-                                                Name
-                                              </p>
-                                              <p className="text-sm font-medium text-slate-900">{log.user.name}</p>
-                                            </div>
-                                            <div>
-                                              <p className="text-xs text-slate-500 uppercase tracking-wider font-medium mb-1">
-                                                Email
-                                              </p>
-                                              <p className="text-sm font-medium text-slate-900">{log.user.email}</p>
-                                            </div>
-                                            <div>
-                                              <p className="text-xs text-slate-500 uppercase tracking-wider font-medium mb-1">
-                                                Role
-                                              </p>
-                                              <p className="text-sm font-medium text-slate-900">{log.user.role}</p>
-                                            </div>
-                                          </>
-                                        ) : (
-                                          <div>
-                                            <p className="text-xs text-slate-500 uppercase tracking-wider font-medium mb-1">
-                                              Action
-                                            </p>
-                                            <p className="text-sm font-medium text-slate-900">System Automated Action</p>
-                                          </div>
-                                        )}
-                                        <div>
-                                          <p className="text-xs text-slate-500 uppercase tracking-wider font-medium mb-1">
-                                            Event Type
-                                          </p>
-                                          <p className="text-sm font-medium text-slate-900">{formatEventType(log.event_type)}</p>
-                                        </div>
-                                      </div>
-                                    </div>
-
-                                    {/* Technical Details */}
-                                    <div>
-                                      <h4 className="text-sm font-bold text-slate-700 mb-3 flex items-center gap-2">
-                                        <Settings size={16} />
-                                        Technical Details
-                                      </h4>
-                                      <div className="space-y-3">
-                                        <div>
-                                          <p className="text-xs text-slate-500 uppercase tracking-wider font-medium mb-1">
-                                            Entity Details
-                                          </p>
-                                          <p className="text-sm text-slate-900 font-medium">
-                                            {getEntityName(log)}
-                                          </p>
-                                        </div>
-                                        <div>
-                                          <p className="text-xs text-slate-500 uppercase tracking-wider font-medium mb-1">
-                                            Timestamp
-                                          </p>
-                                          <p className="text-sm font-medium text-slate-900">
-                                            {format(parseISO(log.created_at), 'PPpp')}
-                                          </p>
-                                        </div>
-                                        {log.changes && Object.keys(log.changes).length > 0 && (
-                                          <div>
-                                            <p className="text-xs text-slate-500 uppercase tracking-wider font-medium mb-1">
-                                              Changes Made
-                                            </p>
-                                            <pre className="text-xs bg-slate-50 p-3 rounded-lg overflow-auto max-h-40 border border-slate-200 text-slate-900">
-                                              {JSON.stringify(log.changes, null, 2)}
-                                            </pre>
-                                          </div>
-                                        )}
-                                        {log.ip_address && (
-                                          <div>
-                                            <p className="text-xs text-slate-500 uppercase tracking-wider font-medium mb-1">
-                                              IP Address
-                                            </p>
-                                            <p className="text-sm font-mono text-slate-900">{log.ip_address}</p>
-                                          </div>
-                                        )}
-                                      </div>
-                                    </div>
-                                  </div>
-                                </motion.div>
-                              )}
-                            </AnimatePresence>
-                          </div>
-                        </div>
-                      </div>
-                    </motion.div>
-                  );
-                })
-              ) : (
-                <div className="py-16 text-center">
-                  <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-slate-100 flex items-center justify-center">
-                    <Search size={32} className="text-slate-400" />
-                  </div>
-                  <h3 className="text-lg font-bold text-slate-700 mb-2">No activity logs found</h3>
-                  <p className="text-slate-500 mb-6 max-w-md mx-auto">
-                    {filters.search || filters.event_type.length > 0 || filters.entity_type.length > 0
-                      ? "No activity logs match your current filters. Try adjusting your search criteria."
-                      : "No activity logs available yet. Start by creating tasks, updating yachts, or having users log in."}
+        {/* Activity Logs */}
+        <div className="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
+          <div className="px-6 py-5 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-blue-50">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-black text-slate-900">Activity Logs</h2>
+              {pagination.total > 0 && (
+                <div className="flex items-center gap-3">
+                  <p className="text-sm text-slate-600 font-semibold">
+                    Showing {pagination.from.toLocaleString()} - {pagination.to.toLocaleString()} of {pagination.total.toLocaleString()}
                   </p>
-                  {(filters.search || filters.event_type.length > 0 || filters.entity_type.length > 0) && (
-                    <button
-                      onClick={clearFilters}
-                      className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium shadow-sm"
-                    >
-                      Clear all filters
-                    </button>
-                  )}
                 </div>
               )}
             </div>
+          </div>
 
-            {/* Pagination */}
-            {pagination.last_page > 1 && !apiError && (
-              <div className="px-6 py-4 border-t border-slate-200 bg-slate-50">
-                <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-                  <div className="text-sm text-slate-700">
-                    Showing <span className="font-medium">{pagination.from}</span> to{' '}
-                    <span className="font-medium">{pagination.to}</span> of{' '}
-                    <span className="font-medium">{pagination.total}</span> results
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => changePage(pagination.current_page - 1)}
-                      disabled={pagination.current_page === 1 || loading}
-                      className="px-4 py-2 border border-slate-300 rounded-lg disabled:opacity-50 hover:bg-white transition-colors font-medium text-sm disabled:cursor-not-allowed"
-                    >
-                      Previous
-                    </button>
-                    <span className="px-4 py-2 text-sm text-slate-700">
-                      Page <span className="font-medium">{pagination.current_page}</span> of{' '}
-                      <span className="font-medium">{pagination.last_page}</span>
-                    </span>
-                    <button
-                      onClick={() => changePage(pagination.current_page + 1)}
-                      disabled={pagination.current_page === pagination.last_page || loading}
-                      className="px-4 py-2 border border-slate-300 rounded-lg disabled:opacity-50 hover:bg-white transition-colors font-medium text-sm disabled:cursor-not-allowed"
-                    >
-                      Next
-                    </button>
-                  </div>
+          <div className="divide-y divide-slate-200">
+            {loading ? (
+              <div className="py-20 text-center">
+                <div className="inline-block animate-spin rounded-full h-16 w-16 border-4 border-blue-600 border-t-transparent mb-4"></div>
+                <p className="text-slate-600 font-semibold">Loading activity logs...</p>
+              </div>
+            ) : filteredLogs.length > 0 ? (
+              filteredLogs.map((log, index) => {
+                const isExpanded = selectedLog?.id === log.id;
+                
+                return (
+                  <motion.div
+                    key={log.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.02 }}
+                    className={cn(
+                      "hover:bg-slate-50 transition-all cursor-pointer",
+                      isExpanded && "bg-blue-50 border-l-4 border-l-blue-600"
+                    )}
+                    onClick={() => setSelectedLog(isExpanded ? null : log)}
+                  >
+                    <div className="p-6">
+                      <div className="flex items-start gap-4">
+                        {/* Icon */}
+                        <div className="flex-shrink-0 mt-1">
+                          {getEventIcon(log.event_type)}
+                        </div>
+
+                        {/* Content */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between gap-4 mb-2">
+                            <div className="flex-1">
+                              <p className="text-slate-900 font-semibold leading-relaxed">
+                                {log.description}
+                              </p>
+                            </div>
+                            
+                            <div className="flex items-center gap-2 flex-shrink-0">
+                              <span className={cn(
+                                "px-3 py-1.5 rounded-full text-xs font-bold border-2 whitespace-nowrap",
+                                getEventColor(log.event_type)
+                              )}>
+                                {formatEventType(log.event_type)}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Meta Information */}
+                          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-slate-600">
+                            <span className="flex items-center gap-1.5 font-medium">
+                              <Clock size={14} />
+                              {formatDistanceToNow(parseISO(log.created_at), { addSuffix: true })}
+                            </span>
+                            
+                            {log.user && (
+                              <span className="flex items-center gap-1.5 font-medium">
+                                <User size={14} />
+                                {log.user.name}
+                              </span>
+                            )}
+                            
+                            <span className="flex items-center gap-1.5 font-medium">
+                              <Database size={14} />
+                              {getEntityName(log)}
+                            </span>
+                            
+                            {log.ip_address && (
+                              <span className="font-mono text-xs bg-slate-200 px-2.5 py-1 rounded-lg font-bold">
+                                {log.ip_address}
+                              </span>
+                            )}
+
+                            <ChevronRight 
+                              size={18} 
+                              className={cn(
+                                "ml-auto transition-transform text-slate-400",
+                                isExpanded && "rotate-90 text-blue-600"
+                              )}
+                            />
+                          </div>
+
+                          {/* Expanded Details */}
+                          <AnimatePresence>
+                            {isExpanded && (
+                              <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
+                                exit={{ opacity: 0, height: 0 }}
+                                className="mt-4 pt-4 border-t border-slate-200"
+                              >
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                  {/* User Information */}
+                                  <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+                                    <h4 className="text-sm font-black text-slate-700 mb-3 flex items-center gap-2">
+                                      <User size={16} />
+                                      {log.user ? 'User Information' : 'System Action'}
+                                    </h4>
+                                    <div className="space-y-3">
+                                      {log.user ? (
+                                        <>
+                                          <div>
+                                            <p className="text-xs text-slate-500 uppercase tracking-wider font-bold mb-1">
+                                              Name
+                                            </p>
+                                            <p className="text-sm font-semibold text-slate-900">{log.user.name}</p>
+                                          </div>
+                                          <div>
+                                            <p className="text-xs text-slate-500 uppercase tracking-wider font-bold mb-1">
+                                              Email
+                                            </p>
+                                            <p className="text-sm font-semibold text-slate-900">{log.user.email}</p>
+                                          </div>
+                                          <div>
+                                            <p className="text-xs text-slate-500 uppercase tracking-wider font-bold mb-1">
+                                              Role
+                                            </p>
+                                            <span className="inline-block px-2.5 py-1 bg-blue-100 text-blue-700 rounded-lg text-xs font-bold">
+                                              {log.user.role}
+                                            </span>
+                                          </div>
+                                        </>
+                                      ) : (
+                                        <div>
+                                          <p className="text-xs text-slate-500 uppercase tracking-wider font-bold mb-1">
+                                            Action
+                                          </p>
+                                          <p className="text-sm font-semibold text-slate-900">System Automated Action</p>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  {/* Technical Details */}
+                                  <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+                                    <h4 className="text-sm font-black text-slate-700 mb-3 flex items-center gap-2">
+                                      <Settings size={16} />
+                                      Technical Details
+                                    </h4>
+                                    <div className="space-y-3">
+                                      <div>
+                                        <p className="text-xs text-slate-500 uppercase tracking-wider font-bold mb-1">
+                                          Entity Details
+                                        </p>
+                                        <p className="text-sm text-slate-900 font-semibold">
+                                          {getEntityName(log)}
+                                        </p>
+                                      </div>
+                                      <div>
+                                        <p className="text-xs text-slate-500 uppercase tracking-wider font-bold mb-1">
+                                          Timestamp
+                                        </p>
+                                        <p className="text-sm font-semibold text-slate-900">
+                                          {format(parseISO(log.created_at), 'PPpp')}
+                                        </p>
+                                      </div>
+                                      {log.ip_address && (
+                                        <div>
+                                          <p className="text-xs text-slate-500 uppercase tracking-wider font-bold mb-1">
+                                            IP Address
+                                          </p>
+                                          <p className="text-sm font-mono font-semibold text-slate-900 bg-slate-200 px-2 py-1 rounded-lg inline-block">
+                                            {log.ip_address}
+                                          </p>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  {/* Changes (Full Width) */}
+                                  {log.changes && Object.keys(log.changes).length > 0 && (
+                                    <div className="md:col-span-2 bg-slate-50 rounded-xl p-4 border border-slate-200">
+                                      <p className="text-xs text-slate-500 uppercase tracking-wider font-bold mb-2 flex items-center gap-2">
+                                        <Activity size={14} />
+                                        Changes Made
+                                      </p>
+                                      <pre className="text-xs bg-white p-4 rounded-lg overflow-auto max-h-60 border border-slate-300 text-slate-900 font-mono">
+                                        {JSON.stringify(log.changes, null, 2)}
+                                      </pre>
+                                    </div>
+                                  )}
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })
+            ) : (
+              <div className="py-20 text-center">
+                <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-slate-100 to-blue-100 flex items-center justify-center">
+                  <Search size={40} className="text-slate-400" />
                 </div>
+                <h3 className="text-xl font-black text-slate-700 mb-2">No activity logs found</h3>
+                <p className="text-slate-500 mb-6 max-w-md mx-auto">
+                  {activeFilterCount > 0
+                    ? "No activity logs match your current filters. Try adjusting your search criteria."
+                    : "No activity logs available yet. Start by creating tasks, updating yachts, or having users log in."}
+                </p>
+                {activeFilterCount > 0 && (
+                  <button
+                    onClick={clearFilters}
+                    className="px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-bold shadow-lg shadow-blue-200"
+                  >
+                    Clear all filters
+                  </button>
+                )}
               </div>
             )}
           </div>
+
+          {/* Enhanced Pagination */}
+          {pagination.last_page > 1 && !apiError && (
+            <div className="px-6 py-5 border-t border-slate-200 bg-gradient-to-r from-slate-50 to-blue-50">
+              <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+                <div className="text-sm text-slate-700 font-semibold">
+                  Showing <span className="font-black text-blue-600">{pagination.from.toLocaleString()}</span> to{' '}
+                  <span className="font-black text-blue-600">{pagination.to.toLocaleString()}</span> of{' '}
+                  <span className="font-black text-blue-600">{pagination.total.toLocaleString()}</span> results
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  {/* First Page */}
+                  <button
+                    onClick={() => changePage(1)}
+                    disabled={pagination.current_page === 1 || loading}
+                    className="p-2 border-2 border-slate-300 rounded-xl disabled:opacity-40 hover:bg-white hover:border-blue-400 transition-all font-bold text-slate-700 disabled:cursor-not-allowed"
+                    title="First page"
+                  >
+                    <ChevronsLeft size={18} />
+                  </button>
+
+                  {/* Previous Page */}
+                  <button
+                    onClick={() => changePage(pagination.current_page - 1)}
+                    disabled={pagination.current_page === 1 || loading}
+                    className="p-2 border-2 border-slate-300 rounded-xl disabled:opacity-40 hover:bg-white hover:border-blue-400 transition-all font-bold text-slate-700 disabled:cursor-not-allowed"
+                    title="Previous page"
+                  >
+                    <ChevronLeft size={18} />
+                  </button>
+
+                  {/* Page Numbers */}
+                  <div className="hidden sm:flex items-center gap-2">
+                    {getPageNumbers().map(pageNum => (
+                      <button
+                        key={pageNum}
+                        onClick={() => changePage(pageNum)}
+                        disabled={loading}
+                        className={cn(
+                          "min-w-[40px] px-3 py-2 rounded-xl font-bold text-sm transition-all border-2",
+                          pageNum === pagination.current_page
+                            ? "bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-200"
+                            : "border-slate-300 text-slate-700 hover:bg-white hover:border-blue-400"
+                        )}
+                      >
+                        {pageNum}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Mobile: Current Page Indicator */}
+                  <div className="sm:hidden px-4 py-2 text-sm font-bold text-slate-700 bg-slate-100 rounded-xl border-2 border-slate-300">
+                    {pagination.current_page} / {pagination.last_page}
+                  </div>
+
+                  {/* Next Page */}
+                  <button
+                    onClick={() => changePage(pagination.current_page + 1)}
+                    disabled={pagination.current_page === pagination.last_page || loading}
+                    className="p-2 border-2 border-slate-300 rounded-xl disabled:opacity-40 hover:bg-white hover:border-blue-400 transition-all font-bold text-slate-700 disabled:cursor-not-allowed"
+                    title="Next page"
+                  >
+                    <ChevronRight size={18} />
+                  </button>
+
+                  {/* Last Page */}
+                  <button
+                    onClick={() => changePage(pagination.last_page)}
+                    disabled={pagination.current_page === pagination.last_page || loading}
+                    className="p-2 border-2 border-slate-300 rounded-xl disabled:opacity-40 hover:bg-white hover:border-blue-400 transition-all font-bold text-slate-700 disabled:cursor-not-allowed"
+                    title="Last page"
+                  >
+                    <ChevronsRight size={18} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
