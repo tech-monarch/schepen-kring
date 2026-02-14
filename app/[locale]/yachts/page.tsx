@@ -708,7 +708,6 @@ function ComparisonView({
 }) {
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Vessels that are NOT already selected and match the search term
   const availableVessels = vessels.filter(
     (v) =>
       !selectedIds.includes(v.id) &&
@@ -759,7 +758,7 @@ function ComparisonView({
         )}
       </div>
 
-      {/* ----- Add vessels: search + dropdown ----- */}
+      {/* Add vessels: search + dropdown */}
       <div className="bg-slate-50 border border-slate-200 p-6 mb-10">
         <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">
           Add yachts to compare
@@ -775,7 +774,6 @@ function ComparisonView({
           />
         </div>
 
-        {/* Suggestions dropdown */}
         {searchTerm && (
           <div className="mt-2 bg-white border border-slate-200 divide-y divide-slate-100 max-h-60 overflow-y-auto shadow-lg">
             {availableVessels.length === 0 ? (
@@ -809,7 +807,6 @@ function ComparisonView({
           </div>
         )}
 
-        {/* Selected vessels as tags */}
         {selectedVessels.length > 0 && (
           <div className="mt-6">
             <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-3">
@@ -848,27 +845,16 @@ function ComparisonView({
         )}
       </div>
 
-      {/* ----- Comparison Table (only if 2+ vessels) ----- */}
+      {/* Comparison Table – only if 2+ vessels */}
       {selectedVessels.length >= 2 ? (
         <div className="bg-white border border-slate-200 overflow-x-auto">
-          {/* Tabs – static for design consistency */}
-          <div className="flex border-b border-slate-200 bg-slate-50 px-4">
-            {["Specifications", "Features", "Photos", "Pricing"].map((tab, i) => (
-              <button
-                key={tab}
-                className={cn(
-                  "px-4 py-3 text-[9px] font-black uppercase tracking-widest transition-all",
-                  i === 0
-                    ? "bg-white text-[#003566] border-b-2 border-blue-600"
-                    : "text-slate-500 hover:text-[#003566]"
-                )}
-              >
-                {tab}
-              </button>
-            ))}
+          {/* Simple Specifications heading – tabs removed */}
+          <div className="px-6 py-4 border-b border-slate-200 bg-slate-50">
+            <h3 className="text-xs font-black uppercase tracking-widest text-[#003566]">
+              Specifications
+            </h3>
           </div>
 
-          {/* Table */}
           <table className="w-full text-sm">
             <thead>
               <tr>
@@ -919,7 +905,6 @@ function ComparisonView({
             </tbody>
           </table>
 
-          {/* Action button */}
           <div className="flex justify-center py-8 bg-slate-50 border-t border-slate-200">
             <button className="px-10 py-4 bg-[#003566] text-white text-xs font-black uppercase tracking-widest hover:bg-blue-800 transition-all shadow-md flex items-center gap-2">
               Compare Now
