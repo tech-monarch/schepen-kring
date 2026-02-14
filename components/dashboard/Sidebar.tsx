@@ -135,6 +135,14 @@ export function Sidebar({ onCollapse }: { onCollapse?: (collapsed: boolean) => v
       roles: ["Partner"],
       page_key: "dashboard"
     },
+    
+  {
+    title: "Harbor Users",
+    href: "/dashboard/partner/users",
+    icon: Users,
+    roles: ["Partner"],
+    page_key: "harbor_users" // optional, for permission control
+  },
     { 
       title: "Tasks", 
       href: userRole === "Admin" ? "/dashboard/tasks" : "/dashboard/tasks", 
