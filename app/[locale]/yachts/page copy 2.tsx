@@ -63,12 +63,13 @@ export default function PublicFleetGallery() {
   const [sortBy, setSortBy] = useState<string>("default");
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000000]);
 
-  // ---------- State for comparison ----------
+  // ---------- New state for comparison ----------
   const [viewMode, setViewMode] = useState<"grid" | "compare">("grid");
   const [selectedCompareIds, setSelectedCompareIds] = useState<string[]>([]);
+  // -----------------------------------------------
 
   // --------------------------------------------------------
-  // 1. FETCH ALL YACHTS
+  // 1. FETCH ALL YACHTS – NO FILTERING, SHOW EVERY RECORD
   // --------------------------------------------------------
   useEffect(() => {
     const fetchFleet = async () => {
@@ -144,7 +145,7 @@ export default function PublicFleetGallery() {
     }
   });
 
-  // Keep selected vessels only if they still exist in the filtered list
+  // ---------- Keep selected vessels only if they still exist in the filtered list ----------
   useEffect(() => {
     setSelectedCompareIds((prev) =>
       prev.filter((id) => sortedVessels.some((v) => v.id === id))
@@ -152,22 +153,18 @@ export default function PublicFleetGallery() {
   }, [sortedVessels]);
 
   // --------------------------------------------------------
-  // 4. HELPER GETTERS (with safe fallbacks)
+  // 4. HELPER GETTERS
   // --------------------------------------------------------
   const getYachtName = (yacht: any) => yacht.boat_name || "Unnamed Vessel";
   const getYachtStatus = (yacht: any) => yacht.status || "Draft";
   const getYachtLength = (yacht: any) => yacht.loa || yacht.length || "--";
   const getYachtBuilder = (yacht: any) => yacht.builder || "N/A";
   const getYachtDesigner = (yacht: any) => yacht.designer || "N/A";
-
-  // Fixed detail URL generator – now encodes slug and falls back safely
   const getYachtDetailUrl = (yacht: any) => {
-    if (!yacht?.id) return "#";
     const slug = generateSlug(
       yacht.boat_name || yacht.vessel_id || `yacht-${yacht.id}`
     );
-    // If your route is different (e.g., without /nl), change this line
-    return `/nl/yachts/${yacht.id}/${encodeURIComponent(slug)}`;
+    return `/nl/yachts/${yacht.id}/${slug}`;
   };
 
   const featuredVessel = vessels.length > 0 ? vessels[0] : null;
@@ -329,7 +326,7 @@ export default function PublicFleetGallery() {
 
       {/* ========== DYNAMIC CONTENT ========== */}
       {viewMode === "grid" ? (
-        /* ---------- GRID VIEW ---------- */
+        /* ---------- GRID VIEW (original) ---------- */
         <section className="max-w-[1400px] mx-auto px-6 md:px-12 py-12 md:py-20">
           {sortedVessels.length === 0 ? (
             <div className="text-center py-20">
@@ -367,7 +364,7 @@ export default function PublicFleetGallery() {
                       key={v.id}
                       className="group relative"
                     >
-                      {/* Entire card image is a link */}
+                      {/* Card content (unchanged) ... */}
                       <Link
                         href={detailUrl}
                         className="relative aspect-[4/5] overflow-hidden block bg-slate-100"
@@ -427,7 +424,6 @@ export default function PublicFleetGallery() {
                         </div>
                       </Link>
 
-                      {/* Lower section */}
                       <div className="pt-6">
                         <div className="grid grid-cols-4 gap-2 mb-6">
                           <div className="text-center">
@@ -509,7 +505,7 @@ export default function PublicFleetGallery() {
           )}
         </section>
       ) : (
-        /* ---------- COMPARISON VIEW (tabs removed) ---------- */
+        /* ---------- COMPARISON VIEW ---------- */
         <ComparisonView
           vessels={sortedVessels}
           selectedIds={selectedCompareIds}
@@ -531,7 +527,7 @@ export default function PublicFleetGallery() {
         />
       )}
 
-      {/* FEATURED VESSEL (only in grid mode) */}
+      {/* FEATURED VESSEL & FOOTER (unchanged) */}
       {featuredVessel && viewMode === "grid" && (
         <section className="max-w-[1400px] mx-auto px-6 md:px-12 py-12 md:py-20">
           <div className="bg-slate-50 border border-slate-200 p-8 md:p-12">
@@ -597,7 +593,6 @@ export default function PublicFleetGallery() {
         </section>
       )}
 
-      {/* FOOTER CTA */}
       <section className="max-w-[1400px] mx-auto px-6 md:px-12 pb-32">
         <div className="bg-[#003566] p-12 md:p-20 relative overflow-hidden group">
           <div className="absolute top-0 right-0 p-20 opacity-10 group-hover:rotate-12 transition-transform duration-1000">
@@ -629,7 +624,6 @@ export default function PublicFleetGallery() {
         </div>
       </section>
 
-      {/* STATS */}
       {vessels.length > 0 && (
         <div className="max-w-[1400px] mx-auto px-6 md:px-12 pb-12">
           <div className="border-t border-slate-200 pt-8">
@@ -685,7 +679,7 @@ export default function PublicFleetGallery() {
 }
 
 // ------------------------------------------------------------
-// Comparison View – Tailwind only, no extra tabs
+// Comparison View – fully restyled with Tailwind, no external CSS
 // ------------------------------------------------------------
 function ComparisonView({
   vessels,
@@ -854,7 +848,7 @@ function ComparisonView({
       {/* Comparison Table – only if 2+ vessels */}
       {selectedVessels.length >= 2 ? (
         <div className="bg-white border border-slate-200 overflow-x-auto">
-          {/* Simple Specifications heading – no tabs */}
+          {/* Simple Specifications heading – tabs removed */}
           <div className="px-6 py-4 border-b border-slate-200 bg-slate-50">
             <h3 className="text-xs font-black uppercase tracking-widest text-[#003566]">
               Specifications
