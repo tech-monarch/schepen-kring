@@ -353,7 +353,7 @@ export default function SystemAuditPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100">
       {/* Main Container - Adjusted for sidebar and navbar */}
-      <div className="">
+      <div className="-top-25 -left-10">
         <div className="p-4 md:p-8 max-w-7xl mx-auto">
           
           {/* Header Section */}
