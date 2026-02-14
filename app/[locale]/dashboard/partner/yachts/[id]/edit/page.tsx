@@ -527,7 +527,7 @@ export default function PartnerYachtEditorPage() {
 
           {/* --- SECTION 1: PROFILE AUTHORITY --- */}
           <div className="space-y-4">
-            <label className="text-[10px] font-black uppercase text-[#003566] tracking-widest flex items-center gap-2 italic">
+            <label className="text-xs font-black uppercase text-[#003566] tracking-widest flex items-center gap-2 italic">
               <Camera size={16} /> 01. Profile Authority
             </label>
             <div
@@ -570,115 +570,112 @@ export default function PartnerYachtEditorPage() {
             </div>
           </div>
 
-          {/* --- SECTION 2: CORE SPECS --- */}
-          <div className="bg-white p-8 lg:p-10 border border-slate-200 shadow-sm space-y-8">
-            <h3 className="text-[10px] font-black text-slate-300 uppercase tracking-[0.4em] flex items-center gap-2 border-b border-slate-50 pb-4 italic">
-              <Coins size={16} /> Essential Registry Data
-            </h3>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              <div className="space-y-2">
-                <Label>Vessel Name *</Label>
-                <Input
-                  name="boat_name"
-                  defaultValue={selectedYacht?.boat_name}
-                  placeholder="e.g. M/Y NOBILITY"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Price (€)</Label>
-                <Input
-                  name="price"
-                  type="number"
-                  defaultValue={selectedYacht?.price}
-                  placeholder="1500000"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Minimum Bid Amount (€)</Label>
-                <Input
-                  name="min_bid_amount"
-                  type="number"
-                  defaultValue={selectedYacht?.min_bid_amount || ''}
-                  placeholder="Auto-calculates 90% of price if empty"
-                  step="1000"
-                />
-                <p className="text-[8px] text-slate-400 italic mt-1">
-                  Leave empty to auto‑calculate
-                </p>
-              </div>
-              <div className="space-y-2">
-                <Label>Year Built</Label>
-                <Input
-                  name="year"
-                  type="number"
-                  defaultValue={selectedYacht?.year}
-                  placeholder="2024"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Model</Label> {/* ✅ Added model field */}
-                <Input
-                  name="model"
-                  defaultValue={selectedYacht?.model}
-                  placeholder="e.g. 62' Skylounge"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>LOA (Length Overall)</Label>
-                <Input
-                  name="loa"
-                  defaultValue={selectedYacht?.loa}
-                  placeholder="45.5"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>LWL (Waterline Length)</Label>
-                <Input
-                  name="lwl"
-                  defaultValue={selectedYacht?.lwl}
-                  placeholder="40.2"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Location</Label>
-                <Input
-                  name="where"
-                  defaultValue={selectedYacht?.where}
-                  placeholder="e.g. Monaco"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Status</Label>
-                <select
-                  name="status"
-                  defaultValue={selectedYacht?.status || "Draft"}
-                  className="w-full bg-slate-50 p-3 border-b border-slate-200 text-[#003566] font-bold text-xs outline-none focus:border-blue-600 transition-all"
-                >
-                  <option value="For Sale">For Sale</option>
-                  <option value="For Bid">For Bid</option>
-                  <option value="Sold">Sold</option>
-                  <option value="Draft">Draft</option>
-                </select>
-              </div>
-              <div className="space-y-2">
-                <Label>Passenger Capacity</Label>
-                <Input
-                  name="passenger_capacity"
-                  type="number"
-                  defaultValue={selectedYacht?.passenger_capacity}
-                  placeholder="12"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* --- SECTION 3: TECHNICAL DOSSIER --- */}
+          {/* --- SECTION 2: TECHNICAL DOSSIER (with Essential Registry Data inside) --- */}
           <div className="space-y-12">
-            <h3 className="text-[12px] font-black text-[#003566] uppercase tracking-[0.3em] flex items-center gap-3 border-b-2 border-[#003566] pb-4">
+            <h3 className="text-lg font-black text-[#003566] uppercase tracking-[0.3em] flex items-center gap-3 border-b-2 border-[#003566] pb-4">
               <Waves size={18} /> Technical Dossier
             </h3>
+
+            {/* ESSENTIAL REGISTRY DATA (moved inside Technical Dossier) */}
+            <div className="space-y-6">
+              <SectionHeader icon={<Coins size={14} />} title="Essential Registry Data" />
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div className="space-y-2">
+                  <Label>Vessel Name *</Label>
+                  <Input
+                    name="boat_name"
+                    defaultValue={selectedYacht?.boat_name}
+                    placeholder="e.g. M/Y NOBILITY"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Price (€)</Label>
+                  <Input
+                    name="price"
+                    type="number"
+                    defaultValue={selectedYacht?.price}
+                    placeholder="1500000"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Minimum Bid Amount (€)</Label>
+                  <Input
+                    name="min_bid_amount"
+                    type="number"
+                    defaultValue={selectedYacht?.min_bid_amount || ''}
+                    placeholder="Auto-calculates 90% of price if empty"
+                    step="1000"
+                  />
+                  <p className="text-[8px] text-slate-400 italic mt-1">
+                    Leave empty to auto‑calculate
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label>Year Built</Label>
+                  <Input
+                    name="year"
+                    type="number"
+                    defaultValue={selectedYacht?.year}
+                    placeholder="2024"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Model</Label>
+                  <Input
+                    name="model"
+                    defaultValue={selectedYacht?.model}
+                    placeholder="e.g. 62' Skylounge"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>LOA (Length Overall)</Label>
+                  <Input
+                    name="loa"
+                    defaultValue={selectedYacht?.loa}
+                    placeholder="45.5"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>LWL (Waterline Length)</Label>
+                  <Input
+                    name="lwl"
+                    defaultValue={selectedYacht?.lwl}
+                    placeholder="40.2"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Location</Label>
+                  <Input
+                    name="where"
+                    defaultValue={selectedYacht?.where}
+                    placeholder="e.g. Monaco"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Status</Label>
+                  <select
+                    name="status"
+                    defaultValue={selectedYacht?.status || "Draft"}
+                    className="w-full bg-slate-50 p-3 border-b border-slate-200 text-[#003566] font-bold text-xs outline-none focus:border-blue-600 transition-all"
+                  >
+                    <option value="For Sale">For Sale</option>
+                    <option value="For Bid">For Bid</option>
+                    <option value="Sold">Sold</option>
+                    <option value="Draft">Draft</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Passenger Capacity</Label>
+                  <Input
+                    name="passenger_capacity"
+                    type="number"
+                    defaultValue={selectedYacht?.passenger_capacity}
+                    placeholder="12"
+                  />
+                </div>
+              </div>
+            </div>
 
             {/* Sub-Section: General & Hull */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
@@ -1057,7 +1054,7 @@ export default function PartnerYachtEditorPage() {
                   'mob_system', 'spinnaker', 'battery', 'battery_charger', 'generator',
                   'inverter', 'television', 'cd_player', 'dvd_player', 'anchor',
                   'spray_hood', 'bimini',
-                  'stern_thruster', 'bow_thruster' // 👈 added
+                  'stern_thruster', 'bow_thruster'
                 ].map((field) => (
                   <div key={field} className="flex items-center gap-2 bg-slate-50/50 p-3">
                     <input
@@ -1077,105 +1074,12 @@ export default function PartnerYachtEditorPage() {
                 ))}
               </div>
             </div>
-
-            {/* --- Display Specifications Control --- */}
-            <div className="space-y-6 bg-white p-6 border border-slate-200">
-              <SectionHeader
-                icon={<Eye size={14} />}
-                title="Display Specifications"
-              />
-              <p className="text-[9px] text-gray-600 mb-4">
-                Select which specifications to show on the public yacht page
-              </p>
-              
-              <div className="space-y-4">
-                {/* General Specs */}
-                <div className="space-y-2">
-                  <h4 className="text-[9px] font-black uppercase text-gray-700">General</h4>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                    {['builder', 'model', 'year', 'designer', 'where', 'hull_number', 'hull_type'].map((field) => (
-                      <SpecCheckbox
-                        key={field}
-                        field={field}
-                        label={field.replace('_', ' ')}
-                        selectedYacht={selectedYacht}
-                        onSpecChange={handleSpecChange}
-                      />
-                    ))}
-                  </div>
-                </div>
-                
-                {/* Dimensions */}
-                <div className="space-y-2">
-                  <h4 className="text-[9px] font-black uppercase text-gray-700">Dimensions</h4>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                    {['loa', 'lwl', 'beam', 'draft', 'air_draft', 'displacement', 'ballast', 'passenger_capacity'].map((field) => (
-                      <SpecCheckbox
-                        key={field}
-                        field={field}
-                        label={field.replace('_', ' ')}
-                        selectedYacht={selectedYacht}
-                        onSpecChange={handleSpecChange}
-                      />
-                    ))}
-                  </div>
-                </div>
-                
-                {/* Construction */}
-                <div className="space-y-2">
-                  <h4 className="text-[9px] font-black uppercase text-gray-700">Construction</h4>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                    {['hull_colour', 'hull_construction', 'super_structure_colour', 'super_structure_construction', 'deck_colour', 'deck_construction', 'cockpit_type', 'control_type'].map((field) => (
-                      <SpecCheckbox
-                        key={field}
-                        field={field}
-                        label={field.replace('_', ' ')}
-                        selectedYacht={selectedYacht}
-                        onSpecChange={handleSpecChange}
-                      />
-                    ))}
-                  </div>
-                </div>
-                
-                {/* Engine */}
-                <div className="space-y-2">
-                  <h4 className="text-[9px] font-black uppercase text-gray-700">Engine & Performance</h4>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                    {['engine_manufacturer', 'horse_power', 'fuel', 'hours', 'cruising_speed', 'max_speed', 'tankage', 'gallons_per_hour', 'starting_type', 'drive_type'].map((field) => (
-                      <SpecCheckbox
-                        key={field}
-                        field={field}
-                        label={field.replace('_', ' ')}
-                        selectedYacht={selectedYacht}
-                        onSpecChange={handleSpecChange}
-                      />
-                    ))}
-                  </div>
-                </div>
-                
-                {/* Accommodation */}
-                <div className="space-y-2">
-                  <h4 className="text-[9px] font-black uppercase text-gray-700">Accommodation</h4>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                    {['cabins', 'berths', 'toilet', 'shower', 'bath', 'heating'].map((field) => (
-                      <SpecCheckbox
-                        key={field}
-                        field={field}
-                        label={field.replace('_', ' ')}
-                        selectedYacht={selectedYacht}
-                        onSpecChange={handleSpecChange}
-                      />
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
 
           {/* --- SCHEDULING AUTHORITY (Availability Rules) --- */}
           <div className="space-y-8 bg-slate-50 p-10 border border-slate-200 shadow-sm">
              <div className="flex justify-between items-center border-b border-slate-200 pb-4">
-               <h3 className="text-[12px] font-black uppercase text-[#003566] tracking-[0.4em] flex items-center gap-3 italic">
+               <h3 className="text-base font-black uppercase text-[#003566] tracking-[0.4em] flex items-center gap-3 italic">
                   <Calendar size={20} className="text-blue-600" /> 04. Scheduling Authority
                 </h3>
                 <Button 
@@ -1260,7 +1164,7 @@ export default function PartnerYachtEditorPage() {
           <div className="space-y-8 bg-slate-900 p-12 border-l-8 border-blue-500 shadow-2xl">
             <div className="flex justify-between items-start">
               <div>
-                <h3 className="text-[12px] font-black uppercase text-blue-400 tracking-[0.4em] flex items-center gap-3 italic">
+                <h3 className="text-base font-black uppercase text-blue-400 tracking-[0.4em] flex items-center gap-3 italic">
                   <Sparkles size={20} className="fill-blue-400" /> Gemini AI
                   Categorizer
                 </h3>
@@ -1346,10 +1250,10 @@ export default function PartnerYachtEditorPage() {
             )}
           </div>
 
-          {/* --- SECTION 6: GALLERY (existing + new) --- */}
+          {/* --- GALLERY SECTIONS (existing + new) --- */}
           {Object.keys(galleryState).map((category) => (
             <div key={category} className="space-y-8">
-              <h3 className="text-[11px] font-black uppercase text-[#003566] tracking-widest flex items-center gap-2 italic border-b border-slate-200 pb-4">
+              <h3 className="text-sm font-black uppercase text-[#003566] tracking-widest flex items-center gap-2 italic border-b border-slate-200 pb-4">
                 <Images size={20} className="text-blue-600" /> {category}{" "}
                 Gallery
               </h3>
@@ -1422,6 +1326,96 @@ export default function PartnerYachtEditorPage() {
             </div>
           ))}
 
+          {/* --- DISPLAY (moved to the latest step) --- */}
+          <div className="space-y-6 bg-white p-6 border border-slate-200">
+            <SectionHeader icon={<Eye size={14} />} title="Display" />
+            <p className="text-[9px] text-gray-600 mb-4">
+              Select which specifications to show on the public yacht page
+            </p>
+            
+            <div className="space-y-4">
+              {/* General Specs */}
+              <div className="space-y-2">
+                <h4 className="text-[9px] font-black uppercase text-gray-700">General</h4>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                  {['builder', 'model', 'year', 'designer', 'where', 'hull_number', 'hull_type'].map((field) => (
+                    <SpecCheckbox
+                      key={field}
+                      field={field}
+                      label={field.replace('_', ' ')}
+                      selectedYacht={selectedYacht}
+                      onSpecChange={handleSpecChange}
+                    />
+                  ))}
+                </div>
+              </div>
+              
+              {/* Dimensions */}
+              <div className="space-y-2">
+                <h4 className="text-[9px] font-black uppercase text-gray-700">Dimensions</h4>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                  {['loa', 'lwl', 'beam', 'draft', 'air_draft', 'displacement', 'ballast', 'passenger_capacity'].map((field) => (
+                    <SpecCheckbox
+                      key={field}
+                      field={field}
+                      label={field.replace('_', ' ')}
+                      selectedYacht={selectedYacht}
+                      onSpecChange={handleSpecChange}
+                    />
+                  ))}
+                </div>
+              </div>
+              
+              {/* Construction */}
+              <div className="space-y-2">
+                <h4 className="text-[9px] font-black uppercase text-gray-700">Construction</h4>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                  {['hull_colour', 'hull_construction', 'super_structure_colour', 'super_structure_construction', 'deck_colour', 'deck_construction', 'cockpit_type', 'control_type'].map((field) => (
+                    <SpecCheckbox
+                      key={field}
+                      field={field}
+                      label={field.replace('_', ' ')}
+                      selectedYacht={selectedYacht}
+                      onSpecChange={handleSpecChange}
+                    />
+                  ))}
+                </div>
+              </div>
+              
+              {/* Engine */}
+              <div className="space-y-2">
+                <h4 className="text-[9px] font-black uppercase text-gray-700">Engine & Performance</h4>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                  {['engine_manufacturer', 'horse_power', 'fuel', 'hours', 'cruising_speed', 'max_speed', 'tankage', 'gallons_per_hour', 'starting_type', 'drive_type'].map((field) => (
+                    <SpecCheckbox
+                      key={field}
+                      field={field}
+                      label={field.replace('_', ' ')}
+                      selectedYacht={selectedYacht}
+                      onSpecChange={handleSpecChange}
+                    />
+                  ))}
+                </div>
+              </div>
+              
+              {/* Accommodation */}
+              <div className="space-y-2">
+                <h4 className="text-[9px] font-black uppercase text-gray-700">Accommodation</h4>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                  {['cabins', 'berths', 'toilet', 'shower', 'bath', 'heating'].map((field) => (
+                    <SpecCheckbox
+                      key={field}
+                      field={field}
+                      label={field.replace('_', ' ')}
+                      selectedYacht={selectedYacht}
+                      onSpecChange={handleSpecChange}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* --- SAVE ACTION BAR --- */}
           <div className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-md border-t border-slate-200 p-6 flex justify-between items-center z-50">
             <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 hidden lg:block">
@@ -1454,7 +1448,7 @@ export default function PartnerYachtEditorPage() {
 
 function Label({ children }: { children: React.ReactNode }) {
   return (
-    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 pl-0.5">
+    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 pl-0.5">
       {children}
     </p>
   );
@@ -1480,7 +1474,7 @@ function SectionHeader({
   title: string;
 }) {
   return (
-    <h4 className="text-[10px] font-black uppercase tracking-widest text-blue-600 flex items-center gap-2 mb-4">
+    <h4 className="text-xs font-black uppercase tracking-widest text-[#003566] flex items-center gap-2 mb-4">
       {icon} {title}
     </h4>
   );

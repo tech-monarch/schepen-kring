@@ -469,8 +469,8 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     <div className="min-h-screen bg-[#F8FAFC] pb-20">
       <Toaster position="top-right" />
 
-      {/* PAGE HEADER */}
-      <div className="bg-[#003566] text-white p-8 sticky top-0 z-40 shadow-xl flex justify-between items-center">
+      {/* PAGE HEADER - now relative (not sticky) */}
+      <div className="bg-[#003566] text-white p-8 relative shadow-xl flex justify-between items-center">
         <div className="flex items-center gap-6">
           <button
             onClick={() => router.back()}
@@ -491,7 +491,7 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto p-6 lg:p-12">
+      <div className="max-w-7xl mx-auto p-6 lg:p-12 pt-16">
         <form onSubmit={handleSubmit} className="space-y-16">
           {/* ERROR SUMMARY */}
           {errors && (
@@ -1262,8 +1262,8 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
             </div>
           ))}
 
-          {/* SAVE ACTION BAR */}
-          <div className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-md border-t border-slate-200 p-6 flex justify-between items-center z-50">
+          {/* SAVE ACTION BAR - now a normal block at the end */}
+          <div className="mt-8 p-6 flex justify-between items-center border-t border-slate-200 bg-white">
             <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 hidden lg:block">
               Unsaved changes will be lost
             </p>
