@@ -138,7 +138,7 @@ export function HeroSection() {
             userMessage = "Invalid input. Please check your details.";
           }
         } else if (status === 500) {
-          userMessage = "Server error. Please try again later.";
+          userMessage = "Invalid input. Please check your details.";
         } else if (status === 401) {
           userMessage = "Invalid email or password.";
         } else {

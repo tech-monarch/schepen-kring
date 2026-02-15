@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, SyntheticEvent } from "react";
+import { useState, SyntheticEvent, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import {
@@ -55,17 +55,15 @@ function SpecCheckbox({
   field,
   label,
   onSpecChange,
+  checked,
 }: {
   field: string;
   label: string;
   onSpecChange: (field: string, isChecked: boolean) => void;
+  checked: boolean;
 }) {
-  const [isChecked, setIsChecked] = useState(true); // default true for new yachts
-
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newChecked = e.target.checked;
-    setIsChecked(newChecked);
-    onSpecChange(field, newChecked);
+    onSpecChange(field, e.target.checked);
   };
 
   return (
@@ -73,7 +71,7 @@ function SpecCheckbox({
       <input
         type="checkbox"
         id={`display_spec_${field}`}
-        checked={isChecked}
+        checked={checked}
         onChange={handleChange}
         className="w-3 h-3 accent-[#003566] cursor-pointer"
       />
@@ -87,12 +85,144 @@ function SpecCheckbox({
   );
 }
 
+// Step Indicator
+function StepIndicator({ currentStep, steps }: { currentStep: number; steps: string[] }) {
+  return (
+    <div className="flex items-center justify-center space-x-4 py-6 bg-white border-b border-slate-200">
+      {steps.map((step, index) => {
+        const stepNumber = index + 1;
+        const isActive = stepNumber === currentStep;
+        const isCompleted = stepNumber < currentStep;
+        return (
+          <div key={step} className="flex items-center">
+            <div
+              className={cn(
+                "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-colors",
+                isActive
+                  ? "bg-[#003566] text-white"
+                  : isCompleted
+                  ? "bg-green-500 text-white"
+                  : "bg-slate-200 text-slate-500"
+              )}
+            >
+              {isCompleted ? <CheckCircle size={16} /> : stepNumber}
+            </div>
+            <span
+              className={cn(
+                "ml-2 text-[10px] font-black uppercase tracking-widest hidden sm:block",
+                isActive ? "text-[#003566]" : "text-slate-400"
+              )}
+            >
+              {step}
+            </span>
+            {index < steps.length - 1 && (
+              <ArrowRight size={14} className="mx-2 text-slate-300" />
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function OnboardingYachtSetup() {
   const router = useRouter();
 
-  // Form state
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errors, setErrors] = useState<any>(null);
+  // Steps definition
+  const steps = ["Main Photo & Core", "Technical Dossier", "Scheduling", "Display Specs", "Media"];
+  const [currentStep, setCurrentStep] = useState(1);
+  const [yachtId, setYachtId] = useState<number | null>(null);
+
+  // Form state (controlled)
+  const [formData, setFormData] = useState<Record<string, any>>({
+    boat_name: "",
+    price: "",
+    min_bid_amount: "",
+    year: "",
+    loa: "",
+    lwl: "",
+    where: "",
+    status: "For Sale",
+    passenger_capacity: "",
+    beam: "",
+    draft: "",
+    air_draft: "",
+    displacement: "",
+    ballast: "",
+    hull_type: "",
+    hull_construction: "",
+    hull_colour: "",
+    hull_number: "",
+    designer: "",
+    builder: "",
+    engine_manufacturer: "",
+    horse_power: "",
+    hours: "",
+    fuel: "",
+    max_speed: "",
+    cruising_speed: "",
+    gallons_per_hour: "",
+    tankage: "",
+    cabins: "",
+    berths: "",
+    toilet: "",
+    shower: "",
+    bath: "",
+    heating: "",
+    cockpit_type: "",
+    control_type: "",
+    external_url: "",
+    print_url: "",
+    owners_comment: "",
+    reg_details: "",
+    known_defects: "",
+    last_serviced: "",
+    super_structure_colour: "",
+    super_structure_construction: "",
+    deck_colour: "",
+    deck_construction: "",
+    starting_type: "",
+    drive_type: "",
+  });
+
+  // Boolean fields (checkboxes)
+  const [booleanFields, setBooleanFields] = useState<Record<string, boolean>>({
+    allow_bidding: false,
+    flybridge: false,
+    oven: false,
+    microwave: false,
+    fridge: false,
+    freezer: false,
+    air_conditioning: false,
+    navigation_lights: false,
+    compass: false,
+    depth_instrument: false,
+    wind_instrument: false,
+    autopilot: false,
+    gps: false,
+    vhf: false,
+    plotter: false,
+    speed_instrument: false,
+    radar: false,
+    life_raft: false,
+    epirb: false,
+    bilge_pump: false,
+    fire_extinguisher: false,
+    mob_system: false,
+    spinnaker: false,
+    battery: false,
+    battery_charger: false,
+    generator: false,
+    inverter: false,
+    television: false,
+    cd_player: false,
+    dvd_player: false,
+    anchor: false,
+    spray_hood: false,
+    bimini: false,
+    stern_thruster: false,
+    bow_thruster: false,
+  });
 
   // Media state
   const [aiStaging, setAiStaging] = useState<AiStagedImage[]>([]);
@@ -113,7 +243,21 @@ export default function OnboardingYachtSetup() {
   // Display specs
   const [displaySpecs, setDisplaySpecs] = useState<Record<string, boolean>>({});
 
+  // UI state
+  const [isSubmittingStep, setIsSubmittingStep] = useState(false);
+  const [errors, setErrors] = useState<any>(null);
+
   // Handlers ----------------------------------------------------------------
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleBooleanChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, checked } = e.target;
+    setBooleanFields((prev) => ({ ...prev, [name]: checked }));
+  };
 
   const handleImageError = (e: SyntheticEvent<HTMLImageElement, Event>) => {
     e.currentTarget.src = PLACEHOLDER_IMAGE;
@@ -206,268 +350,224 @@ export default function OnboardingYachtSetup() {
     }));
   };
 
-  // Submit ----------------------------------------------------------------
-const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-  e.preventDefault();
-  setIsSubmitting(true);
-  setErrors(null);
+  // Step submission ---------------------------------------------------------
 
-  const formData = new FormData();
+  const saveStep = async () => {
+    setIsSubmittingStep(true);
+    setErrors(null);
 
-  // 1. Required field
-  const boatName = (document.querySelector('input[name="boat_name"]') as HTMLInputElement)?.value;
-  if (!boatName) {
-    toast.error("Vessel name is required");
-    setIsSubmitting(false);
-    return;
-  }
-  formData.append("boat_name", boatName);
+    try {
+      if (currentStep === 1) {
+        // Step 1: Create yacht with main photo and core fields
+        const stepData = new FormData();
+        if (mainFile) stepData.append("main_image", mainFile);
+        stepData.append("boat_name", formData.boat_name || "");
+        if (formData.price) stepData.append("price", formData.price);
+        if (formData.min_bid_amount) stepData.append("min_bid_amount", formData.min_bid_amount);
+        if (formData.year) stepData.append("year", formData.year);
+        if (formData.loa) stepData.append("loa", formData.loa);
+        if (formData.lwl) stepData.append("lwl", formData.lwl);
+        if (formData.where) stepData.append("where", formData.where);
+        stepData.append("status", formData.status);
+        if (formData.passenger_capacity) stepData.append("passenger_capacity", formData.passenger_capacity);
 
-  // 2. Main image (only if provided)
-  if (mainFile) {
-    formData.append("main_image", mainFile);
-  }
+        const res = await api.post("/partner/yachts", stepData);
+        setYachtId(res.data.id);
+        toast.success("Vessel created. Proceed to next step.");
+        setCurrentStep(2);
+      } else {
+        // Steps 2-5: Update existing yacht
+        if (!yachtId) throw new Error("Yacht ID missing");
 
-  // 3. Text / numeric fields – only add if they have a value
-  const fields = [
-    "price", "min_bid_amount", "year", "status", "loa", "lwl", "where",
-    "passenger_capacity", "beam", "draft", "air_draft", "displacement",
-    "ballast", "hull_type", "hull_construction", "hull_colour", "hull_number",
-    "designer", "builder", "engine_manufacturer", "horse_power", "hours",
-    "fuel", "max_speed", "cruising_speed", "gallons_per_hour", "tankage",
-    "cabins", "berths", "toilet", "shower", "bath", "heating",
-    "cockpit_type", "control_type", "external_url", "print_url",
-    "owners_comment", "reg_details", "known_defects", "last_serviced",
-    "super_structure_colour", "super_structure_construction",
-    "deck_colour", "deck_construction", "starting_type", "drive_type",
-  ];
+        const updateData: Record<string, any> = {};
 
-  fields.forEach((field) => {
-    const element = document.querySelector(`[name="${field}"]`) as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
-    if (element && element.value !== undefined && element.value.trim() !== "") {
-      formData.append(field, element.value);
-    }
-  });
+        if (currentStep === 2) {
+          // Technical Dossier fields
+          const techFields = [
+            "beam", "draft", "air_draft", "displacement", "ballast", "hull_type",
+            "hull_construction", "hull_colour", "hull_number", "designer", "builder",
+            "engine_manufacturer", "horse_power", "hours", "fuel", "max_speed",
+            "cruising_speed", "gallons_per_hour", "tankage", "cabins", "berths",
+            "toilet", "shower", "bath", "heating", "cockpit_type", "control_type",
+            "external_url", "print_url", "owners_comment", "reg_details", "known_defects",
+            "last_serviced", "super_structure_colour", "super_structure_construction",
+            "deck_colour", "deck_construction", "starting_type", "drive_type"
+          ];
+          techFields.forEach(field => {
+            if (formData[field]) updateData[field] = formData[field];
+          });
 
-  // 4. Boolean fields – always append "true"/"false"
-  const booleanFields = [
-    "allow_bidding", "flybridge", "oven", "microwave", "fridge", "freezer",
-    "air_conditioning", "navigation_lights", "compass", "depth_instrument",
-    "wind_instrument", "autopilot", "gps", "vhf", "plotter", "speed_instrument",
-    "radar", "life_raft", "epirb", "bilge_pump", "fire_extinguisher",
-    "mob_system", "spinnaker", "battery", "battery_charger", "generator",
-    "inverter", "television", "cd_player", "dvd_player", "anchor",
-    "spray_hood", "bimini", "stern_thruster", "bow_thruster",
-  ];
+          // Boolean fields
+          Object.keys(booleanFields).forEach(field => {
+            updateData[field] = booleanFields[field];
+          });
+        } else if (currentStep === 3) {
+          // Availability rules
+          if (availabilityRules.length > 0) {
+            updateData.availability_rules = JSON.stringify(availabilityRules);
+          }
+        } else if (currentStep === 4) {
+          // Display specs
+          const selectedSpecs = Object.keys(displaySpecs).filter(key => displaySpecs[key]);
+          if (selectedSpecs.length > 0) {
+            updateData.display_specs = JSON.stringify(selectedSpecs);
+          }
+        } else if (currentStep === 5) {
+          // Media step: we'll handle gallery uploads after final save
+          // No yacht data update here, just proceed to finish
+        }
 
-  booleanFields.forEach((field) => {
-    const checkbox = document.querySelector(`[name="${field}"]`) as HTMLInputElement;
-    formData.append(field, checkbox?.checked ? "true" : "false");
-  });
+        if (Object.keys(updateData).length > 0) {
+          await api.put(`/partner/yachts/${yachtId}`, updateData);
+        }
 
-  // 5. Availability rules – only if at least one rule exists
-  if (availabilityRules.length > 0) {
-    formData.append("availability_rules", JSON.stringify(availabilityRules));
-  }
-
-  // 6. Display specs – only if at least one spec is selected
-  const selectedSpecs = Object.keys(displaySpecs).filter((key) => displaySpecs[key]);
-  if (selectedSpecs.length > 0) {
-    formData.append("display_specs", JSON.stringify(selectedSpecs));
-  }
-
-  // 7. Auto‑calculate min_bid_amount if price exists but min_bid_amount is empty
-  const price = formData.get("price");
-  if (!formData.has("min_bid_amount") && price) {
-    const priceVal = parseFloat(price as string);
-    if (!isNaN(priceVal)) {
-      formData.append("min_bid_amount", (priceVal * 0.9).toString());
-    }
-  }
-
-  try {
-    // Create yacht
-    const res = await api.post("/partner/yachts", formData);
-    const newYachtId = res.data.id;
-
-    // Upload gallery images
-    for (const cat of Object.keys(galleryState)) {
-      const newFiles = galleryState[cat];
-      if (newFiles.length > 0) {
-        const gData = new FormData();
-        newFiles.forEach((file) => gData.append("images[]", file));
-        gData.append("category", cat);
-        await api.post(`/partner/yachts/${newYachtId}/gallery`, gData);
+        if (currentStep === 5) {
+          // Final step: upload gallery images
+          for (const cat of Object.keys(galleryState)) {
+            const files = galleryState[cat];
+            if (files.length > 0) {
+              const gData = new FormData();
+              files.forEach((file) => gData.append("images[]", file));
+              gData.append("category", cat);
+              await api.post(`/partner/yachts/${yachtId}/gallery`, gData);
+            }
+          }
+          toast.success("Vessel Registered! Welcome Aboard.");
+          router.push("/nl/dashboard/partner");
+        } else {
+          toast.success("Step saved. Continue to next.");
+          setCurrentStep(prev => prev + 1);
+        }
       }
+    } catch (err: any) {
+      console.error("Step save error:", err);
+      const serverMessage = err.response?.data?.message || err.message || "An error occurred";
+      toast.error(`Error: ${serverMessage}`);
+      if (err.response?.status === 422) {
+        setErrors(err.response.data.errors);
+      }
+    } finally {
+      setIsSubmittingStep(false);
     }
+  };
 
-    toast.success("Vessel Registered! Welcome Aboard.");
-    router.push("/nl/dashboard/partner");
-  } catch (err: any) {
-    console.error("Submission error:", err);
-    
-    // 🔍 Show actual server error message
-    if (err.response) {
-      const serverMessage = err.response.data?.message || err.response.data?.error || "Unknown server error";
-      toast.error(`Server error: ${serverMessage}`);
-      console.error("Server response:", err.response.data);
-    } else {
-      toast.error("Network error – please try again");
+  const handleNext = async () => {
+    // Basic validation for required fields in step 1
+    if (currentStep === 1 && !formData.boat_name) {
+      toast.error("Vessel name is required");
+      return;
     }
-    
-    if (err.response?.status === 422) {
-      setErrors(err.response.data.errors);
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
-  } finally {
-    setIsSubmitting(false);
-  }
-};
+    await saveStep();
+  };
 
-  return (
-    <div className="min-h-screen bg-[#F8FAFC] pb-20">
-      <Toaster position="top-right" />
+  const handleBack = () => {
+    setCurrentStep(prev => prev - 1);
+  };
 
-      {/* HEADER */}
-      <div className="bg-[#003566] text-white p-8 sticky top-20 z-40 shadow-xl flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl lg:text-3xl font-serif italic">
-            Register Your First Vessel
-          </h1>
-          <p className="text-blue-400 text-[10px] font-black uppercase tracking-[0.4em] mt-1">
-            Partner Onboarding • Step 2 of 2
-          </p>
-        </div>
-        <div className="hidden md:block text-right opacity-50">
-          <p className="text-[10px] uppercase font-bold tracking-widest">
-            Final Step
-          </p>
-        </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto p-6 lg:p-12">
-        <form onSubmit={handleSubmit} className="space-y-16">
-          {/* ERROR SUMMARY */}
-          {errors && (
-            <div className="p-6 bg-red-50 border-l-4 border-red-500 text-red-700 animate-pulse">
-              <div className="flex items-center gap-2 mb-3 font-black uppercase text-[11px]">
-                <AlertCircle size={16} /> Please Correct the Following
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                {Object.keys(errors).map((key) => (
-                  <p key={key} className="text-[10px] font-bold">
-                    ● {key.toUpperCase()}: {errors[key][0]}
-                  </p>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* --- SECTION 1: MAIN PHOTO --- */}
-          <div className="space-y-4">
-            <label className="text-[10px] font-black uppercase text-[#003566] tracking-widest flex items-center gap-2 italic">
-              <Camera size={16} /> 01. Primary Vessel Photo
-            </label>
-            <div
-              onClick={() =>
-                document.getElementById("main_image_input")?.click()
-              }
-              className="h-80 lg:h-96 bg-white border-2 border-dashed border-slate-200 relative flex items-center justify-center cursor-pointer overflow-hidden shadow-inner group transition-all hover:border-blue-400"
-            >
-              <input
-                id="main_image_input"
-                name="main_image"
-                type="file"
-                className="hidden"
-                accept="image/*"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) {
-                    setMainFile(file);
-                    setMainPreview(URL.createObjectURL(file));
-                  }
-                }}
-              />
-              {mainPreview ? (
-                <img
-                  src={mainPreview}
-                  onError={handleImageError}
-                  className="w-full h-full object-cover group-hover:opacity-90 transition-opacity"
+  // Render step content
+  const renderStep = () => {
+    switch (currentStep) {
+      case 1:
+        return (
+          <>
+            {/* Main Photo */}
+            <div className="space-y-4">
+              <label className="text-[10px] font-black uppercase text-[#003566] tracking-widest flex items-center gap-2 italic">
+                <Camera size={16} /> 01. Primary Vessel Photo
+              </label>
+              <div
+                onClick={() => document.getElementById("main_image_input")?.click()}
+                className="h-80 lg:h-96 bg-white border-2 border-dashed border-slate-200 relative flex items-center justify-center cursor-pointer overflow-hidden shadow-inner group transition-all hover:border-blue-400"
+              >
+                <input
+                  id="main_image_input"
+                  type="file"
+                  className="hidden"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      setMainFile(file);
+                      setMainPreview(URL.createObjectURL(file));
+                    }
+                  }}
                 />
-              ) : (
-                <div className="text-center">
-                  <Upload
-                    className="mx-auto text-slate-200 mb-4 group-hover:text-blue-600 transition-colors"
-                    size={48}
+                {mainPreview ? (
+                  <img
+                    src={mainPreview}
+                    onError={handleImageError}
+                    className="w-full h-full object-cover group-hover:opacity-90 transition-opacity"
                   />
-                  <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest group-hover:text-blue-600 transition-colors">
-                    Click to Upload Main Photo
-                  </p>
+                ) : (
+                  <div className="text-center">
+                    <Upload className="mx-auto text-slate-200 mb-4 group-hover:text-blue-600 transition-colors" size={48} />
+                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest group-hover:text-blue-600 transition-colors">
+                      Click to Upload Main Photo
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Core Specs */}
+            <div className="bg-white p-8 lg:p-10 border border-slate-200 shadow-sm space-y-8">
+              <h3 className="text-[10px] font-black text-slate-300 uppercase tracking-[0.4em] flex items-center gap-2 border-b border-slate-50 pb-4 italic">
+                <Coins size={16} /> Essential Registry Data
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div className="space-y-2">
+                  <Label>Vessel Name *</Label>
+                  <Input name="boat_name" value={formData.boat_name} onChange={handleInputChange} placeholder="e.g. M/Y NOBILITY" required />
                 </div>
-              )}
-            </div>
-          </div>
-
-          {/* --- SECTION 2: CORE SPECS (ESSENTIAL REGISTRY) --- */}
-          <div className="bg-white p-8 lg:p-10 border border-slate-200 shadow-sm space-y-8">
-            <h3 className="text-[10px] font-black text-slate-300 uppercase tracking-[0.4em] flex items-center gap-2 border-b border-slate-50 pb-4 italic">
-              <Coins size={16} /> Essential Registry Data
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              <div className="space-y-2">
-                <Label>Vessel Name *</Label>
-                <Input name="boat_name" placeholder="e.g. M/Y NOBILITY" required />
-              </div>
-              <div className="space-y-2">
-                <Label>Price (€)</Label>
-                <Input name="price" type="number" placeholder="1500000" />
-              </div>
-              <div className="space-y-2">
-                <Label>Minimum Bid Amount (€)</Label>
-                <Input
-                  name="min_bid_amount"
-                  type="number"
-                  placeholder="Auto-calculates 90% of price if empty"
-                  step="1000"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Year Built</Label>
-                <Input name="year" type="number" placeholder="2024" />
-              </div>
-              <div className="space-y-2">
-                <Label>LOA (m)</Label>
-                <Input name="loa" placeholder="45.5" />
-              </div>
-              <div className="space-y-2">
-                <Label>LWL (m)</Label>
-                <Input name="lwl" placeholder="40.2" />
-              </div>
-              <div className="space-y-2">
-                <Label>Location</Label>
-                <Input name="where" placeholder="e.g. Monaco" />
-              </div>
-              <div className="space-y-2">
-                <Label>Status</Label>
-                <select
-                  name="status"
-                  defaultValue="For Sale"
-                  className="w-full bg-slate-50 p-3 border-b border-slate-200 text-[#003566] font-bold text-xs outline-none focus:border-blue-600 transition-all"
-                >
-                  <option value="For Sale">For Sale</option>
-                  <option value="For Bid">For Bid</option>
-                  <option value="Sold">Sold</option>
-                  <option value="Draft">Draft</option>
-                </select>
-              </div>
-              <div className="space-y-2">
-                <Label>Passenger Capacity</Label>
-                <Input name="passenger_capacity" type="number" placeholder="12" />
+                <div className="space-y-2">
+                  <Label>Price (€)</Label>
+                  <Input name="price" type="number" value={formData.price} onChange={handleInputChange} placeholder="1500000" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Minimum Bid Amount (€)</Label>
+                  <Input name="min_bid_amount" type="number" value={formData.min_bid_amount} onChange={handleInputChange} placeholder="Auto-calculates 90% of price if empty" step="1000" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Year Built</Label>
+                  <Input name="year" type="number" value={formData.year} onChange={handleInputChange} placeholder="2024" />
+                </div>
+                <div className="space-y-2">
+                  <Label>LOA (m)</Label>
+                  <Input name="loa" value={formData.loa} onChange={handleInputChange} placeholder="45.5" />
+                </div>
+                <div className="space-y-2">
+                  <Label>LWL (m)</Label>
+                  <Input name="lwl" value={formData.lwl} onChange={handleInputChange} placeholder="40.2" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Location</Label>
+                  <Input name="where" value={formData.where} onChange={handleInputChange} placeholder="e.g. Monaco" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Status</Label>
+                  <select
+                    name="status"
+                    value={formData.status}
+                    onChange={handleInputChange}
+                    className="w-full bg-slate-50 p-3 border-b border-slate-200 text-[#003566] font-bold text-xs outline-none focus:border-blue-600 transition-all"
+                  >
+                    <option value="For Sale">For Sale</option>
+                    <option value="For Bid">For Bid</option>
+                    <option value="Sold">Sold</option>
+                    <option value="Draft">Draft</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Passenger Capacity</Label>
+                  <Input name="passenger_capacity" type="number" value={formData.passenger_capacity} onChange={handleInputChange} placeholder="12" />
+                </div>
               </div>
             </div>
-          </div>
+          </>
+        );
 
-          {/* --- SECTION 3: TECHNICAL DOSSIER (FULL) --- */}
+      case 2:
+        return (
           <div className="space-y-12">
             <h3 className="text-[12px] font-black text-[#003566] uppercase tracking-[0.3em] flex items-center gap-3 border-b-2 border-[#003566] pb-4">
               <Waves size={18} /> Technical Dossier
@@ -480,63 +580,63 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                 <div className="grid grid-cols-2 gap-6">
                   <div className="space-y-1">
                     <Label>Beam (m)</Label>
-                    <Input name="beam" placeholder="8.5" />
+                    <Input name="beam" value={formData.beam} onChange={handleInputChange} placeholder="8.5" />
                   </div>
                   <div className="space-y-1">
                     <Label>Draft (m)</Label>
-                    <Input name="draft" placeholder="2.1" />
+                    <Input name="draft" value={formData.draft} onChange={handleInputChange} placeholder="2.1" />
                   </div>
                   <div className="space-y-1">
                     <Label>Air Draft (m)</Label>
-                    <Input name="air_draft" placeholder="4.5" />
+                    <Input name="air_draft" value={formData.air_draft} onChange={handleInputChange} placeholder="4.5" />
                   </div>
                   <div className="space-y-1">
                     <Label>Displacement (kg)</Label>
-                    <Input name="displacement" placeholder="12000" />
+                    <Input name="displacement" value={formData.displacement} onChange={handleInputChange} placeholder="12000" />
                   </div>
                   <div className="space-y-1">
                     <Label>Ballast</Label>
-                    <Input name="ballast" placeholder="e.g. 4000 kg" />
+                    <Input name="ballast" value={formData.ballast} onChange={handleInputChange} placeholder="e.g. 4000 kg" />
                   </div>
                   <div className="space-y-1">
                     <Label>Hull Type</Label>
-                    <Input name="hull_type" placeholder="e.g. Monohull" />
+                    <Input name="hull_type" value={formData.hull_type} onChange={handleInputChange} placeholder="e.g. Monohull" />
                   </div>
                   <div className="space-y-1">
                     <Label>Hull Construction</Label>
-                    <Input name="hull_construction" placeholder="e.g. GRP" />
+                    <Input name="hull_construction" value={formData.hull_construction} onChange={handleInputChange} placeholder="e.g. GRP" />
                   </div>
                   <div className="space-y-1">
                     <Label>Hull Colour</Label>
-                    <Input name="hull_colour" placeholder="White" />
+                    <Input name="hull_colour" value={formData.hull_colour} onChange={handleInputChange} placeholder="White" />
                   </div>
                   <div className="space-y-1">
                     <Label>Hull Number</Label>
-                    <Input name="hull_number" placeholder="HULL001" />
+                    <Input name="hull_number" value={formData.hull_number} onChange={handleInputChange} placeholder="HULL001" />
                   </div>
                   <div className="space-y-1">
                     <Label>Designer</Label>
-                    <Input name="designer" placeholder="e.g. Naval Architect" />
+                    <Input name="designer" value={formData.designer} onChange={handleInputChange} placeholder="e.g. Naval Architect" />
                   </div>
                   <div className="space-y-1">
                     <Label>Builder</Label>
-                    <Input name="builder" placeholder="e.g. Ferretti" />
+                    <Input name="builder" value={formData.builder} onChange={handleInputChange} placeholder="e.g. Ferretti" />
                   </div>
                   <div className="space-y-1">
                     <Label>Superstructure Colour</Label>
-                    <Input name="super_structure_colour" placeholder="White" />
+                    <Input name="super_structure_colour" value={formData.super_structure_colour} onChange={handleInputChange} placeholder="White" />
                   </div>
                   <div className="space-y-1">
                     <Label>Superstructure Construction</Label>
-                    <Input name="super_structure_construction" placeholder="GRP" />
+                    <Input name="super_structure_construction" value={formData.super_structure_construction} onChange={handleInputChange} placeholder="GRP" />
                   </div>
                   <div className="space-y-1">
                     <Label>Deck Colour</Label>
-                    <Input name="deck_colour" placeholder="Teak" />
+                    <Input name="deck_colour" value={formData.deck_colour} onChange={handleInputChange} placeholder="Teak" />
                   </div>
                   <div className="space-y-1">
                     <Label>Deck Construction</Label>
-                    <Input name="deck_construction" placeholder="Teak" />
+                    <Input name="deck_construction" value={formData.deck_construction} onChange={handleInputChange} placeholder="Teak" />
                   </div>
                 </div>
               </div>
@@ -547,43 +647,43 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                 <div className="bg-slate-50 p-6 border border-slate-100 grid grid-cols-2 gap-6">
                   <div className="space-y-1">
                     <Label>Engine Manufacturer</Label>
-                    <Input name="engine_manufacturer" placeholder="e.g. CAT" className="bg-white" />
+                    <Input name="engine_manufacturer" value={formData.engine_manufacturer} onChange={handleInputChange} placeholder="e.g. CAT" className="bg-white" />
                   </div>
                   <div className="space-y-1">
                     <Label>Horse Power</Label>
-                    <Input name="horse_power" placeholder="e.g. 2x1500HP" className="bg-white" />
+                    <Input name="horse_power" value={formData.horse_power} onChange={handleInputChange} placeholder="e.g. 2x1500HP" className="bg-white" />
                   </div>
                   <div className="space-y-1">
                     <Label>Engine Hours</Label>
-                    <Input name="hours" placeholder="450" className="bg-white" />
+                    <Input name="hours" value={formData.hours} onChange={handleInputChange} placeholder="450" className="bg-white" />
                   </div>
                   <div className="space-y-1">
                     <Label>Fuel Type</Label>
-                    <Input name="fuel" placeholder="Diesel" className="bg-white" />
+                    <Input name="fuel" value={formData.fuel} onChange={handleInputChange} placeholder="Diesel" className="bg-white" />
                   </div>
                   <div className="space-y-1">
                     <Label>Max Speed (kn)</Label>
-                    <Input name="max_speed" placeholder="35" className="bg-white" />
+                    <Input name="max_speed" value={formData.max_speed} onChange={handleInputChange} placeholder="35" className="bg-white" />
                   </div>
                   <div className="space-y-1">
                     <Label>Cruising Speed (kn)</Label>
-                    <Input name="cruising_speed" placeholder="25" className="bg-white" />
+                    <Input name="cruising_speed" value={formData.cruising_speed} onChange={handleInputChange} placeholder="25" className="bg-white" />
                   </div>
                   <div className="space-y-1">
                     <Label>Gallons per Hour</Label>
-                    <Input name="gallons_per_hour" placeholder="50" className="bg-white" />
+                    <Input name="gallons_per_hour" value={formData.gallons_per_hour} onChange={handleInputChange} placeholder="50" className="bg-white" />
                   </div>
                   <div className="space-y-1">
                     <Label>Tankage</Label>
-                    <Input name="tankage" placeholder="2000L" className="bg-white" />
+                    <Input name="tankage" value={formData.tankage} onChange={handleInputChange} placeholder="2000L" className="bg-white" />
                   </div>
                   <div className="space-y-1">
                     <Label>Starting Type</Label>
-                    <Input name="starting_type" placeholder="e.g. Electric" className="bg-white" />
+                    <Input name="starting_type" value={formData.starting_type} onChange={handleInputChange} placeholder="e.g. Electric" className="bg-white" />
                   </div>
                   <div className="space-y-1">
                     <Label>Drive Type</Label>
-                    <Input name="drive_type" placeholder="e.g. Shaft" className="bg-white" />
+                    <Input name="drive_type" value={formData.drive_type} onChange={handleInputChange} placeholder="e.g. Shaft" className="bg-white" />
                   </div>
                 </div>
               </div>
@@ -595,35 +695,35 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
                 <div className="space-y-1">
                   <Label>Cabins</Label>
-                  <Input name="cabins" type="number" placeholder="3" />
+                  <Input name="cabins" type="number" value={formData.cabins} onChange={handleInputChange} placeholder="3" />
                 </div>
                 <div className="space-y-1">
                   <Label>Berths</Label>
-                  <Input name="berths" placeholder="6" />
+                  <Input name="berths" value={formData.berths} onChange={handleInputChange} placeholder="6" />
                 </div>
                 <div className="space-y-1">
                   <Label>Toilet</Label>
-                  <Input name="toilet" placeholder="2" />
+                  <Input name="toilet" value={formData.toilet} onChange={handleInputChange} placeholder="2" />
                 </div>
                 <div className="space-y-1">
                   <Label>Shower</Label>
-                  <Input name="shower" placeholder="2" />
+                  <Input name="shower" value={formData.shower} onChange={handleInputChange} placeholder="2" />
                 </div>
                 <div className="space-y-1">
                   <Label>Bath</Label>
-                  <Input name="bath" placeholder="1" />
+                  <Input name="bath" value={formData.bath} onChange={handleInputChange} placeholder="1" />
                 </div>
                 <div className="space-y-1">
                   <Label>Heating</Label>
-                  <Input name="heating" placeholder="Central heating" />
+                  <Input name="heating" value={formData.heating} onChange={handleInputChange} placeholder="Central heating" />
                 </div>
                 <div className="space-y-1">
                   <Label>Cockpit Type</Label>
-                  <Input name="cockpit_type" placeholder="Open/Closed" />
+                  <Input name="cockpit_type" value={formData.cockpit_type} onChange={handleInputChange} placeholder="Open/Closed" />
                 </div>
                 <div className="space-y-1">
                   <Label>Control Type</Label>
-                  <Input name="control_type" placeholder="Wheel/Joystick" />
+                  <Input name="control_type" value={formData.control_type} onChange={handleInputChange} placeholder="Wheel/Joystick" />
                 </div>
               </div>
             </div>
@@ -634,28 +734,30 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-1">
                   <Label>External URL</Label>
-                  <Input name="external_url" placeholder="https://..." />
+                  <Input name="external_url" value={formData.external_url} onChange={handleInputChange} placeholder="https://..." />
                 </div>
                 <div className="space-y-1">
                   <Label>Print URL</Label>
-                  <Input name="print_url" placeholder="https://..." />
+                  <Input name="print_url" value={formData.print_url} onChange={handleInputChange} placeholder="https://..." />
                 </div>
                 <div className="space-y-1">
                   <Label>Registration Details</Label>
-                  <Input name="reg_details" placeholder="Registration number, flag, etc." />
+                  <Input name="reg_details" value={formData.reg_details} onChange={handleInputChange} placeholder="Registration number, flag, etc." />
                 </div>
                 <div className="space-y-1">
                   <Label>Known Defects</Label>
-                  <Input name="known_defects" placeholder="Any known issues" />
+                  <Input name="known_defects" value={formData.known_defects} onChange={handleInputChange} placeholder="Any known issues" />
                 </div>
                 <div className="space-y-1">
                   <Label>Last Serviced</Label>
-                  <Input name="last_serviced" placeholder="2024-05-01" />
+                  <Input name="last_serviced" value={formData.last_serviced} onChange={handleInputChange} placeholder="2024-05-01" />
                 </div>
                 <div className="space-y-1">
                   <Label>Owner's Comments</Label>
                   <textarea
                     name="owners_comment"
+                    value={formData.owners_comment}
+                    onChange={handleInputChange}
                     className="w-full h-24 bg-slate-50 border border-slate-200 p-3 text-xs text-[#003566] font-medium outline-none focus:border-blue-600 transition-all resize-none"
                     placeholder="Any additional comments about the vessel..."
                   />
@@ -663,52 +765,18 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
               </div>
             </div>
 
-            {/* Equipment Checkboxes (full list) */}
+            {/* Equipment Checkboxes */}
             <div className="space-y-6">
               <SectionHeader icon={<CheckSquare size={14} />} title="Equipment & Features" />
               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                {[
-                  "allow_bidding",
-                  "flybridge",
-                  "oven",
-                  "microwave",
-                  "fridge",
-                  "freezer",
-                  "air_conditioning",
-                  "navigation_lights",
-                  "compass",
-                  "depth_instrument",
-                  "wind_instrument",
-                  "autopilot",
-                  "gps",
-                  "vhf",
-                  "plotter",
-                  "speed_instrument",
-                  "radar",
-                  "life_raft",
-                  "epirb",
-                  "bilge_pump",
-                  "fire_extinguisher",
-                  "mob_system",
-                  "spinnaker",
-                  "battery",
-                  "battery_charger",
-                  "generator",
-                  "inverter",
-                  "television",
-                  "cd_player",
-                  "dvd_player",
-                  "anchor",
-                  "spray_hood",
-                  "bimini",
-                  "stern_thruster",
-                  "bow_thruster",
-                ].map((field) => (
+                {Object.keys(booleanFields).map((field) => (
                   <div key={field} className="flex items-center gap-2 bg-slate-50/50 p-3">
                     <input
                       type="checkbox"
                       name={field}
                       id={field}
+                      checked={booleanFields[field]}
+                      onChange={handleBooleanChange}
                       className="w-3 h-3 accent-[#003566] cursor-pointer"
                     />
                     <label
@@ -722,12 +790,14 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
               </div>
             </div>
           </div>
+        );
 
-          {/* --- SCHEDULING AUTHORITY (Availability Rules) --- */}
+      case 3:
+        return (
           <div className="space-y-8 bg-slate-50 p-10 border border-slate-200 shadow-sm">
             <div className="flex justify-between items-center border-b border-slate-200 pb-4">
               <h3 className="text-[12px] font-black uppercase text-[#003566] tracking-[0.4em] flex items-center gap-3 italic">
-                <Calendar size={20} className="text-blue-600" /> 04. Scheduling Authority
+                <Calendar size={20} className="text-blue-600" /> Scheduling Authority
               </h3>
               <Button
                 type="button"
@@ -811,8 +881,10 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
               )}
             </div>
           </div>
+        );
 
-          {/* --- DISPLAY SPECIFICATIONS (Public visibility) --- */}
+      case 4:
+        return (
           <div className="space-y-6 bg-white p-6 border border-slate-200">
             <SectionHeader icon={<Eye size={14} />} title="Display Specifications" />
             <p className="text-[9px] text-gray-600 mb-4">
@@ -831,6 +903,7 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                         field={field}
                         label={field.replace(/_/g, " ")}
                         onSpecChange={handleSpecChange}
+                        checked={displaySpecs[field] || false}
                       />
                     )
                   )}
@@ -848,6 +921,7 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                         field={field}
                         label={field.replace(/_/g, " ")}
                         onSpecChange={handleSpecChange}
+                        checked={displaySpecs[field] || false}
                       />
                     )
                   )}
@@ -873,6 +947,7 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                       field={field}
                       label={field.replace(/_/g, " ")}
                       onSpecChange={handleSpecChange}
+                      checked={displaySpecs[field] || false}
                     />
                   ))}
                 </div>
@@ -899,6 +974,7 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                       field={field}
                       label={field.replace(/_/g, " ")}
                       onSpecChange={handleSpecChange}
+                      checked={displaySpecs[field] || false}
                     />
                   ))}
                 </div>
@@ -914,157 +990,205 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                       field={field}
                       label={field.replace(/_/g, " ")}
                       onSpecChange={handleSpecChange}
+                      checked={displaySpecs[field] || false}
                     />
                   ))}
                 </div>
               </div>
             </div>
           </div>
+        );
 
-          {/* --- AI CARGO DROP (Gemini Classifier) --- */}
-          <div className="space-y-8 bg-slate-900 p-12 border-l-8 border-blue-500 shadow-2xl">
-            <div className="flex justify-between items-start">
-              <div>
-                <h3 className="text-[12px] font-black uppercase text-blue-400 tracking-[0.4em] flex items-center gap-3 italic">
-                  <Sparkles size={20} className="fill-blue-400" /> Upload Media
-                </h3>
-                <p className="text-[9px] text-slate-500 font-bold uppercase mt-2 tracking-widest italic">
-                  Select all images. Our AI will sort them automatically.
-                </p>
-              </div>
-              <label className="cursor-pointer bg-blue-600 text-white px-10 py-4 text-[10px] font-black uppercase tracking-widest hover:bg-blue-500 transition-all flex items-center gap-2 shadow-xl">
-                {isAnalyzing ? <Loader2 className="animate-spin" /> : <Upload size={14} />}
-                {isAnalyzing ? "Analyzing..." : "Select Images"}
-                <input
-                  type="file"
-                  multiple
-                  className="hidden"
-                  accept="image/*"
-                  onChange={(e) => handleAiCategorizer(e.target.files)}
-                  disabled={isAnalyzing}
-                />
-              </label>
-            </div>
-
-            {/* Staging Area */}
-            {aiStaging.length > 0 && (
-              <div className="space-y-8">
-                <div className="flex justify-between items-center border-b border-slate-800 pb-4">
-                  <p className="text-[9px] font-black text-blue-300 uppercase tracking-widest">
-                    {aiStaging.length} Images Found
+      case 5:
+        return (
+          <>
+            {/* AI Cargo Drop */}
+            <div className="space-y-8 bg-slate-900 p-12 border-l-8 border-blue-500 shadow-2xl">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h3 className="text-[12px] font-black uppercase text-blue-400 tracking-[0.4em] flex items-center gap-3 italic">
+                    <Sparkles size={20} className="fill-blue-400" /> Upload Media
+                  </h3>
+                  <p className="text-[9px] text-slate-500 font-bold uppercase mt-2 tracking-widest italic">
+                    Select all images. Our AI will sort them automatically.
                   </p>
-                  <button
-                    type="button"
-                    onClick={approveAllAi}
-                    className="text-[9px] font-black text-emerald-400 hover:text-emerald-300 uppercase flex items-center gap-2"
-                  >
-                    <CheckCircle size={14} /> Confirm All
-                  </button>
                 </div>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                  {aiStaging.map((item, idx) => (
-                    <div
-                      key={idx}
-                      className="relative group bg-slate-800 border border-slate-700 overflow-hidden"
-                    >
-                      <img
-                        src={item.preview}
-                        className="h-32 w-full object-cover opacity-80"
-                        alt={item.originalName}
-                      />
-                      <div className="absolute top-2 left-2">
-                        <span className="bg-blue-600 text-white text-[8px] font-black px-2 py-1 uppercase">
-                          AI: {item.category}
-                        </span>
-                      </div>
-                      <div className="flex gap-1 p-2 bg-slate-900 border-t border-slate-700">
-                        <button
-                          type="button"
-                          onClick={() => approveAiImage(idx)}
-                          className="flex-1 bg-emerald-600/20 text-emerald-400 border border-emerald-600/30 text-[8px] font-black py-2 uppercase hover:bg-emerald-600 hover:text-white transition-all"
-                        >
-                          Approve
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setAiStaging((prev) => prev.filter((_, i) => i !== idx))
-                          }
-                          className="bg-red-600/20 text-red-400 border border-red-600/30 px-3 py-2 hover:bg-red-600 hover:text-white"
-                        >
-                          <Trash size={12} />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <label className="cursor-pointer bg-blue-600 text-white px-10 py-4 text-[10px] font-black uppercase tracking-widest hover:bg-blue-500 transition-all flex items-center gap-2 shadow-xl">
+                  {isAnalyzing ? <Loader2 className="animate-spin" /> : <Upload size={14} />}
+                  {isAnalyzing ? "Analyzing..." : "Select Images"}
+                  <input
+                    type="file"
+                    multiple
+                    className="hidden"
+                    accept="image/*"
+                    onChange={(e) => handleAiCategorizer(e.target.files)}
+                    disabled={isAnalyzing}
+                  />
+                </label>
               </div>
-            )}
-          </div>
 
-          {/* --- GALLERY (Per category) --- */}
-          {Object.keys(galleryState).map((category) => (
-            <div key={category} className="space-y-4">
-              <div className="bg-white border border-slate-200 rounded-sm overflow-hidden flex flex-col shadow-sm">
-                <div className="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-[#003566]">
-                    {category}
-                  </span>
-                  <label className="cursor-pointer text-[#003566] text-[8px] font-black uppercase hover:text-blue-600">
-                    + Add More
-                    <input
-                      type="file"
-                      multiple
-                      className="hidden"
-                      accept="image/*"
-                      onChange={(e) => handleGalleryAdd(category, e.target.files)}
-                    />
-                  </label>
-                </div>
-
-                {/* Image grid */}
-                {galleryState[category].length > 0 && (
-                  <div className="p-4 grid grid-cols-4 lg:grid-cols-8 gap-2">
-                    {galleryState[category].map((file, i) => (
-                      <div key={i} className="aspect-square bg-slate-100 relative group">
+              {/* Staging Area */}
+              {aiStaging.length > 0 && (
+                <div className="space-y-8">
+                  <div className="flex justify-between items-center border-b border-slate-800 pb-4">
+                    <p className="text-[9px] font-black text-blue-300 uppercase tracking-widest">
+                      {aiStaging.length} Images Found
+                    </p>
+                    <button
+                      type="button"
+                      onClick={approveAllAi}
+                      className="text-[9px] font-black text-emerald-400 hover:text-emerald-300 uppercase flex items-center gap-2"
+                    >
+                      <CheckCircle size={14} /> Confirm All
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                    {aiStaging.map((item, idx) => (
+                      <div
+                        key={idx}
+                        className="relative group bg-slate-800 border border-slate-700 overflow-hidden"
+                      >
                         <img
-                          src={URL.createObjectURL(file)}
-                          className="w-full h-full object-cover"
-                          alt={`${category} ${i}`}
+                          src={item.preview}
+                          className="h-32 w-full object-cover opacity-80"
+                          alt={item.originalName}
                         />
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setGalleryState((prev) => ({
-                              ...prev,
-                              [category]: prev[category].filter((_, idx) => idx !== i),
-                            }))
-                          }
-                          className="absolute inset-0 bg-red-600/80 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white"
-                        >
-                          <Trash size={12} />
-                        </button>
+                        <div className="absolute top-2 left-2">
+                          <span className="bg-blue-600 text-white text-[8px] font-black px-2 py-1 uppercase">
+                            AI: {item.category}
+                          </span>
+                        </div>
+                        <div className="flex gap-1 p-2 bg-slate-900 border-t border-slate-700">
+                          <button
+                            type="button"
+                            onClick={() => approveAiImage(idx)}
+                            className="flex-1 bg-emerald-600/20 text-emerald-400 border border-emerald-600/30 text-[8px] font-black py-2 uppercase hover:bg-emerald-600 hover:text-white transition-all"
+                          >
+                            Approve
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setAiStaging((prev) => prev.filter((_, i) => i !== idx))
+                            }
+                            className="bg-red-600/20 text-red-400 border border-red-600/30 px-3 py-2 hover:bg-red-600 hover:text-white"
+                          >
+                            <Trash size={12} />
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
-                )}
-              </div>
-            </div>
-          ))}
-
-          {/* --- SUBMIT BUTTON --- */}
-          <div className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-slate-200 p-6 flex justify-end items-center z-50">
-            <Button
-              type="submit"
-              disabled={isSubmitting}
-              className="bg-[#003566] text-white hover:bg-blue-800 rounded-none h-14 px-12 font-black uppercase text-[10px] tracking-widest transition-all shadow-xl"
-            >
-              {isSubmitting ? (
-                <Loader2 className="animate-spin mr-2 w-5 h-5" />
-              ) : (
-                <Save className="mr-2 w-5 h-5" />
+                </div>
               )}
-              Complete & Go to Dashboard <ArrowRight size={14} className="ml-2" />
+            </div>
+
+            {/* Gallery per category */}
+            {Object.keys(galleryState).map((category) => (
+              <div key={category} className="space-y-4">
+                <div className="bg-white border border-slate-200 rounded-sm overflow-hidden flex flex-col shadow-sm">
+                  <div className="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-[#003566]">
+                      {category}
+                    </span>
+                    <label className="cursor-pointer text-[#003566] text-[8px] font-black uppercase hover:text-blue-600">
+                      + Add More
+                      <input
+                        type="file"
+                        multiple
+                        className="hidden"
+                        accept="image/*"
+                        onChange={(e) => handleGalleryAdd(category, e.target.files)}
+                      />
+                    </label>
+                  </div>
+
+                  {/* Image grid */}
+                  {galleryState[category].length > 0 && (
+                    <div className="p-4 grid grid-cols-4 lg:grid-cols-8 gap-2">
+                      {galleryState[category].map((file, i) => (
+                        <div key={i} className="aspect-square bg-slate-100 relative group">
+                          <img
+                            src={URL.createObjectURL(file)}
+                            className="w-full h-full object-cover"
+                            alt={`${category} ${i}`}
+                          />
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setGalleryState((prev) => ({
+                                ...prev,
+                                [category]: prev[category].filter((_, idx) => idx !== i),
+                              }))
+                            }
+                            className="absolute inset-0 bg-red-600/80 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white"
+                          >
+                            <Trash size={12} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-[#F8FAFC] pb-20">
+      <Toaster position="top-right" />
+
+      {/* Step Indicator */}
+      <StepIndicator currentStep={currentStep} steps={steps} />
+
+      <div className="max-w-7xl mx-auto p-6 lg:p-12">
+        {/* Error Summary */}
+        {errors && (
+          <div className="mb-8 p-6 bg-red-50 border-l-4 border-red-500 text-red-700">
+            <div className="flex items-center gap-2 mb-3 font-black uppercase text-[11px]">
+              <AlertCircle size={16} /> Please Correct the Following
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              {Object.keys(errors).map((key) => (
+                <p key={key} className="text-[10px] font-bold">
+                  ● {key.toUpperCase()}: {errors[key][0]}
+                </p>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <form onSubmit={(e) => e.preventDefault()} className="space-y-16">
+          {renderStep()}
+
+          {/* Navigation Buttons */}
+          <div className="flex justify-between pt-8 border-t border-slate-200">
+            <Button
+              type="button"
+              onClick={handleBack}
+              disabled={currentStep === 1 || isSubmittingStep}
+              variant="outline"
+              className="px-8 py-2 text-xs font-black uppercase tracking-widest"
+            >
+              Back
+            </Button>
+            <Button
+              type="button"
+              onClick={handleNext}
+              disabled={isSubmittingStep}
+              className="bg-[#003566] text-white hover:bg-blue-800 px-8 py-2 font-black uppercase text-xs tracking-widest"
+            >
+              {isSubmittingStep ? (
+                <Loader2 className="animate-spin mr-2 w-4 h-4" />
+              ) : null}
+              {currentStep === steps.length ? "Save & Finish" : "Save & Next"}
+              {!isSubmittingStep && <ArrowRight size={14} className="ml-2" />}
             </Button>
           </div>
         </form>
@@ -1073,10 +1197,7 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
   );
 }
 
-// ----------------------------------------------------------------------
 // Helper Components
-// ----------------------------------------------------------------------
-
 function Label({ children, htmlFor }: { children: React.ReactNode; htmlFor?: string }) {
   return (
     <label
