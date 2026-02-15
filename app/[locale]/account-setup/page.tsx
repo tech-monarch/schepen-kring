@@ -50,7 +50,7 @@ type AvailabilityRule = {
   end_time: string;
 };
 
-// Spec Checkbox Component (identical to admin)
+// Spec Checkbox Component
 function SpecCheckbox({
   field,
   label,
@@ -85,38 +85,30 @@ function SpecCheckbox({
   );
 }
 
-// Step Indicator
+// Step Indicator (numbers only)
 function StepIndicator({ currentStep, steps }: { currentStep: number; steps: string[] }) {
   return (
-    <div className="flex items-center justify-center space-x-4 py-6 bg-white border-b border-slate-200">
-      {steps.map((step, index) => {
+    <div className="flex items-center justify-center space-x-6 py-6">
+      {steps.map((_, index) => {
         const stepNumber = index + 1;
         const isActive = stepNumber === currentStep;
         const isCompleted = stepNumber < currentStep;
         return (
-          <div key={step} className="flex items-center">
+          <div key={stepNumber} className="flex items-center">
             <div
               className={cn(
-                "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-colors",
+                "w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-colors",
                 isActive
                   ? "bg-[#003566] text-white"
                   : isCompleted
-                  ? "bg-green-500 text-white"
+                  ? "bg-blue-400 text-white"
                   : "bg-slate-200 text-slate-500"
               )}
             >
-              {isCompleted ? <CheckCircle size={16} /> : stepNumber}
+              {isCompleted ? <CheckCircle size={18} /> : stepNumber}
             </div>
-            <span
-              className={cn(
-                "ml-2 text-[10px] font-black uppercase tracking-widest hidden sm:block",
-                isActive ? "text-[#003566]" : "text-slate-400"
-              )}
-            >
-              {step}
-            </span>
             {index < steps.length - 1 && (
-              <ArrowRight size={14} className="mx-2 text-slate-300" />
+              <div className="w-12 h-px bg-slate-300 mx-2" />
             )}
           </div>
         );
@@ -128,8 +120,8 @@ function StepIndicator({ currentStep, steps }: { currentStep: number; steps: str
 export default function OnboardingYachtSetup() {
   const router = useRouter();
 
-  // Steps definition
-  const steps = ["Main Photo & Core", "Technical Dossier", "Scheduling", "Display Specs", "Media"];
+  // Steps definition (just numbers, no labels)
+  const steps = ["", "", "", "", ""];
   const [currentStep, setCurrentStep] = useState(1);
   const [yachtId, setYachtId] = useState<number | null>(null);
 
@@ -1144,7 +1136,14 @@ export default function OnboardingYachtSetup() {
     <div className="min-h-screen bg-[#F8FAFC] pb-20">
       <Toaster position="top-right" />
 
-      {/* Step Indicator */}
+      {/* Simple Header */}
+      <div className="bg-white border-b border-slate-200 px-6 py-4">
+        <div className="max-w-7xl mx-auto">
+          <h1 className="text-xl font-serif italic text-[#003566]">Create Vessel</h1>
+        </div>
+      </div>
+
+      {/* Step Indicator (numbers only) */}
       <StepIndicator currentStep={currentStep} steps={steps} />
 
       <div className="max-w-7xl mx-auto p-6 lg:p-12">
