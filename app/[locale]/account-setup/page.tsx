@@ -333,6 +333,10 @@ export default function OnboardingYachtSetup() {
     newRules[index] = { ...newRules[index], [field]: value };
     setAvailabilityRules(newRules);
   };
+// Add this useEffect after your state declarations (around line where other state is defined)
+useEffect(() => {
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}, [currentStep]);
 
   // Display specs handler
   const handleSpecChange = (field: string, isChecked: boolean) => {
