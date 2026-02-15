@@ -1133,7 +1133,7 @@ export default function OnboardingYachtSetup() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] pb-20">
+    <div className="min-h-screen bg-[#F8FAFC] pb-20 pt-16">
       <Toaster position="top-right" />
 
       {/* Simple Header */}
