@@ -209,7 +209,7 @@ export default function Faq() {
         />
         <div className="relative z-10 text-center px-6">
           <h1 className="text-4xl md:text-6xl font-serif text-white tracking-tight mb-3">
-            Maritime Knowledge Hub
+            Schepen Kring Knowledge Hub
           </h1>
           <p className="text-blue-100/60 text-[10px] md:text-xs font-light uppercase tracking-[0.3em]">
             {faqs.length} FAQs • AI-Powered Assistance
