@@ -39,7 +39,7 @@ export function HeroSection() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Step 1: Handle Initial Click [cite: 506]
+  // Step 1: Handle Initial Click
   async function handleSubmitTrigger(
     e: FormEvent<HTMLFormElement>,
   ): Promise<void> {
@@ -47,22 +47,21 @@ export function HeroSection() {
     setError("");
 
     if (mode === "partner") {
-      setShowTerms(true); // Show popup for partners first [cite: 507, 508]
+      setShowTerms(true); // Show popup for partners first
     } else {
-      executeAuth(); // Standard login/register proceeds immediately [cite: 509]
+      executeAuth(); // Standard login/register proceeds immediately
     }
   }
 
-  // Step 2: Actual API call [cite: 510]
+  // Step 2: Actual API call
   async function executeAuth() {
     setShowTerms(false);
     setIsLoading(true);
     setSuccess("");
-    setError(""); // Reset error state at start of attempt
+    setError("");
 
     try {
-      // Choose the endpoint based on the current mode [cite: 13, 14]
-      // Mode "partner" goes to /register/partner, "register" goes to /register, and "login" to /login
+      // Choose the endpoint based on the current mode
       const endpoint =
         mode === "login"
           ? "/login"
@@ -70,7 +69,7 @@ export function HeroSection() {
             ? "/register/partner"
             : "/register";
 
-      // Construct the payload based on the authentication mode [cite: 15]
+      // Construct the payload based on the authentication mode
       const payload =
         mode === "login"
           ? { email: formData.email, password: formData.password }
@@ -78,13 +77,13 @@ export function HeroSection() {
               name: formData.name,
               email: formData.email,
               password: formData.password,
-              accept_terms: true, // Required by the controller validation
+              accept_terms: true,
             };
 
-      // Perform the POST request to the backend [cite: 16]
+      // Perform the POST request to the backend
       const response = await axios.post(`${API_BASE_URL}${endpoint}`, payload);
 
-      // The new QuickAuthController returns token, id, and userType directly [cite: 16]
+      // The new QuickAuthController returns token, id, and userType directly
       const { token, id, name, userType, email: userEmail } = response.data;
 
       if (token) {
@@ -94,7 +93,7 @@ export function HeroSection() {
           "user_data",
           JSON.stringify({
             id,
-            name: name || formData.name, // Fallback if name isn't returned in login
+            name: name || formData.name,
             email: userEmail || formData.email,
             userType,
           }),
@@ -102,7 +101,7 @@ export function HeroSection() {
 
         setSuccess("Identity Verified. Redirecting...");
 
-        // Role-based redirection logic [cite: 18, 19]
+        // Role-based redirection logic
         setTimeout(() => {
           if (userType === "Partner") {
             router.push("/account-setup");
@@ -116,11 +115,49 @@ export function HeroSection() {
         }, 800);
       }
     } catch (err: any) {
-      // Capture detailed error messages to help bypass "silent" 500/CORS errors
-      const errorMessage =
-        err.response?.data?.message || err.message || "An error occurred.";
-      setError(errorMessage);
-      console.error("Auth System Failure:", errorMessage);
+      console.error("Auth System Failure:", err);
+
+      // User-friendly error messages
+      let userMessage = "An error occurred. Please try again.";
+
+      if (err.response) {
+        const status = err.response.status;
+        const data = err.response.data;
+
+        if (status === 409) {
+          userMessage = "This email is already registered. Please log in or use a different email.";
+        } else if (status === 422) {
+          // Laravel validation errors
+          if (data.errors) {
+            // Flatten all error messages and take the first one
+            const messages = Object.values(data.errors).flat();
+            userMessage = (messages[0] as string) || "Invalid input. Please check your details.";
+          } else if (data.message) {
+            userMessage = data.message;
+          } else {
+            userMessage = "Invalid input. Please check your details.";
+          }
+        } else if (status === 500) {
+          userMessage = "Server error. Please try again later.";
+        } else if (status === 401) {
+          userMessage = "Invalid email or password.";
+        } else {
+          // For other statuses, use a short message if available
+          if (data.message && typeof data.message === 'string' && data.message.length < 100) {
+            userMessage = data.message;
+          } else {
+            userMessage = `Error (${status}). Please try again.`;
+          }
+        }
+      } else if (err.request) {
+        // Request made but no response (network error)
+        userMessage = "Network error. Please check your connection.";
+      } else {
+        // Something else (e.g., invalid request setup)
+        userMessage = err.message || userMessage;
+      }
+
+      setError(userMessage);
     } finally {
       setIsLoading(false);
     }
@@ -296,7 +333,7 @@ export function HeroSection() {
         </div>
       </div>
 
-      {/* Terms Modal [cite: 525] */}
+      {/* Terms Modal */}
       <Dialog open={showTerms} onOpenChange={setShowTerms}>
         <DialogContent className="sm:max-w-[400px] bg-white">
           <DialogHeader>
