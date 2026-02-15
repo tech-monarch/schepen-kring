@@ -7,26 +7,31 @@ export default function BoatCenter() {
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const VPS_URL = "https://schepen-kring.nl"; // Change this to your VPS IP
+  const VPS_URL = "https://schepen-kring.nl"; // Change to your domain
 
-  // 1. Load initial boats (just a blank search to fill the page)
-  useEffect(() => { handleSearch(""); }, []);
+  // Load all boats on mount
+  useEffect(() => {
+    handleSearch("");
+  }, []);
 
+  // Search boats (empty query returns all)
   const handleSearch = async (text: string) => {
     setLoading(true);
     try {
-      const res = await fetch(`${VPS_URL}/api/search-boats?query=${text}`);
+      const res = await fetch(`${VPS_URL}/api/search-boats?query=${encodeURIComponent(text)}`);
       const data = await res.json();
-      setResults(data.results.matches || []);
+      // Expecting { results: { matches: [...] } }
+      setResults(data.results?.matches || []);
     } catch (e) {
-      console.error("Search failed");
+      console.error("Search failed", e);
     } finally {
       setLoading(false);
     }
   };
 
-  // 2. Drag & Drop Upload Logic
+  // Upload image
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     setIsUploading(true);
     const file = acceptedFiles[0];
@@ -39,20 +44,49 @@ export default function BoatCenter() {
         body: formData,
       });
       const data = await res.json();
-      alert(data.status === 'success' ? "Boat synced successfully!" : data.message);
-      handleSearch(""); // Refresh gallery
+      if (data.status === 'success') {
+        alert("Boat synced successfully!");
+        handleSearch(""); // Refresh gallery
+      } else {
+        alert(data.message || "Upload failed");
+      }
     } catch (error) {
-      alert("Upload failed connection.");
+      alert("Upload connection failed.");
     } finally {
       setIsUploading(false);
     }
   }, []);
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({ 
-    onDrop, 
-    accept: {'image/*': []},
-    multiple: false 
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: { 'image/*': [] },
+    multiple: false,
   });
+
+  // Delete a boat by filename (id)
+  const handleDelete = async (filename: string) => {
+    if (!confirm("Are you sure you want to delete this boat image? This action cannot be undone.")) {
+      return;
+    }
+
+    setDeletingId(filename);
+    try {
+      const res = await fetch(`${VPS_URL}/api/boats/${encodeURIComponent(filename)}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert("Boat deleted successfully!");
+        handleSearch(""); // Refresh gallery
+      } else {
+        alert(data.message || "Delete failed");
+      }
+    } catch (error) {
+      alert("Delete connection failed.");
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 p-4 md:p-10 font-sans">
@@ -116,13 +150,29 @@ export default function BoatCenter() {
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {results.map((boat) => (
-                <div key={boat.id} className="bg-white rounded-xl shadow-sm overflow-hidden border border-slate-100 hover:shadow-lg transition">
+                <div key={boat.id} className="bg-white rounded-xl shadow-sm overflow-hidden border border-slate-100 hover:shadow-lg transition group relative">
                   <div className="aspect-square relative">
                     <img 
-                      src={boat.metadata.url} 
+                      src={boat.metadata?.url || boat.url} 
                       alt="Boat" 
                       className="object-cover w-full h-full"
+                      onError={(e) => (e.currentTarget.src = '/placeholder-boat.jpg')}
                     />
+                    {/* Delete button */}
+                    <button
+                      onClick={() => handleDelete(boat.id)}
+                      disabled={deletingId === boat.id}
+                      className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="Delete image"
+                    >
+                      {deletingId === boat.id ? (
+                        <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
+                      ) : (
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      )}
+                    </button>
                   </div>
                   <div className="p-3 bg-white">
                     <p className="text-xs text-slate-500 truncate">{boat.id}</p>
@@ -131,9 +181,15 @@ export default function BoatCenter() {
                         Match: {Math.round(boat.score * 100)}%
                       </div>
                     )}
+                    {boat.metadata?.description && (
+                      <p className="text-xs text-slate-600 mt-1 line-clamp-2">{boat.metadata.description}</p>
+                    )}
                   </div>
                 </div>
               ))}
+              {results.length === 0 && !loading && (
+                <p className="col-span-full text-center text-slate-500 py-10">No boats found. Upload some images to get started.</p>
+              )}
             </div>
           )}
         </section>
