@@ -9,18 +9,15 @@ import {
   Upload,
   Waves,
   Coins,
-  Images,
   Trash,
   AlertCircle,
   Ship,
-  Compass,
   Box,
   CheckSquare,
   Sparkles,
   CheckCircle,
   Zap,
   Bed,
-  Save,
   ArrowRight,
   Calendar,
   Clock,
@@ -41,9 +38,8 @@ type AiStagedImage = {
   originalName: string;
 };
 
-type GalleryState = { [key: string]: any[] };
+type GalleryState = { [key: string]: File[] };
 
-// Availability Rule Type
 type AvailabilityRule = {
   day_of_week: number;
   start_time: string;
@@ -62,17 +58,13 @@ function SpecCheckbox({
   onSpecChange: (field: string, isChecked: boolean) => void;
   checked: boolean;
 }) {
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    onSpecChange(field, e.target.checked);
-  };
-
   return (
     <div className="flex items-center gap-2 bg-slate-50/50 p-2 rounded">
       <input
         type="checkbox"
         id={`display_spec_${field}`}
         checked={checked}
-        onChange={handleChange}
+        onChange={(e) => onSpecChange(field, e.target.checked)}
         className="w-3 h-3 accent-[#003566] cursor-pointer"
       />
       <label
@@ -120,12 +112,11 @@ function StepIndicator({ currentStep, steps }: { currentStep: number; steps: str
 export default function OnboardingYachtSetup() {
   const router = useRouter();
 
-  // Steps definition (just numbers, no labels)
+  // Steps definition
   const steps = ["", "", "", "", ""];
   const [currentStep, setCurrentStep] = useState(1);
-  const [yachtId, setYachtId] = useState<number | null>(null);
 
-  // Form state (controlled)
+  // --- Local state (cache) for all form data ---
   const [formData, setFormData] = useState<Record<string, any>>({
     boat_name: "",
     price: "",
@@ -177,7 +168,6 @@ export default function OnboardingYachtSetup() {
     drive_type: "",
   });
 
-  // Boolean fields (checkboxes)
   const [booleanFields, setBooleanFields] = useState<Record<string, boolean>>({
     allow_bidding: false,
     flybridge: false,
@@ -216,7 +206,7 @@ export default function OnboardingYachtSetup() {
     bow_thruster: false,
   });
 
-  // Media state
+  // Media
   const [aiStaging, setAiStaging] = useState<AiStagedImage[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [mainPreview, setMainPreview] = useState<string | null>(null);
@@ -236,8 +226,13 @@ export default function OnboardingYachtSetup() {
   const [displaySpecs, setDisplaySpecs] = useState<Record<string, boolean>>({});
 
   // UI state
-  const [isSubmittingStep, setIsSubmittingStep] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<any>(null);
+
+  // Auto‑scroll to top on step change
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [currentStep]);
 
   // Handlers ----------------------------------------------------------------
 
@@ -302,10 +297,7 @@ export default function OnboardingYachtSetup() {
   const approveAllAi = () => {
     const updatedGallery = { ...galleryState };
     aiStaging.forEach((item) => {
-      updatedGallery[item.category] = [
-        ...updatedGallery[item.category],
-        item.file,
-      ];
+      updatedGallery[item.category] = [...updatedGallery[item.category], item.file];
     });
     setGalleryState(updatedGallery);
     setAiStaging([]);
@@ -333,131 +325,119 @@ export default function OnboardingYachtSetup() {
     newRules[index] = { ...newRules[index], [field]: value };
     setAvailabilityRules(newRules);
   };
-// Add this useEffect after your state declarations (around line where other state is defined)
-useEffect(() => {
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}, [currentStep]);
 
-  // Display specs handler
   const handleSpecChange = (field: string, isChecked: boolean) => {
-    setDisplaySpecs((prev) => ({
-      ...prev,
-      [field]: isChecked,
-    }));
+    setDisplaySpecs((prev) => ({ ...prev, [field]: isChecked }));
   };
 
-  // Step submission ---------------------------------------------------------
+  // Navigation --------------------------------------------------------------
 
-  const saveStep = async () => {
-    setIsSubmittingStep(true);
+  const handleNext = () => {
+    // Basic validation for required fields on step 1
+    if (currentStep === 1 && !formData.boat_name) {
+      toast.error("Vessel name is required");
+      return;
+    }
+    setCurrentStep((prev) => prev + 1);
+  };
+
+  const handleBack = () => {
+    setCurrentStep((prev) => prev - 1);
+  };
+
+  // Final submission --------------------------------------------------------
+
+  const handleSubmit = async () => {
+    // Final validation
+    if (!formData.boat_name) {
+      toast.error("Vessel name is required");
+      setCurrentStep(1);
+      return;
+    }
+
+    setIsSubmitting(true);
     setErrors(null);
 
     try {
-      if (currentStep === 1) {
-        // Step 1: Create yacht with main photo and core fields
-        const stepData = new FormData();
-        if (mainFile) stepData.append("main_image", mainFile);
-        stepData.append("boat_name", formData.boat_name || "");
-        if (formData.price) stepData.append("price", formData.price);
-        if (formData.min_bid_amount) stepData.append("min_bid_amount", formData.min_bid_amount);
-        if (formData.year) stepData.append("year", formData.year);
-        if (formData.loa) stepData.append("loa", formData.loa);
-        if (formData.lwl) stepData.append("lwl", formData.lwl);
-        if (formData.where) stepData.append("where", formData.where);
-        stepData.append("status", formData.status);
-        if (formData.passenger_capacity) stepData.append("passenger_capacity", formData.passenger_capacity);
+      // 1. Create the yacht with all text fields and main image
+      const yachtData = new FormData();
+      
+      // Required
+      yachtData.append("boat_name", formData.boat_name);
+      
+      // Optional text fields (only if they have a value)
+      const textFields = [
+        "price", "min_bid_amount", "year", "loa", "lwl", "where", "status",
+        "passenger_capacity", "beam", "draft", "air_draft", "displacement",
+        "ballast", "hull_type", "hull_construction", "hull_colour", "hull_number",
+        "designer", "builder", "engine_manufacturer", "horse_power", "hours",
+        "fuel", "max_speed", "cruising_speed", "gallons_per_hour", "tankage",
+        "cabins", "berths", "toilet", "shower", "bath", "heating", "cockpit_type",
+        "control_type", "external_url", "print_url", "owners_comment",
+        "reg_details", "known_defects", "last_serviced", "super_structure_colour",
+        "super_structure_construction", "deck_colour", "deck_construction",
+        "starting_type", "drive_type"
+      ];
+      textFields.forEach(field => {
+        if (formData[field]) yachtData.append(field, formData[field]);
+      });
 
-        const res = await api.post("/partner/yachts", stepData);
-        setYachtId(res.data.id);
-        toast.success("Vessel created. Proceed to next step.");
-        setCurrentStep(2);
-      } else {
-        // Steps 2-5: Update existing yacht
-        if (!yachtId) throw new Error("Yacht ID missing");
+      // Boolean fields (send as "true"/"false")
+      Object.keys(booleanFields).forEach(field => {
+        yachtData.append(field, booleanFields[field] ? "true" : "false");
+      });
 
-        const updateData: Record<string, any> = {};
+      // Availability rules (JSON string)
+      if (availabilityRules.length > 0) {
+        yachtData.append("availability_rules", JSON.stringify(availabilityRules));
+      }
 
-        if (currentStep === 2) {
-          // Technical Dossier fields
-          const techFields = [
-            "beam", "draft", "air_draft", "displacement", "ballast", "hull_type",
-            "hull_construction", "hull_colour", "hull_number", "designer", "builder",
-            "engine_manufacturer", "horse_power", "hours", "fuel", "max_speed",
-            "cruising_speed", "gallons_per_hour", "tankage", "cabins", "berths",
-            "toilet", "shower", "bath", "heating", "cockpit_type", "control_type",
-            "external_url", "print_url", "owners_comment", "reg_details", "known_defects",
-            "last_serviced", "super_structure_colour", "super_structure_construction",
-            "deck_colour", "deck_construction", "starting_type", "drive_type"
-          ];
-          techFields.forEach(field => {
-            if (formData[field]) updateData[field] = formData[field];
-          });
+      // Display specs (JSON array of selected fields)
+      const selectedSpecs = Object.keys(displaySpecs).filter(key => displaySpecs[key]);
+      if (selectedSpecs.length > 0) {
+        yachtData.append("display_specs", JSON.stringify(selectedSpecs));
+      }
 
-          // Boolean fields
-          Object.keys(booleanFields).forEach(field => {
-            updateData[field] = booleanFields[field];
-          });
-        } else if (currentStep === 3) {
-          // Availability rules
-          if (availabilityRules.length > 0) {
-            updateData.availability_rules = JSON.stringify(availabilityRules);
-          }
-        } else if (currentStep === 4) {
-          // Display specs
-          const selectedSpecs = Object.keys(displaySpecs).filter(key => displaySpecs[key]);
-          if (selectedSpecs.length > 0) {
-            updateData.display_specs = JSON.stringify(selectedSpecs);
-          }
-        } else if (currentStep === 5) {
-          // Media step: we'll handle gallery uploads after final save
-          // No yacht data update here, just proceed to finish
-        }
+      // Main image
+      if (mainFile) {
+        yachtData.append("main_image", mainFile);
+      }
 
-        if (Object.keys(updateData).length > 0) {
-          await api.put(`/partner/yachts/${yachtId}`, updateData);
-        }
-
-        if (currentStep === 5) {
-          // Final step: upload gallery images
-          for (const cat of Object.keys(galleryState)) {
-            const files = galleryState[cat];
-            if (files.length > 0) {
-              const gData = new FormData();
-              files.forEach((file) => gData.append("images[]", file));
-              gData.append("category", cat);
-              await api.post(`/partner/yachts/${yachtId}/gallery`, gData);
-            }
-          }
-          toast.success("Vessel Registered! Welcome Aboard.");
-          router.push("/nl/dashboard/partner");
-        } else {
-          toast.success("Step saved. Continue to next.");
-          setCurrentStep(prev => prev + 1);
+      // Auto‑calculate min_bid_amount if not set but price exists
+      if (!formData.min_bid_amount && formData.price) {
+        const priceVal = parseFloat(formData.price);
+        if (!isNaN(priceVal)) {
+          yachtData.append("min_bid_amount", (priceVal * 0.9).toString());
         }
       }
+
+      // Create yacht
+      const createRes = await api.post("/partner/yachts", yachtData);
+      const newYachtId = createRes.data.id;
+
+      // 2. Upload gallery images (if any)
+      for (const category of Object.keys(galleryState)) {
+        const files = galleryState[category];
+        if (files.length > 0) {
+          const galleryFormData = new FormData();
+          files.forEach((file) => galleryFormData.append("images[]", file));
+          galleryFormData.append("category", category);
+          await api.post(`/partner/yachts/${newYachtId}/gallery`, galleryFormData);
+        }
+      }
+
+      toast.success("Vessel Registered! Welcome Aboard.");
+      router.push("/nl/dashboard/partner");
     } catch (err: any) {
-      console.error("Step save error:", err);
+      console.error("Submission error:", err);
       const serverMessage = err.response?.data?.message || err.message || "An error occurred";
       toast.error(`Error: ${serverMessage}`);
       if (err.response?.status === 422) {
         setErrors(err.response.data.errors);
       }
     } finally {
-      setIsSubmittingStep(false);
+      setIsSubmitting(false);
     }
-  };
-
-  const handleNext = async () => {
-    // Basic validation for required fields in step 1
-    if (currentStep === 1 && !formData.boat_name) {
-      toast.error("Vessel name is required");
-      return;
-    }
-    await saveStep();
-  };
-
-  const handleBack = () => {
-    setCurrentStep(prev => prev - 1);
   };
 
   // Render step content
@@ -1137,7 +1117,7 @@ useEffect(() => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] pb-20 pt-30">
+    <div className="min-h-screen bg-[#F8FAFC] pb-20 pt-16">
       <Toaster position="top-right" />
 
       {/* Simple Header */}
@@ -1175,24 +1155,36 @@ useEffect(() => {
             <Button
               type="button"
               onClick={handleBack}
-              disabled={currentStep === 1 || isSubmittingStep}
+              disabled={currentStep === 1 || isSubmitting}
               variant="outline"
               className="px-8 py-2 text-xs font-black uppercase tracking-widest"
             >
               Back
             </Button>
-            <Button
-              type="button"
-              onClick={handleNext}
-              disabled={isSubmittingStep}
-              className="bg-[#003566] text-white hover:bg-blue-800 px-8 py-2 font-black uppercase text-xs tracking-widest"
-            >
-              {isSubmittingStep ? (
-                <Loader2 className="animate-spin mr-2 w-4 h-4" />
-              ) : null}
-              {currentStep === steps.length ? "Save & Finish" : "Save & Next"}
-              {!isSubmittingStep && <ArrowRight size={14} className="ml-2" />}
-            </Button>
+            {currentStep === steps.length ? (
+              <Button
+                type="button"
+                onClick={handleSubmit}
+                disabled={isSubmitting}
+                className="bg-[#003566] text-white hover:bg-blue-800 px-8 py-2 font-black uppercase text-xs tracking-widest"
+              >
+                {isSubmitting ? (
+                  <Loader2 className="animate-spin mr-2 w-4 h-4" />
+                ) : null}
+                Save & Finish
+                {!isSubmitting && <ArrowRight size={14} className="ml-2" />}
+              </Button>
+            ) : (
+              <Button
+                type="button"
+                onClick={handleNext}
+                disabled={isSubmitting}
+                className="bg-[#003566] text-white hover:bg-blue-800 px-8 py-2 font-black uppercase text-xs tracking-widest"
+              >
+                Save & Next
+                <ArrowRight size={14} className="ml-2" />
+              </Button>
+            )}
           </div>
         </form>
       </div>
