@@ -225,12 +225,11 @@ export default function OnboardingYachtSetup() {
   // Display specs
   const [displaySpecs, setDisplaySpecs] = useState<Record<string, boolean>>({});
 
-  // --- NEW: Boat types and checklist ---
+  // Boat types and checklist
   const [boatTypes, setBoatTypes] = useState<Array<{ id: number; name: string }>>([]);
   const [selectedBoatTypeId, setSelectedBoatTypeId] = useState<number | null>(null);
   const [checklistQuestions, setChecklistQuestions] = useState<any[]>([]);
   const [answers, setAnswers] = useState<Record<number, { answer: string }>>({});
-  // ----------------------------------------
 
   // UI state
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -241,7 +240,7 @@ export default function OnboardingYachtSetup() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [currentStep]);
 
-  // --- NEW: Fetch boat types on mount ---
+  // Fetch boat types on mount
   useEffect(() => {
     const fetchBoatTypes = async () => {
       try {
@@ -254,7 +253,7 @@ export default function OnboardingYachtSetup() {
     fetchBoatTypes();
   }, []);
 
-  // --- NEW: Fetch checklist questions when boat type changes ---
+  // Fetch checklist questions when boat type changes
   useEffect(() => {
     if (!selectedBoatTypeId) return;
     const fetchQuestions = async () => {
@@ -267,7 +266,6 @@ export default function OnboardingYachtSetup() {
     };
     fetchQuestions();
   }, [selectedBoatTypeId]);
-  // --------------------------------------------------------------
 
   // Handlers ----------------------------------------------------------------
 
@@ -365,14 +363,13 @@ export default function OnboardingYachtSetup() {
     setDisplaySpecs((prev) => ({ ...prev, [field]: isChecked }));
   };
 
-  // --- NEW: Handle answer change for checklist ---
+  // Handle answer change for checklist
   const handleAnswerChange = (questionId: number, value: string) => {
     setAnswers((prev) => ({
       ...prev,
       [questionId]: { answer: value },
     }));
   };
-  // ------------------------------------------------
 
   // Navigation --------------------------------------------------------------
 
@@ -419,7 +416,7 @@ export default function OnboardingYachtSetup() {
 
       // Required
       yachtData.append("boat_name", formData.boat_name);
-      yachtData.append("boat_type_id", selectedBoatTypeId.toString()); // NEW
+      yachtData.append("boat_type_id", selectedBoatTypeId.toString());
 
       // Optional text fields (only if they have a value)
       const textFields = [
@@ -482,7 +479,7 @@ export default function OnboardingYachtSetup() {
         }
       }
 
-      // --- NEW: Save checklist answers ---
+      // Save checklist answers
       if (Object.keys(answers).length > 0) {
         // First create an inspection for this yacht
         const inspectionRes = await api.post('/inspections', { boat_id: newYachtId });
@@ -497,7 +494,6 @@ export default function OnboardingYachtSetup() {
         // Post answers
         await api.post(`/inspections/${inspectionId}/answers`, { answers: answersPayload });
       }
-      // -----------------------------------
 
       toast.success("Vessel Registered! Welcome Aboard.");
       router.push("/nl/dashboard/partner");
@@ -568,7 +564,7 @@ export default function OnboardingYachtSetup() {
                   <Label>Vessel Name *</Label>
                   <Input name="boat_name" value={formData.boat_name} onChange={handleInputChange} placeholder="e.g. M/Y NOBILITY" required />
                 </div>
-                {/* --- NEW: Boat Type Dropdown --- */}
+                {/* Boat Type Dropdown */}
                 <div className="space-y-2">
                   <Label>Boat Type *</Label>
                   <select
@@ -584,7 +580,6 @@ export default function OnboardingYachtSetup() {
                     ))}
                   </select>
                 </div>
-                {/* --------------------------------- */}
                 <div className="space-y-2">
                   <Label>Price (€)</Label>
                   <Input name="price" type="number" value={formData.price} onChange={handleInputChange} placeholder="1500000" />
@@ -858,11 +853,11 @@ export default function OnboardingYachtSetup() {
           </div>
         );
 
-      // ---------- NEW STEP 3: Merged Availability + Display Specs ----------
+      // Step 3: Merged Availability + Display Specs
       case 3:
         return (
           <div className="space-y-12">
-            {/* Availability Rules (original step 3) */}
+            {/* Availability Rules */}
             <div className="space-y-8 bg-slate-50 p-10 border border-slate-200 shadow-sm">
               <div className="flex justify-between items-center border-b border-slate-200 pb-4">
                 <h3 className="text-[12px] font-black uppercase text-[#003566] tracking-[0.4em] flex items-center gap-3 italic">
@@ -943,7 +938,7 @@ export default function OnboardingYachtSetup() {
                 {availabilityRules.length === 0 && (
                   <div className="text-center py-12 border-2 border-dashed border-slate-200 bg-white">
                     <Calendar size={32} className="mx-auto text-slate-200 mb-2" />
-                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
+                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
                       No Booking Windows Defined. Test Sails will be disabled.
                     </p>
                   </div>
@@ -951,7 +946,7 @@ export default function OnboardingYachtSetup() {
               </div>
             </div>
 
-            {/* Display Specifications (original step 4) */}
+            {/* Display Specifications */}
             <div className="space-y-6 bg-white p-6 border border-slate-200">
               <SectionHeader icon={<Eye size={14} />} title="Display Specifications" />
               <p className="text-[9px] text-gray-600 mb-4">
@@ -1066,9 +1061,8 @@ export default function OnboardingYachtSetup() {
             </div>
           </div>
         );
-      // ---------------------------------------------------------------
 
-      // ---------- NEW STEP 4: Checklist Questions ----------
+      // Step 4: Checklist Questions
       case 4:
         return (
           <div className="space-y-8">
@@ -1076,12 +1070,12 @@ export default function OnboardingYachtSetup() {
               <CheckSquare size={18} /> Vessel Inspection Checklist
             </h3>
             {checklistQuestions.length === 0 ? (
-              <p className="text-center py-12 text-slate-400">No questions for this boat type.</p>
+              <p className="text-center py-12 text-slate-600">No questions for this boat type.</p>
             ) : (
               <div className="space-y-6">
                 {checklistQuestions.map((q) => (
                   <div key={q.id} className="bg-white p-6 border border-slate-200">
-                    <p className="font-bold text-sm mb-2">{q.question_text}</p>
+                    <p className="font-bold text-sm text-gray-900 mb-2">{q.question_text}</p>
                     {q.ai_prompt && (
                       <p className="text-xs text-slate-500 italic mb-4">AI prompt: {q.ai_prompt}</p>
                     )}
@@ -1089,7 +1083,7 @@ export default function OnboardingYachtSetup() {
                       {/* Render input based on question type */}
                       {q.type === 'YES_NO' && (
                         <div className="flex gap-4">
-                          <label className="flex items-center gap-2">
+                          <label className="flex items-center gap-2 text-gray-700">
                             <input
                               type="radio"
                               name={`q_${q.id}`}
@@ -1098,7 +1092,7 @@ export default function OnboardingYachtSetup() {
                               onChange={() => handleAnswerChange(q.id, 'yes')}
                             /> Yes
                           </label>
-                          <label className="flex items-center gap-2">
+                          <label className="flex items-center gap-2 text-gray-700">
                             <input
                               type="radio"
                               name={`q_${q.id}`}
@@ -1111,7 +1105,7 @@ export default function OnboardingYachtSetup() {
                       )}
                       {q.type === 'TEXT' && (
                         <textarea
-                          className="w-full border p-2 text-sm"
+                          className="w-full border p-2 text-sm text-gray-900"
                           rows={3}
                           value={answers[q.id]?.answer || ''}
                           onChange={(e) => handleAnswerChange(q.id, e.target.value)}
@@ -1120,7 +1114,7 @@ export default function OnboardingYachtSetup() {
                       {q.type === 'DATE' && (
                         <input
                           type="date"
-                          className="border p-2"
+                          className="border p-2 text-gray-900"
                           value={answers[q.id]?.answer || ''}
                           onChange={(e) => handleAnswerChange(q.id, e.target.value)}
                         />
@@ -1128,7 +1122,7 @@ export default function OnboardingYachtSetup() {
                       {q.type === 'MULTI' && (
                         <input
                           type="text"
-                          className="border p-2 w-full"
+                          className="border p-2 w-full text-gray-900"
                           placeholder="Enter value"
                           value={answers[q.id]?.answer || ''}
                           onChange={(e) => handleAnswerChange(q.id, e.target.value)}
@@ -1141,7 +1135,6 @@ export default function OnboardingYachtSetup() {
             )}
           </div>
         );
-      // ------------------------------------------------
 
       case 5:
         return (
@@ -1295,7 +1288,7 @@ export default function OnboardingYachtSetup() {
         </div>
       </div>
 
-      {/* Step Indicator (numbers only) */}
+      {/* Step Indicator */}
       <StepIndicator currentStep={currentStep} steps={steps} />
 
       <div className="max-w-7xl mx-auto p-6 lg:p-12">
@@ -1365,7 +1358,7 @@ function Label({ children, htmlFor }: { children: React.ReactNode; htmlFor?: str
   return (
     <label
       htmlFor={htmlFor}
-      className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 pl-0.5 block cursor-pointer"
+      className="text-[9px] font-black text-slate-600 uppercase tracking-widest mb-1.5 pl-0.5 block cursor-pointer"
     >
       {children}
     </label>
