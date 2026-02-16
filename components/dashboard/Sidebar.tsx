@@ -215,7 +215,7 @@ export function Sidebar({ onCollapse }: { onCollapse?: (collapsed: boolean) => v
     },
     { 
       title: "My Boats", 
-      href: "/dashboard/partner/boats", 
+      href: "/dashboard/partner", 
       icon: Ship, 
       roles: ["Partner"],
       page_key: "partner_boats"
