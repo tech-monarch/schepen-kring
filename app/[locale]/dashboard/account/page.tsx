@@ -17,7 +17,17 @@ import {
   Eye,
   EyeOff,
   Search,
-  Map
+  Map,
+  Hash,
+  Calendar,
+  Link,
+  FileText,
+  Smartphone,
+  Home,
+  UserCircle,
+  Briefcase,
+  Tag,
+  BookOpen
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { motion } from "framer-motion";
@@ -57,8 +67,9 @@ export default function ProfileSettingsPage() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Main form state
+  // Main form state – existing + new fields
   const [formData, setFormData] = useState({
+    // Existing
     name: "",
     email: "",
     phone_number: "",
@@ -68,6 +79,23 @@ export default function ProfileSettingsPage() {
     postcode: "",
     country: "Netherlands",
     profile_image: null as File | null,
+    // New fields
+    relationNumber: "",
+    firstName: "",
+    lastName: "",
+    prefix: "",
+    initials: "",
+    title: "",
+    salutation: "",
+    attentionOf: "",
+    identification: "",
+    dateOfBirth: "",
+    website: "",
+    mobile: "",
+    street: "",
+    houseNumber: "",
+    note: "",
+    claimHistoryCount: 0,
   });
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
@@ -83,7 +111,7 @@ export default function ProfileSettingsPage() {
     confirm: false
   });
 
-  // Address autocomplete
+  // Address autocomplete (unchanged)
   const [addressSuggestions, setAddressSuggestions] = useState<AddressSuggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isSearchingAddress, setIsSearchingAddress] = useState(false);
@@ -91,7 +119,7 @@ export default function ProfileSettingsPage() {
 
   useEffect(() => {
     fetchProfile();
-    
+
     // Cleanup debounce timer on unmount
     return () => {
       if (debounceTimer) {
@@ -109,6 +137,7 @@ export default function ProfileSettingsPage() {
       const data = res.data;
       setUser(data);
       setFormData({
+        // Existing
         name: data.name || "",
         email: data.email || "",
         phone_number: data.phone_number || "",
@@ -118,6 +147,23 @@ export default function ProfileSettingsPage() {
         postcode: data.postcode || "",
         country: data.country || "Netherlands",
         profile_image: null,
+        // New fields
+        relationNumber: data.relationNumber || "",
+        firstName: data.firstName || "",
+        lastName: data.lastName || "",
+        prefix: data.prefix || "",
+        initials: data.initials || "",
+        title: data.title || "",
+        salutation: data.salutation || "",
+        attentionOf: data.attentionOf || "",
+        identification: data.identification || "",
+        dateOfBirth: data.dateOfBirth ? data.dateOfBirth.slice(0, 10) : "",
+        website: data.website || "",
+        mobile: data.mobile || "",
+        street: data.street || "",
+        houseNumber: data.houseNumber || "",
+        note: data.note || "",
+        claimHistoryCount: data.claimHistoryCount || 0,
       });
       setLoading(false);
     } catch (err) {
@@ -148,12 +194,11 @@ export default function ProfileSettingsPage() {
 
     setIsSearchingAddress(true);
     try {
-      // OpenStreetMap Nominatim API - FREE, no API key needed
       const response = await fetch(
         `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=nl&limit=5&addressdetails=1`
       );
       const data = await response.json();
-      
+
       if (Array.isArray(data) && data.length > 0) {
         setAddressSuggestions(data);
         setShowSuggestions(true);
@@ -172,34 +217,32 @@ export default function ProfileSettingsPage() {
   // Handle address input with debounce
   const handleAddressChange = (value: string) => {
     setFormData({ ...formData, address: value });
-    
-    // Clear previous timer
+
     if (debounceTimer) {
       clearTimeout(debounceTimer);
     }
-    
-    // Set new debounce timer (500ms delay)
+
     const timer = setTimeout(() => {
       searchAddress(value);
     }, 500);
-    
+
     setDebounceTimer(timer);
   };
 
   // Handle address selection from suggestions
   const handleAddressSelect = (suggestion: AddressSuggestion) => {
     const address = suggestion.display_name;
-    const city = suggestion.address.city || 
-                 suggestion.address.town || 
-                 suggestion.address.village || 
-                 suggestion.address.suburb || 
+    const city = suggestion.address.city ||
+                 suggestion.address.town ||
+                 suggestion.address.village ||
+                 suggestion.address.suburb ||
                  "";
-    const state = suggestion.address.state || 
-                  suggestion.address.county || 
+    const state = suggestion.address.state ||
+                  suggestion.address.county ||
                   "";
     const postcode = suggestion.address.postcode || "";
     const country = suggestion.address.country || "Netherlands";
-    
+
     setFormData(prev => ({
       ...prev,
       address: address,
@@ -208,7 +251,7 @@ export default function ProfileSettingsPage() {
       postcode: postcode,
       country: country
     }));
-    
+
     setShowSuggestions(false);
     setAddressSuggestions([]);
   };
@@ -218,6 +261,7 @@ export default function ProfileSettingsPage() {
     setIsSubmitting(true);
 
     const data = new FormData();
+    // Append all fields – existing and new
     data.append("name", formData.name);
     data.append("email", formData.email);
     data.append("phone_number", formData.phone_number);
@@ -226,7 +270,23 @@ export default function ProfileSettingsPage() {
     data.append("state", formData.state);
     data.append("postcode", formData.postcode);
     data.append("country", formData.country);
-    
+    data.append("relationNumber", formData.relationNumber);
+    data.append("firstName", formData.firstName);
+    data.append("lastName", formData.lastName);
+    data.append("prefix", formData.prefix);
+    data.append("initials", formData.initials);
+    data.append("title", formData.title);
+    data.append("salutation", formData.salutation);
+    data.append("attentionOf", formData.attentionOf);
+    data.append("identification", formData.identification);
+    data.append("dateOfBirth", formData.dateOfBirth);
+    data.append("website", formData.website);
+    data.append("mobile", formData.mobile);
+    data.append("street", formData.street);
+    data.append("houseNumber", formData.houseNumber);
+    data.append("note", formData.note);
+    data.append("claimHistoryCount", String(formData.claimHistoryCount));
+
     if (formData.profile_image) {
       data.append("profile_image", formData.profile_image);
     }
@@ -256,7 +316,6 @@ export default function ProfileSettingsPage() {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Validate password match
     if (passwordData.new_password !== passwordData.new_password_confirmation) {
       toast.error("New passwords do not match");
       setIsSubmitting(false);
@@ -313,7 +372,7 @@ export default function ProfileSettingsPage() {
             </div>
 
             <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-              {/* Left Column */}
+              {/* Left Column – Profile Image (unchanged) */}
               <div className="lg:col-span-1 space-y-6">
                 <div className="bg-white border border-slate-100 p-8 text-center shadow-sm relative">
                   <div className="relative inline-block group">
@@ -342,10 +401,11 @@ export default function ProfileSettingsPage() {
                 </div>
               </div>
 
-              {/* Right Column: ALL FIELDS */}
+              {/* Right Column – ALL FIELDS (existing + new) */}
               <div className="lg:col-span-2 space-y-8">
+                {/* Existing fields (unchanged) */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  {/* Name */}
+                  {/* Name (existing) */}
                   <div className="space-y-2">
                     <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-2">
                       <User size={12} /> Full Name
@@ -359,7 +419,7 @@ export default function ProfileSettingsPage() {
                     />
                   </div>
 
-                  {/* Email */}
+                  {/* Email (existing) */}
                   <div className="space-y-2">
                     <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-2">
                       <Mail size={12} /> Email Address
@@ -373,7 +433,7 @@ export default function ProfileSettingsPage() {
                     />
                   </div>
 
-                  {/* Phone Number */}
+                  {/* Phone Number (existing) */}
                   <div className="space-y-2">
                     <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-2">
                       <Phone size={12} /> Phone Number
@@ -386,108 +446,290 @@ export default function ProfileSettingsPage() {
                     />
                   </div>
 
-                  {/* City */}
+                  {/* Mobile (new) */}
                   <div className="space-y-2">
                     <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-2">
-                      <Building2 size={12} /> City
+                      <Smartphone size={12} /> Mobile
                     </label>
                     <input
                       type="text"
-                      value={formData.city}
-                      onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                      value={formData.mobile}
+                      onChange={(e) => setFormData({ ...formData, mobile: e.target.value })}
                       className="w-full bg-transparent border-b border-slate-200 py-2 text-sm font-bold text-[#003566] outline-none focus:border-[#003566]"
                     />
                   </div>
                 </div>
 
-                {/* House Address with OpenStreetMap Autocomplete */}
-                <div className="space-y-2 relative">
-                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-2">
-                    <MapPin size={12} /> House Address
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      value={formData.address}
-                      onChange={(e) => handleAddressChange(e.target.value)}
-                      onFocus={() => {
-                        if (formData.address.length >= 3) {
-                          searchAddress(formData.address);
-                        }
-                      }}
-                      className="w-full bg-transparent border-b border-slate-200 py-2 text-sm font-bold text-[#003566] outline-none focus:border-[#003566] pr-10"
-                      placeholder="Type your address (street, city, postal code)..."
-                    />
-                    {isSearchingAddress && (
-                      <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
-                        <Loader2 className="w-4 h-4 animate-spin text-slate-400" />
-                      </div>
-                    )}
-                    
-                    {showSuggestions && addressSuggestions.length > 0 && (
-                      <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 shadow-lg max-h-60 overflow-y-auto rounded-b-md">
-                        <div className="px-3 py-2 bg-slate-50 border-b border-slate-200">
-                          <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">
-                            <Map size={10} className="inline mr-1" />
-                            OpenStreetMap Results
-                          </p>
+                {/* New personal details section */}
+                <div className="border-t border-slate-100 pt-6">
+                  <h3 className="text-xs font-black uppercase tracking-[0.3em] text-[#003566] mb-4 flex items-center gap-2">
+                    <UserCircle size={14} /> Personal Details
+                  </h3>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+                    {/* Relation Number */}
+                    <div className="space-y-2">
+                      <label className="text-[8px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-1">
+                        <Hash size={10} /> Relation Number
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.relationNumber}
+                        onChange={(e) => setFormData({ ...formData, relationNumber: e.target.value })}
+                        className="w-full bg-transparent border-b border-slate-200 py-1 text-sm font-bold text-[#003566] outline-none focus:border-[#003566]"
+                      />
+                    </div>
+                    {/* First Name */}
+                    <div className="space-y-2">
+                      <label className="text-[8px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-1">
+                        <User size={10} /> First Name
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.firstName}
+                        onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                        className="w-full bg-transparent border-b border-slate-200 py-1 text-sm font-bold text-[#003566] outline-none focus:border-[#003566]"
+                      />
+                    </div>
+                    {/* Last Name */}
+                    <div className="space-y-2">
+                      <label className="text-[8px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-1">
+                        <User size={10} /> Last Name
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.lastName}
+                        onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                        className="w-full bg-transparent border-b border-slate-200 py-1 text-sm font-bold text-[#003566] outline-none focus:border-[#003566]"
+                      />
+                    </div>
+                    {/* Prefix */}
+                    <div className="space-y-2">
+                      <label className="text-[8px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-1">
+                        <Tag size={10} /> Prefix
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.prefix}
+                        onChange={(e) => setFormData({ ...formData, prefix: e.target.value })}
+                        className="w-full bg-transparent border-b border-slate-200 py-1 text-sm font-bold text-[#003566] outline-none focus:border-[#003566]"
+                      />
+                    </div>
+                    {/* Initials */}
+                    <div className="space-y-2">
+                      <label className="text-[8px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-1">
+                        <User size={10} /> Initials
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.initials}
+                        onChange={(e) => setFormData({ ...formData, initials: e.target.value })}
+                        className="w-full bg-transparent border-b border-slate-200 py-1 text-sm font-bold text-[#003566] outline-none focus:border-[#003566]"
+                      />
+                    </div>
+                    {/* Title */}
+                    <div className="space-y-2">
+                      <label className="text-[8px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-1">
+                        <Briefcase size={10} /> Title
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.title}
+                        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                        className="w-full bg-transparent border-b border-slate-200 py-1 text-sm font-bold text-[#003566] outline-none focus:border-[#003566]"
+                      />
+                    </div>
+                    {/* Salutation */}
+                    <div className="space-y-2">
+                      <label className="text-[8px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-1">
+                        <UserCircle size={10} /> Salutation
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.salutation}
+                        onChange={(e) => setFormData({ ...formData, salutation: e.target.value })}
+                        className="w-full bg-transparent border-b border-slate-200 py-1 text-sm font-bold text-[#003566] outline-none focus:border-[#003566]"
+                      />
+                    </div>
+                    {/* Attention Of */}
+                    <div className="space-y-2">
+                      <label className="text-[8px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-1">
+                        <BookOpen size={10} /> Attention Of
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.attentionOf}
+                        onChange={(e) => setFormData({ ...formData, attentionOf: e.target.value })}
+                        className="w-full bg-transparent border-b border-slate-200 py-1 text-sm font-bold text-[#003566] outline-none focus:border-[#003566]"
+                      />
+                    </div>
+                    {/* Identification */}
+                    <div className="space-y-2">
+                      <label className="text-[8px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-1">
+                        <FileText size={10} /> Identification
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.identification}
+                        onChange={(e) => setFormData({ ...formData, identification: e.target.value })}
+                        className="w-full bg-transparent border-b border-slate-200 py-1 text-sm font-bold text-[#003566] outline-none focus:border-[#003566]"
+                      />
+                    </div>
+                    {/* Date of Birth */}
+                    <div className="space-y-2">
+                      <label className="text-[8px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-1">
+                        <Calendar size={10} /> Date of Birth
+                      </label>
+                      <input
+                        type="date"
+                        value={formData.dateOfBirth}
+                        onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
+                        className="w-full bg-transparent border-b border-slate-200 py-1 text-sm font-bold text-[#003566] outline-none focus:border-[#003566]"
+                      />
+                    </div>
+                    {/* Website */}
+                    <div className="space-y-2">
+                      <label className="text-[8px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-1">
+                        <Link size={10} /> Website
+                      </label>
+                      <input
+                        type="url"
+                        value={formData.website}
+                        onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+                        className="w-full bg-transparent border-b border-slate-200 py-1 text-sm font-bold text-[#003566] outline-none focus:border-[#003566]"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Address section – existing + new split fields */}
+                <div className="border-t border-slate-100 pt-6">
+                  <h3 className="text-xs font-black uppercase tracking-[0.3em] text-[#003566] mb-4 flex items-center gap-2">
+                    <Home size={14} /> Address Information
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Street (new) */}
+                    <div className="space-y-2">
+                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-2">
+                        <MapPin size={12} /> Street
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.street}
+                        onChange={(e) => setFormData({ ...formData, street: e.target.value })}
+                        className="w-full bg-transparent border-b border-slate-200 py-2 text-sm font-bold text-[#003566] outline-none focus:border-[#003566]"
+                      />
+                    </div>
+                    {/* House Number (new) */}
+                    <div className="space-y-2">
+                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-2">
+                        <Hash size={12} /> House Number
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.houseNumber}
+                        onChange={(e) => setFormData({ ...formData, houseNumber: e.target.value })}
+                        className="w-full bg-transparent border-b border-slate-200 py-2 text-sm font-bold text-[#003566] outline-none focus:border-[#003566]"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Existing address field (kept for compatibility) */}
+                  <div className="space-y-2 relative mt-6">
+                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-2">
+                      <MapPin size={12} /> Full Address (autocomplete)
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={formData.address}
+                        onChange={(e) => handleAddressChange(e.target.value)}
+                        onFocus={() => {
+                          if (formData.address.length >= 3) {
+                            searchAddress(formData.address);
+                          }
+                        }}
+                        className="w-full bg-transparent border-b border-slate-200 py-2 text-sm font-bold text-[#003566] outline-none focus:border-[#003566] pr-10"
+                        placeholder="Type your address (street, city, postal code)..."
+                      />
+                      {isSearchingAddress && (
+                        <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                          <Loader2 className="w-4 h-4 animate-spin text-slate-400" />
                         </div>
-                        {addressSuggestions.map((suggestion, index) => (
-                          <button
-                            key={`${suggestion.lat}-${suggestion.lon}-${index}`}
-                            type="button"
-                            className="w-full text-left px-4 py-3 hover:bg-slate-50 text-sm text-slate-700 border-b border-slate-100 last:border-b-0"
-                            onClick={() => handleAddressSelect(suggestion)}
-                          >
-                            <div className="flex items-start gap-2">
-                              <Search size={12} className="text-slate-400 mt-0.5 flex-shrink-0" />
-                              <div className="text-left">
-                                <p className="font-medium">{suggestion.display_name.split(',')[0]}</p>
-                                <p className="text-xs text-slate-500 truncate">
-                                  {suggestion.display_name.split(',').slice(1).join(',').trim()}
-                                </p>
+                      )}
+
+                      {showSuggestions && addressSuggestions.length > 0 && (
+                        <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 shadow-lg max-h-60 overflow-y-auto rounded-b-md">
+                          <div className="px-3 py-2 bg-slate-50 border-b border-slate-200">
+                            <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">
+                              <Map size={10} className="inline mr-1" />
+                              OpenStreetMap Results
+                            </p>
+                          </div>
+                          {addressSuggestions.map((suggestion, index) => (
+                            <button
+                              key={`${suggestion.lat}-${suggestion.lon}-${index}`}
+                              type="button"
+                              className="w-full text-left px-4 py-3 hover:bg-slate-50 text-sm text-slate-700 border-b border-slate-100 last:border-b-0"
+                              onClick={() => handleAddressSelect(suggestion)}
+                            >
+                              <div className="flex items-start gap-2">
+                                <Search size={12} className="text-slate-400 mt-0.5 flex-shrink-0" />
+                                <div className="text-left">
+                                  <p className="font-medium">{suggestion.display_name.split(',')[0]}</p>
+                                  <p className="text-xs text-slate-500 truncate">
+                                    {suggestion.display_name.split(',').slice(1).join(',').trim()}
+                                  </p>
+                                </div>
                               </div>
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  {/* <p className="text-[8px] text-slate-400 mt-1 flex items-center gap-1">
-                    <Map size={8} /> Powered by OpenStreetMap (free, no API key required)
-                  </p> */}
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                  {/* State/Region */}
-                  <div className="space-y-2">
-                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-2">
-                      <Globe size={12} /> State / Province
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.state}
-                      onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-                      className="w-full bg-transparent border-b border-slate-200 py-2 text-sm font-bold text-[#003566] outline-none focus:border-[#003566]"
-                    />
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
 
-                  {/* Postal Code */}
-                  <div className="space-y-2">
-                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-2">
-                      <MapPin size={12} /> Postal Code
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.postcode}
-                      onChange={(e) => setFormData({ ...formData, postcode: e.target.value })}
-                      className="w-full bg-transparent border-b border-slate-200 py-2 text-sm font-bold text-[#003566] outline-none focus:border-[#003566] uppercase"
-                      placeholder="1234 AB"
-                    />
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
+                    {/* City (existing) */}
+                    <div className="space-y-2">
+                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-2">
+                        <Building2 size={12} /> City
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.city}
+                        onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                        className="w-full bg-transparent border-b border-slate-200 py-2 text-sm font-bold text-[#003566] outline-none focus:border-[#003566]"
+                      />
+                    </div>
+                    {/* State (existing) */}
+                    <div className="space-y-2">
+                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-2">
+                        <Globe size={12} /> State / Province
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.state}
+                        onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+                        className="w-full bg-transparent border-b border-slate-200 py-2 text-sm font-bold text-[#003566] outline-none focus:border-[#003566]"
+                      />
+                    </div>
+                    {/* Postal Code (existing) */}
+                    <div className="space-y-2">
+                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-2">
+                        <MapPin size={12} /> Postal Code
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.postcode}
+                        onChange={(e) => setFormData({ ...formData, postcode: e.target.value })}
+                        className="w-full bg-transparent border-b border-slate-200 py-2 text-sm font-bold text-[#003566] outline-none focus:border-[#003566] uppercase"
+                        placeholder="1234 AB"
+                      />
+                    </div>
                   </div>
 
-                  {/* Country */}
-                  <div className="space-y-2">
+                  {/* Country (existing) */}
+                  <div className="space-y-2 mt-4">
                     <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-2">
                       <Globe size={12} /> Country
                     </label>
@@ -506,12 +748,39 @@ export default function ProfileSettingsPage() {
                   </div>
                 </div>
 
-                {/* PASSWORD CHANGE SECTION */}
+                {/* Note and Claim History Count */}
+                <div className="border-t border-slate-100 pt-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    {/* Note (textarea) */}
+                    <div className="space-y-2">
+                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-2">
+                        <FileText size={12} /> Note
+                      </label>
+                      <textarea
+                        value={formData.note}
+                        onChange={(e) => setFormData({ ...formData, note: e.target.value })}
+                        rows={3}
+                        className="w-full bg-transparent border border-slate-200 p-2 text-sm font-bold text-[#003566] outline-none focus:border-[#003566]"
+                      />
+                    </div>
+                    {/* Claim History Count (read-only) */}
+                    <div className="space-y-2">
+                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-2">
+                        <BookOpen size={12} /> Claim History Count
+                      </label>
+                      <div className="w-full bg-transparent border-b border-slate-200 py-2 text-sm font-bold text-[#003566]">
+                        {formData.claimHistoryCount}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* PASSWORD CHANGE SECTION (unchanged) */}
                 <div className="mt-12 pt-12 border-t border-slate-100">
                   <h3 className="text-sm font-black uppercase tracking-[0.3em] text-[#003566] mb-6 flex items-center gap-2">
                     <Shield size={14} /> Change Password
                   </h3>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                     {/* Current Password */}
                     <div className="space-y-2">
@@ -596,6 +865,7 @@ export default function ProfileSettingsPage() {
                   </div>
                 </div>
 
+                {/* Submit button */}
                 <div className="mt-16 flex justify-end">
                   <button
                     type="submit"
