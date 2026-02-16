@@ -41,7 +41,6 @@ export default function PartnerUserManagementPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [selectedUserPermissions, setSelectedUserPermissions] = useState<Record<number, UserPagePermission[]>>({});
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  // Track which users have permissions expanded
   const [expandedPermissions, setExpandedPermissions] = useState<Record<number, boolean>>({});
 
   // New User Form State
@@ -183,7 +182,6 @@ export default function PartnerUserManagementPage() {
     );
   }, [users, searchQuery, activeTab]);
 
-  // Toggle permissions expansion for a user
   const togglePermissions = (userId: number) => {
     setExpandedPermissions(prev => ({ ...prev, [userId]: !prev[userId] }));
   };
@@ -200,11 +198,11 @@ export default function PartnerUserManagementPage() {
       <select
         value={currentValue}
         onChange={handleChange}
-        className="border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium rounded shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 cursor-pointer"
+        className="border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium rounded shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 cursor-pointer text-gray-900"
       >
-        <option value={0}>Default</option>
-        <option value={1}>Allow</option>
-        <option value={2}>Deny</option>
+        <option value={0} className="text-gray-900">Default</option>
+        <option value={1} className="text-gray-900">Allow</option>
+        <option value={2} className="text-gray-900">Deny</option>
       </select>
     );
   };
@@ -229,10 +227,10 @@ export default function PartnerUserManagementPage() {
           <Toaster position="top-right" />
 
           {/* HEADER */}
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-slate-200 pb-8">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-gray-200 pb-8">
             <div>
-              <h1 className="text-4xl font-serif italic text-[#003566]">Harbor Personnel</h1>
-              <p className="text-xs uppercase tracking-[0.3em] text-blue-600 font-bold mt-2">
+              <h1 className="text-4xl font-serif italic text-gray-900">Harbor Personnel</h1>
+              <p className="text-xs uppercase tracking-[0.3em] text-blue-700 font-bold mt-2">
                 Manage employees, customers & sellers
               </p>
             </div>
@@ -240,7 +238,7 @@ export default function PartnerUserManagementPage() {
               <input
                 type="text"
                 placeholder="SEARCH..."
-                className="bg-white border border-slate-300 px-4 py-3 text-xs font-semibold tracking-wider uppercase outline-none focus:border-blue-500 w-64 text-slate-800 placeholder:text-slate-400 rounded"
+                className="bg-white border border-gray-300 px-4 py-3 text-xs font-semibold tracking-wider uppercase outline-none focus:border-blue-500 w-64 text-gray-900 placeholder:text-gray-500 rounded"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -253,16 +251,16 @@ export default function PartnerUserManagementPage() {
             </div>
           </div>
 
-          {/* REFERRAL LINK SECTION (only for partners) */}
+          {/* REFERRAL LINK SECTION */}
           {referralLink && (
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-blue-100 rounded-full">
-                  <LinkIcon className="w-4 h-4 text-blue-700" />
+                  <LinkIcon className="w-4 h-4 text-blue-800" />
                 </div>
                 <div>
                   <p className="text-xs font-bold uppercase tracking-wider text-blue-800">Your Unique Referral Link</p>
-                  <p className="text-sm text-blue-900 font-mono break-all">{referralLink}</p>
+                  <p className="text-sm text-gray-900 font-mono break-all">{referralLink}</p>
                 </div>
               </div>
               <Button
@@ -275,14 +273,14 @@ export default function PartnerUserManagementPage() {
           )}
 
           {/* TABS */}
-          <div className="flex flex-wrap gap-1 border-b border-slate-200">
+          <div className="flex flex-wrap gap-1 border-b border-gray-200">
             {(["Employee", "Customer", "Seller"] as UserCategory[]).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
                 className={cn(
                   "flex items-center gap-2 px-6 py-3 text-xs font-bold uppercase tracking-wider transition-all relative",
-                  activeTab === tab ? "text-[#003566]" : "text-slate-500 hover:text-slate-700"
+                  activeTab === tab ? "text-gray-900" : "text-gray-600 hover:text-gray-800"
                 )}
               >
                 {tab === "Employee" ? <Briefcase size={16} /> :
@@ -299,9 +297,9 @@ export default function PartnerUserManagementPage() {
           {/* USER LIST */}
           <div className="grid grid-cols-1 gap-6 pb-20">
             {loading ? (
-              <Loader2 className="animate-spin mx-auto mt-20 text-slate-400" size={48} />
+              <Loader2 className="animate-spin mx-auto mt-20 text-gray-400" size={48} />
             ) : filteredUsers.length === 0 ? (
-              <div className="text-center py-20 text-slate-500">
+              <div className="text-center py-20 text-gray-500">
                 <p className="text-xs font-bold uppercase tracking-wider">No users found</p>
               </div>
             ) : (
@@ -309,13 +307,13 @@ export default function PartnerUserManagementPage() {
                 <motion.div
                   layout
                   key={user.id}
-                  className="bg-white border border-slate-200 rounded-lg p-6 hover:shadow-md transition-shadow"
+                  className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow"
                 >
                   <div className="flex flex-col lg:flex-row gap-6">
                     {/* User info column */}
                     <div className="lg:w-1/3 space-y-4">
                       <div className="flex items-center gap-4">
-                        <div className="w-16 h-16 bg-slate-100 border border-slate-200 rounded-full flex items-center justify-center text-[#003566] overflow-hidden">
+                        <div className="w-16 h-16 bg-gray-100 border border-gray-200 rounded-full flex items-center justify-center text-gray-700 overflow-hidden">
                           {user.profile_image ? (
                             <img src={user.profile_image} alt={user.name} className="w-full h-full object-cover" />
                           ) : (
@@ -323,22 +321,22 @@ export default function PartnerUserManagementPage() {
                           )}
                         </div>
                         <div>
-                          <h3 className="text-xl font-serif italic text-[#003566]">{user.name}</h3>
-                          <p className="text-xs text-blue-600 font-bold uppercase tracking-wider mt-1">
+                          <h3 className="text-xl font-serif italic text-gray-900">{user.name}</h3>
+                          <p className="text-xs text-blue-700 font-bold uppercase tracking-wider mt-1">
                             {user.access_level} CLEARANCE
                           </p>
                         </div>
                       </div>
-                      <div className="space-y-2 text-sm text-slate-700">
-                        <div className="flex items-center gap-2"><Mail size={16} className="text-slate-500" /> {user.email}</div>
+                      <div className="space-y-2 text-sm text-gray-800">
+                        <div className="flex items-center gap-2"><Mail size={16} className="text-gray-600" /> {user.email}</div>
                         {user.phone_number && (
-                          <div className="flex items-center gap-2"><Phone size={16} className="text-slate-500" /> {user.phone_number}</div>
+                          <div className="flex items-center gap-2"><Phone size={16} className="text-gray-600" /> {user.phone_number}</div>
                         )}
                       </div>
-                      <div className="flex gap-4 pt-4 border-t border-slate-100">
+                      <div className="flex gap-4 pt-4 border-t border-gray-100">
                         <button
                           onClick={() => { if(confirm("Delete this user?")) handleDeleteUser(user.id); }}
-                          className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-red-500 hover:text-red-700"
+                          className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-red-600 hover:text-red-800"
                         >
                           <Trash2 size={16} /> Terminate
                         </button>
@@ -347,11 +345,11 @@ export default function PartnerUserManagementPage() {
 
                     {/* Permissions section (only for Employees) */}
                     {user.role === "Employee" && pagePermissions.length > 0 && (
-                      <div className="lg:w-2/3 lg:border-l border-slate-200 lg:pl-6">
+                      <div className="lg:w-2/3 lg:border-l border-gray-200 lg:pl-6">
                         <div className="flex items-center justify-between mb-4">
                           <button
                             onClick={() => togglePermissions(user.id)}
-                            className="flex items-center gap-2 text-sm font-semibold text-[#003566] hover:text-blue-700"
+                            className="flex items-center gap-2 text-sm font-semibold text-gray-800 hover:text-blue-700"
                           >
                             <Settings size={18} />
                             Manage Permissions
@@ -364,7 +362,7 @@ export default function PartnerUserManagementPage() {
                           {expandedPermissions[user.id] && (
                             <button
                               onClick={() => resetUserPermissions(user.id)}
-                              className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-600 hover:text-amber-800"
+                              className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-700 hover:text-amber-900"
                             >
                               <RefreshCw size={14} /> Reset All
                             </button>
@@ -380,17 +378,17 @@ export default function PartnerUserManagementPage() {
                               transition={{ duration: 0.2 }}
                               className="overflow-hidden"
                             >
-                              <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
-                                <p className="text-[10px] font-bold uppercase text-slate-500 mb-3 tracking-wider">
+                              <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                                <p className="text-[10px] font-bold uppercase text-gray-600 mb-3 tracking-wider">
                                   Page Access Control (0=Default, 1=Allow, 2=Deny)
                                 </p>
                                 <div className="space-y-3">
                                   {pagePermissions.map((page) => (
-                                    <div key={page.id} className="flex items-center justify-between border-b border-slate-200 pb-3 last:border-0">
+                                    <div key={page.id} className="flex items-center justify-between border-b border-gray-200 pb-3 last:border-0">
                                       <div className="pr-4">
-                                        <p className="text-sm font-semibold text-[#003566]">{page.page_name}</p>
+                                        <p className="text-sm font-semibold text-gray-900">{page.page_name}</p>
                                         {page.description && (
-                                          <p className="text-xs text-slate-500 mt-0.5">{page.description}</p>
+                                          <p className="text-xs text-gray-600 mt-0.5">{page.description}</p>
                                         )}
                                       </div>
                                       <PermissionDropdown userId={user.id} page={page} />
@@ -417,24 +415,24 @@ export default function PartnerUserManagementPage() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+                  className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm"
                   onClick={() => setIsModalOpen(false)}
                 />
                 <motion.div
                   initial={{ scale: 0.95, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   exit={{ scale: 0.95, opacity: 0 }}
-                  className="bg-white w-full max-w-xl p-8 shadow-2xl relative z-10 border border-slate-200 rounded-lg"
+                  className="bg-white w-full max-w-xl p-8 shadow-2xl relative z-10 border border-gray-200 rounded-lg"
                 >
                   <button
                     onClick={() => setIsModalOpen(false)}
-                    className="absolute right-4 top-4 text-slate-500 hover:text-slate-700"
+                    className="absolute right-4 top-4 text-gray-600 hover:text-gray-900"
                   >
                     <X size={20} />
                   </button>
                   <div className="mb-6">
-                    <h2 className="text-2xl font-serif italic text-[#003566]">Add New User</h2>
-                    <p className="text-xs font-bold uppercase tracking-wider text-blue-600 mt-1">
+                    <h2 className="text-2xl font-serif italic text-gray-900">Add New User</h2>
+                    <p className="text-xs font-bold uppercase tracking-wider text-blue-700 mt-1">
                       Create employee, customer or seller
                     </p>
                   </div>
@@ -442,25 +440,25 @@ export default function PartnerUserManagementPage() {
                   <form onSubmit={handleCreateUser} className="space-y-5">
                     <div className="grid grid-cols-2 gap-5">
                       <div>
-                        <label className="text-xs font-bold uppercase tracking-wider text-slate-500 block mb-1">
+                        <label className="text-xs font-bold uppercase tracking-wider text-gray-700 block mb-1">
                           Full Name
                         </label>
                         <input
                           required
-                          className="w-full border border-slate-300 rounded-md px-4 py-2.5 text-sm outline-none focus:border-blue-500 text-slate-800"
+                          className="w-full border border-gray-300 rounded-md px-4 py-2.5 text-sm outline-none focus:border-blue-500 text-gray-900"
                           value={newUser.name}
                           onChange={(e) => setNewUser({...newUser, name: e.target.value})}
                           placeholder="John Doe"
                         />
                       </div>
                       <div>
-                        <label className="text-xs font-bold uppercase tracking-wider text-slate-500 block mb-1">
+                        <label className="text-xs font-bold uppercase tracking-wider text-gray-700 block mb-1">
                           Email Address
                         </label>
                         <input
                           required
                           type="email"
-                          className="w-full border border-slate-300 rounded-md px-4 py-2.5 text-sm outline-none focus:border-blue-500 text-slate-800"
+                          className="w-full border border-gray-300 rounded-md px-4 py-2.5 text-sm outline-none focus:border-blue-500 text-gray-900"
                           value={newUser.email}
                           onChange={(e) => setNewUser({...newUser, email: e.target.value})}
                           placeholder="user@example.com"
@@ -469,13 +467,13 @@ export default function PartnerUserManagementPage() {
                     </div>
 
                     <div className="relative">
-                      <label className="text-xs font-bold uppercase tracking-wider text-slate-500 block mb-1">
+                      <label className="text-xs font-bold uppercase tracking-wider text-gray-700 block mb-1">
                         Password
                       </label>
                       <input
                         required
                         type={showPassword ? "text" : "password"}
-                        className="w-full border border-slate-300 rounded-md px-4 py-2.5 text-sm outline-none focus:border-blue-500 text-slate-800 pr-12"
+                        className="w-full border border-gray-300 rounded-md px-4 py-2.5 text-sm outline-none focus:border-blue-500 text-gray-900 pr-12"
                         value={newUser.password}
                         onChange={(e) => setNewUser({...newUser, password: e.target.value})}
                         placeholder="••••••••"
@@ -483,7 +481,7 @@ export default function PartnerUserManagementPage() {
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-9 text-slate-500 hover:text-slate-700"
+                        className="absolute right-3 top-9 text-gray-600 hover:text-gray-900"
                       >
                         {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                       </button>
@@ -491,11 +489,11 @@ export default function PartnerUserManagementPage() {
 
                     <div className="grid grid-cols-3 gap-5">
                       <div>
-                        <label className="text-xs font-bold uppercase tracking-wider text-slate-500 block mb-1">
+                        <label className="text-xs font-bold uppercase tracking-wider text-gray-700 block mb-1">
                           Role
                         </label>
                         <select
-                          className="w-full border border-slate-300 rounded-md px-3 py-2.5 text-sm outline-none text-slate-800"
+                          className="w-full border border-gray-300 rounded-md px-3 py-2.5 text-sm outline-none text-gray-900"
                           value={newUser.role}
                           onChange={(e) => setNewUser({...newUser, role: e.target.value as UserCategory})}
                         >
@@ -505,11 +503,11 @@ export default function PartnerUserManagementPage() {
                         </select>
                       </div>
                       <div>
-                        <label className="text-xs font-bold uppercase tracking-wider text-slate-500 block mb-1">
+                        <label className="text-xs font-bold uppercase tracking-wider text-gray-700 block mb-1">
                           Access Level
                         </label>
                         <select
-                          className="w-full border border-slate-300 rounded-md px-3 py-2.5 text-sm outline-none text-slate-800"
+                          className="w-full border border-gray-300 rounded-md px-3 py-2.5 text-sm outline-none text-gray-900"
                           value={newUser.access_level}
                           onChange={(e) => setNewUser({...newUser, access_level: e.target.value as "Limited" | "Full"})}
                         >
@@ -518,11 +516,11 @@ export default function PartnerUserManagementPage() {
                         </select>
                       </div>
                       <div>
-                        <label className="text-xs font-bold uppercase tracking-wider text-slate-500 block mb-1">
+                        <label className="text-xs font-bold uppercase tracking-wider text-gray-700 block mb-1">
                           Status
                         </label>
                         <select
-                          className="w-full border border-slate-300 rounded-md px-3 py-2.5 text-sm outline-none text-slate-800"
+                          className="w-full border border-gray-300 rounded-md px-3 py-2.5 text-sm outline-none text-gray-900"
                           value={newUser.status}
                           onChange={(e) => setNewUser({...newUser, status: e.target.value as "Active" | "Inactive" | "Pending"})}
                         >
