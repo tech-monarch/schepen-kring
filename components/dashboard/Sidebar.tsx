@@ -175,7 +175,7 @@ export function Sidebar({ onCollapse }: { onCollapse?: (collapsed: boolean) => v
       title: "Fleets", 
       href: userRole === "Admin" ? "/yachts" : "/yachts", 
       icon: Anchor, 
-      roles: ["Admin", "Employee", "Partner", "Customer"],
+      roles: ["Admin", "Employee", "Customer"],
       page_key: "manage_yachts"
     },
     { 
