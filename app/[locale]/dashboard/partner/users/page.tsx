@@ -5,7 +5,7 @@ import axios from "axios";
 import {
   UserPlus, Trash2, X, Eye, EyeOff, UserCircle, Mail, Phone,
   RefreshCw, Briefcase, UserCheck, Loader2, BadgeDollarSign,
-  Link as LinkIcon, Copy, ChevronDown, ChevronUp, Settings
+  Link as LinkIcon, Copy, ChevronDown, ChevronUp, Settings, Shield
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -34,6 +34,7 @@ export default function PartnerUserManagementPage() {
   const [users, setUsers] = useState<any[]>([]);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [pagePermissions, setPagePermissions] = useState<PagePermission[]>([]);
+  const [partnerPermissions, setPartnerPermissions] = useState<UserPagePermission[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<UserCategory>("Employee");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -42,6 +43,7 @@ export default function PartnerUserManagementPage() {
   const [selectedUserPermissions, setSelectedUserPermissions] = useState<Record<number, UserPagePermission[]>>({});
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [expandedPermissions, setExpandedPermissions] = useState<Record<number, boolean>>({});
+  const [expandedPartnerPermissions, setExpandedPartnerPermissions] = useState(false);
 
   // New User Form State
   const [newUser, setNewUser] = useState({
@@ -62,8 +64,21 @@ export default function PartnerUserManagementPage() {
     try {
       const res = await api.get("/user", getHeaders());
       setCurrentUser(res.data);
+      // After getting current user, fetch their permissions
+      if (res.data?.id) {
+        fetchPartnerPermissions(res.data.id);
+      }
     } catch (err) {
       console.error("Failed to fetch current user", err);
+    }
+  };
+
+  const fetchPartnerPermissions = async (userId: number) => {
+    try {
+      const response = await axios.get(`${API_BASE}/users/${userId}/page-permissions`, getHeaders());
+      setPartnerPermissions(response.data);
+    } catch (error) {
+      console.error("Failed to fetch partner permissions:", error);
     }
   };
 
@@ -131,47 +146,75 @@ export default function PartnerUserManagementPage() {
     }
   };
 
-  const updateUserPermission = async (userId: number, pageKey: string, value: PermissionValue) => {
+  const updateUserPermission = async (userId: number, pageKey: string, value: PermissionValue, isPartner = false) => {
     try {
       await axios.post(
         `${API_BASE}/users/${userId}/page-permissions/update`,
         { page_key: pageKey, permission_value: value },
         getHeaders()
       );
-      setSelectedUserPermissions(prev => {
-        const userPerms = prev[userId] || [];
-        const updatedPerms = userPerms.map(perm =>
-          perm.page_key === pageKey ? { ...perm, permission_value: value } : perm
-        );
-        if (!updatedPerms.find(p => p.page_key === pageKey)) {
-          const page = pagePermissions.find(p => p.page_key === pageKey);
-          if (page) {
-            updatedPerms.push({ page_key: pageKey, page_name: page.page_name, permission_value: value });
+
+      if (isPartner) {
+        // Update partner permissions state
+        setPartnerPermissions(prev => {
+          const updated = prev.map(p =>
+            p.page_key === pageKey ? { ...p, permission_value: value } : p
+          );
+          if (!updated.find(p => p.page_key === pageKey)) {
+            const page = pagePermissions.find(p => p.page_key === pageKey);
+            if (page) {
+              updated.push({ page_key: pageKey, page_name: page.page_name, permission_value: value });
+            }
           }
-        }
-        return { ...prev, [userId]: updatedPerms };
-      });
+          return updated;
+        });
+      } else {
+        // Update employee permissions state
+        setSelectedUserPermissions(prev => {
+          const userPerms = prev[userId] || [];
+          const updatedPerms = userPerms.map(perm =>
+            perm.page_key === pageKey ? { ...perm, permission_value: value } : perm
+          );
+          if (!updatedPerms.find(p => p.page_key === pageKey)) {
+            const page = pagePermissions.find(p => p.page_key === pageKey);
+            if (page) {
+              updatedPerms.push({ page_key: pageKey, page_name: page.page_name, permission_value: value });
+            }
+          }
+          return { ...prev, [userId]: updatedPerms };
+        });
+      }
+
       toast.success("Permission updated");
     } catch (err) {
       toast.error("Failed to update permission");
     }
   };
 
-  const resetUserPermissions = async (userId: number) => {
+  const resetUserPermissions = async (userId: number, isPartner = false) => {
     try {
       await axios.post(`${API_BASE}/users/${userId}/page-permissions/reset`, {}, getHeaders());
-      setSelectedUserPermissions(prev => {
-        const userPerms = prev[userId] || [];
-        const resetPerms = userPerms.map(perm => ({ ...perm, permission_value: 0 as PermissionValue }));
-        return { ...prev, [userId]: resetPerms };
-      });
+
+      if (isPartner) {
+        setPartnerPermissions(prev => prev.map(p => ({ ...p, permission_value: 0 })));
+      } else {
+        setSelectedUserPermissions(prev => {
+          const userPerms = prev[userId] || [];
+          const resetPerms = userPerms.map(perm => ({ ...perm, permission_value: 0 }));
+          return { ...prev, [userId]: resetPerms };
+        });
+      }
+
       toast.success("Permissions reset");
     } catch (err) {
       toast.error("Failed to reset permissions");
     }
   };
 
-  const getPermissionValue = (userId: number, pageKey: string): PermissionValue => {
+  const getPermissionValue = (userId: number, pageKey: string, isPartner = false): PermissionValue => {
+    if (isPartner) {
+      return partnerPermissions.find(p => p.page_key === pageKey)?.permission_value ?? 0;
+    }
     return selectedUserPermissions[userId]?.find(p => p.page_key === pageKey)?.permission_value ?? 0;
   };
 
@@ -186,12 +229,12 @@ export default function PartnerUserManagementPage() {
     setExpandedPermissions(prev => ({ ...prev, [userId]: !prev[userId] }));
   };
 
-  const PermissionDropdown = ({ userId, page }: { userId: number, page: PagePermission }) => {
-    const currentValue = getPermissionValue(userId, page.page_key);
+  const PermissionDropdown = ({ userId, page, isPartner = false }: { userId: number, page: PagePermission, isPartner?: boolean }) => {
+    const currentValue = getPermissionValue(userId, page.page_key, isPartner);
 
     const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
       const value = parseInt(e.target.value) as PermissionValue;
-      updateUserPermission(userId, page.page_key, value);
+      updateUserPermission(userId, page.page_key, value, isPartner);
     };
 
     return (
@@ -269,6 +312,65 @@ export default function PartnerUserManagementPage() {
               >
                 <Copy size={14} /> Copy Link
               </Button>
+            </div>
+          )}
+
+          {/* PARTNER'S OWN PERMISSIONS SECTION */}
+          {currentUser?.role === "Partner" && pagePermissions.length > 0 && (
+            <div className="bg-white border border-gray-200 rounded-lg p-6">
+              <div className="flex items-center justify-between mb-4">
+                <button
+                  onClick={() => setExpandedPartnerPermissions(!expandedPartnerPermissions)}
+                  className="flex items-center gap-2 text-sm font-semibold text-gray-800 hover:text-blue-700"
+                >
+                  <Shield size={18} />
+                  Partner Access Control
+                  {expandedPartnerPermissions ? (
+                    <ChevronUp size={18} />
+                  ) : (
+                    <ChevronDown size={18} />
+                  )}
+                </button>
+                {expandedPartnerPermissions && (
+                  <button
+                    onClick={() => resetUserPermissions(currentUser.id, true)}
+                    className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-700 hover:text-amber-900"
+                  >
+                    <RefreshCw size={14} /> Reset All
+                  </button>
+                )}
+              </div>
+
+              <AnimatePresence>
+                {expandedPartnerPermissions && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                      <p className="text-[10px] font-bold uppercase text-gray-600 mb-3 tracking-wider">
+                        Page Access Control (0=Default, 1=Allow, 2=Deny)
+                      </p>
+                      <div className="space-y-3">
+                        {pagePermissions.map((page) => (
+                          <div key={page.id} className="flex items-center justify-between border-b border-gray-200 pb-3 last:border-0">
+                            <div className="pr-4">
+                              <p className="text-sm font-semibold text-gray-900">{page.page_name}</p>
+                              {page.description && (
+                                <p className="text-xs text-gray-600 mt-0.5">{page.description}</p>
+                              )}
+                            </div>
+                            <PermissionDropdown userId={currentUser.id} page={page} isPartner={true} />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           )}
 
