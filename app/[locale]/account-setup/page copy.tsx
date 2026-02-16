@@ -112,7 +112,7 @@ function StepIndicator({ currentStep, steps }: { currentStep: number; steps: str
 export default function OnboardingYachtSetup() {
   const router = useRouter();
 
-  // Steps definition (5 steps)
+  // Steps definition
   const steps = ["", "", "", "", ""];
   const [currentStep, setCurrentStep] = useState(1);
 
@@ -225,13 +225,6 @@ export default function OnboardingYachtSetup() {
   // Display specs
   const [displaySpecs, setDisplaySpecs] = useState<Record<string, boolean>>({});
 
-  // --- NEW: Boat types and checklist ---
-  const [boatTypes, setBoatTypes] = useState<Array<{ id: number; name: string }>>([]);
-  const [selectedBoatTypeId, setSelectedBoatTypeId] = useState<number | null>(null);
-  const [checklistQuestions, setChecklistQuestions] = useState<any[]>([]);
-  const [answers, setAnswers] = useState<Record<number, { answer: string }>>({});
-  // ----------------------------------------
-
   // UI state
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<any>(null);
@@ -240,34 +233,6 @@ export default function OnboardingYachtSetup() {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [currentStep]);
-
-  // --- NEW: Fetch boat types on mount ---
-  useEffect(() => {
-    const fetchBoatTypes = async () => {
-      try {
-        const res = await api.get('/boat-types');
-        setBoatTypes(res.data);
-      } catch (err) {
-        toast.error('Failed to load boat types');
-      }
-    };
-    fetchBoatTypes();
-  }, []);
-
-  // --- NEW: Fetch checklist questions when boat type changes ---
-  useEffect(() => {
-    if (!selectedBoatTypeId) return;
-    const fetchQuestions = async () => {
-      try {
-        const res = await api.get(`/boat-checks?boat_type_id=${selectedBoatTypeId}`);
-        setChecklistQuestions(res.data);
-      } catch (err) {
-        toast.error('Failed to load checklist');
-      }
-    };
-    fetchQuestions();
-  }, [selectedBoatTypeId]);
-  // --------------------------------------------------------------
 
   // Handlers ----------------------------------------------------------------
 
@@ -365,28 +330,13 @@ export default function OnboardingYachtSetup() {
     setDisplaySpecs((prev) => ({ ...prev, [field]: isChecked }));
   };
 
-  // --- NEW: Handle answer change for checklist ---
-  const handleAnswerChange = (questionId: number, value: string) => {
-    setAnswers((prev) => ({
-      ...prev,
-      [questionId]: { answer: value },
-    }));
-  };
-  // ------------------------------------------------
-
   // Navigation --------------------------------------------------------------
 
   const handleNext = () => {
     // Basic validation for required fields on step 1
-    if (currentStep === 1) {
-      if (!formData.boat_name) {
-        toast.error("Vessel name is required");
-        return;
-      }
-      if (!selectedBoatTypeId) {
-        toast.error("Please select a boat type");
-        return;
-      }
+    if (currentStep === 1 && !formData.boat_name) {
+      toast.error("Vessel name is required");
+      return;
     }
     setCurrentStep((prev) => prev + 1);
   };
@@ -404,11 +354,6 @@ export default function OnboardingYachtSetup() {
       setCurrentStep(1);
       return;
     }
-    if (!selectedBoatTypeId) {
-      toast.error("Boat type is required");
-      setCurrentStep(1);
-      return;
-    }
 
     setIsSubmitting(true);
     setErrors(null);
@@ -416,11 +361,10 @@ export default function OnboardingYachtSetup() {
     try {
       // 1. Create the yacht with all text fields and main image
       const yachtData = new FormData();
-
+      
       // Required
       yachtData.append("boat_name", formData.boat_name);
-      yachtData.append("boat_type_id", selectedBoatTypeId.toString()); // NEW
-
+      
       // Optional text fields (only if they have a value)
       const textFields = [
         "price", "min_bid_amount", "year", "loa", "lwl", "where", "status",
@@ -481,23 +425,6 @@ export default function OnboardingYachtSetup() {
           await api.post(`/partner/yachts/${newYachtId}/gallery`, galleryFormData);
         }
       }
-
-      // --- NEW: Save checklist answers ---
-      if (Object.keys(answers).length > 0) {
-        // First create an inspection for this yacht
-        const inspectionRes = await api.post('/inspections', { boat_id: newYachtId });
-        const inspectionId = inspectionRes.data.id;
-
-        // Prepare answers payload
-        const answersPayload = Object.entries(answers).map(([qId, ans]) => ({
-          question_id: parseInt(qId),
-          answer: ans.answer,
-        }));
-
-        // Post answers
-        await api.post(`/inspections/${inspectionId}/answers`, { answers: answersPayload });
-      }
-      // -----------------------------------
 
       toast.success("Vessel Registered! Welcome Aboard.");
       router.push("/nl/dashboard/partner");
@@ -568,23 +495,6 @@ export default function OnboardingYachtSetup() {
                   <Label>Vessel Name *</Label>
                   <Input name="boat_name" value={formData.boat_name} onChange={handleInputChange} placeholder="e.g. M/Y NOBILITY" required />
                 </div>
-                {/* --- NEW: Boat Type Dropdown --- */}
-                <div className="space-y-2">
-                  <Label>Boat Type *</Label>
-                  <select
-                    name="boat_type_id"
-                    value={selectedBoatTypeId || ''}
-                    onChange={(e) => setSelectedBoatTypeId(Number(e.target.value))}
-                    className="w-full bg-slate-50 p-3 border-b border-slate-200 text-[#003566] font-bold text-xs outline-none focus:border-blue-600"
-                    required
-                  >
-                    <option value="">Select a type</option>
-                    {boatTypes.map(type => (
-                      <option key={type.id} value={type.id}>{type.name}</option>
-                    ))}
-                  </select>
-                </div>
-                {/* --------------------------------- */}
                 <div className="space-y-2">
                   <Label>Price (€)</Label>
                   <Input name="price" type="number" value={formData.price} onChange={handleInputChange} placeholder="1500000" />
@@ -858,290 +768,212 @@ export default function OnboardingYachtSetup() {
           </div>
         );
 
-      // ---------- NEW STEP 3: Merged Availability + Display Specs ----------
       case 3:
         return (
-          <div className="space-y-12">
-            {/* Availability Rules (original step 3) */}
-            <div className="space-y-8 bg-slate-50 p-10 border border-slate-200 shadow-sm">
-              <div className="flex justify-between items-center border-b border-slate-200 pb-4">
-                <h3 className="text-[12px] font-black uppercase text-[#003566] tracking-[0.4em] flex items-center gap-3 italic">
-                  <Calendar size={20} className="text-blue-600" /> Scheduling Authority
-                </h3>
-                <Button
-                  type="button"
-                  onClick={addAvailabilityRule}
-                  className="bg-[#003566] text-white text-[8px] font-black uppercase tracking-widest px-6 h-8"
-                >
-                  Add Window
-                </Button>
-              </div>
-
-              <div className="space-y-4">
-                {availabilityRules.map((rule, idx) => (
-                  <div
-                    key={idx}
-                    className="flex flex-wrap items-end gap-6 bg-white p-4 border border-slate-100 shadow-sm relative group"
-                  >
-                    <div className="flex-1 min-w-[150px]">
-                      <Label>Day of Week</Label>
-                      <select
-                        value={rule.day_of_week}
-                        onChange={(e) =>
-                          updateAvailabilityRule(idx, "day_of_week", parseInt(e.target.value))
-                        }
-                        className="w-full bg-slate-50 p-2 border-b border-slate-200 text-[#003566] font-bold text-xs outline-none"
-                      >
-                        <option value={1}>Monday</option>
-                        <option value={2}>Tuesday</option>
-                        <option value={3}>Wednesday</option>
-                        <option value={4}>Thursday</option>
-                        <option value={5}>Friday</option>
-                        <option value={6}>Saturday</option>
-                        <option value={0}>Sunday</option>
-                      </select>
-                    </div>
-
-                    <div className="flex-1 min-w-[120px]">
-                      <Label>Start Time</Label>
-                      <div className="flex items-center gap-2 bg-slate-50 p-2 border-b border-slate-200">
-                        <Clock size={12} className="text-slate-400" />
-                        <input
-                          type="time"
-                          step="900"
-                          value={rule.start_time}
-                          onChange={(e) => updateAvailabilityRule(idx, "start_time", e.target.value)}
-                          className="bg-transparent text-xs font-bold text-[#003566] outline-none w-full"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="flex-1 min-w-[120px]">
-                      <Label>End Time</Label>
-                      <div className="flex items-center gap-2 bg-slate-50 p-2 border-b border-slate-200">
-                        <Clock size={12} className="text-slate-400" />
-                        <input
-                          type="time"
-                          step="900"
-                          value={rule.end_time}
-                          onChange={(e) => updateAvailabilityRule(idx, "end_time", e.target.value)}
-                          className="bg-transparent text-xs font-bold text-[#003566] outline-none w-full"
-                        />
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => removeAvailabilityRule(idx)}
-                      className="p-2 text-red-400 hover:text-red-600 transition-colors"
-                    >
-                      <Trash size={16} />
-                    </button>
-                  </div>
-                ))}
-
-                {availabilityRules.length === 0 && (
-                  <div className="text-center py-12 border-2 border-dashed border-slate-200 bg-white">
-                    <Calendar size={32} className="mx-auto text-slate-200 mb-2" />
-                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
-                      No Booking Windows Defined. Test Sails will be disabled.
-                    </p>
-                  </div>
-                )}
-              </div>
+          <div className="space-y-8 bg-slate-50 p-10 border border-slate-200 shadow-sm">
+            <div className="flex justify-between items-center border-b border-slate-200 pb-4">
+              <h3 className="text-[12px] font-black uppercase text-[#003566] tracking-[0.4em] flex items-center gap-3 italic">
+                <Calendar size={20} className="text-blue-600" /> Scheduling Authority
+              </h3>
+              <Button
+                type="button"
+                onClick={addAvailabilityRule}
+                className="bg-[#003566] text-white text-[8px] font-black uppercase tracking-widest px-6 h-8"
+              >
+                Add Window
+              </Button>
             </div>
 
-            {/* Display Specifications (original step 4) */}
-            <div className="space-y-6 bg-white p-6 border border-slate-200">
-              <SectionHeader icon={<Eye size={14} />} title="Display Specifications" />
-              <p className="text-[9px] text-gray-600 mb-4">
-                Select which specifications to show on the public yacht page
-              </p>
-
-              <div className="space-y-4">
-                {/* General */}
-                <div className="space-y-2">
-                  <h4 className="text-[9px] font-black uppercase text-gray-700">General</h4>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                    {["builder", "model", "year", "designer", "where", "hull_number", "hull_type"].map(
-                      (field) => (
-                        <SpecCheckbox
-                          key={field}
-                          field={field}
-                          label={field.replace(/_/g, " ")}
-                          onSpecChange={handleSpecChange}
-                          checked={displaySpecs[field] || false}
-                        />
-                      )
-                    )}
+            <div className="space-y-4">
+              {availabilityRules.map((rule, idx) => (
+                <div
+                  key={idx}
+                  className="flex flex-wrap items-end gap-6 bg-white p-4 border border-slate-100 shadow-sm relative group"
+                >
+                  <div className="flex-1 min-w-[150px]">
+                    <Label>Day of Week</Label>
+                    <select
+                      value={rule.day_of_week}
+                      onChange={(e) =>
+                        updateAvailabilityRule(idx, "day_of_week", parseInt(e.target.value))
+                      }
+                      className="w-full bg-slate-50 p-2 border-b border-slate-200 text-[#003566] font-bold text-xs outline-none"
+                    >
+                      <option value={1}>Monday</option>
+                      <option value={2}>Tuesday</option>
+                      <option value={3}>Wednesday</option>
+                      <option value={4}>Thursday</option>
+                      <option value={5}>Friday</option>
+                      <option value={6}>Saturday</option>
+                      <option value={0}>Sunday</option>
+                    </select>
                   </div>
-                </div>
 
-                {/* Dimensions */}
-                <div className="space-y-2">
-                  <h4 className="text-[9px] font-black uppercase text-gray-700">Dimensions</h4>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                    {["loa", "lwl", "beam", "draft", "air_draft", "displacement", "ballast", "passenger_capacity"].map(
-                      (field) => (
-                        <SpecCheckbox
-                          key={field}
-                          field={field}
-                          label={field.replace(/_/g, " ")}
-                          onSpecChange={handleSpecChange}
-                          checked={displaySpecs[field] || false}
-                        />
-                      )
-                    )}
-                  </div>
-                </div>
-
-                {/* Construction */}
-                <div className="space-y-2">
-                  <h4 className="text-[9px] font-black uppercase text-gray-700">Construction</h4>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                    {[
-                      "hull_colour",
-                      "hull_construction",
-                      "super_structure_colour",
-                      "super_structure_construction",
-                      "deck_colour",
-                      "deck_construction",
-                      "cockpit_type",
-                      "control_type",
-                    ].map((field) => (
-                      <SpecCheckbox
-                        key={field}
-                        field={field}
-                        label={field.replace(/_/g, " ")}
-                        onSpecChange={handleSpecChange}
-                        checked={displaySpecs[field] || false}
+                  <div className="flex-1 min-w-[120px]">
+                    <Label>Start Time</Label>
+                    <div className="flex items-center gap-2 bg-slate-50 p-2 border-b border-slate-200">
+                      <Clock size={12} className="text-slate-400" />
+                      <input
+                        type="time"
+                        step="900"
+                        value={rule.start_time}
+                        onChange={(e) => updateAvailabilityRule(idx, "start_time", e.target.value)}
+                        className="bg-transparent text-xs font-bold text-[#003566] outline-none w-full"
                       />
-                    ))}
+                    </div>
                   </div>
-                </div>
 
-                {/* Engine */}
-                <div className="space-y-2">
-                  <h4 className="text-[9px] font-black uppercase text-gray-700">Engine & Performance</h4>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                    {[
-                      "engine_manufacturer",
-                      "horse_power",
-                      "fuel",
-                      "hours",
-                      "cruising_speed",
-                      "max_speed",
-                      "tankage",
-                      "gallons_per_hour",
-                      "starting_type",
-                      "drive_type",
-                    ].map((field) => (
-                      <SpecCheckbox
-                        key={field}
-                        field={field}
-                        label={field.replace(/_/g, " ")}
-                        onSpecChange={handleSpecChange}
-                        checked={displaySpecs[field] || false}
+                  <div className="flex-1 min-w-[120px]">
+                    <Label>End Time</Label>
+                    <div className="flex items-center gap-2 bg-slate-50 p-2 border-b border-slate-200">
+                      <Clock size={12} className="text-slate-400" />
+                      <input
+                        type="time"
+                        step="900"
+                        value={rule.end_time}
+                        onChange={(e) => updateAvailabilityRule(idx, "end_time", e.target.value)}
+                        className="bg-transparent text-xs font-bold text-[#003566] outline-none w-full"
                       />
-                    ))}
+                    </div>
                   </div>
-                </div>
 
-                {/* Accommodation */}
-                <div className="space-y-2">
-                  <h4 className="text-[9px] font-black uppercase text-gray-700">Accommodation</h4>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                    {["cabins", "berths", "toilet", "shower", "bath", "heating"].map((field) => (
-                      <SpecCheckbox
-                        key={field}
-                        field={field}
-                        label={field.replace(/_/g, " ")}
-                        onSpecChange={handleSpecChange}
-                        checked={displaySpecs[field] || false}
-                      />
-                    ))}
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => removeAvailabilityRule(idx)}
+                    className="p-2 text-red-400 hover:text-red-600 transition-colors"
+                  >
+                    <Trash size={16} />
+                  </button>
                 </div>
-              </div>
+              ))}
+
+              {availabilityRules.length === 0 && (
+                <div className="text-center py-12 border-2 border-dashed border-slate-200 bg-white">
+                  <Calendar size={32} className="mx-auto text-slate-200 mb-2" />
+                  <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
+                    No Booking Windows Defined. Test Sails will be disabled.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         );
-      // ---------------------------------------------------------------
 
-      // ---------- NEW STEP 4: Checklist Questions ----------
       case 4:
         return (
-          <div className="space-y-8">
-            <h3 className="text-[12px] font-black text-[#003566] uppercase tracking-[0.3em] flex items-center gap-3 border-b-2 border-[#003566] pb-4">
-              <CheckSquare size={18} /> Vessel Inspection Checklist
-            </h3>
-            {checklistQuestions.length === 0 ? (
-              <p className="text-center py-12 text-slate-400">No questions for this boat type.</p>
-            ) : (
-              <div className="space-y-6">
-                {checklistQuestions.map((q) => (
-                  <div key={q.id} className="bg-white p-6 border border-slate-200">
-                    <p className="font-bold text-sm mb-2">{q.question_text}</p>
-                    {q.ai_prompt && (
-                      <p className="text-xs text-slate-500 italic mb-4">AI prompt: {q.ai_prompt}</p>
-                    )}
-                    <div className="space-y-2">
-                      {/* Render input based on question type */}
-                      {q.type === 'YES_NO' && (
-                        <div className="flex gap-4">
-                          <label className="flex items-center gap-2">
-                            <input
-                              type="radio"
-                              name={`q_${q.id}`}
-                              value="yes"
-                              checked={answers[q.id]?.answer === 'yes'}
-                              onChange={() => handleAnswerChange(q.id, 'yes')}
-                            /> Yes
-                          </label>
-                          <label className="flex items-center gap-2">
-                            <input
-                              type="radio"
-                              name={`q_${q.id}`}
-                              value="no"
-                              checked={answers[q.id]?.answer === 'no'}
-                              onChange={() => handleAnswerChange(q.id, 'no')}
-                            /> No
-                          </label>
-                        </div>
-                      )}
-                      {q.type === 'TEXT' && (
-                        <textarea
-                          className="w-full border p-2 text-sm"
-                          rows={3}
-                          value={answers[q.id]?.answer || ''}
-                          onChange={(e) => handleAnswerChange(q.id, e.target.value)}
-                        />
-                      )}
-                      {q.type === 'DATE' && (
-                        <input
-                          type="date"
-                          className="border p-2"
-                          value={answers[q.id]?.answer || ''}
-                          onChange={(e) => handleAnswerChange(q.id, e.target.value)}
-                        />
-                      )}
-                      {q.type === 'MULTI' && (
-                        <input
-                          type="text"
-                          className="border p-2 w-full"
-                          placeholder="Enter value"
-                          value={answers[q.id]?.answer || ''}
-                          onChange={(e) => handleAnswerChange(q.id, e.target.value)}
-                        />
-                      )}
-                    </div>
-                  </div>
-                ))}
+          <div className="space-y-6 bg-white p-6 border border-slate-200">
+            <SectionHeader icon={<Eye size={14} />} title="Display Specifications" />
+            <p className="text-[9px] text-gray-600 mb-4">
+              Select which specifications to show on the public yacht page
+            </p>
+
+            <div className="space-y-4">
+              {/* General */}
+              <div className="space-y-2">
+                <h4 className="text-[9px] font-black uppercase text-gray-700">General</h4>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                  {["builder", "model", "year", "designer", "where", "hull_number", "hull_type"].map(
+                    (field) => (
+                      <SpecCheckbox
+                        key={field}
+                        field={field}
+                        label={field.replace(/_/g, " ")}
+                        onSpecChange={handleSpecChange}
+                        checked={displaySpecs[field] || false}
+                      />
+                    )
+                  )}
+                </div>
               </div>
-            )}
+
+              {/* Dimensions */}
+              <div className="space-y-2">
+                <h4 className="text-[9px] font-black uppercase text-gray-700">Dimensions</h4>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                  {["loa", "lwl", "beam", "draft", "air_draft", "displacement", "ballast", "passenger_capacity"].map(
+                    (field) => (
+                      <SpecCheckbox
+                        key={field}
+                        field={field}
+                        label={field.replace(/_/g, " ")}
+                        onSpecChange={handleSpecChange}
+                        checked={displaySpecs[field] || false}
+                      />
+                    )
+                  )}
+                </div>
+              </div>
+
+              {/* Construction */}
+              <div className="space-y-2">
+                <h4 className="text-[9px] font-black uppercase text-gray-700">Construction</h4>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                  {[
+                    "hull_colour",
+                    "hull_construction",
+                    "super_structure_colour",
+                    "super_structure_construction",
+                    "deck_colour",
+                    "deck_construction",
+                    "cockpit_type",
+                    "control_type",
+                  ].map((field) => (
+                    <SpecCheckbox
+                      key={field}
+                      field={field}
+                      label={field.replace(/_/g, " ")}
+                      onSpecChange={handleSpecChange}
+                      checked={displaySpecs[field] || false}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* Engine */}
+              <div className="space-y-2">
+                <h4 className="text-[9px] font-black uppercase text-gray-700">Engine & Performance</h4>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                  {[
+                    "engine_manufacturer",
+                    "horse_power",
+                    "fuel",
+                    "hours",
+                    "cruising_speed",
+                    "max_speed",
+                    "tankage",
+                    "gallons_per_hour",
+                    "starting_type",
+                    "drive_type",
+                  ].map((field) => (
+                    <SpecCheckbox
+                      key={field}
+                      field={field}
+                      label={field.replace(/_/g, " ")}
+                      onSpecChange={handleSpecChange}
+                      checked={displaySpecs[field] || false}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* Accommodation */}
+              <div className="space-y-2">
+                <h4 className="text-[9px] font-black uppercase text-gray-700">Accommodation</h4>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                  {["cabins", "berths", "toilet", "shower", "bath", "heating"].map((field) => (
+                    <SpecCheckbox
+                      key={field}
+                      field={field}
+                      label={field.replace(/_/g, " ")}
+                      onSpecChange={handleSpecChange}
+                      checked={displaySpecs[field] || false}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
         );
-      // ------------------------------------------------
 
       case 5:
         return (
