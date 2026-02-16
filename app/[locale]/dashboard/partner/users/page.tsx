@@ -5,15 +5,16 @@ import axios from "axios";
 import {
   UserPlus, Trash2, X, Eye, EyeOff, UserCircle, Mail, Phone,
   RefreshCw, CheckSquare, Square, MinusSquare, Briefcase, UserCheck,
-  Loader2
+  Loader2, BadgeDollarSign, Link as LinkIcon, Copy
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast, Toaster } from "react-hot-toast";
 import { Sidebar } from "@/components/dashboard/Sidebar";
+import { api } from "@/lib/api"; // adjust import to your api instance
 
-type UserCategory = "Employee" | "Customer";
+type UserCategory = "Employee" | "Customer" | "Seller";
 type PermissionValue = 0 | 1 | 2;
 
 interface PagePermission {
@@ -31,6 +32,7 @@ interface UserPagePermission {
 
 export default function PartnerUserManagementPage() {
   const [users, setUsers] = useState<any[]>([]);
+  const [currentUser, setCurrentUser] = useState<any>(null);
   const [pagePermissions, setPagePermissions] = useState<PagePermission[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<UserCategory>("Employee");
@@ -55,8 +57,19 @@ export default function PartnerUserManagementPage() {
     headers: { Authorization: `Bearer ${localStorage.getItem("auth_token")}`, Accept: "application/json" },
   });
 
+  // Fetch current user (partner) data
+  const fetchCurrentUser = async () => {
+    try {
+      const res = await api.get("/user", getHeaders());
+      setCurrentUser(res.data);
+    } catch (err) {
+      console.error("Failed to fetch current user", err);
+    }
+  };
+
   useEffect(() => {
     fetchData();
+    fetchCurrentUser();
   }, []);
 
   const fetchData = async () => {
@@ -169,45 +182,36 @@ export default function PartnerUserManagementPage() {
     );
   }, [users, searchQuery, activeTab]);
 
-  const PermissionToggle = ({ userId, page }: { userId: number, page: PagePermission }) => {
+  // Dropdown component for permissions
+  const PermissionDropdown = ({ userId, page }: { userId: number, page: PagePermission }) => {
     const currentValue = getPermissionValue(userId, page.page_key);
+
+    const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+      const value = parseInt(e.target.value) as PermissionValue;
+      updateUserPermission(userId, page.page_key, value);
+    };
+
     return (
-      <div className="flex items-center gap-2">
-        <button
-          onClick={() => updateUserPermission(userId, page.page_key, 1)}
-          className={cn(
-            "px-3 py-2 text-[9px] font-bold uppercase border transition-all flex items-center gap-1",
-            currentValue === 1
-              ? "bg-green-100 text-green-700 border-green-300"
-              : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
-          )}
-        >
-          <CheckSquare size={12} /> Allow
-        </button>
-        <button
-          onClick={() => updateUserPermission(userId, page.page_key, 2)}
-          className={cn(
-            "px-3 py-2 text-[9px] font-bold uppercase border transition-all flex items-center gap-1",
-            currentValue === 2
-              ? "bg-red-100 text-red-700 border-red-300"
-              : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
-          )}
-        >
-          <Square size={12} /> Deny
-        </button>
-        <button
-          onClick={() => updateUserPermission(userId, page.page_key, 0)}
-          className={cn(
-            "px-3 py-2 text-[9px] font-bold uppercase border transition-all flex items-center gap-1",
-            currentValue === 0
-              ? "bg-blue-100 text-blue-700 border-blue-300"
-              : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
-          )}
-        >
-          <MinusSquare size={12} /> Default
-        </button>
-      </div>
+      <select
+        value={currentValue}
+        onChange={handleChange}
+        className="border border-slate-200 bg-white px-3 py-2 text-[10px] font-bold uppercase tracking-wider outline-none focus:border-blue-400 cursor-pointer"
+      >
+        <option value={0}>Default</option>
+        <option value={1}>Allow</option>
+        <option value={2}>Deny</option>
+      </select>
     );
+  };
+
+  // Construct referral link if current user is a partner and has a token
+  const referralLink = currentUser?.role === "Partner" && currentUser?.partner_token
+    ? `${window.location.origin}/nl/login/${currentUser.partner_token}`
+    : null;
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast.success("Referral link copied to clipboard!");
   };
 
   return (
@@ -224,7 +228,7 @@ export default function PartnerUserManagementPage() {
           <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-slate-100 pb-10">
             <div>
               <h1 className="text-4xl font-serif italic text-[#003566]">Harbor Personnel</h1>
-              <p className="text-[10px] uppercase tracking-[0.4em] text-blue-600 font-black mt-2">Manage your employees & customers</p>
+              <p className="text-[10px] uppercase tracking-[0.4em] text-blue-600 font-black mt-2">Manage your employees & customers & sellers</p>
             </div>
             <div className="flex gap-4">
               <input
@@ -240,9 +244,30 @@ export default function PartnerUserManagementPage() {
             </div>
           </div>
 
+          {/* REFERRAL LINK SECTION (only for partners) */}
+          {referralLink && (
+            <div className="bg-blue-50 border border-blue-100 p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-100 rounded-full">
+                  <LinkIcon className="w-4 h-4 text-blue-700" />
+                </div>
+                <div>
+                  <p className="text-[9px] font-black uppercase tracking-widest text-blue-800">Your Unique Referral Link</p>
+                  <p className="text-xs text-blue-900 font-mono break-all">{referralLink}</p>
+                </div>
+              </div>
+              <Button
+                onClick={() => copyToClipboard(referralLink)}
+                className="bg-white border border-blue-200 text-blue-800 hover:bg-blue-100 rounded-none text-[10px] font-black uppercase tracking-widest px-4 py-2 flex items-center gap-2"
+              >
+                <Copy size={14} /> Copy Link
+              </Button>
+            </div>
+          )}
+
           {/* TABS */}
           <div className="flex flex-wrap gap-2 border-b border-slate-100">
-            {(["Employee", "Customer"] as UserCategory[]).map((tab) => (
+            {(["Employee", "Customer", "Seller"] as UserCategory[]).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -251,7 +276,9 @@ export default function PartnerUserManagementPage() {
                   activeTab === tab ? "text-[#003566]" : "text-slate-400"
                 )}
               >
-                {tab === "Employee" ? <Briefcase size={16} /> : <UserCircle size={16} />}
+                {tab === "Employee" ? <Briefcase size={16} /> :
+                 tab === "Customer" ? <UserCircle size={16} /> :
+                 <BadgeDollarSign size={16} />}
                 {tab}s
                 {activeTab === tab && <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-1 bg-[#003566]" />}
               </button>
@@ -296,7 +323,7 @@ export default function PartnerUserManagementPage() {
                       </div>
                     </div>
 
-                    {/* PERMISSION TOGGLES (only for Employees) */}
+                    {/* PERMISSION DROPDOWNS (only for Employees) */}
                     {user.role === "Employee" && pagePermissions.length > 0 && (
                       <div className="lg:w-2/3 lg:border-l border-slate-100 lg:pl-10">
                         <div className="flex justify-between items-center mb-6">
@@ -316,7 +343,7 @@ export default function PartnerUserManagementPage() {
                                 <p className="text-[10px] font-bold uppercase text-[#003566]">{page.page_name}</p>
                                 {page.description && <p className="text-[8px] text-slate-500 mt-1">{page.description}</p>}
                               </div>
-                              <PermissionToggle userId={user.id} page={page} />
+                              <PermissionDropdown userId={user.id} page={page} />
                             </div>
                           ))}
                         </div>
@@ -348,7 +375,7 @@ export default function PartnerUserManagementPage() {
                   <button onClick={() => setIsModalOpen(false)} className="absolute right-6 top-6 text-slate-400 hover:text-slate-600"><X size={20} /></button>
                   <div className="mb-8">
                     <h2 className="text-2xl font-serif italic text-[#003566]">Add New User</h2>
-                    <p className="text-[9px] font-black uppercase tracking-widest text-blue-600">Create employee or customer</p>
+                    <p className="text-[9px] font-black uppercase tracking-widest text-blue-600">Create employee, customer or seller</p>
                   </div>
 
                   <form onSubmit={handleCreateUser} className="space-y-6">
@@ -405,6 +432,7 @@ export default function PartnerUserManagementPage() {
                         >
                           <option value="Employee">Employee</option>
                           <option value="Customer">Customer</option>
+                          <option value="Seller">Seller</option>
                         </select>
                       </div>
                       <div className="space-y-1">
