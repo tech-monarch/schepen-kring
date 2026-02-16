@@ -4,15 +4,15 @@ import { useState, useEffect, useMemo } from "react";
 import axios from "axios";
 import {
   UserPlus, Trash2, X, Eye, EyeOff, UserCircle, Mail, Phone,
-  RefreshCw, CheckSquare, Square, MinusSquare, Briefcase, UserCheck,
-  Loader2, BadgeDollarSign, Link as LinkIcon, Copy
+  RefreshCw, Briefcase, UserCheck, Loader2, BadgeDollarSign,
+  Link as LinkIcon, Copy, ChevronDown, ChevronUp, Settings
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast, Toaster } from "react-hot-toast";
 import { Sidebar } from "@/components/dashboard/Sidebar";
-import { api } from "@/lib/api"; // adjust import to your api instance
+import { api } from "@/lib/api";
 
 type UserCategory = "Employee" | "Customer" | "Seller";
 type PermissionValue = 0 | 1 | 2;
@@ -41,6 +41,8 @@ export default function PartnerUserManagementPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [selectedUserPermissions, setSelectedUserPermissions] = useState<Record<number, UserPagePermission[]>>({});
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  // Track which users have permissions expanded
+  const [expandedPermissions, setExpandedPermissions] = useState<Record<number, boolean>>({});
 
   // New User Form State
   const [newUser, setNewUser] = useState({
@@ -57,7 +59,6 @@ export default function PartnerUserManagementPage() {
     headers: { Authorization: `Bearer ${localStorage.getItem("auth_token")}`, Accept: "application/json" },
   });
 
-  // Fetch current user (partner) data
   const fetchCurrentUser = async () => {
     try {
       const res = await api.get("/user", getHeaders());
@@ -182,7 +183,11 @@ export default function PartnerUserManagementPage() {
     );
   }, [users, searchQuery, activeTab]);
 
-  // Dropdown component for permissions
+  // Toggle permissions expansion for a user
+  const togglePermissions = (userId: number) => {
+    setExpandedPermissions(prev => ({ ...prev, [userId]: !prev[userId] }));
+  };
+
   const PermissionDropdown = ({ userId, page }: { userId: number, page: PagePermission }) => {
     const currentValue = getPermissionValue(userId, page.page_key);
 
@@ -195,7 +200,7 @@ export default function PartnerUserManagementPage() {
       <select
         value={currentValue}
         onChange={handleChange}
-        className="border border-slate-200 bg-white px-3 py-2 text-[10px] font-bold uppercase tracking-wider outline-none focus:border-blue-400 cursor-pointer"
+        className="border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium rounded shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 cursor-pointer"
       >
         <option value={0}>Default</option>
         <option value={1}>Allow</option>
@@ -204,7 +209,6 @@ export default function PartnerUserManagementPage() {
     );
   };
 
-  // Construct referral link if current user is a partner and has a token
   const referralLink = currentUser?.role === "Partner" && currentUser?.partner_token
     ? `${window.location.origin}/nl/login/${currentUser.partner_token}`
     : null;
@@ -221,24 +225,29 @@ export default function PartnerUserManagementPage() {
         className="flex-1 transition-all duration-300 bg-white"
         style={{ marginLeft: isSidebarCollapsed ? '80px' : '280px' }}
       >
-        <div className="space-y-10 p-6 max-w-7xl mx-auto">
+        <div className="space-y-8 p-8 max-w-7xl mx-auto">
           <Toaster position="top-right" />
 
           {/* HEADER */}
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-slate-100 pb-10">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-slate-200 pb-8">
             <div>
               <h1 className="text-4xl font-serif italic text-[#003566]">Harbor Personnel</h1>
-              <p className="text-[10px] uppercase tracking-[0.4em] text-blue-600 font-black mt-2">Manage your employees & customers & sellers</p>
+              <p className="text-xs uppercase tracking-[0.3em] text-blue-600 font-bold mt-2">
+                Manage employees, customers & sellers
+              </p>
             </div>
             <div className="flex gap-4">
               <input
                 type="text"
                 placeholder="SEARCH..."
-                className="bg-white border border-slate-200 px-4 py-3 text-[10px] font-bold tracking-widest uppercase outline-none focus:border-blue-400 w-64 text-[#003566] placeholder:text-slate-300"
+                className="bg-white border border-slate-300 px-4 py-3 text-xs font-semibold tracking-wider uppercase outline-none focus:border-blue-500 w-64 text-slate-800 placeholder:text-slate-400 rounded"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
-              <Button onClick={() => setIsModalOpen(true)} className="bg-[#003566] text-white rounded-none uppercase text-[10px] tracking-widest font-black px-8 h-12">
+              <Button
+                onClick={() => setIsModalOpen(true)}
+                className="bg-[#003566] hover:bg-blue-800 text-white rounded-md uppercase text-xs tracking-wider font-bold px-6 h-12 shadow-md"
+              >
                 <UserPlus className="mr-2 w-4 h-4" /> Add New
               </Button>
             </div>
@@ -246,19 +255,19 @@ export default function PartnerUserManagementPage() {
 
           {/* REFERRAL LINK SECTION (only for partners) */}
           {referralLink && (
-            <div className="bg-blue-50 border border-blue-100 p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-blue-100 rounded-full">
                   <LinkIcon className="w-4 h-4 text-blue-700" />
                 </div>
                 <div>
-                  <p className="text-[9px] font-black uppercase tracking-widest text-blue-800">Your Unique Referral Link</p>
-                  <p className="text-xs text-blue-900 font-mono break-all">{referralLink}</p>
+                  <p className="text-xs font-bold uppercase tracking-wider text-blue-800">Your Unique Referral Link</p>
+                  <p className="text-sm text-blue-900 font-mono break-all">{referralLink}</p>
                 </div>
               </div>
               <Button
                 onClick={() => copyToClipboard(referralLink)}
-                className="bg-white border border-blue-200 text-blue-800 hover:bg-blue-100 rounded-none text-[10px] font-black uppercase tracking-widest px-4 py-2 flex items-center gap-2"
+                className="bg-white border border-blue-300 text-blue-800 hover:bg-blue-100 rounded-md text-xs font-bold uppercase tracking-wider px-4 py-2 flex items-center gap-2 shadow-sm"
               >
                 <Copy size={14} /> Copy Link
               </Button>
@@ -266,21 +275,23 @@ export default function PartnerUserManagementPage() {
           )}
 
           {/* TABS */}
-          <div className="flex flex-wrap gap-2 border-b border-slate-100">
+          <div className="flex flex-wrap gap-1 border-b border-slate-200">
             {(["Employee", "Customer", "Seller"] as UserCategory[]).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
                 className={cn(
-                  "flex items-center gap-3 px-8 py-4 text-[10px] font-black uppercase tracking-widest transition-all relative",
-                  activeTab === tab ? "text-[#003566]" : "text-slate-400"
+                  "flex items-center gap-2 px-6 py-3 text-xs font-bold uppercase tracking-wider transition-all relative",
+                  activeTab === tab ? "text-[#003566]" : "text-slate-500 hover:text-slate-700"
                 )}
               >
                 {tab === "Employee" ? <Briefcase size={16} /> :
                  tab === "Customer" ? <UserCircle size={16} /> :
                  <BadgeDollarSign size={16} />}
                 {tab}s
-                {activeTab === tab && <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-1 bg-[#003566]" />}
+                {activeTab === tab && (
+                  <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#003566]" />
+                )}
               </button>
             ))}
           </div>
@@ -288,19 +299,23 @@ export default function PartnerUserManagementPage() {
           {/* USER LIST */}
           <div className="grid grid-cols-1 gap-6 pb-20">
             {loading ? (
-              <Loader2 className="animate-spin mx-auto mt-20 text-slate-200" size={48} />
+              <Loader2 className="animate-spin mx-auto mt-20 text-slate-400" size={48} />
             ) : filteredUsers.length === 0 ? (
-              <div className="text-center py-20 text-slate-400">
-                <p className="text-[10px] font-bold uppercase tracking-widest">No users found</p>
+              <div className="text-center py-20 text-slate-500">
+                <p className="text-xs font-bold uppercase tracking-wider">No users found</p>
               </div>
             ) : (
               filteredUsers.map((user) => (
-                <motion.div layout key={user.id} className="bg-white border border-slate-200 p-8 hover:shadow-lg transition-all">
-                  <div className="flex flex-col lg:flex-row gap-10">
+                <motion.div
+                  layout
+                  key={user.id}
+                  className="bg-white border border-slate-200 rounded-lg p-6 hover:shadow-md transition-shadow"
+                >
+                  <div className="flex flex-col lg:flex-row gap-6">
                     {/* User info column */}
-                    <div className="lg:w-1/3 space-y-6">
+                    <div className="lg:w-1/3 space-y-4">
                       <div className="flex items-center gap-4">
-                        <div className="w-16 h-16 bg-slate-50 border border-slate-200 flex items-center justify-center text-[#003566]">
+                        <div className="w-16 h-16 bg-slate-100 border border-slate-200 rounded-full flex items-center justify-center text-[#003566] overflow-hidden">
                           {user.profile_image ? (
                             <img src={user.profile_image} alt={user.name} className="w-full h-full object-cover" />
                           ) : (
@@ -309,44 +324,83 @@ export default function PartnerUserManagementPage() {
                         </div>
                         <div>
                           <h3 className="text-xl font-serif italic text-[#003566]">{user.name}</h3>
-                          <p className="text-[10px] text-blue-600 font-black uppercase tracking-widest">{user.access_level} CLEARANCE</p>
+                          <p className="text-xs text-blue-600 font-bold uppercase tracking-wider mt-1">
+                            {user.access_level} CLEARANCE
+                          </p>
                         </div>
                       </div>
-                      <div className="space-y-2 text-[10px] font-bold text-slate-700 uppercase tracking-widest">
-                        <div className="flex items-center gap-2"><Mail size={14} className="text-slate-400" /> {user.email}</div>
-                        {user.phone_number && <div className="flex items-center gap-2"><Phone size={14} className="text-slate-400" /> {user.phone_number}</div>}
+                      <div className="space-y-2 text-sm text-slate-700">
+                        <div className="flex items-center gap-2"><Mail size={16} className="text-slate-500" /> {user.email}</div>
+                        {user.phone_number && (
+                          <div className="flex items-center gap-2"><Phone size={16} className="text-slate-500" /> {user.phone_number}</div>
+                        )}
                       </div>
-                      <div className="flex gap-4 pt-4 border-t border-slate-50">
-                        <button onClick={() => { if(confirm("Delete this user?")) handleDeleteUser(user.id); }} className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-red-400 hover:text-red-600">
-                          <Trash2 size={14} /> Terminate
+                      <div className="flex gap-4 pt-4 border-t border-slate-100">
+                        <button
+                          onClick={() => { if(confirm("Delete this user?")) handleDeleteUser(user.id); }}
+                          className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-red-500 hover:text-red-700"
+                        >
+                          <Trash2 size={16} /> Terminate
                         </button>
                       </div>
                     </div>
 
-                    {/* PERMISSION DROPDOWNS (only for Employees) */}
+                    {/* Permissions section (only for Employees) */}
                     {user.role === "Employee" && pagePermissions.length > 0 && (
-                      <div className="lg:w-2/3 lg:border-l border-slate-100 lg:pl-10">
-                        <div className="flex justify-between items-center mb-6">
-                          <div>
-                            <p className="text-[8px] font-black uppercase text-slate-400 tracking-[0.3em]">Page Access Control</p>
-                            <p className="text-[7px] text-slate-400 mt-1">0=Default | 1=Show | 2=Hide</p>
-                          </div>
-                          <button onClick={() => resetUserPermissions(user.id)} className="flex items-center gap-2 text-[8px] font-black uppercase tracking-widest text-amber-600 hover:text-amber-700">
-                            <RefreshCw size={12} /> Reset All
+                      <div className="lg:w-2/3 lg:border-l border-slate-200 lg:pl-6">
+                        <div className="flex items-center justify-between mb-4">
+                          <button
+                            onClick={() => togglePermissions(user.id)}
+                            className="flex items-center gap-2 text-sm font-semibold text-[#003566] hover:text-blue-700"
+                          >
+                            <Settings size={18} />
+                            Manage Permissions
+                            {expandedPermissions[user.id] ? (
+                              <ChevronUp size={18} />
+                            ) : (
+                              <ChevronDown size={18} />
+                            )}
                           </button>
+                          {expandedPermissions[user.id] && (
+                            <button
+                              onClick={() => resetUserPermissions(user.id)}
+                              className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-600 hover:text-amber-800"
+                            >
+                              <RefreshCw size={14} /> Reset All
+                            </button>
+                          )}
                         </div>
 
-                        <div className="space-y-4">
-                          {pagePermissions.map((page) => (
-                            <div key={page.id} className="flex items-center justify-between border-b border-slate-100 pb-4">
-                              <div>
-                                <p className="text-[10px] font-bold uppercase text-[#003566]">{page.page_name}</p>
-                                {page.description && <p className="text-[8px] text-slate-500 mt-1">{page.description}</p>}
+                        <AnimatePresence>
+                          {expandedPermissions[user.id] && (
+                            <motion.div
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: "auto" }}
+                              exit={{ opacity: 0, height: 0 }}
+                              transition={{ duration: 0.2 }}
+                              className="overflow-hidden"
+                            >
+                              <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                                <p className="text-[10px] font-bold uppercase text-slate-500 mb-3 tracking-wider">
+                                  Page Access Control (0=Default, 1=Allow, 2=Deny)
+                                </p>
+                                <div className="space-y-3">
+                                  {pagePermissions.map((page) => (
+                                    <div key={page.id} className="flex items-center justify-between border-b border-slate-200 pb-3 last:border-0">
+                                      <div className="pr-4">
+                                        <p className="text-sm font-semibold text-[#003566]">{page.page_name}</p>
+                                        {page.description && (
+                                          <p className="text-xs text-slate-500 mt-0.5">{page.description}</p>
+                                        )}
+                                      </div>
+                                      <PermissionDropdown userId={user.id} page={page} />
+                                    </div>
+                                  ))}
+                                </div>
                               </div>
-                              <PermissionDropdown userId={user.id} page={page} />
-                            </div>
-                          ))}
-                        </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
                       </div>
                     )}
                   </div>
@@ -370,32 +424,43 @@ export default function PartnerUserManagementPage() {
                   initial={{ scale: 0.95, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   exit={{ scale: 0.95, opacity: 0 }}
-                  className="bg-white w-full max-w-xl p-10 shadow-2xl relative z-10 border border-slate-200 rounded-none"
+                  className="bg-white w-full max-w-xl p-8 shadow-2xl relative z-10 border border-slate-200 rounded-lg"
                 >
-                  <button onClick={() => setIsModalOpen(false)} className="absolute right-6 top-6 text-slate-400 hover:text-slate-600"><X size={20} /></button>
-                  <div className="mb-8">
+                  <button
+                    onClick={() => setIsModalOpen(false)}
+                    className="absolute right-4 top-4 text-slate-500 hover:text-slate-700"
+                  >
+                    <X size={20} />
+                  </button>
+                  <div className="mb-6">
                     <h2 className="text-2xl font-serif italic text-[#003566]">Add New User</h2>
-                    <p className="text-[9px] font-black uppercase tracking-widest text-blue-600">Create employee, customer or seller</p>
+                    <p className="text-xs font-bold uppercase tracking-wider text-blue-600 mt-1">
+                      Create employee, customer or seller
+                    </p>
                   </div>
 
-                  <form onSubmit={handleCreateUser} className="space-y-6">
-                    <div className="grid grid-cols-2 gap-6">
-                      <div className="space-y-1">
-                        <label className="text-[8px] font-black uppercase tracking-widest text-slate-400">Full Name</label>
+                  <form onSubmit={handleCreateUser} className="space-y-5">
+                    <div className="grid grid-cols-2 gap-5">
+                      <div>
+                        <label className="text-xs font-bold uppercase tracking-wider text-slate-500 block mb-1">
+                          Full Name
+                        </label>
                         <input
                           required
-                          className="w-full border-b border-slate-200 py-2 text-[10px] font-bold uppercase outline-none focus:border-blue-400 text-[#003566] placeholder:text-slate-300"
+                          className="w-full border border-slate-300 rounded-md px-4 py-2.5 text-sm outline-none focus:border-blue-500 text-slate-800"
                           value={newUser.name}
                           onChange={(e) => setNewUser({...newUser, name: e.target.value})}
                           placeholder="John Doe"
                         />
                       </div>
-                      <div className="space-y-1">
-                        <label className="text-[8px] font-black uppercase tracking-widest text-slate-400">Email Address</label>
+                      <div>
+                        <label className="text-xs font-bold uppercase tracking-wider text-slate-500 block mb-1">
+                          Email Address
+                        </label>
                         <input
                           required
                           type="email"
-                          className="w-full border-b border-slate-200 py-2 text-[10px] font-bold uppercase outline-none focus:border-blue-400 text-[#003566] placeholder:text-slate-300"
+                          className="w-full border border-slate-300 rounded-md px-4 py-2.5 text-sm outline-none focus:border-blue-500 text-slate-800"
                           value={newUser.email}
                           onChange={(e) => setNewUser({...newUser, email: e.target.value})}
                           placeholder="user@example.com"
@@ -403,12 +468,14 @@ export default function PartnerUserManagementPage() {
                       </div>
                     </div>
 
-                    <div className="space-y-1 relative">
-                      <label className="text-[8px] font-black uppercase tracking-widest text-slate-400">Password</label>
+                    <div className="relative">
+                      <label className="text-xs font-bold uppercase tracking-wider text-slate-500 block mb-1">
+                        Password
+                      </label>
                       <input
                         required
                         type={showPassword ? "text" : "password"}
-                        className="w-full border-b border-slate-200 py-2 text-[10px] font-bold uppercase outline-none focus:border-blue-400 text-[#003566] placeholder:text-slate-300"
+                        className="w-full border border-slate-300 rounded-md px-4 py-2.5 text-sm outline-none focus:border-blue-500 text-slate-800 pr-12"
                         value={newUser.password}
                         onChange={(e) => setNewUser({...newUser, password: e.target.value})}
                         placeholder="••••••••"
@@ -416,17 +483,19 @@ export default function PartnerUserManagementPage() {
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-0 bottom-2 text-slate-400 hover:text-slate-600"
+                        className="absolute right-3 top-9 text-slate-500 hover:text-slate-700"
                       >
-                        {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                       </button>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-6 pt-4">
-                      <div className="space-y-1">
-                        <label className="text-[8px] font-black uppercase tracking-widest text-slate-400">Role</label>
+                    <div className="grid grid-cols-3 gap-5">
+                      <div>
+                        <label className="text-xs font-bold uppercase tracking-wider text-slate-500 block mb-1">
+                          Role
+                        </label>
                         <select
-                          className="w-full border-b border-slate-200 py-2 text-[10px] font-bold uppercase outline-none text-[#003566]"
+                          className="w-full border border-slate-300 rounded-md px-3 py-2.5 text-sm outline-none text-slate-800"
                           value={newUser.role}
                           onChange={(e) => setNewUser({...newUser, role: e.target.value as UserCategory})}
                         >
@@ -435,10 +504,12 @@ export default function PartnerUserManagementPage() {
                           <option value="Seller">Seller</option>
                         </select>
                       </div>
-                      <div className="space-y-1">
-                        <label className="text-[8px] font-black uppercase tracking-widest text-slate-400">Access Level</label>
+                      <div>
+                        <label className="text-xs font-bold uppercase tracking-wider text-slate-500 block mb-1">
+                          Access Level
+                        </label>
                         <select
-                          className="w-full border-b border-slate-200 py-2 text-[10px] font-bold uppercase outline-none text-[#003566]"
+                          className="w-full border border-slate-300 rounded-md px-3 py-2.5 text-sm outline-none text-slate-800"
                           value={newUser.access_level}
                           onChange={(e) => setNewUser({...newUser, access_level: e.target.value as "Limited" | "Full"})}
                         >
@@ -446,10 +517,12 @@ export default function PartnerUserManagementPage() {
                           <option value="Full">Full</option>
                         </select>
                       </div>
-                      <div className="space-y-1">
-                        <label className="text-[8px] font-black uppercase tracking-widest text-slate-400">Status</label>
+                      <div>
+                        <label className="text-xs font-bold uppercase tracking-wider text-slate-500 block mb-1">
+                          Status
+                        </label>
                         <select
-                          className="w-full border-b border-slate-200 py-2 text-[10px] font-bold uppercase outline-none text-[#003566]"
+                          className="w-full border border-slate-300 rounded-md px-3 py-2.5 text-sm outline-none text-slate-800"
                           value={newUser.status}
                           onChange={(e) => setNewUser({...newUser, status: e.target.value as "Active" | "Inactive" | "Pending"})}
                         >
@@ -460,7 +533,10 @@ export default function PartnerUserManagementPage() {
                       </div>
                     </div>
 
-                    <Button type="submit" className="w-full bg-[#003566] text-white rounded-none h-14 uppercase text-[10px] tracking-widest font-black shadow-lg">
+                    <Button
+                      type="submit"
+                      className="w-full bg-[#003566] hover:bg-blue-800 text-white rounded-md h-12 uppercase text-xs font-bold shadow-md mt-4"
+                    >
                       Create User
                     </Button>
                   </form>
