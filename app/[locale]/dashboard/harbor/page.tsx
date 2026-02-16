@@ -42,7 +42,7 @@ export default function PartnerFleetLinkPage() {
 
   // ✅ Correct URL: /nl/partner-fleet/{token}
   const fullUrl = token
-    ? `${window.location.origin}/${locale}/partner-fleet/${token}`
+    ? `${window.location.origin}/${locale}/${token}`
     : '';
 
   const copyToClipboard = async () => {
