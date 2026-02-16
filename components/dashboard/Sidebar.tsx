@@ -213,13 +213,13 @@ export function Sidebar({ onCollapse }: { onCollapse?: (collapsed: boolean) => v
       roles: ["Admin"],
       page_key: "dashboard"
     },
-    // { 
-    //   title: "My Boats", 
-    //   href: "/dashboard/partner/boats", 
-    //   icon: Ship, 
-    //   roles: ["Partner"],
-    //   page_key: "partner_boats"
-    // },
+    { 
+      title: "My Boats", 
+      href: "/dashboard/partner/boats", 
+      icon: Ship, 
+      roles: ["Partner"],
+      page_key: "partner_boats"
+    },
     { 
       title: "Account Settings", 
       href: "/dashboard/account", 
