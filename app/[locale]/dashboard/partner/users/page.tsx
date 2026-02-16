@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast, Toaster } from "react-hot-toast";
-import { Sidebar } from "@/components/dashboard/Sidebar";  // <-- added
+import { Sidebar } from "@/components/dashboard/Sidebar";
 
 type UserCategory = "Employee" | "Customer";
 type PermissionValue = 0 | 1 | 2;
@@ -38,7 +38,7 @@ export default function PartnerUserManagementPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [selectedUserPermissions, setSelectedUserPermissions] = useState<Record<number, UserPagePermission[]>>({});
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false); // <-- new
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   // New User Form State
   const [newUser, setNewUser] = useState({
@@ -176,35 +176,35 @@ export default function PartnerUserManagementPage() {
         <button
           onClick={() => updateUserPermission(userId, page.page_key, 1)}
           className={cn(
-            "px-3 py-2 text-[9px] font-bold uppercase border transition-all",
+            "px-3 py-2 text-[9px] font-bold uppercase border transition-all flex items-center gap-1",
             currentValue === 1
               ? "bg-green-100 text-green-700 border-green-300"
-              : "bg-white text-slate-400 border-slate-200 hover:bg-slate-50"
+              : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
           )}
         >
-          <CheckSquare size={12} className="inline mr-1" /> Allow
+          <CheckSquare size={12} /> Allow
         </button>
         <button
           onClick={() => updateUserPermission(userId, page.page_key, 2)}
           className={cn(
-            "px-3 py-2 text-[9px] font-bold uppercase border transition-all",
+            "px-3 py-2 text-[9px] font-bold uppercase border transition-all flex items-center gap-1",
             currentValue === 2
               ? "bg-red-100 text-red-700 border-red-300"
-              : "bg-white text-slate-400 border-slate-200 hover:bg-slate-50"
+              : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
           )}
         >
-          <Square size={12} className="inline mr-1" /> Deny
+          <Square size={12} /> Deny
         </button>
         <button
           onClick={() => updateUserPermission(userId, page.page_key, 0)}
           className={cn(
-            "px-3 py-2 text-[9px] font-bold uppercase border transition-all",
+            "px-3 py-2 text-[9px] font-bold uppercase border transition-all flex items-center gap-1",
             currentValue === 0
               ? "bg-blue-100 text-blue-700 border-blue-300"
-              : "bg-white text-slate-400 border-slate-200 hover:bg-slate-50"
+              : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
           )}
         >
-          <MinusSquare size={12} className="inline mr-1" /> Default
+          <MinusSquare size={12} /> Default
         </button>
       </div>
     );
@@ -230,7 +230,7 @@ export default function PartnerUserManagementPage() {
               <input
                 type="text"
                 placeholder="SEARCH..."
-                className="bg-white border border-slate-200 px-4 py-3 text-[10px] font-bold tracking-widest uppercase outline-none focus:border-blue-400 w-64"
+                className="bg-white border border-slate-200 px-4 py-3 text-[10px] font-bold tracking-widest uppercase outline-none focus:border-blue-400 w-64 text-[#003566] placeholder:text-slate-300"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -285,12 +285,12 @@ export default function PartnerUserManagementPage() {
                           <p className="text-[10px] text-blue-600 font-black uppercase tracking-widest">{user.access_level} CLEARANCE</p>
                         </div>
                       </div>
-                      <div className="space-y-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                        <div className="flex items-center gap-2"><Mail size={14} /> {user.email}</div>
-                        {user.phone_number && <div className="flex items-center gap-2"><Phone size={14} /> {user.phone_number}</div>}
+                      <div className="space-y-2 text-[10px] font-bold text-slate-700 uppercase tracking-widest">
+                        <div className="flex items-center gap-2"><Mail size={14} className="text-slate-400" /> {user.email}</div>
+                        {user.phone_number && <div className="flex items-center gap-2"><Phone size={14} className="text-slate-400" /> {user.phone_number}</div>}
                       </div>
                       <div className="flex gap-4 pt-4 border-t border-slate-50">
-                        <button onClick={() => { if(confirm("Delete this user?")) handleDeleteUser(user.id); }} className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-red-400">
+                        <button onClick={() => { if(confirm("Delete this user?")) handleDeleteUser(user.id); }} className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-red-400 hover:text-red-600">
                           <Trash2 size={14} /> Terminate
                         </button>
                       </div>
@@ -314,7 +314,7 @@ export default function PartnerUserManagementPage() {
                             <div key={page.id} className="flex items-center justify-between border-b border-slate-100 pb-4">
                               <div>
                                 <p className="text-[10px] font-bold uppercase text-[#003566]">{page.page_name}</p>
-                                {page.description && <p className="text-[8px] text-slate-400 mt-1">{page.description}</p>}
+                                {page.description && <p className="text-[8px] text-slate-500 mt-1">{page.description}</p>}
                               </div>
                               <PermissionToggle userId={user.id} page={page} />
                             </div>
@@ -357,9 +357,10 @@ export default function PartnerUserManagementPage() {
                         <label className="text-[8px] font-black uppercase tracking-widest text-slate-400">Full Name</label>
                         <input
                           required
-                          className="w-full border-b border-slate-200 py-2 text-[10px] font-bold uppercase outline-none focus:border-blue-400"
+                          className="w-full border-b border-slate-200 py-2 text-[10px] font-bold uppercase outline-none focus:border-blue-400 text-[#003566] placeholder:text-slate-300"
                           value={newUser.name}
                           onChange={(e) => setNewUser({...newUser, name: e.target.value})}
+                          placeholder="John Doe"
                         />
                       </div>
                       <div className="space-y-1">
@@ -367,9 +368,10 @@ export default function PartnerUserManagementPage() {
                         <input
                           required
                           type="email"
-                          className="w-full border-b border-slate-200 py-2 text-[10px] font-bold uppercase outline-none focus:border-blue-400"
+                          className="w-full border-b border-slate-200 py-2 text-[10px] font-bold uppercase outline-none focus:border-blue-400 text-[#003566] placeholder:text-slate-300"
                           value={newUser.email}
                           onChange={(e) => setNewUser({...newUser, email: e.target.value})}
+                          placeholder="user@example.com"
                         />
                       </div>
                     </div>
@@ -379,14 +381,15 @@ export default function PartnerUserManagementPage() {
                       <input
                         required
                         type={showPassword ? "text" : "password"}
-                        className="w-full border-b border-slate-200 py-2 text-[10px] font-bold uppercase outline-none focus:border-blue-400"
+                        className="w-full border-b border-slate-200 py-2 text-[10px] font-bold uppercase outline-none focus:border-blue-400 text-[#003566] placeholder:text-slate-300"
                         value={newUser.password}
                         onChange={(e) => setNewUser({...newUser, password: e.target.value})}
+                        placeholder="••••••••"
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-0 bottom-2 text-slate-400"
+                        className="absolute right-0 bottom-2 text-slate-400 hover:text-slate-600"
                       >
                         {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
                       </button>
@@ -396,7 +399,7 @@ export default function PartnerUserManagementPage() {
                       <div className="space-y-1">
                         <label className="text-[8px] font-black uppercase tracking-widest text-slate-400">Role</label>
                         <select
-                          className="w-full border-b border-slate-200 py-2 text-[10px] font-bold uppercase outline-none"
+                          className="w-full border-b border-slate-200 py-2 text-[10px] font-bold uppercase outline-none text-[#003566]"
                           value={newUser.role}
                           onChange={(e) => setNewUser({...newUser, role: e.target.value as UserCategory})}
                         >
@@ -407,7 +410,7 @@ export default function PartnerUserManagementPage() {
                       <div className="space-y-1">
                         <label className="text-[8px] font-black uppercase tracking-widest text-slate-400">Access Level</label>
                         <select
-                          className="w-full border-b border-slate-200 py-2 text-[10px] font-bold uppercase outline-none"
+                          className="w-full border-b border-slate-200 py-2 text-[10px] font-bold uppercase outline-none text-[#003566]"
                           value={newUser.access_level}
                           onChange={(e) => setNewUser({...newUser, access_level: e.target.value as "Limited" | "Full"})}
                         >
@@ -418,7 +421,7 @@ export default function PartnerUserManagementPage() {
                       <div className="space-y-1">
                         <label className="text-[8px] font-black uppercase tracking-widest text-slate-400">Status</label>
                         <select
-                          className="w-full border-b border-slate-200 py-2 text-[10px] font-bold uppercase outline-none"
+                          className="w-full border-b border-slate-200 py-2 text-[10px] font-bold uppercase outline-none text-[#003566]"
                           value={newUser.status}
                           onChange={(e) => setNewUser({...newUser, status: e.target.value as "Active" | "Inactive" | "Pending"})}
                         >
