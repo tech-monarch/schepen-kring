@@ -23,6 +23,7 @@ import {
   Edit2,
   ChevronLeft,
   ChevronRight,
+  Save,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -68,12 +69,7 @@ type BlockFilter = "active" | "priority" | "completed" | "efficiency" | null;
 // ============================================
 // CALENDAR VIEW COMPONENT (unchanged)
 // ============================================
-interface CalendarViewProps {
-  tasks: Task[];
-  onTaskClick?: (task: Task) => void;
-}
-
-function CalendarView({ tasks, onTaskClick }: CalendarViewProps) {
+function CalendarView({ tasks, onTaskClick }: { tasks: Task[]; onTaskClick?: (task: Task) => void }) {
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
 
   const getPriorityColor = (priority: string): string => {
@@ -322,320 +318,13 @@ function CalendarView({ tasks, onTaskClick }: CalendarViewProps) {
 }
 
 // ============================================
-// TASK MODAL COMPONENT (updated labels)
-// ============================================
-interface TaskModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSubmit: (data: any) => void;
-  task?: Task;
-  users: User[];
-  currentUser: User | null;
-}
-
-function TaskModal({ isOpen, onClose, onSubmit, task, users, currentUser }: TaskModalProps) {
-  const [formData, setFormData] = useState({
-    title: "",
-    description: "",
-    priority: "Medium" as Task["priority"],
-    status: "To Do" as Task["status"],
-    assigned_to: "",
-    due_date: new Date().toISOString().split("T")[0],
-    type: "personal" as "personal" | "assigned",
-  });
-
-  const [errors, setErrors] = useState<Record<string, string>>({});
-
-  useEffect(() => {
-    if (task) {
-      setFormData({
-        title: task.title || "",
-        description: task.description || "",
-        priority: task.priority || "Medium",
-        status: task.status || "To Do",
-        assigned_to: task.assigned_to?.toString() || "",
-        due_date: task.due_date ? task.due_date.split("T")[0] : new Date().toISOString().split("T")[0],
-        type: task.type || "personal",
-      });
-    } else {
-      setFormData({
-        title: "",
-        description: "",
-        priority: "Medium",
-        status: "To Do",
-        assigned_to: "",
-        due_date: new Date().toISOString().split("T")[0],
-        type: "personal",
-      });
-    }
-    setErrors({});
-  }, [task, isOpen]);
-
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {};
-
-    if (!formData.title.trim()) {
-      newErrors.title = "Title is required";
-    }
-
-    if (!formData.due_date) {
-      newErrors.due_date = "Due date is required";
-    }
-
-    if (formData.type === "assigned" && !formData.assigned_to) {
-      newErrors.assigned_to = "Please select an employee";
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!validateForm()) {
-      return;
-    }
-
-    const apiData = {
-      ...formData,
-      assigned_to: formData.assigned_to ? parseInt(formData.assigned_to) : null,
-    };
-
-    onSubmit(apiData);
-  };
-
-  const handlePrioritySelect = (priority: Task["priority"]) => {
-    setFormData(prev => ({ ...prev, priority }));
-  };
-
-  const getPriorityIcon = (priority: string) => {
-    switch (priority) {
-      case "High": return <AlertTriangle className="text-red-600" size={20} />;
-      case "Medium": return <Shield className="text-blue-500" size={20} />;
-      case "Low": return <Info className="text-slate-500" size={20} />;
-      default: return <Info size={20} />;
-    }
-  };
-
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case "High": return "bg-red-50 border-red-500 text-red-700";
-      case "Medium": return "bg-blue-50 border-blue-500 text-blue-700";
-      case "Low": return "bg-slate-50 border-slate-500 text-slate-700";
-      default: return "bg-slate-50 border-slate-500 text-slate-700";
-    }
-  };
-
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-center p-6 border-b border-slate-200">
-          <h2 className="text-2xl font-bold text-[#003566]">
-            {task ? "Edit Task" : "Create New Task"}
-          </h2>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-slate-100 rounded-full transition-colors"
-          >
-            <X className="text-slate-500" size={24} />
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-slate-700">
-              Task Type
-            </label>
-            <div className="flex gap-4">
-              <button
-                type="button"
-                onClick={() => setFormData(prev => ({ ...prev, type: "personal", assigned_to: "" }))}
-                className={cn(
-                  "flex-1 py-3 px-4 border rounded-lg text-center transition-all",
-                  formData.type === "personal"
-                    ? "border-blue-500 bg-blue-50 text-blue-700"
-                    : "border-slate-200 hover:border-slate-300"
-                )}
-              >
-                My own task
-              </button>
-              <button
-                type="button"
-                onClick={() => setFormData(prev => ({ ...prev, type: "assigned" }))}
-                className={cn(
-                  "flex-1 py-3 px-4 border rounded-lg text-center transition-all",
-                  formData.type === "assigned"
-                    ? "border-purple-500 bg-purple-50 text-purple-700"
-                    : "border-slate-200 hover:border-slate-300"
-                )}
-              >
-                Assign to another employee
-              </button>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-slate-700">
-              Task Title *
-            </label>
-            <input
-              type="text"
-              value={formData.title}
-              onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-              className={cn(
-                "w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all",
-                errors.title ? "border-red-500" : "border-slate-200"
-              )}
-              placeholder="Enter task title"
-            />
-            {errors.title && <p className="text-red-500 text-sm">{errors.title}</p>}
-          </div>
-
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-slate-700">
-              Description
-            </label>
-            <textarea
-              value={formData.description}
-              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-              className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-              placeholder="Enter task description"
-              rows={3}
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-slate-700">
-                Priority *
-              </label>
-              <div className="grid grid-cols-3 gap-2">
-                {(["Low", "Medium", "High"] as const).map((priority) => (
-                  <button
-                    key={priority}
-                    type="button"
-                    onClick={() => handlePrioritySelect(priority)}
-                    className={cn(
-                      "flex flex-col items-center justify-center p-3 border rounded-lg transition-all",
-                      formData.priority === priority
-                        ? getPriorityColor(priority)
-                        : "border-slate-200 hover:border-slate-300"
-                    )}
-                  >
-                    {getPriorityIcon(priority)}
-                    <span className="text-xs mt-1">{priority}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-slate-700">
-                Due Date *
-              </label>
-              <input
-                type="date"
-                value={formData.due_date}
-                onChange={(e) => setFormData(prev => ({ ...prev, due_date: e.target.value }))}
-                className={cn(
-                  "w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all",
-                  errors.due_date ? "border-red-500" : "border-slate-200"
-                )}
-                min={new Date().toISOString().split("T")[0]}
-              />
-              {errors.due_date && <p className="text-red-500 text-sm">{errors.due_date}</p>}
-            </div>
-          </div>
-
-          {formData.type === "assigned" && (
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-slate-700">
-                Assign to Employee *
-              </label>
-              <select
-                value={formData.assigned_to}
-                onChange={(e) => setFormData(prev => ({ ...prev, assigned_to: e.target.value }))}
-                className={cn(
-                  "w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all",
-                  errors.assigned_to ? "border-red-500" : "border-slate-200"
-                )}
-              >
-                <option value="">Select employee</option>
-                {users.map((user) => (
-                  <option key={user.id} value={user.id}>
-                    {user.name} ({user.role})
-                  </option>
-                ))}
-              </select>
-              {errors.assigned_to && <p className="text-red-500 text-sm">{errors.assigned_to}</p>}
-              <p className="text-sm text-slate-500">
-                The task will be pending until the employee accepts it.
-              </p>
-            </div>
-          )}
-
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-slate-700">
-              Status
-            </label>
-            <div className="flex gap-4">
-              {(["To Do", "In Progress", "Done"] as const).map((status) => (
-                <button
-                  key={status}
-                  type="button"
-                  onClick={() => setFormData(prev => ({ ...prev, status }))}
-                  className={cn(
-                    "flex-1 py-3 px-4 border rounded-lg text-center transition-all",
-                    formData.status === status
-                      ? status === "Done"
-                        ? "border-emerald-500 bg-emerald-50 text-emerald-700"
-                        : status === "In Progress"
-                        ? "border-blue-500 bg-blue-50 text-blue-700"
-                        : "border-slate-500 bg-slate-50 text-slate-700"
-                      : "border-slate-200 hover:border-slate-300"
-                  )}
-                >
-                  {status}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="flex justify-end gap-4 pt-6 border-t border-slate-200">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onClose}
-              className="px-8 py-3 border-slate-200 text-slate-600 hover:bg-slate-50"
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              className="px-8 py-3 bg-[#003566] text-white hover:bg-[#003566]/90"
-            >
-              {task ? "Update Task" : "Create Task"}
-            </Button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-}
-
-// ============================================
-// MAIN USER TASKS PAGE (improved data fetching)
+// MAIN TASKS PAGE – NO MODALS, INLINE CREATE & EDIT
 // ============================================
 export default function UserTasksPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  const [editingTask, setEditingTask] = useState<Task | undefined>(undefined);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [showDone, setShowDone] = useState(false);
@@ -647,13 +336,28 @@ export default function UserTasksPage() {
   });
   const [blockFilter, setBlockFilter] = useState<BlockFilter>(null);
 
+  // Inline create form state
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [newTask, setNewTask] = useState({
+    title: "",
+    description: "",
+    priority: "Medium" as Task["priority"],
+    status: "To Do" as Task["status"],
+    assigned_to: "",
+    due_date: new Date().toISOString().split("T")[0],
+    type: "personal" as "personal" | "assigned",
+  });
+
+  // Editing state per task (track which task is in edit mode)
+  const [editingTaskId, setEditingTaskId] = useState<number | null>(null);
+  const [editFormData, setEditFormData] = useState<Partial<Task>>({});
+
   const API_BASE = "https://schepen-kring.nl/api";
 
   const getHeaders = () => ({
     headers: { Authorization: `Bearer ${localStorage.getItem("auth_token")}` }
   });
 
-  // Fetch current user from API first
   const fetchCurrentUser = async () => {
     try {
       const res = await axios.get(`${API_BASE}/user`, getHeaders());
@@ -669,25 +373,19 @@ export default function UserTasksPage() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      // 1. Get current user from API
       const user = await fetchCurrentUser();
       if (!user) {
         setLoading(false);
         return;
       }
 
-      // 2. Fetch tasks
       const tasksRes = await axios.get(`${API_BASE}/tasks/my`, getHeaders());
       setTasks(tasksRes.data);
 
-      // 3. If user has partner_id, fetch partner users
       if (user.partner_id) {
         const usersRes = await axios.get(`${API_BASE}/partner/users`, getHeaders());
-        // Filter out current user so they don't assign to themselves
         setUsers(usersRes.data.filter((u: User) => u.id !== user.id));
-        console.log("Partner users loaded:", usersRes.data);
       } else {
-        console.warn("Current user has no partner_id, cannot fetch partner users");
         setUsers([]);
       }
     } catch (error: any) {
@@ -764,31 +462,93 @@ export default function UserTasksPage() {
     setBlockFilter(prev => prev === block ? null : block);
   };
 
-  const handleTaskSubmit = async (taskData: any) => {
-    try {
-      if (editingTask) {
-        await axios.put(`${API_BASE}/tasks/${editingTask.id}`, taskData, getHeaders());
-        toast.success("Task updated successfully");
-      } else {
-        await axios.post(`${API_BASE}/tasks`, taskData, getHeaders());
-        toast.success("Task created successfully");
-      }
+  // --- CREATE TASK ---
+  const handleCreateTask = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTask.title.trim()) {
+      toast.error("Title is required");
+      return;
+    }
+    if (newTask.type === "assigned" && !newTask.assigned_to) {
+      toast.error("Please select an employee");
+      return;
+    }
 
-      await fetchData(); // refresh all data
-      setIsModalOpen(false);
-      setEditingTask(undefined);
+    try {
+      const apiData = {
+        ...newTask,
+        assigned_to: newTask.assigned_to ? parseInt(newTask.assigned_to) : null,
+      };
+      await axios.post(`${API_BASE}/tasks`, apiData, getHeaders());
+      toast.success("Task created");
+      setNewTask({
+        title: "",
+        description: "",
+        priority: "Medium",
+        status: "To Do",
+        assigned_to: "",
+        due_date: new Date().toISOString().split("T")[0],
+        type: "personal",
+      });
+      setShowCreateForm(false);
+      await fetchData();
     } catch (error: any) {
-      console.error("Error saving task:", error);
-      toast.error(error.response?.data?.error || "Failed to save task");
+      console.error("Error creating task:", error);
+      toast.error(error.response?.data?.error || "Failed to create task");
     }
   };
 
-  const handleDeleteTask = async (taskId: number) => {
-    if (!confirm("Are you sure you want to delete this task?")) return;
+  // --- UPDATE TASK (inline) ---
+  const startEditing = (task: Task) => {
+    setEditingTaskId(task.id);
+    setEditFormData({
+      title: task.title,
+      description: task.description,
+      priority: task.priority,
+      status: task.status,
+      assigned_to: task.assigned_to?.toString() || "",
+      due_date: task.due_date ? task.due_date.split("T")[0] : new Date().toISOString().split("T")[0],
+      type: task.type,
+    });
+  };
+
+  const cancelEditing = () => {
+    setEditingTaskId(null);
+    setEditFormData({});
+  };
+
+  const saveEditing = async (taskId: number) => {
+    if (!editFormData.title?.trim()) {
+      toast.error("Title is required");
+      return;
+    }
+    if (editFormData.type === "assigned" && !editFormData.assigned_to) {
+      toast.error("Please select an employee");
+      return;
+    }
 
     try {
+      const apiData = {
+        ...editFormData,
+        assigned_to: editFormData.assigned_to ? parseInt(editFormData.assigned_to as string) : null,
+      };
+      await axios.put(`${API_BASE}/tasks/${taskId}`, apiData, getHeaders());
+      toast.success("Task updated");
+      setEditingTaskId(null);
+      setEditFormData({});
+      await fetchData();
+    } catch (error: any) {
+      console.error("Error updating task:", error);
+      toast.error(error.response?.data?.error || "Failed to update task");
+    }
+  };
+
+  // --- DELETE TASK ---
+  const handleDeleteTask = async (taskId: number) => {
+    if (!confirm("Delete this task?")) return;
+    try {
       await axios.delete(`${API_BASE}/tasks/${taskId}`, getHeaders());
-      toast.success("Task deleted successfully");
+      toast.success("Task deleted");
       await fetchData();
     } catch (error: any) {
       console.error("Error deleting task:", error);
@@ -796,14 +556,11 @@ export default function UserTasksPage() {
     }
   };
 
+  // --- STATUS CHANGE ---
   const handleStatusChange = async (taskId: number, newStatus: Task["status"]) => {
     try {
       await axios.patch(`${API_BASE}/tasks/${taskId}/status`, { status: newStatus }, getHeaders());
-
-      setTasks(prev => prev.map(task =>
-        task.id === taskId ? { ...task, status: newStatus } : task
-      ));
-
+      setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: newStatus } : t));
       toast.success("Status updated");
     } catch (error: any) {
       console.error("Error updating status:", error);
@@ -811,6 +568,7 @@ export default function UserTasksPage() {
     }
   };
 
+  // --- ACCEPT / REJECT ---
   const handleAcceptTask = async (taskId: number) => {
     try {
       await axios.patch(`${API_BASE}/tasks/${taskId}/accept`, {}, getHeaders());
@@ -823,8 +581,7 @@ export default function UserTasksPage() {
   };
 
   const handleRejectTask = async (taskId: number) => {
-    if (!confirm("Are you sure you want to reject this task?")) return;
-
+    if (!confirm("Reject this task?")) return;
     try {
       await axios.patch(`${API_BASE}/tasks/${taskId}/reject`, {}, getHeaders());
       toast.success("Task rejected");
@@ -835,6 +592,20 @@ export default function UserTasksPage() {
     }
   };
 
+  // --- ASSIGNEE CHANGE (for non‑editing mode) ---
+  const handleAssigneeChange = async (taskId: number, newAssigneeId: string) => {
+    if (!newAssigneeId) return;
+    try {
+      await axios.put(`${API_BASE}/tasks/${taskId}`, { assigned_to: parseInt(newAssigneeId) }, getHeaders());
+      toast.success("Assignee updated");
+      await fetchData();
+    } catch (error: any) {
+      console.error("Error updating assignee:", error);
+      toast.error(error.response?.data?.error || "Failed to update assignee");
+    }
+  };
+
+  // Helpers for display
   const getPriorityIcon = (priority: Task["priority"]) => {
     switch (priority) {
       case "High": return <AlertTriangle className="text-red-600" size={16} />;
@@ -881,6 +652,32 @@ export default function UserTasksPage() {
     return due < today && due.toDateString() !== today.toDateString();
   };
 
+  // Render either list or calendar
+  if (viewMode === "calendar") {
+    return (
+      <div className="min-h-screen bg-white text-[#003566]">
+        <DashboardHeader />
+        <Toaster position="top-right" />
+        <div className="flex pt-20">
+          <Sidebar onCollapse={setIsSidebarCollapsed} />
+          <motion.main
+            animate={{ marginLeft: isSidebarCollapsed ? 80 : 256 }}
+            className="flex-1 p-6 bg-white min-h-[calc(100vh-80px)] z-30 -mt-20"
+          >
+            <div className="max-w-7xl mx-auto space-y-6">
+              <div className="flex justify-between items-center">
+                <h1 className="text-3xl font-serif italic text-[#003566]">Calendar</h1>
+                <Button onClick={() => setViewMode("list")} variant="outline">Back to List</Button>
+              </div>
+              <CalendarView tasks={filteredTasks} />
+            </div>
+          </motion.main>
+        </div>
+      </div>
+    );
+  }
+
+  // LIST VIEW with inline create/edit
   return (
     <div className="min-h-screen bg-white text-[#003566]">
       <DashboardHeader />
@@ -934,13 +731,10 @@ export default function UserTasksPage() {
                 </div>
 
                 <Button
-                  onClick={() => {
-                    setEditingTask(undefined);
-                    setIsModalOpen(true);
-                  }}
+                  onClick={() => setShowCreateForm(!showCreateForm)}
                   className="bg-[#003566] text-white rounded-none h-12 px-8 uppercase text-xs tracking-widest font-black shadow-lg hover:bg-[#003566]/90"
                 >
-                  <Plus size={16} className="mr-2" /> New Task
+                  <Plus size={16} className="mr-2" /> {showCreateForm ? "Cancel" : "New Task"}
                 </Button>
               </div>
             </div>
@@ -1004,7 +798,6 @@ export default function UserTasksPage() {
                   <option value="Done">Done</option>
                 </select>
               </div>
-
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium text-slate-600">Priority:</span>
                 <select
@@ -1018,7 +811,6 @@ export default function UserTasksPage() {
                   <option value="High">High</option>
                 </select>
               </div>
-
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium text-slate-600">Type:</span>
                 <select
@@ -1031,7 +823,6 @@ export default function UserTasksPage() {
                   <option value="assigned">Assigned</option>
                 </select>
               </div>
-
               <Button
                 variant={showDone ? "default" : "outline"}
                 onClick={() => setShowDone(!showDone)}
@@ -1042,198 +833,366 @@ export default function UserTasksPage() {
               </Button>
             </div>
 
-            {loading ? (
-              <div className="flex items-center justify-center p-12">
-                <Loader2 className="animate-spin text-[#003566]" size={32} />
-                <span className="ml-3 text-slate-600">Loading tasks...</span>
-              </div>
-            ) : viewMode === "list" ? (
-              <div className="space-y-4">
-                <AnimatePresence mode="popLayout">
-                  {filteredTasks.length === 0 ? (
-                    <div className="text-center p-12 border-2 border-dashed border-slate-200 rounded-lg">
-                      <p className="text-slate-400">No tasks found</p>
-                      <p className="text-sm text-slate-300 mt-2">
-                        {filters.search || filters.status !== "all" || filters.priority !== "all"
-                          ? "Try changing your filters"
-                          : "Create your first task"}
-                      </p>
+            {/* INLINE CREATE FORM */}
+            {showCreateForm && (
+              <div className="border-2 border-blue-200 bg-blue-50 p-6 rounded-lg space-y-4">
+                <h3 className="text-lg font-bold text-[#003566]">Create New Task</h3>
+                <form onSubmit={handleCreateTask} className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold uppercase text-slate-600 mb-1">Title *</label>
+                      <input
+                        type="text"
+                        className="w-full border border-slate-300 rounded px-3 py-2"
+                        value={newTask.title}
+                        onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
+                        required
+                      />
                     </div>
-                  ) : (
-                    filteredTasks.map((task) => (
-                      <motion.div
-                        key={task.id}
-                        layout
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -20 }}
-                        className={cn(
-                          "flex flex-col md:flex-row items-start md:items-center justify-between p-6 gap-6 border shadow-sm rounded-lg transition-all hover:shadow-md",
-                          task.status === "Done" && "opacity-70",
-                          task.priority === "High" && task.status !== "Done" && "border-l-4 border-l-red-600"
-                        )}
+                    <div>
+                      <label className="block text-xs font-bold uppercase text-slate-600 mb-1">Due Date *</label>
+                      <input
+                        type="date"
+                        className="w-full border border-slate-300 rounded px-3 py-2"
+                        value={newTask.due_date}
+                        onChange={(e) => setNewTask({ ...newTask, due_date: e.target.value })}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold uppercase text-slate-600 mb-1">Description</label>
+                    <textarea
+                      className="w-full border border-slate-300 rounded px-3 py-2"
+                      rows={2}
+                      value={newTask.description}
+                      onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold uppercase text-slate-600 mb-1">Priority</label>
+                      <select
+                        className="w-full border border-slate-300 rounded px-3 py-2"
+                        value={newTask.priority}
+                        onChange={(e) => setNewTask({ ...newTask, priority: e.target.value as Task["priority"] })}
                       >
-                        <div className="flex items-start gap-4 flex-1">
-                          <div className={cn(
-                            "w-12 h-12 flex items-center justify-center rounded-full border-2",
-                            getPriorityStyles(task.priority)
-                          )}>
-                            {getPriorityIcon(task.priority)}
+                        <option value="Low">Low</option>
+                        <option value="Medium">Medium</option>
+                        <option value="High">High</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold uppercase text-slate-600 mb-1">Type</label>
+                      <select
+                        className="w-full border border-slate-300 rounded px-3 py-2"
+                        value={newTask.type}
+                        onChange={(e) => {
+                          const type = e.target.value as "personal" | "assigned";
+                          setNewTask({ ...newTask, type, assigned_to: type === "personal" ? "" : newTask.assigned_to });
+                        }}
+                      >
+                        <option value="personal">My own task</option>
+                        <option value="assigned">Assign to employee</option>
+                      </select>
+                    </div>
+                    {newTask.type === "assigned" && (
+                      <div>
+                        <label className="block text-xs font-bold uppercase text-slate-600 mb-1">Assign to</label>
+                        <select
+                          className="w-full border border-slate-300 rounded px-3 py-2"
+                          value={newTask.assigned_to}
+                          onChange={(e) => setNewTask({ ...newTask, assigned_to: e.target.value })}
+                          required={newTask.type === "assigned"}
+                        >
+                          <option value="">Select employee</option>
+                          {users.map((u) => (
+                            <option key={u.id} value={u.id}>{u.name} ({u.role})</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex justify-end gap-2">
+                    <Button type="button" variant="outline" onClick={() => setShowCreateForm(false)}>Cancel</Button>
+                    <Button type="submit" className="bg-[#003566] text-white">Create Task</Button>
+                  </div>
+                </form>
+              </div>
+            )}
+
+            {/* TASK LIST */}
+            <div className="space-y-4">
+              {loading ? (
+                <div className="flex items-center justify-center p-12">
+                  <Loader2 className="animate-spin text-[#003566]" size={32} />
+                  <span className="ml-3 text-slate-600">Loading tasks...</span>
+                </div>
+              ) : filteredTasks.length === 0 ? (
+                <div className="text-center p-12 border-2 border-dashed border-slate-200 rounded-lg">
+                  <p className="text-slate-400">No tasks found</p>
+                </div>
+              ) : (
+                filteredTasks.map((task) => {
+                  const isEditing = editingTaskId === task.id;
+
+                  if (isEditing) {
+                    // EDIT MODE – inline form for this task
+                    return (
+                      <div key={task.id} className="border-2 border-blue-200 bg-blue-50 p-6 rounded-lg space-y-4">
+                        <h3 className="text-lg font-bold text-[#003566]">Edit Task</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-xs font-bold uppercase text-slate-600 mb-1">Title *</label>
+                            <input
+                              type="text"
+                              className="w-full border border-slate-300 rounded px-3 py-2"
+                              value={editFormData.title || ""}
+                              onChange={(e) => setEditFormData({ ...editFormData, title: e.target.value })}
+                            />
                           </div>
-
-                          <div className="flex-1">
-                            <div className="flex items-center gap-3 mb-2 flex-wrap">
-                              <h3 className="text-lg font-bold text-[#003566]">
-                                {task.title}
-                              </h3>
-                              <span className={cn(
-                                "px-2 py-1 text-xs font-bold uppercase border rounded",
-                                getPriorityStyles(task.priority)
-                              )}>
-                                {task.priority}
-                              </span>
-                              <span className={cn(
-                                "px-2 py-1 text-xs font-bold uppercase border rounded",
-                                getStatusStyles(task.status)
-                              )}>
-                                {task.status}
-                              </span>
-                              {task.assignment_status === "pending" && task.assigned_to === currentUser?.id && (
-                                <span className="px-2 py-1 text-xs font-bold uppercase bg-yellow-50 text-yellow-600 border border-yellow-200 rounded">
-                                  Pending Acceptance
-                                </span>
-                              )}
-                            </div>
-
-                            {task.description && (
-                              <p className="text-sm text-slate-600 mb-3">
-                                {task.description}
-                              </p>
-                            )}
-
-                            <div className="flex flex-wrap items-center gap-4 text-sm text-slate-500">
-                              {task.created_by_user && (
-                                <span className="flex items-center gap-1.5">
-                                  <UserIcon size={14} />
-                                  Created by: {task.created_by_user.name}
-                                </span>
-                              )}
-                              {task.assigned_to_user && task.type === "assigned" && (
-                                <span className="flex items-center gap-1.5">
-                                  <UserIcon size={14} />
-                                  Assigned to: {task.assigned_to_user.name}
-                                </span>
-                              )}
-                              <span className={cn(
-                                "flex items-center gap-1.5",
-                                isOverdue(task.due_date) && "text-red-600 font-bold"
-                              )}>
-                                <CalendarIcon size={14} />
-                                Due: {formatDate(task.due_date)}
-                                {isOverdue(task.due_date) && " (OVERDUE)"}
-                              </span>
-                            </div>
+                          <div>
+                            <label className="block text-xs font-bold uppercase text-slate-600 mb-1">Due Date *</label>
+                            <input
+                              type="date"
+                              className="w-full border border-slate-300 rounded px-3 py-2"
+                              value={editFormData.due_date || ""}
+                              onChange={(e) => setEditFormData({ ...editFormData, due_date: e.target.value })}
+                            />
                           </div>
                         </div>
+                        <div>
+                          <label className="block text-xs font-bold uppercase text-slate-600 mb-1">Description</label>
+                          <textarea
+                            className="w-full border border-slate-300 rounded px-3 py-2"
+                            rows={2}
+                            value={editFormData.description || ""}
+                            onChange={(e) => setEditFormData({ ...editFormData, description: e.target.value })}
+                          />
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <div>
+                            <label className="block text-xs font-bold uppercase text-slate-600 mb-1">Priority</label>
+                            <select
+                              className="w-full border border-slate-300 rounded px-3 py-2"
+                              value={editFormData.priority || "Medium"}
+                              onChange={(e) => setEditFormData({ ...editFormData, priority: e.target.value as Task["priority"] })}
+                            >
+                              <option value="Low">Low</option>
+                              <option value="Medium">Medium</option>
+                              <option value="High">High</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-xs font-bold uppercase text-slate-600 mb-1">Type</label>
+                            <select
+                              className="w-full border border-slate-300 rounded px-3 py-2"
+                              value={editFormData.type || "personal"}
+                              onChange={(e) => {
+                                const type = e.target.value as "personal" | "assigned";
+                                setEditFormData({ ...editFormData, type, assigned_to: type === "personal" ? "" : editFormData.assigned_to });
+                              }}
+                            >
+                              <option value="personal">My own task</option>
+                              <option value="assigned">Assign to employee</option>
+                            </select>
+                          </div>
+                          {editFormData.type === "assigned" && (
+                            <div>
+                              <label className="block text-xs font-bold uppercase text-slate-600 mb-1">Assign to</label>
+                              <select
+                                className="w-full border border-slate-300 rounded px-3 py-2"
+                                value={editFormData.assigned_to || ""}
+                                onChange={(e) => setEditFormData({ ...editFormData, assigned_to: e.target.value })}
+                                required
+                              >
+                                <option value="">Select employee</option>
+                                {users.map((u) => (
+                                  <option key={u.id} value={u.id}>{u.name} ({u.role})</option>
+                                ))}
+                              </select>
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex justify-end gap-2">
+                          <Button variant="outline" onClick={cancelEditing}>Cancel</Button>
+                          <Button onClick={() => saveEditing(task.id)} className="bg-[#003566] text-white">
+                            <Save size={16} className="mr-2" /> Save
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  }
 
-                        <div className="flex items-center gap-3">
-                          {task.assignment_status === "pending" && task.assigned_to === currentUser?.id && (
-                            <>
-                              <Button
-                                onClick={() => handleAcceptTask(task.id)}
-                                className="bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100"
-                                size="sm"
-                              >
-                                <CheckCircle2 size={16} className="mr-2" />
-                                Accept
-                              </Button>
-                              <Button
-                                onClick={() => handleRejectTask(task.id)}
-                                variant="outline"
-                                size="sm"
-                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                              >
-                                <X size={16} className="mr-2" />
-                                Reject
-                              </Button>
-                            </>
+                  // VIEW MODE
+                  return (
+                    <motion.div
+                      key={task.id}
+                      layout
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      className={cn(
+                        "flex flex-col lg:flex-row items-start lg:items-center justify-between p-6 gap-4 border shadow-sm rounded-lg transition-all hover:shadow-md",
+                        task.status === "Done" && "opacity-70",
+                        task.priority === "High" && task.status !== "Done" && "border-l-4 border-l-red-600"
+                      )}
+                    >
+                      {/* Left side: icon + details */}
+                      <div className="flex items-start gap-4 flex-1 min-w-0">
+                        <div className={cn(
+                          "w-12 h-12 flex items-center justify-center rounded-full border-2 flex-shrink-0",
+                          getPriorityStyles(task.priority)
+                        )}>
+                          {getPriorityIcon(task.priority)}
+                        </div>
+
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-3 mb-2 flex-wrap">
+                            <h3 className="text-lg font-bold text-[#003566] truncate max-w-xs">
+                              {task.title}
+                            </h3>
+                            <span className={cn(
+                              "px-2 py-1 text-xs font-bold uppercase border rounded",
+                              getPriorityStyles(task.priority)
+                            )}>
+                              {task.priority}
+                            </span>
+                            <span className={cn(
+                              "px-2 py-1 text-xs font-bold uppercase border rounded",
+                              getStatusStyles(task.status)
+                            )}>
+                              {task.status}
+                            </span>
+                            {task.assignment_status === "pending" && task.assigned_to === currentUser?.id && (
+                              <span className="px-2 py-1 text-xs font-bold uppercase bg-yellow-50 text-yellow-600 border border-yellow-200 rounded">
+                                Pending Acceptance
+                              </span>
+                            )}
+                          </div>
+
+                          {task.description && (
+                            <p className="text-sm text-slate-600 mb-3 line-clamp-2">
+                              {task.description}
+                            </p>
                           )}
 
-                          {task.assignment_status !== "pending" && task.status !== "Done" ? (
+                          <div className="flex flex-wrap items-center gap-4 text-sm text-slate-500">
+                            {task.created_by_user && (
+                              <span className="flex items-center gap-1.5">
+                                <UserIcon size={14} />
+                                Created by: {task.created_by_user.name}
+                              </span>
+                            )}
+                            {task.assigned_to_user && task.type === "assigned" && (
+                              <span className="flex items-center gap-1.5">
+                                <UserIcon size={14} />
+                                Assigned to: {task.assigned_to_user.name}
+                              </span>
+                            )}
+                            <span className={cn(
+                              "flex items-center gap-1.5",
+                              isOverdue(task.due_date) && "text-red-600 font-bold"
+                            )}>
+                              <CalendarIcon size={14} />
+                              Due: {formatDate(task.due_date)}
+                              {isOverdue(task.due_date) && " (OVERDUE)"}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Right side: actions and assignee dropdown */}
+                      <div className="flex items-center gap-3 flex-wrap lg:flex-nowrap">
+                        {/* Assignee dropdown (visible only for assigned tasks and if user has permission) */}
+                        {task.type === "assigned" && (task.created_by === currentUser?.id || currentUser?.role === "Partner") && (
+                          <select
+                            className="border border-slate-300 bg-white rounded px-2 py-1 text-sm"
+                            value={task.assigned_to || ""}
+                            onChange={(e) => handleAssigneeChange(task.id, e.target.value)}
+                          >
+                            <option value="">Unassigned</option>
+                            {users.map((u) => (
+                              <option key={u.id} value={u.id}>{u.name}</option>
+                            ))}
+                          </select>
+                        )}
+
+                        {/* Accept/Reject for pending tasks */}
+                        {task.assignment_status === "pending" && task.assigned_to === currentUser?.id && (
+                          <>
                             <Button
-                              onClick={() => handleStatusChange(task.id, "Done")}
+                              onClick={() => handleAcceptTask(task.id)}
                               className="bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100"
                               size="sm"
                             >
                               <CheckCircle2 size={16} className="mr-2" />
-                              Mark Done
+                              Accept
                             </Button>
-                          ) : task.assignment_status !== "pending" && task.status === "Done" ? (
                             <Button
-                              onClick={() => handleStatusChange(task.id, "To Do")}
+                              onClick={() => handleRejectTask(task.id)}
+                              variant="outline"
+                              size="sm"
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            >
+                              <X size={16} className="mr-2" />
+                              Reject
+                            </Button>
+                          </>
+                        )}
+
+                        {/* Status change buttons */}
+                        {task.assignment_status !== "pending" && task.status !== "Done" ? (
+                          <Button
+                            onClick={() => handleStatusChange(task.id, "Done")}
+                            className="bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100"
+                            size="sm"
+                          >
+                            <CheckCircle2 size={16} className="mr-2" />
+                            Mark Done
+                          </Button>
+                        ) : task.assignment_status !== "pending" && task.status === "Done" ? (
+                          <Button
+                            onClick={() => handleStatusChange(task.id, "To Do")}
+                            variant="outline"
+                            size="sm"
+                          >
+                            Re‑open
+                          </Button>
+                        ) : null}
+
+                        {/* Edit/Delete for creator */}
+                        {task.created_by === currentUser?.id && (
+                          <>
+                            <Button
+                              onClick={() => startEditing(task)}
                               variant="outline"
                               size="sm"
                             >
-                              Re-open
+                              <Edit2 size={16} />
                             </Button>
-                          ) : null}
-
-                          {task.created_by === currentUser?.id && (
-                            <>
-                              <Button
-                                onClick={() => {
-                                  setEditingTask(task);
-                                  setIsModalOpen(true);
-                                }}
-                                variant="outline"
-                                size="sm"
-                              >
-                                <Edit2 size={16} />
-                              </Button>
-                              <Button
-                                onClick={() => handleDeleteTask(task.id)}
-                                variant="outline"
-                                size="sm"
-                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                              >
-                                <Trash2 size={16} />
-                              </Button>
-                            </>
-                          )}
-                        </div>
-                      </motion.div>
-                    ))
-                  )}
-                </AnimatePresence>
-              </div>
-            ) : (
-              <div className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
-                <CalendarView
-                  tasks={filteredTasks}
-                  onTaskClick={(task) => {
-                    if (task.created_by === currentUser?.id) {
-                      setEditingTask(task);
-                      setIsModalOpen(true);
-                    }
-                  }}
-                />
-              </div>
-            )}
+                            <Button
+                              onClick={() => handleDeleteTask(task.id)}
+                              variant="outline"
+                              size="sm"
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            >
+                              <Trash2 size={16} />
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    </motion.div>
+                  );
+                })
+              )}
+            </div>
           </div>
         </motion.main>
       </div>
-
-      <TaskModal
-        isOpen={isModalOpen}
-        onClose={() => {
-          setIsModalOpen(false);
-          setEditingTask(undefined);
-        }}
-        onSubmit={handleTaskSubmit}
-        task={editingTask}
-        users={users}
-        currentUser={currentUser}
-      />
     </div>
   );
 }
