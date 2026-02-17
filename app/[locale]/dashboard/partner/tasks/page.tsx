@@ -60,7 +60,7 @@ interface Task {
   updated_at: string;
 }
 
-// Form data uses strings for inputs (select values)
+// Form data uses strings for input values (select returns string)
 interface TaskFormData {
   title: string;
   description: string;
@@ -371,6 +371,9 @@ export default function UserTasksPage() {
     type: "personal",
   });
 
+  // State for toggling assign dropdown per task
+  const [showAssignDropdown, setShowAssignDropdown] = useState<Record<number, boolean>>({});
+
   const API_BASE = "https://schepen-kring.nl/api";
 
   const getHeaders = () => ({
@@ -627,7 +630,7 @@ export default function UserTasksPage() {
     }
   };
 
-  // --- ASSIGNEE CHANGE (for non‑editing mode) ---
+  // --- ASSIGNEE CHANGE (for button) ---
   const handleAssigneeChange = async (taskId: number, newAssigneeId: string) => {
     if (!newAssigneeId) return;
     try {
@@ -638,6 +641,15 @@ export default function UserTasksPage() {
       console.error("Error updating assignee:", error);
       toast.error(error.response?.data?.error || "Failed to update assignee");
     }
+  };
+
+  const toggleAssignDropdown = (taskId: number) => {
+    setShowAssignDropdown(prev => ({ ...prev, [taskId]: !prev[taskId] }));
+  };
+
+  const handleAssigneeChangeFromButton = async (taskId: number, newAssigneeId: string) => {
+    await handleAssigneeChange(taskId, newAssigneeId);
+    setShowAssignDropdown(prev => ({ ...prev, [taskId]: false }));
   };
 
   // Helpers for display
@@ -1125,20 +1137,43 @@ export default function UserTasksPage() {
                             </div>
                           </div>
 
-                          {/* Right side: actions and assignee dropdown */}
+                          {/* Right side: actions */}
                           <div className="flex items-center gap-3 flex-wrap lg:flex-nowrap">
-                            {/* Assignee dropdown (visible only for assigned tasks and if user has permission) */}
+                            {/* Assign button / dropdown */}
                             {task.type === "assigned" && (task.created_by === currentUser?.id || currentUser?.role === "Partner") && (
-                              <select
-                                className="border border-slate-300 bg-white rounded px-2 py-1 text-sm"
-                                value={task.assigned_to || ""}
-                                onChange={(e) => handleAssigneeChange(task.id, e.target.value)}
-                              >
-                                <option value="">Unassigned</option>
-                                {users.map((u) => (
-                                  <option key={u.id} value={u.id}>{u.name}</option>
-                                ))}
-                              </select>
+                              <>
+                                {!showAssignDropdown[task.id] ? (
+                                  <Button
+                                    onClick={() => toggleAssignDropdown(task.id)}
+                                    variant="outline"
+                                    size="sm"
+                                    className="text-xs"
+                                  >
+                                    <UserIcon size={14} className="mr-1" /> Assign
+                                  </Button>
+                                ) : (
+                                  <div className="flex items-center gap-2">
+                                    <select
+                                      className="border border-slate-300 bg-white rounded px-2 py-1 text-sm"
+                                      defaultValue=""
+                                      onChange={(e) => handleAssigneeChangeFromButton(task.id, e.target.value)}
+                                      autoFocus
+                                    >
+                                      <option value="">Select employee...</option>
+                                      {users.map((u) => (
+                                        <option key={u.id} value={u.id}>{u.name}</option>
+                                      ))}
+                                    </select>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => toggleAssignDropdown(task.id)}
+                                    >
+                                      <X size={14} />
+                                    </Button>
+                                  </div>
+                                )}
+                              </>
                             )}
 
                             {/* Accept/Reject for pending tasks */}
