@@ -132,7 +132,7 @@ export function Sidebar({ onCollapse }: { onCollapse?: (collapsed: boolean) => v
       title: "Harbor", 
       href: userRole === "Partner" ? "/dashboard/harbor" : "/dashboard/harbor", 
       icon: BarChart3, 
-      roles: ["Partner", "Seller"],
+      roles: ["Partner"],
       page_key: "dashboard"
     },
     
