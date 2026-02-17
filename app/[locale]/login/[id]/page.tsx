@@ -44,7 +44,7 @@ export default function SellerRegistrationPage() {
       api.defaults.headers.common["Authorization"] = `Bearer ${authToken}`;
 
       setSuccess("Registration successful! Redirecting...");
-      setTimeout(() => router.push("/dashboard"), 1500);
+      setTimeout(() => router.push("/nl/dashboard/harbor"), 1500);
     } catch (err: any) {
       setError(err.response?.data?.message || "Registration failed. Please check your details.");
     } finally {

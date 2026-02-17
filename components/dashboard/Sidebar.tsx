@@ -132,7 +132,7 @@ export function Sidebar({ onCollapse }: { onCollapse?: (collapsed: boolean) => v
       title: "Harbor", 
       href: userRole === "Partner" ? "/dashboard/harbor" : "/dashboard/harbor", 
       icon: BarChart3, 
-      roles: ["Partner"],
+      roles: ["Partner", "Seller"],
       page_key: "dashboard"
     },
     
@@ -147,7 +147,7 @@ export function Sidebar({ onCollapse }: { onCollapse?: (collapsed: boolean) => v
       title: "Tasks", 
       href: userRole === "Admin" ? "/dashboard/tasks" : "/dashboard/tasks", 
       icon: CheckSquare, 
-      roles: ["Admin", "Employee"],
+      roles: ["Admin", "Employee", "Seller"],
       page_key: "tasks"
     },
     { 
@@ -217,14 +217,14 @@ export function Sidebar({ onCollapse }: { onCollapse?: (collapsed: boolean) => v
       title: "My Boats", 
       href: "/dashboard/partner", 
       icon: Ship, 
-      roles: ["Partner"],
+      roles: ["Partner", "Seller"],
       page_key: "partner_boats"
     },
     { 
       title: "Account Settings", 
       href: "/dashboard/account", 
       icon: Settings, 
-      roles: ["Admin", "Employee", "Partner", "Customer"],
+      roles: ["Admin", "Employee", "Partner", "Customer", "Seller"],
       page_key: "settings"
     },
   ];
