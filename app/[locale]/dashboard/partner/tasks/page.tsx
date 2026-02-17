@@ -1,4 +1,3 @@
-// app/[locale]/dashboard/tasks/page.tsx
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
@@ -40,7 +39,7 @@ interface User {
   name: string;
   email: string;
   role: string;
-  partner_id?: number; // 👈 changed from harbor_id
+  partner_id?: number;
 }
 
 interface Task {
@@ -323,7 +322,7 @@ function CalendarView({ tasks, onTaskClick }: CalendarViewProps) {
 }
 
 // ============================================
-// TASK MODAL COMPONENT (unchanged, but uses users filtered by partner)
+// TASK MODAL COMPONENT (updated labels)
 // ============================================
 interface TaskModalProps {
   isOpen: boolean;
@@ -461,7 +460,7 @@ function TaskModal({ isOpen, onClose, onSubmit, task, users, currentUser }: Task
                     : "border-slate-200 hover:border-slate-300"
                 )}
               >
-                Personal Task
+                My own task
               </button>
               <button
                 type="button"
@@ -473,7 +472,7 @@ function TaskModal({ isOpen, onClose, onSubmit, task, users, currentUser }: Task
                     : "border-slate-200 hover:border-slate-300"
                 )}
               >
-                Assign to Someone
+                Assign to another employee
               </button>
             </div>
           </div>
@@ -628,7 +627,7 @@ function TaskModal({ isOpen, onClose, onSubmit, task, users, currentUser }: Task
 }
 
 // ============================================
-// MAIN USER TASKS PAGE (updated with partner_id)
+// MAIN USER TASKS PAGE
 // ============================================
 export default function UserTasksPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -671,7 +670,7 @@ export default function UserTasksPage() {
       const tasksRes = await axios.get(`${API_BASE}/tasks/my`, { headers });
       setTasks(tasksRes.data);
 
-      // 👇 changed from harbor_id to partner_id, and use partner endpoint
+      // Fetch users under the same partner
       if (user.partner_id) {
         const usersRes = await axios.get(`${API_BASE}/partner/users`, { headers });
         setUsers(usersRes.data.filter((u: User) => u.id !== user.id));
@@ -942,7 +941,7 @@ export default function UserTasksPage() {
               </div>
             </div>
 
-            {/* Four metric blocks (unchanged) */}
+            {/* Four metric blocks */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div
                 onClick={() => handleBlockClick("active")}
