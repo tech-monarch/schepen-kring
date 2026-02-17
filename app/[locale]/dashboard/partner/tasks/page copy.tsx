@@ -6,13 +6,13 @@ import axios from "axios";
 import {
   Plus,
   User as UserIcon,
-  X,
   Trash2,
   Search,
   Loader2,
-  Calendar as CalendarIcon,
+  CalendarIcon,
   Eye,
   EyeOff,
+  Filter,
   List,
   CalendarDays,
   AlertTriangle,
@@ -24,6 +24,7 @@ import {
   Edit2,
   ChevronLeft,
   ChevronRight,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -35,39 +36,36 @@ import { Sidebar } from "@/components/dashboard/Sidebar";
 // ============================================
 // INTERFACES
 // ============================================
-interface User {
-  id: number;
-  name: string;
-  email: string;
-  role: string;
-  partner_id?: number; // 👈 changed from harbor_id
-}
-
 interface Task {
-  id: number;
+  id: number | string;
   title: string;
   description?: string;
-  priority: "Low" | "Medium" | "High";
+  priority: "Low" | "Medium" | "High" | "Urgent" | "Critical";
   status: "To Do" | "In Progress" | "Done";
   due_date?: string;
   assigned_to?: number;
-  assigned_to_user?: User;
-  created_by?: number;
-  created_by_user?: User;
-  type: "personal" | "assigned";
-  assignment_status?: "pending" | "accepted" | "rejected";
+  assigned_to_user?: {
+    id: number;
+    name: string;
+    email: string;
+  };
+  yacht?: {
+    id: number;
+    name: string;
+  };
+  type: "assigned" | "personal";
+  user_id?: number;
   created_at: string;
   updated_at: string;
 }
 
 type ViewMode = "list" | "calendar";
 type StatusFilter = "all" | "To Do" | "In Progress" | "Done";
-type PriorityFilter = "all" | "Low" | "Medium" | "High";
-type TypeFilter = "all" | "personal" | "assigned";
-type BlockFilter = "active" | "priority" | "completed" | "efficiency" | null;
+type PriorityFilter = "all" | "Low" | "Medium" | "High" | "Urgent" | "Critical";
+type TypeFilter = "all" | "assigned" | "personal";
 
 // ============================================
-// CALENDAR VIEW COMPONENT (unchanged)
+// CALENDAR VIEW COMPONENT
 // ============================================
 interface CalendarViewProps {
   tasks: Task[];
@@ -76,16 +74,20 @@ interface CalendarViewProps {
 
 function CalendarView({ tasks, onTaskClick }: CalendarViewProps) {
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
-
+  
+  // Get priority color
   const getPriorityColor = (priority: string): string => {
     switch (priority) {
-      case "High": return "#dc2626";
+      case "Critical": return "#dc2626";
+      case "Urgent": return "#ea580c";
+      case "High": return "#d97706";
       case "Medium": return "#3b82f6";
       case "Low": return "#6b7280";
       default: return "#6b7280";
     }
   };
 
+  // Get days in month
   const getDaysInMonth = (date: Date) => {
     const year = date.getFullYear();
     const month = date.getMonth();
@@ -93,96 +95,89 @@ function CalendarView({ tasks, onTaskClick }: CalendarViewProps) {
     const lastDay = new Date(year, month + 1, 0);
     const daysInMonth = lastDay.getDate();
     const startingDay = firstDay.getDay();
+    
     return { firstDay, lastDay, daysInMonth, startingDay };
   };
 
+  // Get week days
   const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
+  
+  // Get month name
   const getMonthName = (date: Date) => {
-    return date.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+    return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
   };
 
+  // Navigate to previous month
   const prevMonth = () => {
-    setCurrentDate((prev) => {
+    setCurrentDate(prev => {
       const newDate = new Date(prev);
       newDate.setMonth(newDate.getMonth() - 1);
       return newDate;
     });
   };
 
+  // Navigate to next month
   const nextMonth = () => {
-    setCurrentDate((prev) => {
+    setCurrentDate(prev => {
       const newDate = new Date(prev);
       newDate.setMonth(newDate.getMonth() + 1);
       return newDate;
     });
   };
 
+  // Navigate to today
   const goToToday = () => {
     setCurrentDate(new Date());
   };
 
+  // Get tasks for a specific day
   const getTasksForDay = (day: number) => {
-    const date = new Date(
-      currentDate.getFullYear(),
-      currentDate.getMonth(),
-      day,
-    );
-    return tasks.filter((task) => {
+    const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+    return tasks.filter(task => {
       if (!task.due_date) return false;
       const taskDate = new Date(task.due_date);
-      return (
-        taskDate.getDate() === day &&
-        taskDate.getMonth() === currentDate.getMonth() &&
-        taskDate.getFullYear() === currentDate.getFullYear()
-      );
+      return taskDate.getDate() === day &&
+             taskDate.getMonth() === currentDate.getMonth() &&
+             taskDate.getFullYear() === currentDate.getFullYear();
     });
   };
 
+  // Get calendar grid
   const getCalendarGrid = () => {
     const { daysInMonth, startingDay } = getDaysInMonth(currentDate);
     const days = [];
-
-    const prevMonth = new Date(
-      currentDate.getFullYear(),
-      currentDate.getMonth(),
-      0,
-    );
+    
+    // Previous month days
+    const prevMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 0);
     const prevMonthDays = prevMonth.getDate();
-
+    
     for (let i = 0; i < startingDay; i++) {
       days.push({
         day: prevMonthDays - startingDay + i + 1,
         isCurrentMonth: false,
-        date: new Date(
-          currentDate.getFullYear(),
-          currentDate.getMonth() - 1,
-          prevMonthDays - startingDay + i + 1,
-        ),
+        date: new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, prevMonthDays - startingDay + i + 1)
       });
     }
-
+    
+    // Current month days
     for (let i = 1; i <= daysInMonth; i++) {
       days.push({
         day: i,
         isCurrentMonth: true,
-        date: new Date(currentDate.getFullYear(), currentDate.getMonth(), i),
+        date: new Date(currentDate.getFullYear(), currentDate.getMonth(), i)
       });
     }
-
-    const totalCells = 42;
+    
+    // Next month days
+    const totalCells = 42; // 6 weeks
     for (let i = 1; days.length < totalCells; i++) {
       days.push({
         day: i,
         isCurrentMonth: false,
-        date: new Date(
-          currentDate.getFullYear(),
-          currentDate.getMonth() + 1,
-          i,
-        ),
+        date: new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, i)
       });
     }
-
+    
     return days;
   };
 
@@ -191,6 +186,8 @@ function CalendarView({ tasks, onTaskClick }: CalendarViewProps) {
 
   return (
     <div className="bg-white p-6 rounded-lg border border-slate-200">
+      
+      {/* Calendar Header */}
       <div className="flex flex-col md:flex-row justify-between items-center mb-6">
         <div className="flex items-center gap-4 mb-4 md:mb-0">
           <button
@@ -217,40 +214,37 @@ function CalendarView({ tasks, onTaskClick }: CalendarViewProps) {
         </div>
       </div>
 
+      {/* Calendar Grid */}
       <div className="grid grid-cols-7 gap-px bg-slate-200 rounded-lg overflow-hidden">
-        {weekDays.map((day) => (
-          <div
-            key={day}
-            className="bg-slate-50 p-3 text-center text-sm font-medium text-slate-600"
-          >
+        {/* Week Days Header */}
+        {weekDays.map(day => (
+          <div key={day} className="bg-slate-50 p-3 text-center text-sm font-medium text-slate-600">
             {day}
           </div>
         ))}
-
+        
+        {/* Calendar Days */}
         {calendarGrid.map(({ day, isCurrentMonth, date }, index) => {
           const dayTasks = getTasksForDay(day);
-          const isToday =
-            date.getDate() === today.getDate() &&
-            date.getMonth() === today.getMonth() &&
-            date.getFullYear() === today.getFullYear();
-
+          const isToday = date.getDate() === today.getDate() &&
+                         date.getMonth() === today.getMonth() &&
+                         date.getFullYear() === today.getFullYear();
+          
           return (
             <div
               key={index}
               className={cn(
                 "min-h-[120px] bg-white p-2 border border-slate-100",
                 !isCurrentMonth && "bg-slate-50",
-                isToday && "bg-blue-50",
+                isToday && "bg-blue-50"
               )}
             >
               <div className="flex justify-between items-center mb-1">
-                <span
-                  className={cn(
-                    "text-sm font-medium",
-                    isCurrentMonth ? "text-slate-900" : "text-slate-400",
-                    isToday && "text-blue-600 font-bold",
-                  )}
-                >
+                <span className={cn(
+                  "text-sm font-medium",
+                  isCurrentMonth ? "text-slate-900" : "text-slate-400",
+                  isToday && "text-blue-600 font-bold"
+                )}>
                   {day}
                 </span>
                 {dayTasks.length > 0 && (
@@ -259,9 +253,10 @@ function CalendarView({ tasks, onTaskClick }: CalendarViewProps) {
                   </span>
                 )}
               </div>
-
+              
+              {/* Tasks for this day */}
               <div className="space-y-1 max-h-20 overflow-y-auto">
-                {dayTasks.slice(0, 3).map((task) => (
+                {dayTasks.slice(0, 3).map(task => (
                   <div
                     key={task.id}
                     className="text-xs p-1 rounded border-l-2 cursor-pointer hover:opacity-90"
@@ -276,15 +271,10 @@ function CalendarView({ tasks, onTaskClick }: CalendarViewProps) {
                     }}
                   >
                     <div className="flex items-center gap-1">
-                      {task.priority === "High" && (
-                        <AlertTriangle className="text-red-600" size={10} />
-                      )}
-                      {task.priority === "Medium" && (
-                        <Shield className="text-blue-500" size={10} />
-                      )}
-                      {task.priority === "Low" && (
-                        <Info className="text-slate-500" size={10} />
-                      )}
+                      {task.priority === "Critical" && <AlertTriangle className="text-red-600" size={10} />}
+                      {task.priority === "Urgent" && <AlertCircle className="text-orange-500" size={10} />}
+                      {task.priority === "High" && <AlertTriangle className="text-amber-500" size={10} />}
+                      {["Medium", "Low"].includes(task.priority) && <Clock className="text-blue-500" size={10} />}
                       <span className="truncate">{task.title}</span>
                     </div>
                   </div>
@@ -299,7 +289,8 @@ function CalendarView({ tasks, onTaskClick }: CalendarViewProps) {
           );
         })}
       </div>
-
+      
+      {/* Legend */}
       <div className="flex flex-wrap gap-4 mt-6 pt-6 border-t border-slate-200">
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded-full bg-blue-600"></div>
@@ -307,7 +298,11 @@ function CalendarView({ tasks, onTaskClick }: CalendarViewProps) {
         </div>
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded-full bg-red-600"></div>
-          <span className="text-sm text-slate-600">High</span>
+          <span className="text-sm text-slate-600">Critical</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-3 rounded-full bg-orange-500"></div>
+          <span className="text-sm text-slate-600">Urgent</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded-full bg-blue-500"></div>
@@ -323,26 +318,23 @@ function CalendarView({ tasks, onTaskClick }: CalendarViewProps) {
 }
 
 // ============================================
-// TASK MODAL COMPONENT (unchanged, but uses users filtered by partner)
+// TASK MODAL COMPONENT (User Version)
 // ============================================
 interface TaskModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (data: any) => void;
   task?: Task;
-  users: User[];
-  currentUser: User | null;
 }
 
-function TaskModal({ isOpen, onClose, onSubmit, task, users, currentUser }: TaskModalProps) {
+function TaskModal({ isOpen, onClose, onSubmit, task }: TaskModalProps) {
   const [formData, setFormData] = useState({
     title: "",
     description: "",
     priority: "Medium" as Task["priority"],
     status: "To Do" as Task["status"],
-    assigned_to: "",
     due_date: new Date().toISOString().split("T")[0],
-    type: "personal" as "personal" | "assigned",
+    type: "personal" as "personal",
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -354,9 +346,8 @@ function TaskModal({ isOpen, onClose, onSubmit, task, users, currentUser }: Task
         description: task.description || "",
         priority: task.priority || "Medium",
         status: task.status || "To Do",
-        assigned_to: task.assigned_to?.toString() || "",
         due_date: task.due_date ? task.due_date.split("T")[0] : new Date().toISOString().split("T")[0],
-        type: task.type || "personal",
+        type: "personal",
       });
     } else {
       setFormData({
@@ -364,7 +355,6 @@ function TaskModal({ isOpen, onClose, onSubmit, task, users, currentUser }: Task
         description: "",
         priority: "Medium",
         status: "To Do",
-        assigned_to: "",
         due_date: new Date().toISOString().split("T")[0],
         type: "personal",
       });
@@ -374,17 +364,13 @@ function TaskModal({ isOpen, onClose, onSubmit, task, users, currentUser }: Task
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
-
+    
     if (!formData.title.trim()) {
       newErrors.title = "Title is required";
     }
-
+    
     if (!formData.due_date) {
       newErrors.due_date = "Due date is required";
-    }
-
-    if (formData.type === "assigned" && !formData.assigned_to) {
-      newErrors.assigned_to = "Please select an employee";
     }
 
     setErrors(newErrors);
@@ -393,17 +379,12 @@ function TaskModal({ isOpen, onClose, onSubmit, task, users, currentUser }: Task
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
+    
     if (!validateForm()) {
       return;
     }
 
-    const apiData = {
-      ...formData,
-      assigned_to: formData.assigned_to ? parseInt(formData.assigned_to) : null,
-    };
-
-    onSubmit(apiData);
+    onSubmit(formData);
   };
 
   const handlePrioritySelect = (priority: Task["priority"]) => {
@@ -412,7 +393,9 @@ function TaskModal({ isOpen, onClose, onSubmit, task, users, currentUser }: Task
 
   const getPriorityIcon = (priority: string) => {
     switch (priority) {
-      case "High": return <AlertTriangle className="text-red-600" size={20} />;
+      case "Critical": return <AlertTriangle className="text-red-600" size={20} />;
+      case "Urgent": return <AlertCircle className="text-orange-500" size={20} />;
+      case "High": return <AlertTriangle className="text-amber-500" size={20} />;
       case "Medium": return <Shield className="text-blue-500" size={20} />;
       case "Low": return <Info className="text-slate-500" size={20} />;
       default: return <Info size={20} />;
@@ -421,7 +404,9 @@ function TaskModal({ isOpen, onClose, onSubmit, task, users, currentUser }: Task
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case "High": return "bg-red-50 border-red-500 text-red-700";
+      case "Critical": return "bg-red-50 border-red-500 text-red-700";
+      case "Urgent": return "bg-orange-50 border-orange-500 text-orange-700";
+      case "High": return "bg-amber-50 border-amber-500 text-amber-700";
       case "Medium": return "bg-blue-50 border-blue-500 text-blue-700";
       case "Low": return "bg-slate-50 border-slate-500 text-slate-700";
       default: return "bg-slate-50 border-slate-500 text-slate-700";
@@ -433,9 +418,10 @@ function TaskModal({ isOpen, onClose, onSubmit, task, users, currentUser }: Task
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        {/* Header */}
         <div className="flex justify-between items-center p-6 border-b border-slate-200">
           <h2 className="text-2xl font-bold text-[#003566]">
-            {task ? "Edit Task" : "Create New Task"}
+            {task ? "Edit Task" : "Create Personal Task"}
           </h2>
           <button
             onClick={onClose}
@@ -445,39 +431,9 @@ function TaskModal({ isOpen, onClose, onSubmit, task, users, currentUser }: Task
           </button>
         </div>
 
+        {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-slate-700">
-              Task Type
-            </label>
-            <div className="flex gap-4">
-              <button
-                type="button"
-                onClick={() => setFormData(prev => ({ ...prev, type: "personal", assigned_to: "" }))}
-                className={cn(
-                  "flex-1 py-3 px-4 border rounded-lg text-center transition-all",
-                  formData.type === "personal"
-                    ? "border-blue-500 bg-blue-50 text-blue-700"
-                    : "border-slate-200 hover:border-slate-300"
-                )}
-              >
-                Personal Task
-              </button>
-              <button
-                type="button"
-                onClick={() => setFormData(prev => ({ ...prev, type: "assigned" }))}
-                className={cn(
-                  "flex-1 py-3 px-4 border rounded-lg text-center transition-all",
-                  formData.type === "assigned"
-                    ? "border-purple-500 bg-purple-50 text-purple-700"
-                    : "border-slate-200 hover:border-slate-300"
-                )}
-              >
-                Assign to Someone
-              </button>
-            </div>
-          </div>
-
+          {/* Title */}
           <div className="space-y-2">
             <label className="block text-sm font-medium text-slate-700">
               Task Title *
@@ -492,9 +448,12 @@ function TaskModal({ isOpen, onClose, onSubmit, task, users, currentUser }: Task
               )}
               placeholder="Enter task title"
             />
-            {errors.title && <p className="text-red-500 text-sm">{errors.title}</p>}
+            {errors.title && (
+              <p className="text-red-500 text-sm">{errors.title}</p>
+            )}
           </div>
 
+          {/* Description */}
           <div className="space-y-2">
             <label className="block text-sm font-medium text-slate-700">
               Description
@@ -509,12 +468,13 @@ function TaskModal({ isOpen, onClose, onSubmit, task, users, currentUser }: Task
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Priority */}
             <div className="space-y-2">
               <label className="block text-sm font-medium text-slate-700">
                 Priority *
               </label>
-              <div className="grid grid-cols-3 gap-2">
-                {(["Low", "Medium", "High"] as const).map((priority) => (
+              <div className="grid grid-cols-5 gap-2">
+                {(["Low", "Medium", "High", "Urgent", "Critical"] as const).map((priority) => (
                   <button
                     key={priority}
                     type="button"
@@ -533,6 +493,7 @@ function TaskModal({ isOpen, onClose, onSubmit, task, users, currentUser }: Task
               </div>
             </div>
 
+            {/* Due Date */}
             <div className="space-y-2">
               <label className="block text-sm font-medium text-slate-700">
                 Due Date *
@@ -547,37 +508,13 @@ function TaskModal({ isOpen, onClose, onSubmit, task, users, currentUser }: Task
                 )}
                 min={new Date().toISOString().split("T")[0]}
               />
-              {errors.due_date && <p className="text-red-500 text-sm">{errors.due_date}</p>}
+              {errors.due_date && (
+                <p className="text-red-500 text-sm">{errors.due_date}</p>
+              )}
             </div>
           </div>
 
-          {formData.type === "assigned" && (
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-slate-700">
-                Assign to Employee *
-              </label>
-              <select
-                value={formData.assigned_to}
-                onChange={(e) => setFormData(prev => ({ ...prev, assigned_to: e.target.value }))}
-                className={cn(
-                  "w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all",
-                  errors.assigned_to ? "border-red-500" : "border-slate-200"
-                )}
-              >
-                <option value="">Select employee</option>
-                {users.map((user) => (
-                  <option key={user.id} value={user.id}>
-                    {user.name} ({user.role})
-                  </option>
-                ))}
-              </select>
-              {errors.assigned_to && <p className="text-red-500 text-sm">{errors.assigned_to}</p>}
-              <p className="text-sm text-slate-500">
-                The task will be pending until the employee accepts it.
-              </p>
-            </div>
-          )}
-
+          {/* Status */}
           <div className="space-y-2">
             <label className="block text-sm font-medium text-slate-700">
               Status
@@ -591,11 +528,9 @@ function TaskModal({ isOpen, onClose, onSubmit, task, users, currentUser }: Task
                   className={cn(
                     "flex-1 py-3 px-4 border rounded-lg text-center transition-all",
                     formData.status === status
-                      ? status === "Done"
-                        ? "border-emerald-500 bg-emerald-50 text-emerald-700"
-                        : status === "In Progress"
-                        ? "border-blue-500 bg-blue-50 text-blue-700"
-                        : "border-slate-500 bg-slate-50 text-slate-700"
+                      ? status === "Done" ? "border-emerald-500 bg-emerald-50 text-emerald-700"
+                      : status === "In Progress" ? "border-blue-500 bg-blue-50 text-blue-700"
+                      : "border-slate-500 bg-slate-50 text-slate-700"
                       : "border-slate-200 hover:border-slate-300"
                   )}
                 >
@@ -605,6 +540,7 @@ function TaskModal({ isOpen, onClose, onSubmit, task, users, currentUser }: Task
             </div>
           </div>
 
+          {/* Footer */}
           <div className="flex justify-end gap-4 pt-6 border-t border-slate-200">
             <Button
               type="button"
@@ -628,12 +564,11 @@ function TaskModal({ isOpen, onClose, onSubmit, task, users, currentUser }: Task
 }
 
 // ============================================
-// MAIN USER TASKS PAGE (updated with partner_id)
+// MAIN USER TASKS PAGE
 // ============================================
 export default function UserTasksPage() {
+  // State
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [users, setUsers] = useState<User[]>([]);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [editingTask, setEditingTask] = useState<Task | undefined>(undefined);
@@ -646,10 +581,10 @@ export default function UserTasksPage() {
     priority: "all" as PriorityFilter,
     type: "all" as TypeFilter,
   });
-  const [blockFilter, setBlockFilter] = useState<BlockFilter>(null);
 
   const API_BASE = "https://schepen-kring.nl/api";
 
+  // Fetch data on mount
   useEffect(() => {
     fetchData();
   }, []);
@@ -660,101 +595,83 @@ export default function UserTasksPage() {
       const token = localStorage.getItem("auth_token");
       const headers = { Authorization: `Bearer ${token}` };
 
+      // Get current user
       const userData = localStorage.getItem("user_data");
       if (!userData) {
         toast.error("Please log in first");
         return;
       }
-      const user = JSON.parse(userData);
-      setCurrentUser(user);
 
+      // Fetch user's tasks – this endpoint returns:
+      // - Tasks assigned to the user (assigned_to = user.id) – these are partner‑assigned tasks
+      // - Personal tasks created by the user (user_id = user.id)
       const tasksRes = await axios.get(`${API_BASE}/tasks/my`, { headers });
       setTasks(tasksRes.data);
-
-      // 👇 changed from harbor_id to partner_id, and use partner endpoint
-      if (user.partner_id) {
-        const usersRes = await axios.get(`${API_BASE}/partner/users`, { headers });
-        setUsers(usersRes.data.filter((u: User) => u.id !== user.id));
-      }
+      
     } catch (error: any) {
-      console.error("Error fetching data:", error);
-      toast.error(error.response?.data?.error || "Failed to load data");
+      console.error("Error fetching tasks:", error);
+      toast.error(error.response?.data?.error || "Failed to load tasks");
     } finally {
       setLoading(false);
     }
   };
 
-  const metrics = useMemo(() => {
-    const activeTasks = tasks.filter(t => t.status === "To Do").length;
-    const highPriority = tasks.filter(t => t.priority === "High").length;
-    const completedAssets = tasks.filter(t => t.status === "Done").length;
-
-    const today = new Date().toISOString().split("T")[0];
-    const tasksDueToday = tasks.filter(t => t.due_date && t.due_date.startsWith(today));
-    const completedToday = tasksDueToday.filter(t => t.status === "Done").length;
-    const efficiency = tasksDueToday.length > 0 ? Math.round((completedToday / tasksDueToday.length) * 100) : 0;
-
-    return { activeTasks, highPriority, completedAssets, efficiency };
-  }, [tasks]);
-
+  // Filter tasks
   const filteredTasks = useMemo(() => {
     let filtered = [...tasks];
 
-    if (blockFilter) {
-      switch (blockFilter) {
-        case "active":
-          filtered = filtered.filter(task => task.status === "To Do");
-          break;
-        case "priority":
-          filtered = filtered.filter(task => task.priority === "High");
-          break;
-        case "completed":
-          filtered = filtered.filter(task => task.status === "Done");
-          break;
-        case "efficiency":
-          const today = new Date().toISOString().split("T")[0];
-          filtered = filtered.filter(task => task.due_date && task.due_date.startsWith(today));
-          break;
-      }
-    }
-
+    // Apply status filter
     if (filters.status !== "all") {
       filtered = filtered.filter(task => task.status === filters.status);
     }
+
+    // Apply priority filter
     if (filters.priority !== "all") {
       filtered = filtered.filter(task => task.priority === filters.priority);
     }
+
+    // Apply type filter
     if (filters.type !== "all") {
       filtered = filtered.filter(task => task.type === filters.type);
     }
+
+    // Apply search filter
     if (filters.search) {
       const searchLower = filters.search.toLowerCase();
       filtered = filtered.filter(task =>
         task.title.toLowerCase().includes(searchLower) ||
-        task.description?.toLowerCase().includes(searchLower) ||
-        task.created_by_user?.name.toLowerCase().includes(searchLower)
+        task.description?.toLowerCase().includes(searchLower)
       );
     }
+
+    // Apply showDone filter
     if (!showDone) {
       filtered = filtered.filter(task => task.status !== "Done");
     }
 
     return filtered;
-  }, [tasks, filters, showDone, blockFilter]);
+  }, [tasks, filters, showDone]);
 
-  const handleBlockClick = (block: BlockFilter) => {
-    setBlockFilter(prev => prev === block ? null : block);
-  };
-
+  // Handle create/update task
   const handleTaskSubmit = async (taskData: any) => {
     try {
       const token = localStorage.getItem("auth_token");
       const headers = { Authorization: `Bearer ${token}` };
 
+      // Add user_id for personal tasks
+      const userData = localStorage.getItem("user_data");
+      if (userData) {
+        const user = JSON.parse(userData);
+        taskData.user_id = user.id;
+        taskData.type = "personal";
+      }
+
       if (editingTask) {
+        // Update task
         await axios.put(`${API_BASE}/tasks/${editingTask.id}`, taskData, { headers });
         toast.success("Task updated successfully");
       } else {
+        // Create task
         await axios.post(`${API_BASE}/tasks`, taskData, { headers });
         toast.success("Task created successfully");
       }
@@ -762,13 +679,15 @@ export default function UserTasksPage() {
       await fetchData();
       setIsModalOpen(false);
       setEditingTask(undefined);
+      
     } catch (error: any) {
       console.error("Error saving task:", error);
       toast.error(error.response?.data?.error || "Failed to save task");
     }
   };
 
-  const handleDeleteTask = async (taskId: number) => {
+  // Handle delete task
+  const handleDeleteTask = async (taskId: number | string) => {
     if (!confirm("Are you sure you want to delete this task?")) return;
 
     try {
@@ -778,23 +697,29 @@ export default function UserTasksPage() {
       await axios.delete(`${API_BASE}/tasks/${taskId}`, { headers });
       toast.success("Task deleted successfully");
       await fetchData();
+      
     } catch (error: any) {
       console.error("Error deleting task:", error);
       toast.error(error.response?.data?.error || "Failed to delete task");
     }
   };
 
-  const handleStatusChange = async (taskId: number, newStatus: Task["status"]) => {
+  // Handle status change
+  const handleStatusChange = async (taskId: number | string, newStatus: Task["status"]) => {
     try {
       const token = localStorage.getItem("auth_token");
       const headers = { Authorization: `Bearer ${token}` };
 
-      await axios.patch(`${API_BASE}/tasks/${taskId}/status`, { status: newStatus }, { headers });
+      await axios.patch(
+        `${API_BASE}/tasks/${taskId}/status`,
+        { status: newStatus },
+        { headers }
+      );
 
-      setTasks(prev => prev.map(task =>
+      setTasks(prev => prev.map(task => 
         task.id === taskId ? { ...task, status: newStatus } : task
       ));
-
+      
       toast.success("Status updated");
     } catch (error: any) {
       console.error("Error updating status:", error);
@@ -802,54 +727,31 @@ export default function UserTasksPage() {
     }
   };
 
-  const handleAcceptTask = async (taskId: number) => {
-    try {
-      const token = localStorage.getItem("auth_token");
-      const headers = { Authorization: `Bearer ${token}` };
-
-      await axios.patch(`${API_BASE}/tasks/${taskId}/accept`, {}, { headers });
-      toast.success("Task accepted");
-      await fetchData();
-    } catch (error: any) {
-      console.error("Error accepting task:", error);
-      toast.error(error.response?.data?.error || "Failed to accept task");
-    }
-  };
-
-  const handleRejectTask = async (taskId: number) => {
-    if (!confirm("Are you sure you want to reject this task?")) return;
-
-    try {
-      const token = localStorage.getItem("auth_token");
-      const headers = { Authorization: `Bearer ${token}` };
-
-      await axios.patch(`${API_BASE}/tasks/${taskId}/reject`, {}, { headers });
-      toast.success("Task rejected");
-      await fetchData();
-    } catch (error: any) {
-      console.error("Error rejecting task:", error);
-      toast.error(error.response?.data?.error || "Failed to reject task");
-    }
-  };
-
+  // Get priority icon
   const getPriorityIcon = (priority: Task["priority"]) => {
     switch (priority) {
-      case "High": return <AlertTriangle className="text-red-600" size={16} />;
+      case "Critical": return <AlertTriangle className="text-red-600" size={16} />;
+      case "Urgent": return <AlertCircle className="text-orange-500" size={16} />;
+      case "High": return <AlertTriangle className="text-amber-500" size={16} />;
       case "Medium": return <Shield className="text-blue-500" size={16} />;
       case "Low": return <Info className="text-slate-500" size={16} />;
       default: return <Info size={16} />;
     }
   };
 
+  // Get priority styles
   const getPriorityStyles = (priority: Task["priority"]) => {
     switch (priority) {
-      case "High": return "bg-red-50 border-red-200 text-red-700";
+      case "Critical": return "bg-red-50 border-red-200 text-red-700";
+      case "Urgent": return "bg-orange-50 border-orange-200 text-orange-700";
+      case "High": return "bg-amber-50 border-amber-200 text-amber-700";
       case "Medium": return "bg-blue-50 border-blue-200 text-blue-700";
       case "Low": return "bg-slate-50 border-slate-200 text-slate-700";
       default: return "bg-slate-50 border-slate-200 text-slate-700";
     }
   };
 
+  // Get status styles
   const getStatusStyles = (status: Task["status"]) => {
     switch (status) {
       case "Done": return "bg-emerald-50 text-emerald-600 border-emerald-200";
@@ -859,6 +761,7 @@ export default function UserTasksPage() {
     }
   };
 
+  // Format date
   const formatDate = (dateString?: string) => {
     if (!dateString) return "No date";
     const date = new Date(dateString);
@@ -869,6 +772,7 @@ export default function UserTasksPage() {
     });
   };
 
+  // Check if overdue
   const isOverdue = (dueDate?: string) => {
     if (!dueDate) return false;
     const today = new Date();
@@ -882,15 +786,16 @@ export default function UserTasksPage() {
     <div className="min-h-screen bg-white text-[#003566]">
       <DashboardHeader />
       <Toaster position="top-right" />
-
+      
       <div className="flex pt-20">
         <Sidebar onCollapse={setIsSidebarCollapsed} />
-
+        
         <motion.main
           animate={{ marginLeft: isSidebarCollapsed ? 80 : 256 }}
           className="flex-1 p-6 bg-white min-h-[calc(100vh-80px)] z-30 -mt-20"
         >
           <div className="max-w-7xl mx-auto space-y-6">
+            {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
               <div>
                 <h1 className="text-3xl font-serif italic text-[#003566]">
@@ -902,6 +807,7 @@ export default function UserTasksPage() {
               </div>
 
               <div className="flex flex-col md:flex-row w-full md:w-auto gap-4">
+                {/* Search */}
                 <div className="relative w-full md:w-64">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
                   <input
@@ -913,23 +819,27 @@ export default function UserTasksPage() {
                   />
                 </div>
 
+                {/* View Toggle */}
                 <div className="flex gap-2">
                   <Button
                     variant={viewMode === "list" ? "default" : "outline"}
                     onClick={() => setViewMode("list")}
                     className="rounded-none h-12 px-4 border text-xs"
                   >
-                    <List size={16} className="mr-2" /> List
+                    <List size={16} className="mr-2" />
+                    List
                   </Button>
                   <Button
                     variant={viewMode === "calendar" ? "default" : "outline"}
                     onClick={() => setViewMode("calendar")}
                     className="rounded-none h-12 px-4 border text-xs"
                   >
-                    <CalendarDays size={16} className="mr-2" /> Calendar
+                    <CalendarDays size={16} className="mr-2" />
+                    Calendar
                   </Button>
                 </div>
 
+                {/* New Task Button */}
                 <Button
                   onClick={() => {
                     setEditingTask(undefined);
@@ -942,52 +852,9 @@ export default function UserTasksPage() {
               </div>
             </div>
 
-            {/* Four metric blocks (unchanged) */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div
-                onClick={() => handleBlockClick("active")}
-                className={cn(
-                  "p-6 border rounded-lg cursor-pointer transition-all",
-                  blockFilter === "active" ? "bg-blue-50 border-blue-500" : "bg-white border-slate-200 hover:bg-slate-50"
-                )}
-              >
-                <p className="text-sm uppercase tracking-wider text-slate-500">Active Tasks</p>
-                <p className="text-4xl font-bold text-[#003566]">{metrics.activeTasks}</p>
-              </div>
-              <div
-                onClick={() => handleBlockClick("priority")}
-                className={cn(
-                  "p-6 border rounded-lg cursor-pointer transition-all",
-                  blockFilter === "priority" ? "bg-red-50 border-red-500" : "bg-white border-slate-200 hover:bg-slate-50"
-                )}
-              >
-                <p className="text-sm uppercase tracking-wider text-slate-500">High Priority</p>
-                <p className="text-4xl font-bold text-[#003566]">{metrics.highPriority}</p>
-              </div>
-              <div
-                onClick={() => handleBlockClick("completed")}
-                className={cn(
-                  "p-6 border rounded-lg cursor-pointer transition-all",
-                  blockFilter === "completed" ? "bg-emerald-50 border-emerald-500" : "bg-white border-slate-200 hover:bg-slate-50"
-                )}
-              >
-                <p className="text-sm uppercase tracking-wider text-slate-500">Completed Assets</p>
-                <p className="text-4xl font-bold text-[#003566]">{metrics.completedAssets}</p>
-              </div>
-              <div
-                onClick={() => handleBlockClick("efficiency")}
-                className={cn(
-                  "p-6 border rounded-lg cursor-pointer transition-all",
-                  blockFilter === "efficiency" ? "bg-purple-50 border-purple-500" : "bg-white border-slate-200 hover:bg-slate-50"
-                )}
-              >
-                <p className="text-sm uppercase tracking-wider text-slate-500">User Efficiency</p>
-                <p className="text-4xl font-bold text-[#003566]">{metrics.efficiency}%</p>
-              </div>
-            </div>
-
             {/* Filters */}
             <div className="flex flex-wrap items-center gap-4 p-4 bg-slate-50 border border-slate-200 rounded-lg">
+              {/* Status Filter */}
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium text-slate-600">Status:</span>
                 <select
@@ -1002,6 +869,7 @@ export default function UserTasksPage() {
                 </select>
               </div>
 
+              {/* Priority Filter */}
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium text-slate-600">Priority:</span>
                 <select
@@ -1013,9 +881,12 @@ export default function UserTasksPage() {
                   <option value="Low">Low</option>
                   <option value="Medium">Medium</option>
                   <option value="High">High</option>
+                  <option value="Urgent">Urgent</option>
+                  <option value="Critical">Critical</option>
                 </select>
               </div>
 
+              {/* Type Filter */}
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium text-slate-600">Type:</span>
                 <select
@@ -1024,11 +895,12 @@ export default function UserTasksPage() {
                   onChange={(e) => setFilters(prev => ({ ...prev, type: e.target.value as TypeFilter }))}
                 >
                   <option value="all">All Types</option>
-                  <option value="personal">Personal</option>
                   <option value="assigned">Assigned</option>
+                  <option value="personal">Personal</option>
                 </select>
               </div>
 
+              {/* Show Done Toggle */}
               <Button
                 variant={showDone ? "default" : "outline"}
                 onClick={() => setShowDone(!showDone)}
@@ -1039,12 +911,14 @@ export default function UserTasksPage() {
               </Button>
             </div>
 
+            {/* Content */}
             {loading ? (
               <div className="flex items-center justify-center p-12">
                 <Loader2 className="animate-spin text-[#003566]" size={32} />
                 <span className="ml-3 text-slate-600">Loading tasks...</span>
               </div>
             ) : viewMode === "list" ? (
+              /* List View */
               <div className="space-y-4">
                 <AnimatePresence mode="popLayout">
                   {filteredTasks.length === 0 ? (
@@ -1067,10 +941,12 @@ export default function UserTasksPage() {
                         className={cn(
                           "flex flex-col md:flex-row items-start md:items-center justify-between p-6 gap-6 border shadow-sm rounded-lg transition-all hover:shadow-md",
                           task.status === "Done" && "opacity-70",
-                          task.priority === "High" && task.status !== "Done" && "border-l-4 border-l-red-600"
+                          task.priority === "Critical" && task.status !== "Done" && "border-l-4 border-l-red-600 animate-pulse"
                         )}
                       >
+                        {/* Left Section */}
                         <div className="flex items-start gap-4 flex-1">
+                          {/* Priority Icon */}
                           <div className={cn(
                             "w-12 h-12 flex items-center justify-center rounded-full border-2",
                             getPriorityStyles(task.priority)
@@ -1078,8 +954,9 @@ export default function UserTasksPage() {
                             {getPriorityIcon(task.priority)}
                           </div>
 
+                          {/* Task Details */}
                           <div className="flex-1">
-                            <div className="flex items-center gap-3 mb-2 flex-wrap">
+                            <div className="flex items-center gap-3 mb-2">
                               <h3 className="text-lg font-bold text-[#003566]">
                                 {task.title}
                               </h3>
@@ -1095,9 +972,9 @@ export default function UserTasksPage() {
                               )}>
                                 {task.status}
                               </span>
-                              {task.assignment_status === "pending" && task.assigned_to === currentUser?.id && (
-                                <span className="px-2 py-1 text-xs font-bold uppercase bg-yellow-50 text-yellow-600 border border-yellow-200 rounded">
-                                  Pending Acceptance
+                              {task.type === "personal" && (
+                                <span className="px-2 py-1 text-xs font-bold uppercase bg-purple-50 text-purple-600 border border-purple-200 rounded">
+                                  Personal
                                 </span>
                               )}
                             </div>
@@ -1109,16 +986,16 @@ export default function UserTasksPage() {
                             )}
 
                             <div className="flex flex-wrap items-center gap-4 text-sm text-slate-500">
-                              {task.created_by_user && (
-                                <span className="flex items-center gap-1.5">
-                                  <UserIcon size={14} />
-                                  Created by: {task.created_by_user.name}
-                                </span>
-                              )}
                               {task.assigned_to_user && task.type === "assigned" && (
                                 <span className="flex items-center gap-1.5">
                                   <UserIcon size={14} />
-                                  Assigned to: {task.assigned_to_user.name}
+                                  {task.assigned_to_user.name}
+                                </span>
+                              )}
+                              {task.yacht && (
+                                <span className="flex items-center gap-1.5">
+                                  <Shield size={14} />
+                                  {task.yacht.name}
                                 </span>
                               )}
                               <span className={cn(
@@ -1133,30 +1010,10 @@ export default function UserTasksPage() {
                           </div>
                         </div>
 
+                        {/* Right Section - Actions */}
                         <div className="flex items-center gap-3">
-                          {task.assignment_status === "pending" && task.assigned_to === currentUser?.id && (
-                            <>
-                              <Button
-                                onClick={() => handleAcceptTask(task.id)}
-                                className="bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100"
-                                size="sm"
-                              >
-                                <CheckCircle2 size={16} className="mr-2" />
-                                Accept
-                              </Button>
-                              <Button
-                                onClick={() => handleRejectTask(task.id)}
-                                variant="outline"
-                                size="sm"
-                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                              >
-                                <X size={16} className="mr-2" />
-                                Reject
-                              </Button>
-                            </>
-                          )}
-
-                          {task.assignment_status !== "pending" && task.status !== "Done" ? (
+                          {/* Status Change */}
+                          {task.status !== "Done" ? (
                             <Button
                               onClick={() => handleStatusChange(task.id, "Done")}
                               className="bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100"
@@ -1165,7 +1022,7 @@ export default function UserTasksPage() {
                               <CheckCircle2 size={16} className="mr-2" />
                               Mark Done
                             </Button>
-                          ) : task.assignment_status !== "pending" && task.status === "Done" ? (
+                          ) : (
                             <Button
                               onClick={() => handleStatusChange(task.id, "To Do")}
                               variant="outline"
@@ -1173,29 +1030,32 @@ export default function UserTasksPage() {
                             >
                               Re-open
                             </Button>
-                          ) : null}
+                          )}
 
-                          {task.created_by === currentUser?.id && (
-                            <>
-                              <Button
-                                onClick={() => {
-                                  setEditingTask(task);
-                                  setIsModalOpen(true);
-                                }}
-                                variant="outline"
-                                size="sm"
-                              >
-                                <Edit2 size={16} />
-                              </Button>
-                              <Button
-                                onClick={() => handleDeleteTask(task.id)}
-                                variant="outline"
-                                size="sm"
-                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                              >
-                                <Trash2 size={16} />
-                              </Button>
-                            </>
+                          {/* Edit Button (only for personal tasks) */}
+                          {task.type === "personal" && (
+                            <Button
+                              onClick={() => {
+                                setEditingTask(task);
+                                setIsModalOpen(true);
+                              }}
+                              variant="outline"
+                              size="sm"
+                            >
+                              <Edit2 size={16} />
+                            </Button>
+                          )}
+
+                          {/* Delete Button (only for personal tasks) */}
+                          {task.type === "personal" && (
+                            <Button
+                              onClick={() => handleDeleteTask(task.id)}
+                              variant="outline"
+                              size="sm"
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            >
+                              <Trash2 size={16} />
+                            </Button>
                           )}
                         </div>
                       </motion.div>
@@ -1204,11 +1064,12 @@ export default function UserTasksPage() {
                 </AnimatePresence>
               </div>
             ) : (
+              /* Calendar View */
               <div className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
-                <CalendarView
-                  tasks={filteredTasks}
+                <CalendarView 
+                  tasks={filteredTasks} 
                   onTaskClick={(task) => {
-                    if (task.created_by === currentUser?.id) {
+                    if (task.type === "personal") {
                       setEditingTask(task);
                       setIsModalOpen(true);
                     }
@@ -1220,6 +1081,7 @@ export default function UserTasksPage() {
         </motion.main>
       </div>
 
+      {/* Task Modal */}
       <TaskModal
         isOpen={isModalOpen}
         onClose={() => {
@@ -1228,8 +1090,6 @@ export default function UserTasksPage() {
         }}
         onSubmit={handleTaskSubmit}
         task={editingTask}
-        users={users}
-        currentUser={currentUser}
       />
     </div>
   );
