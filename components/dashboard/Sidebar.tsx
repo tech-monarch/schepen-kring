@@ -147,7 +147,14 @@ export function Sidebar({ onCollapse }: { onCollapse?: (collapsed: boolean) => v
       title: "Tasks", 
       href: userRole === "Admin" ? "/dashboard/tasks" : "/dashboard/tasks", 
       icon: CheckSquare, 
-      roles: ["Admin", "Employee", "Seller"],
+      roles: ["Admin", "Employee"],
+      page_key: "tasks"
+    },
+    { 
+      title: "Tasks", 
+      href:  "/dashboard/partner/tasks", 
+      icon: CheckSquare, 
+      roles: ["Seller"],
       page_key: "tasks"
     },
     { 
