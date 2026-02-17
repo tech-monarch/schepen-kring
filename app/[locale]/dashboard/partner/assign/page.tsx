@@ -70,25 +70,18 @@ interface CalendarViewProps {
   onTaskClick?: (task: Task) => void;
 }
 
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 function CalendarView({ tasks, onTaskClick }: CalendarViewProps) {
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
 
   // Get priority color
   const getPriorityColor = (priority: string): string => {
     switch (priority) {
-      case "Critical":
-        return "#dc2626";
-      case "Urgent":
-        return "#ea580c";
-      case "High":
-        return "#d97706";
-      case "Medium":
-        return "#3b82f6";
-      case "Low":
-        return "#6b7280";
-      default:
-        return "#6b7280";
+      case "Critical": return "#dc2626";
+      case "Urgent": return "#ea580c";
+      case "High": return "#d97706";
+      case "Medium": return "#3b82f6";
+      case "Low": return "#6b7280";
+      default: return "#6b7280";
     }
   };
 
@@ -209,8 +202,6 @@ function CalendarView({ tasks, onTaskClick }: CalendarViewProps) {
 
   return (
     <div className="bg-white p-6 rounded-lg border border-slate-200">
-        
-              <Sidebar onCollapse={setIsSidebarCollapsed} />
       {/* Calendar Header */}
       <div className="flex flex-col md:flex-row justify-between items-center mb-6">
         <div className="flex items-center gap-4 mb-4 md:mb-0">
@@ -994,8 +985,15 @@ export default function PartnerTasksPage() {
       <DashboardHeader />
       <Toaster position="top-right" />
 
-      <div className="flex">
-        <motion.main className="fixed top-0 left-0 w-full p-6 bg-white min-h-screen z-30">
+      <div className="flex pt-20">
+        {/* Sidebar */}
+        <Sidebar onCollapse={setIsSidebarCollapsed} />
+
+        {/* Main Content */}
+        <motion.main
+          animate={{ marginLeft: isSidebarCollapsed ? 80 : 256 }}
+          className="flex-1 p-6 bg-white min-h-[calc(100vh-80px)] z-30 -mt-20"
+        >
           <div className="max-w-7xl mx-auto space-y-6">
             {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
