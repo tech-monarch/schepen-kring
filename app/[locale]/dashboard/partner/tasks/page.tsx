@@ -627,7 +627,7 @@ function TaskModal({ isOpen, onClose, onSubmit, task, users, currentUser }: Task
 }
 
 // ============================================
-// MAIN USER TASKS PAGE
+// MAIN USER TASKS PAGE (improved data fetching)
 // ============================================
 export default function UserTasksPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -649,31 +649,46 @@ export default function UserTasksPage() {
 
   const API_BASE = "https://schepen-kring.nl/api";
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  const getHeaders = () => ({
+    headers: { Authorization: `Bearer ${localStorage.getItem("auth_token")}` }
+  });
+
+  // Fetch current user from API first
+  const fetchCurrentUser = async () => {
+    try {
+      const res = await axios.get(`${API_BASE}/user`, getHeaders());
+      setCurrentUser(res.data);
+      return res.data;
+    } catch (error) {
+      console.error("Failed to fetch current user", error);
+      toast.error("Could not verify your user. Please log in again.");
+      return null;
+    }
+  };
 
   const fetchData = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem("auth_token");
-      const headers = { Authorization: `Bearer ${token}` };
-
-      const userData = localStorage.getItem("user_data");
-      if (!userData) {
-        toast.error("Please log in first");
+      // 1. Get current user from API
+      const user = await fetchCurrentUser();
+      if (!user) {
+        setLoading(false);
         return;
       }
-      const user = JSON.parse(userData);
-      setCurrentUser(user);
 
-      const tasksRes = await axios.get(`${API_BASE}/tasks/my`, { headers });
+      // 2. Fetch tasks
+      const tasksRes = await axios.get(`${API_BASE}/tasks/my`, getHeaders());
       setTasks(tasksRes.data);
 
-      // Fetch users under the same partner
+      // 3. If user has partner_id, fetch partner users
       if (user.partner_id) {
-        const usersRes = await axios.get(`${API_BASE}/partner/users`, { headers });
+        const usersRes = await axios.get(`${API_BASE}/partner/users`, getHeaders());
+        // Filter out current user so they don't assign to themselves
         setUsers(usersRes.data.filter((u: User) => u.id !== user.id));
+        console.log("Partner users loaded:", usersRes.data);
+      } else {
+        console.warn("Current user has no partner_id, cannot fetch partner users");
+        setUsers([]);
       }
     } catch (error: any) {
       console.error("Error fetching data:", error);
@@ -682,6 +697,10 @@ export default function UserTasksPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   const metrics = useMemo(() => {
     const activeTasks = tasks.filter(t => t.status === "To Do").length;
@@ -747,18 +766,15 @@ export default function UserTasksPage() {
 
   const handleTaskSubmit = async (taskData: any) => {
     try {
-      const token = localStorage.getItem("auth_token");
-      const headers = { Authorization: `Bearer ${token}` };
-
       if (editingTask) {
-        await axios.put(`${API_BASE}/tasks/${editingTask.id}`, taskData, { headers });
+        await axios.put(`${API_BASE}/tasks/${editingTask.id}`, taskData, getHeaders());
         toast.success("Task updated successfully");
       } else {
-        await axios.post(`${API_BASE}/tasks`, taskData, { headers });
+        await axios.post(`${API_BASE}/tasks`, taskData, getHeaders());
         toast.success("Task created successfully");
       }
 
-      await fetchData();
+      await fetchData(); // refresh all data
       setIsModalOpen(false);
       setEditingTask(undefined);
     } catch (error: any) {
@@ -771,10 +787,7 @@ export default function UserTasksPage() {
     if (!confirm("Are you sure you want to delete this task?")) return;
 
     try {
-      const token = localStorage.getItem("auth_token");
-      const headers = { Authorization: `Bearer ${token}` };
-
-      await axios.delete(`${API_BASE}/tasks/${taskId}`, { headers });
+      await axios.delete(`${API_BASE}/tasks/${taskId}`, getHeaders());
       toast.success("Task deleted successfully");
       await fetchData();
     } catch (error: any) {
@@ -785,10 +798,7 @@ export default function UserTasksPage() {
 
   const handleStatusChange = async (taskId: number, newStatus: Task["status"]) => {
     try {
-      const token = localStorage.getItem("auth_token");
-      const headers = { Authorization: `Bearer ${token}` };
-
-      await axios.patch(`${API_BASE}/tasks/${taskId}/status`, { status: newStatus }, { headers });
+      await axios.patch(`${API_BASE}/tasks/${taskId}/status`, { status: newStatus }, getHeaders());
 
       setTasks(prev => prev.map(task =>
         task.id === taskId ? { ...task, status: newStatus } : task
@@ -803,10 +813,7 @@ export default function UserTasksPage() {
 
   const handleAcceptTask = async (taskId: number) => {
     try {
-      const token = localStorage.getItem("auth_token");
-      const headers = { Authorization: `Bearer ${token}` };
-
-      await axios.patch(`${API_BASE}/tasks/${taskId}/accept`, {}, { headers });
+      await axios.patch(`${API_BASE}/tasks/${taskId}/accept`, {}, getHeaders());
       toast.success("Task accepted");
       await fetchData();
     } catch (error: any) {
@@ -819,10 +826,7 @@ export default function UserTasksPage() {
     if (!confirm("Are you sure you want to reject this task?")) return;
 
     try {
-      const token = localStorage.getItem("auth_token");
-      const headers = { Authorization: `Bearer ${token}` };
-
-      await axios.patch(`${API_BASE}/tasks/${taskId}/reject`, {}, { headers });
+      await axios.patch(`${API_BASE}/tasks/${taskId}/reject`, {}, getHeaders());
       toast.success("Task rejected");
       await fetchData();
     } catch (error: any) {
