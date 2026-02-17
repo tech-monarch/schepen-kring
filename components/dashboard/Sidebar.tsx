@@ -154,8 +154,15 @@ export function Sidebar({ onCollapse }: { onCollapse?: (collapsed: boolean) => v
       title: "Tasks", 
       href:  "/dashboard/partner/tasks", 
       icon: CheckSquare, 
-      roles: ["Seller"],
+      roles: ["Employee"],
       page_key: "tasks"
+    },
+    { 
+      title: "Assign Tasks", 
+      href: "/dashboard/partner/assign", 
+      icon: Calendar, 
+      roles: ["Partner"],
+      page_key: "assign_tasks"
     },
     { 
       title: "Assign Tasks", 
