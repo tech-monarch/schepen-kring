@@ -324,7 +324,7 @@ interface TaskModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (data: any) => void;
-  task?: Task;  // Changed from task?: Task | null
+  task?: Task;
 }
 
 function TaskModal({ isOpen, onClose, onSubmit, task }: TaskModalProps) {
@@ -571,7 +571,7 @@ export default function UserTasksPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  const [editingTask, setEditingTask] = useState<Task | undefined>(undefined); // Changed from null to undefined
+  const [editingTask, setEditingTask] = useState<Task | undefined>(undefined);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [showDone, setShowDone] = useState(false);
@@ -602,7 +602,9 @@ export default function UserTasksPage() {
         return;
       }
 
-      // Fetch user's tasks
+      // Fetch user's tasks – this endpoint returns:
+      // - Tasks assigned to the user (assigned_to = user.id) – these are partner‑assigned tasks
+      // - Personal tasks created by the user (user_id = user.id)
       const tasksRes = await axios.get(`${API_BASE}/tasks/my`, { headers });
       setTasks(tasksRes.data);
       
@@ -676,7 +678,7 @@ export default function UserTasksPage() {
 
       await fetchData();
       setIsModalOpen(false);
-      setEditingTask(undefined); // Changed from null to undefined
+      setEditingTask(undefined);
       
     } catch (error: any) {
       console.error("Error saving task:", error);
@@ -840,7 +842,7 @@ export default function UserTasksPage() {
                 {/* New Task Button */}
                 <Button
                   onClick={() => {
-                    setEditingTask(undefined); // Changed from null to undefined
+                    setEditingTask(undefined);
                     setIsModalOpen(true);
                   }}
                   className="bg-[#003566] text-white rounded-none h-12 px-8 uppercase text-xs tracking-widest font-black shadow-lg hover:bg-[#003566]/90"
@@ -1084,10 +1086,10 @@ export default function UserTasksPage() {
         isOpen={isModalOpen}
         onClose={() => {
           setIsModalOpen(false);
-          setEditingTask(undefined); // Changed from null to undefined
+          setEditingTask(undefined);
         }}
         onSubmit={handleTaskSubmit}
-        task={editingTask} // Now this is Task | undefined which matches TaskModalProps
+        task={editingTask}
       />
     </div>
   );
