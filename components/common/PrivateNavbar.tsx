@@ -2,7 +2,16 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Menu, X, RefreshCw, LayoutDashboard, ArrowRight, User } from "lucide-react";
+import {
+  Menu,
+  X,
+  RefreshCw,
+  LayoutDashboard,
+  ArrowRight,
+  ChevronDown,
+  Settings,
+  LogOut,
+} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import LanguageSwitcher from "./LanguageSwitcher";
 import { Link } from "@/i18n/navigation";
@@ -12,6 +21,15 @@ import { cn } from "@/lib/utils";
 import Image from "next/image";
 import ANSWER24LOGO from "@/public/schepenkring-logo.png";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import { useRouter } from "@/i18n/navigation";
 
 // Storage URL constant - Fixed to match your actual storage structure
 const STORAGE_URL = "https://schepen-kring.nl/storage/";
@@ -43,15 +61,16 @@ export function PrivateNavbar() {
 
   const t = useTranslations("Navigation");
   const currentPath = usePathname();
+  const router = useRouter();
 
   // Parse and get user data from localStorage
   const getUserFromLocalStorage = (): UserProfile | null => {
     try {
       const storedUser = localStorage.getItem("user_data");
       if (!storedUser) return null;
-      
+
       const parsedUser = JSON.parse(storedUser);
-      
+
       // Transform the localStorage data to match our UserProfile interface
       return {
         id: parsedUser.id,
@@ -64,7 +83,7 @@ export function PrivateNavbar() {
         city: parsedUser.city,
         state: parsedUser.state,
         status: parsedUser.status,
-        access_level: parsedUser.access_level
+        access_level: parsedUser.access_level,
       };
     } catch (error) {
       console.error("Error parsing user data from localStorage:", error);
@@ -84,8 +103,8 @@ export function PrivateNavbar() {
 
       const response = await fetch(`${API_URL}/profile`, {
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/json',
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
         },
       });
 
@@ -103,7 +122,7 @@ export function PrivateNavbar() {
           city: data.city,
           state: data.state,
           status: data.status,
-          access_level: data.access_level
+          access_level: data.access_level,
         };
         setUserProfile(formattedData);
         localStorage.setItem("user_data", JSON.stringify(data));
@@ -156,14 +175,14 @@ export function PrivateNavbar() {
   // Get dashboard link based on user role
   const getDashboardLink = () => {
     if (!userProfile) return "/dashboard";
-    
+
     switch (userProfile.role?.toLowerCase()) {
-      case 'admin':
+      case "admin":
         return "/dashboard/admin";
-      case 'partner':
+      case "partner":
         return "/dashboard/partner";
-      case 'employee':
-      case 'user':
+      case "employee":
+      case "user":
       default:
         return "/dashboard";
     }
@@ -178,27 +197,43 @@ export function PrivateNavbar() {
   // Construct profile image URL
   const getProfileImageUrl = (profileImage?: string) => {
     if (!profileImage) return null;
-    
+
     // Remove any leading slashes
-    const cleanPath = profileImage.replace(/^\//, '');
-    
+    const cleanPath = profileImage.replace(/^\//, "");
+
     // Try different URL patterns
     const urlPatterns = [
       `${STORAGE_URL}${cleanPath}`,
-      `${STORAGE_URL.replace(/\/$/, '')}/${cleanPath}`,
+      `${STORAGE_URL.replace(/\/$/, "")}/${cleanPath}`,
     ];
-    
+
     return urlPatterns[0];
   };
 
   // Get user initials for avatar fallback
   const getUserInitials = () => {
     if (!userProfile?.name) return "U";
-    const names = userProfile.name.split(' ');
+    const names = userProfile.name.split(" ");
     if (names.length >= 2) {
       return `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase();
     }
     return userProfile.name.substring(0, 2).toUpperCase();
+  };
+
+  // Handle logout (copied from DashboardHeader)
+  const handleLogout = () => {
+    localStorage.removeItem("auth_token");
+    localStorage.removeItem("user_data");
+    localStorage.removeItem("admin_token");
+    localStorage.removeItem("fleet_tasks");
+    localStorage.removeItem("task_cache");
+    // Clear sidebar cache on logout
+    Object.keys(localStorage).forEach((key) => {
+      if (key.startsWith("sidebar_cache_")) {
+        localStorage.removeItem(key);
+      }
+    });
+    router.push("/");
   };
 
   // --- LOGIC: HIDE NAVBAR ON HOMEPAGE IF LOGGED IN ---
@@ -288,45 +323,82 @@ export function PrivateNavbar() {
               <Link href={getDashboardLink()}>
                 <button className="flex items-center gap-3 px-8 py-3 bg-[#003566] text-white text-[9px] font-sans font-bold uppercase tracking-[0.3em] hover:bg-[#001d3d] transition-all group">
                   Dashboard
-                  <ArrowRight size={12} className="group-hover:translate-x-1 transition-transform" />
+                  <ArrowRight
+                    size={12}
+                    className="group-hover:translate-x-1 transition-transform"
+                  />
                 </button>
               </Link>
 
-              {/* User Profile Section - STACKED LAYOUT */}
-              <div className="flex items-center">
-                <div className="flex flex-col items-center gap-1">
-                  <Avatar className="h-12 w-12 border-2 border-slate-100 hover:border-[#003566] transition-all duration-300">
+              {/* User Dropdown Menu - replicated from DashboardHeader */}
+              <DropdownMenu>
+                <DropdownMenuTrigger className="flex items-center gap-4 outline-none group">
+                  <div className="hidden text-right lg:block">
+                    <p className="text-[10px] font-bold text-[#003566] uppercase tracking-wider leading-none">
+                      {userProfile?.name || "User"}
+                    </p>
+                    <p className="text-[8px] text-blue-500 font-bold uppercase tracking-tighter mt-1">
+                      {formatUserRole(userProfile?.role)}
+                    </p>
+                  </div>
+
+                  <Avatar className="h-10 w-10 border-2 border-slate-100 group-hover:border-[#003566] transition-all duration-300">
                     <AvatarImage
                       src={
                         userProfile?.profile_image
-                          ? getProfileImageUrl(userProfile.profile_image) || undefined
+                          ? getProfileImageUrl(userProfile.profile_image) ||
+                            undefined
                           : undefined
                       }
                       className="object-cover"
                       alt={userProfile?.name || "User"}
                     />
-                    <AvatarFallback className="bg-[#003566] text-white text-sm font-bold">
+                    <AvatarFallback className="bg-slate-100 text-[#003566] text-xs font-bold">
                       {getUserInitials()}
                     </AvatarFallback>
                   </Avatar>
-                  
-                  <div className="text-center">
-                    <p className="text-[10px] font-bold text-[#003566] leading-tight truncate max-w-[100px]">
-                      {userProfile?.name || "User"}
-                    </p>
-                    <p className="text-[8px] text-slate-500 font-medium uppercase tracking-tighter mt-0.5">
-                      {formatUserRole(userProfile?.role)}
-                    </p>
-                  </div>
-                </div>
-              </div>
+
+                  <ChevronDown
+                    size={14}
+                    className="text-slate-400 group-hover:text-[#003566] transition-all"
+                  />
+                </DropdownMenuTrigger>
+
+                <DropdownMenuContent
+                  align="end"
+                  className="w-72 bg-white border border-slate-200 text-[#003566] rounded-none p-2 shadow-xl overflow-hidden"
+                >
+                  <DropdownMenuLabel className="flex flex-col px-3 py-2">
+                    <span className="text-[9px] uppercase tracking-[0.2em] text-slate-400 font-bold">
+                      User Identity
+                    </span>
+                    <span className="text-[11px] font-medium lowercase text-[#003566] mt-1 truncate">
+                      {userProfile?.email || "Authenticated Session"}
+                    </span>
+                  </DropdownMenuLabel>
+
+                  <DropdownMenuSeparator className="bg-slate-100" />
+
+                  <DropdownMenuItem
+                    onSelect={() => router.push("/dashboard/account")}
+                    className="hover:bg-slate-50 cursor-pointer gap-3 text-[10px] font-bold uppercase tracking-widest py-3 px-3"
+                  >
+                    <Settings size={14} /> Account Settings
+                  </DropdownMenuItem>
+
+                  <DropdownMenuSeparator className="bg-slate-100" />
+
+                  <DropdownMenuItem
+                    onSelect={handleLogout}
+                    className="text-red-500 hover:bg-red-50 cursor-pointer gap-3 text-[10px] font-bold uppercase tracking-widest py-3 px-3"
+                  >
+                    <LogOut size={14} /> Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           ) : (
-            <Link href="/login">
-              {/* <button className="px-10 py-3.5 border border-[#003566] text-[#003566] text-[9px] font-sans font-bold uppercase tracking-[0.3em] hover:bg-[#003566] hover:text-white transition-all duration-500">
-                Employee Login
-              </button> */}
-            </Link>
+            <Link href="/login">{/* Login button if needed */}</Link>
           )}
         </div>
 
@@ -379,16 +451,17 @@ export function PrivateNavbar() {
               <div className="py-8 border-t border-slate-100">
                 <LanguageSwitcher />
               </div>
-              
+
               {isLoggedIn ? (
                 <div className="space-y-6">
-                  {/* User Profile in Mobile Menu - STACKED LAYOUT */}
+                  {/* User Profile in Mobile Menu - STACKED LAYOUT (unchanged) */}
                   <div className="flex flex-col items-center gap-3 p-6 bg-slate-50 rounded-lg">
                     <Avatar className="h-24 w-24 border-4 border-white shadow-sm">
                       <AvatarImage
                         src={
                           userProfile?.profile_image
-                            ? getProfileImageUrl(userProfile.profile_image) || undefined
+                            ? getProfileImageUrl(userProfile.profile_image) ||
+                              undefined
                             : undefined
                         }
                         className="object-cover"
@@ -412,8 +485,8 @@ export function PrivateNavbar() {
                   </div>
 
                   {/* Dashboard Button in Mobile Menu */}
-                  <Link 
-                    href={getDashboardLink()} 
+                  <Link
+                    href={getDashboardLink()}
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     <Button className="w-full bg-[#003566] text-white font-sans font-bold h-16 rounded-none uppercase tracking-[0.3em] hover:bg-[#001d3d]">
@@ -424,9 +497,7 @@ export function PrivateNavbar() {
                 </div>
               ) : (
                 <Link href="/login" onClick={() => setIsMobileMenuOpen(false)}>
-                  {/* <Button className="w-full bg-[#003566] text-white font-sans font-bold h-16 rounded-none uppercase tracking-[0.3em]">
-                    Employee Login
-                  </Button> */}
+                  {/* Login button if needed */}
                 </Link>
               )}
             </div>
