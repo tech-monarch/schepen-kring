@@ -30,7 +30,6 @@ import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { Toaster, toast } from "react-hot-toast";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
-import { Sidebar } from "@/components/dashboard/Sidebar";
 
 // ============================================
 // INTERFACES
@@ -70,7 +69,6 @@ interface CalendarViewProps {
   onTaskClick?: (task: Task) => void;
 }
 
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 function CalendarView({ tasks, onTaskClick }: CalendarViewProps) {
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
 
@@ -210,7 +208,6 @@ function CalendarView({ tasks, onTaskClick }: CalendarViewProps) {
   return (
     <div className="bg-white p-6 rounded-lg border border-slate-200">
         
-              <Sidebar onCollapse={setIsSidebarCollapsed} />
       {/* Calendar Header */}
       <div className="flex flex-col md:flex-row justify-between items-center mb-6">
         <div className="flex items-center gap-4 mb-4 md:mb-0">
