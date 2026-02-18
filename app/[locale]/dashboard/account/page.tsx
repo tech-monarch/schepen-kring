@@ -28,7 +28,8 @@ import {
   Briefcase,
   Tag,
   BookOpen,
-  Clock // added for lockscreen timeout
+  Clock, // added for lockscreen timeout
+  KeyRound // added for PIN
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { motion } from "framer-motion";
@@ -36,9 +37,6 @@ import { Toaster, toast } from "react-hot-toast";
 import axios from "axios";
 import DEFAULT_PFP from "@/components/dashboard/pfp.webp";
 import { Sidebar } from "@/components/dashboard/Sidebar";
-
-// Import the lockscreen provider (assumed to be created as per instructions)
-// import { LockscreenProvider } from "@/components/Lockscreen";
 
 const API_BASE = "https://schepen-kring.nl/api";
 const STORAGE_URL = "https://schepen-kring.nl/storage/";
@@ -71,7 +69,7 @@ export default function ProfileSettingsPage() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Main form state – existing + new fields + lockscreen_timeout
+  // Main form state – existing + new fields + lockscreen settings
   const [formData, setFormData] = useState({
     // Existing
     name: "",
@@ -100,9 +98,12 @@ export default function ProfileSettingsPage() {
     houseNumber: "",
     note: "",
     claimHistoryCount: 0,
-    // Lockscreen timeout (new)
+    // Lockscreen & Security
     lockscreen_timeout: 10,
+    lockscreen_code: "1234", // Default
+    otp_enabled: false,      // YES/NO Toggle
   });
+
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   // Password form state
@@ -111,6 +112,7 @@ export default function ProfileSettingsPage() {
     new_password: "",
     new_password_confirmation: "",
   });
+
   const [showPasswords, setShowPasswords] = useState({
     current: false,
     new: false,
@@ -125,7 +127,6 @@ export default function ProfileSettingsPage() {
 
   useEffect(() => {
     fetchProfile();
-
     return () => {
       if (debounceTimer) {
         clearTimeout(debounceTimer);
@@ -169,8 +170,10 @@ export default function ProfileSettingsPage() {
         houseNumber: data.houseNumber || "",
         note: data.note || "",
         claimHistoryCount: data.claimHistoryCount || 0,
-        // Lockscreen timeout
+        // Lockscreen settings
         lockscreen_timeout: data.lockscreen_timeout || 10,
+        lockscreen_code: data.lockscreen_code || "1234",
+        otp_enabled: data.otp_enabled === 1 || data.otp_enabled === true,
       });
       setLoading(false);
     } catch (err) {
@@ -191,7 +194,7 @@ export default function ProfileSettingsPage() {
     }
   };
 
-  // Address search functions (unchanged)
+  // Address search functions
   const searchAddress = async (query: string) => {
     if (!query || query.trim().length < 3) {
       setAddressSuggestions([]);
@@ -223,7 +226,6 @@ export default function ProfileSettingsPage() {
 
   const handleAddressChange = (value: string) => {
     setFormData({ ...formData, address: value });
-
     if (debounceTimer) {
       clearTimeout(debounceTimer);
     }
@@ -231,7 +233,6 @@ export default function ProfileSettingsPage() {
     const timer = setTimeout(() => {
       searchAddress(value);
     }, 500);
-
     setDebounceTimer(timer);
   };
 
@@ -247,7 +248,6 @@ export default function ProfileSettingsPage() {
                   "";
     const postcode = suggestion.address.postcode || "";
     const country = suggestion.address.country || "Netherlands";
-
     setFormData(prev => ({
       ...prev,
       address: address,
@@ -256,7 +256,6 @@ export default function ProfileSettingsPage() {
       postcode: postcode,
       country: country
     }));
-
     setShowSuggestions(false);
     setAddressSuggestions([]);
   };
@@ -264,9 +263,8 @@ export default function ProfileSettingsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-
     const data = new FormData();
-    // Append all fields – existing and new
+    // Append all fields
     data.append("name", formData.name);
     data.append("email", formData.email);
     data.append("phone_number", formData.phone_number);
@@ -291,8 +289,11 @@ export default function ProfileSettingsPage() {
     data.append("houseNumber", formData.houseNumber);
     data.append("note", formData.note);
     data.append("claimHistoryCount", String(formData.claimHistoryCount));
-    // Lockscreen timeout
+    
+    // Security fields
     data.append("lockscreen_timeout", String(formData.lockscreen_timeout));
+    data.append("lockscreen_code", formData.lockscreen_code);
+    data.append("otp_enabled", formData.otp_enabled ? "1" : "0");
 
     if (formData.profile_image) {
       data.append("profile_image", formData.profile_image);
@@ -306,7 +307,6 @@ export default function ProfileSettingsPage() {
           "Content-Type": "multipart/form-data",
         },
       });
-
       toast.success("Profile updated successfully");
       setUser(res.data.user);
       localStorage.setItem("user_data", JSON.stringify(res.data.user));
@@ -322,7 +322,6 @@ export default function ProfileSettingsPage() {
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-
     if (passwordData.new_password !== passwordData.new_password_confirmation) {
       toast.error("New passwords do not match");
       setIsSubmitting(false);
@@ -336,7 +335,6 @@ export default function ProfileSettingsPage() {
           Authorization: `Bearer ${token}`,
         },
       });
-
       toast.success("Password changed successfully");
       setPasswordData({
         current_password: "",
@@ -381,7 +379,7 @@ export default function ProfileSettingsPage() {
               <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-12">
                 {/* Left Column – Profile Image */}
                 <div className="lg:col-span-1 space-y-6">
-                  <div className="bg-white border border-slate-100 p-8 text-center shadow-sm relative">
+                   <div className="bg-white border border-slate-100 p-8 text-center shadow-sm relative">
                     <div className="relative inline-block group">
                       <div className="w-40 h-40 border border-slate-200 overflow-hidden bg-white mx-auto">
                         <img
@@ -507,7 +505,7 @@ export default function ProfileSettingsPage() {
                           value={formData.lastName}
                           onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
                           className="w-full bg-transparent border-b border-slate-200 py-1 text-sm font-bold text-[#003566] outline-none focus:border-[#003566]"
-                        />
+                         />
                       </div>
                       {/* Prefix */}
                       <div className="space-y-2">
@@ -533,6 +531,7 @@ export default function ProfileSettingsPage() {
                           className="w-full bg-transparent border-b border-slate-200 py-1 text-sm font-bold text-[#003566] outline-none focus:border-[#003566]"
                         />
                       </div>
+                      
                       {/* Title */}
                       <div className="space-y-2">
                         <label className="text-[8px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-1">
@@ -545,6 +544,7 @@ export default function ProfileSettingsPage() {
                           className="w-full bg-transparent border-b border-slate-200 py-1 text-sm font-bold text-[#003566] outline-none focus:border-[#003566]"
                         />
                       </div>
+ 
                       {/* Salutation */}
                       <div className="space-y-2">
                         <label className="text-[8px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-1">
@@ -567,7 +567,7 @@ export default function ProfileSettingsPage() {
                           value={formData.attentionOf}
                           onChange={(e) => setFormData({ ...formData, attentionOf: e.target.value })}
                           className="w-full bg-transparent border-b border-slate-200 py-1 text-sm font-bold text-[#003566] outline-none focus:border-[#003566]"
-                        />
+                         />
                       </div>
                       {/* Identification */}
                       <div className="space-y-2">
@@ -782,15 +782,16 @@ export default function ProfileSettingsPage() {
                     </div>
                   </div>
 
-                  {/* LOCkSCREEN TIMEOUT SETTING (NEW) */}
+                  {/* LOCKSCREEN & SECURITY SETTINGS */}
                   <div className="border-t border-slate-100 pt-6">
                     <h3 className="text-xs font-black uppercase tracking-[0.3em] text-[#003566] mb-4 flex items-center gap-2">
                       <Clock size={14} /> Security Settings
                     </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                      {/* Timeout */}
                       <div className="space-y-2">
                         <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-2">
-                          <Clock size={12} /> Auto‑Lock Timeout (minutes)
+                          <Clock size={12} /> Auto‑Lock Timeout (min)
                         </label>
                         <input
                           type="number"
@@ -802,6 +803,42 @@ export default function ProfileSettingsPage() {
                         />
                         <p className="text-[8px] text-slate-400 mt-1">
                           After this many minutes of inactivity, the screen will lock.
+                        </p>
+                      </div>
+
+                      {/* 4-Digit PIN Code */}
+                      <div className="space-y-2">
+                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-2">
+                          <KeyRound size={12} /> 4-Digit PIN Code
+                        </label>
+                        <input
+                          type="text"
+                          maxLength={4}
+                          value={formData.lockscreen_code}
+                          onChange={(e) => setFormData({ ...formData, lockscreen_code: e.target.value })}
+                          placeholder="1234"
+                          className="w-full bg-transparent border-b border-slate-200 py-2 text-sm font-bold text-[#003566] outline-none focus:border-[#003566]"
+                        />
+                        <p className="text-[8px] text-slate-400 mt-1">
+                          Used to unlock the screen. (Default: 1234)
+                        </p>
+                      </div>
+
+                      {/* 1-Time Password Option */}
+                      <div className="space-y-2">
+                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-2">
+                          <Shield size={12} /> 1-Time Password
+                        </label>
+                        <select
+                          value={formData.otp_enabled ? "true" : "false"}
+                          onChange={(e) => setFormData({ ...formData, otp_enabled: e.target.value === "true" })}
+                          className="w-full bg-transparent border-b border-slate-200 py-2 text-sm font-bold text-[#003566] outline-none focus:border-[#003566]"
+                        >
+                          <option value="false">NO</option>
+                          <option value="true">YES</option>
+                        </select>
+                        <p className="text-[8px] text-slate-400 mt-1">
+                          Enable OTP for additional security.
                         </p>
                       </div>
                     </div>
