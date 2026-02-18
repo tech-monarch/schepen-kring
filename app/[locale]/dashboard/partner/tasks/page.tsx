@@ -1,4 +1,3 @@
-// app/[locale]/dashboard/employee/tasks/page.tsx
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
@@ -65,7 +64,7 @@ type PriorityFilter = "all" | "Low" | "Medium" | "High" | "Urgent" | "Critical";
 type TypeFilter = "all" | "personal" | "assigned";
 
 // ============================================
-// CALENDAR VIEW COMPONENT (from partner page)
+// CALENDAR VIEW (same as before)
 // ============================================
 function CalendarView({ tasks, onTaskClick }: { tasks: Task[]; onTaskClick?: (task: Task) => void }) {
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
@@ -98,7 +97,7 @@ function CalendarView({ tasks, onTaskClick }: { tasks: Task[]; onTaskClick?: (ta
   };
 
   const prevMonth = () => {
-    setCurrentDate((prev) => {
+    setCurrentDate(prev => {
       const newDate = new Date(prev);
       newDate.setMonth(newDate.getMonth() - 1);
       return newDate;
@@ -106,7 +105,7 @@ function CalendarView({ tasks, onTaskClick }: { tasks: Task[]; onTaskClick?: (ta
   };
 
   const nextMonth = () => {
-    setCurrentDate((prev) => {
+    setCurrentDate(prev => {
       const newDate = new Date(prev);
       newDate.setMonth(newDate.getMonth() + 1);
       return newDate;
@@ -118,12 +117,8 @@ function CalendarView({ tasks, onTaskClick }: { tasks: Task[]; onTaskClick?: (ta
   };
 
   const getTasksForDay = (day: number) => {
-    const date = new Date(
-      currentDate.getFullYear(),
-      currentDate.getMonth(),
-      day,
-    );
-    return tasks.filter((task) => {
+    const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+    return tasks.filter(task => {
       if (!task.due_date) return false;
       const taskDate = new Date(task.due_date);
       return (
@@ -138,22 +133,14 @@ function CalendarView({ tasks, onTaskClick }: { tasks: Task[]; onTaskClick?: (ta
     const { daysInMonth, startingDay } = getDaysInMonth(currentDate);
     const days = [];
 
-    const prevMonth = new Date(
-      currentDate.getFullYear(),
-      currentDate.getMonth(),
-      0,
-    );
+    const prevMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 0);
     const prevMonthDays = prevMonth.getDate();
 
     for (let i = 0; i < startingDay; i++) {
       days.push({
         day: prevMonthDays - startingDay + i + 1,
         isCurrentMonth: false,
-        date: new Date(
-          currentDate.getFullYear(),
-          currentDate.getMonth() - 1,
-          prevMonthDays - startingDay + i + 1,
-        ),
+        date: new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, prevMonthDays - startingDay + i + 1),
       });
     }
 
@@ -170,11 +157,7 @@ function CalendarView({ tasks, onTaskClick }: { tasks: Task[]; onTaskClick?: (ta
       days.push({
         day: i,
         isCurrentMonth: false,
-        date: new Date(
-          currentDate.getFullYear(),
-          currentDate.getMonth() + 1,
-          i,
-        ),
+        date: new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, i),
       });
     }
 
@@ -188,36 +171,22 @@ function CalendarView({ tasks, onTaskClick }: { tasks: Task[]; onTaskClick?: (ta
     <div className="bg-white p-6 rounded-lg border border-slate-200">
       <div className="flex flex-col md:flex-row justify-between items-center mb-6">
         <div className="flex items-center gap-4 mb-4 md:mb-0">
-          <button
-            onClick={prevMonth}
-            className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
-          >
+          <button onClick={prevMonth} className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
             <ChevronLeft className="text-slate-600" size={20} />
           </button>
-          <button
-            onClick={goToToday}
-            className="px-4 py-2 border border-slate-200 rounded-lg text-sm hover:bg-slate-50"
-          >
+          <button onClick={goToToday} className="px-4 py-2 border border-slate-200 rounded-lg text-sm hover:bg-slate-50">
             Today
           </button>
-          <button
-            onClick={nextMonth}
-            className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
-          >
+          <button onClick={nextMonth} className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
             <ChevronRight className="text-slate-600" size={20} />
           </button>
-          <h2 className="text-xl font-bold text-[#003566] ml-4">
-            {getMonthName(currentDate)}
-          </h2>
+          <h2 className="text-xl font-bold text-[#003566] ml-4">{getMonthName(currentDate)}</h2>
         </div>
       </div>
 
       <div className="grid grid-cols-7 gap-px bg-slate-200 rounded-lg overflow-hidden">
-        {weekDays.map((day) => (
-          <div
-            key={day}
-            className="bg-slate-50 p-3 text-center text-sm font-medium text-slate-600"
-          >
+        {weekDays.map(day => (
+          <div key={day} className="bg-slate-50 p-3 text-center text-sm font-medium text-slate-600">
             {day}
           </div>
         ))}
@@ -235,7 +204,7 @@ function CalendarView({ tasks, onTaskClick }: { tasks: Task[]; onTaskClick?: (ta
               className={cn(
                 "min-h-[120px] bg-white p-2 border border-slate-100",
                 !isCurrentMonth && "bg-slate-50",
-                isToday && "bg-blue-50",
+                isToday && "bg-blue-50"
               )}
             >
               <div className="flex justify-between items-center mb-1">
@@ -243,7 +212,7 @@ function CalendarView({ tasks, onTaskClick }: { tasks: Task[]; onTaskClick?: (ta
                   className={cn(
                     "text-sm font-medium",
                     isCurrentMonth ? "text-slate-900" : "text-slate-400",
-                    isToday && "text-blue-600 font-bold",
+                    isToday && "text-blue-600 font-bold"
                   )}
                 >
                   {day}
@@ -256,7 +225,7 @@ function CalendarView({ tasks, onTaskClick }: { tasks: Task[]; onTaskClick?: (ta
               </div>
 
               <div className="space-y-1 max-h-20 overflow-y-auto">
-                {dayTasks.slice(0, 3).map((task) => (
+                {dayTasks.slice(0, 3).map(task => (
                   <div
                     key={task.id}
                     className="text-xs p-1 rounded border-l-2 cursor-pointer hover:opacity-90"
@@ -265,32 +234,22 @@ function CalendarView({ tasks, onTaskClick }: { tasks: Task[]; onTaskClick?: (ta
                       backgroundColor: `${getPriorityColor(task.priority)}10`,
                       color: getPriorityColor(task.priority),
                     }}
-                    onClick={(e) => {
+                    onClick={e => {
                       e.stopPropagation();
                       onTaskClick?.(task);
                     }}
                   >
                     <div className="flex items-center gap-1">
-                      {task.priority === "Critical" && (
-                        <AlertTriangle className="text-red-600" size={10} />
-                      )}
-                      {task.priority === "Urgent" && (
-                        <AlertCircle className="text-orange-500" size={10} />
-                      )}
-                      {task.priority === "High" && (
-                        <AlertTriangle className="text-amber-500" size={10} />
-                      )}
-                      {["Medium", "Low"].includes(task.priority) && (
-                        <Clock className="text-blue-500" size={10} />
-                      )}
+                      {task.priority === "Critical" && <AlertTriangle className="text-red-600" size={10} />}
+                      {task.priority === "Urgent" && <AlertCircle className="text-orange-500" size={10} />}
+                      {task.priority === "High" && <AlertTriangle className="text-amber-500" size={10} />}
+                      {["Medium", "Low"].includes(task.priority) && <Clock className="text-blue-500" size={10} />}
                       <span className="truncate">{task.title}</span>
                     </div>
                   </div>
                 ))}
                 {dayTasks.length > 3 && (
-                  <div className="text-xs text-slate-500 text-center">
-                    +{dayTasks.length - 3} more
-                  </div>
+                  <div className="text-xs text-slate-500 text-center">+{dayTasks.length - 3} more</div>
                 )}
               </div>
             </div>
@@ -331,7 +290,7 @@ interface PersonalTaskModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (data: any) => void;
-  task?: Task; // for editing? we might not need edit, but keep for completeness
+  task?: Task;
 }
 
 function PersonalTaskModal({ isOpen, onClose, onSubmit, task }: PersonalTaskModalProps) {
@@ -352,9 +311,7 @@ function PersonalTaskModal({ isOpen, onClose, onSubmit, task }: PersonalTaskModa
         description: task.description || "",
         priority: task.priority || "Medium",
         status: task.status || "To Do",
-        due_date: task.due_date
-          ? task.due_date.split("T")[0]
-          : new Date().toISOString().split("T")[0],
+        due_date: task.due_date ? task.due_date.split("T")[0] : new Date().toISOString().split("T")[0],
       });
     } else {
       setFormData({
@@ -379,12 +336,12 @@ function PersonalTaskModal({ isOpen, onClose, onSubmit, task }: PersonalTaskModa
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
-    // type is always personal for this modal
+    // type is always personal
     onSubmit({ ...formData, type: "personal" });
   };
 
   const handlePrioritySelect = (priority: Task["priority"]) => {
-    setFormData((prev) => ({ ...prev, priority }));
+    setFormData(prev => ({ ...prev, priority }));
   };
 
   const getPriorityIcon = (priority: string) => {
@@ -418,10 +375,7 @@ function PersonalTaskModal({ isOpen, onClose, onSubmit, task }: PersonalTaskModa
           <h2 className="text-2xl font-bold text-[#003566]">
             {task ? "Edit Personal Task" : "Create Personal Task"}
           </h2>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-slate-100 rounded-full transition-colors"
-          >
+          <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
             <X className="text-slate-500" size={24} />
           </button>
         </div>
@@ -432,7 +386,7 @@ function PersonalTaskModal({ isOpen, onClose, onSubmit, task }: PersonalTaskModa
             <input
               type="text"
               value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              onChange={e => setFormData({ ...formData, title: e.target.value })}
               className={cn(
                 "w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all",
                 errors.title ? "border-red-500" : "border-slate-200"
@@ -446,7 +400,7 @@ function PersonalTaskModal({ isOpen, onClose, onSubmit, task }: PersonalTaskModa
             <label className="block text-sm font-medium text-slate-700">Description</label>
             <textarea
               value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              onChange={e => setFormData({ ...formData, description: e.target.value })}
               className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
               placeholder="Enter task description"
               rows={3}
@@ -457,7 +411,7 @@ function PersonalTaskModal({ isOpen, onClose, onSubmit, task }: PersonalTaskModa
             <div className="space-y-2">
               <label className="block text-sm font-medium text-slate-700">Priority *</label>
               <div className="grid grid-cols-5 gap-2">
-                {(["Low", "Medium", "High", "Urgent", "Critical"] as const).map((priority) => (
+                {(["Low", "Medium", "High", "Urgent", "Critical"] as const).map(priority => (
                   <button
                     key={priority}
                     type="button"
@@ -481,7 +435,7 @@ function PersonalTaskModal({ isOpen, onClose, onSubmit, task }: PersonalTaskModa
               <input
                 type="date"
                 value={formData.due_date}
-                onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
+                onChange={e => setFormData({ ...formData, due_date: e.target.value })}
                 className={cn(
                   "w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all",
                   errors.due_date ? "border-red-500" : "border-slate-200"
@@ -495,11 +449,11 @@ function PersonalTaskModal({ isOpen, onClose, onSubmit, task }: PersonalTaskModa
           <div className="space-y-2">
             <label className="block text-sm font-medium text-slate-700">Status</label>
             <div className="flex gap-4">
-              {(["To Do", "In Progress", "Done"] as const).map((status) => (
+              {(["To Do", "In Progress", "Done"] as const).map(status => (
                 <button
                   key={status}
                   type="button"
-                  onClick={() => setFormData((prev) => ({ ...prev, status }))}
+                  onClick={() => setFormData(prev => ({ ...prev, status }))}
                   className={cn(
                     "flex-1 py-3 px-4 border rounded-lg text-center transition-all",
                     formData.status === status
@@ -518,18 +472,10 @@ function PersonalTaskModal({ isOpen, onClose, onSubmit, task }: PersonalTaskModa
           </div>
 
           <div className="flex justify-end gap-4 pt-6 border-t border-slate-200">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onClose}
-              className="px-8 py-3 border-slate-200 text-slate-600 hover:bg-slate-50"
-            >
+            <Button type="button" variant="outline" onClick={onClose} className="px-8 py-3 border-slate-200 text-slate-600 hover:bg-slate-50">
               Cancel
             </Button>
-            <Button
-              type="submit"
-              className="px-8 py-3 bg-[#003566] text-white hover:bg-[#003566]/90"
-            >
+            <Button type="submit" className="px-8 py-3 bg-[#003566] text-white hover:bg-[#003566]/90">
               {task ? "Update Task" : "Create Task"}
             </Button>
           </div>
@@ -540,7 +486,7 @@ function PersonalTaskModal({ isOpen, onClose, onSubmit, task }: PersonalTaskModa
 }
 
 // ============================================
-// EMPLOYEE TASKS PAGE
+// MAIN EMPLOYEE TASKS PAGE
 // ============================================
 export default function EmployeeTasksPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -548,6 +494,7 @@ export default function EmployeeTasksPage() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [editingTask, setEditingTask] = useState<Task | undefined>(undefined);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [showDone, setShowDone] = useState(true);
@@ -558,13 +505,13 @@ export default function EmployeeTasksPage() {
     type: "all" as TypeFilter,
   });
 
-  // State for inline assign dropdown per task
+  // For inline assign dropdown
   const [showAssignDropdown, setShowAssignDropdown] = useState<Record<number, boolean>>({});
 
   const API_BASE = "https://schepen-kring.nl/api";
 
   const getHeaders = () => ({
-    headers: { Authorization: `Bearer ${localStorage.getItem("auth_token")}` }
+    headers: { Authorization: `Bearer ${localStorage.getItem("auth_token")}` },
   });
 
   const fetchCurrentUser = async () => {
@@ -588,9 +535,11 @@ export default function EmployeeTasksPage() {
         return;
       }
 
+      // Employee's tasks (personal + assigned)
       const tasksRes = await axios.get(`${API_BASE}/tasks/my`, getHeaders());
       setTasks(tasksRes.data);
 
+      // Other employees under same partner (for reassign)
       if (user.partner_id) {
         const usersRes = await axios.get(`${API_BASE}/partner/users`, getHeaders());
         setUsers(usersRes.data.filter((u: User) => u.id !== user.id));
@@ -611,33 +560,23 @@ export default function EmployeeTasksPage() {
 
   const filteredTasks = useMemo(() => {
     let filtered = [...tasks];
-
-    if (filters.status !== "all") {
-      filtered = filtered.filter((task) => task.status === filters.status);
-    }
-    if (filters.priority !== "all") {
-      filtered = filtered.filter((task) => task.priority === filters.priority);
-    }
-    if (filters.type !== "all") {
-      filtered = filtered.filter((task) => task.type === filters.type);
-    }
+    if (filters.status !== "all") filtered = filtered.filter(t => t.status === filters.status);
+    if (filters.priority !== "all") filtered = filtered.filter(t => t.priority === filters.priority);
+    if (filters.type !== "all") filtered = filtered.filter(t => t.type === filters.type);
     if (filters.search) {
       const searchLower = filters.search.toLowerCase();
       filtered = filtered.filter(
-        (task) =>
-          task.title.toLowerCase().includes(searchLower) ||
-          task.description?.toLowerCase().includes(searchLower) ||
-          task.assigned_to_user?.name.toLowerCase().includes(searchLower)
+        t =>
+          t.title.toLowerCase().includes(searchLower) ||
+          t.description?.toLowerCase().includes(searchLower) ||
+          t.assigned_to_user?.name.toLowerCase().includes(searchLower)
       );
     }
-    if (!showDone) {
-      filtered = filtered.filter((task) => task.status !== "Done");
-    }
-
+    if (!showDone) filtered = filtered.filter(t => t.status !== "Done");
     return filtered;
   }, [tasks, filters, showDone]);
 
-  // --- CREATE TASK (personal) ---
+  // --- CREATE PERSONAL TASK ---
   const handleCreateTask = async (taskData: any) => {
     try {
       await axios.post(`${API_BASE}/tasks`, taskData, getHeaders());
@@ -650,7 +589,7 @@ export default function EmployeeTasksPage() {
     }
   };
 
-  // --- DELETE TASK ---
+  // --- DELETE TASK (only if creator) ---
   const handleDeleteTask = async (taskId: number) => {
     if (!confirm("Delete this task?")) return;
     try {
@@ -658,7 +597,6 @@ export default function EmployeeTasksPage() {
       toast.success("Task deleted");
       await fetchData();
     } catch (error: any) {
-      console.error("Error deleting task:", error);
       toast.error(error.response?.data?.error || "Failed to delete task");
     }
   };
@@ -667,10 +605,9 @@ export default function EmployeeTasksPage() {
   const handleStatusChange = async (taskId: number, newStatus: Task["status"]) => {
     try {
       await axios.patch(`${API_BASE}/tasks/${taskId}/status`, { status: newStatus }, getHeaders());
-      setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: newStatus } : t));
+      setTasks(prev => prev.map(t => (t.id === taskId ? { ...t, status: newStatus } : t)));
       toast.success("Status updated");
     } catch (error: any) {
-      console.error("Error updating status:", error);
       toast.error(error.response?.data?.error || "Failed to update status");
     }
   };
@@ -682,7 +619,6 @@ export default function EmployeeTasksPage() {
       toast.success("Task accepted");
       await fetchData();
     } catch (error: any) {
-      console.error("Error accepting task:", error);
       toast.error(error.response?.data?.error || "Failed to accept task");
     }
   };
@@ -694,21 +630,24 @@ export default function EmployeeTasksPage() {
       toast.success("Task rejected");
       await fetchData();
     } catch (error: any) {
-      console.error("Error rejecting task:", error);
       toast.error(error.response?.data?.error || "Failed to reject task");
     }
   };
 
-  // --- ASSIGN TASK TO ANOTHER EMPLOYEE ---
+  // --- ASSIGN TASK TO ANOTHER EMPLOYEE (reassign) ---
   const handleAssignTask = async (taskId: number, newAssigneeId: string) => {
     if (!newAssigneeId) return;
     try {
-      await axios.put(`${API_BASE}/tasks/${taskId}`, {
-        assigned_to: parseInt(newAssigneeId),
-        type: "assigned",
-        assignment_status: "pending"
-      }, getHeaders());
-      toast.success("Task assigned");
+      await axios.put(
+        `${API_BASE}/tasks/${taskId}`,
+        {
+          assigned_to: parseInt(newAssigneeId),
+          type: "assigned",
+          assignment_status: "pending",
+        },
+        getHeaders()
+      );
+      toast.success("Task reassigned");
       await fetchData();
     } catch (error: any) {
       console.error("Error assigning task:", error);
@@ -725,7 +664,7 @@ export default function EmployeeTasksPage() {
     setShowAssignDropdown(prev => ({ ...prev, [taskId]: false }));
   };
 
-  // Helper functions (same as partner page)
+  // Helper functions (same as before)
   const getPriorityIcon = (priority: Task["priority"]) => {
     switch (priority) {
       case "Critical": return <AlertTriangle className="text-red-600" size={16} />;
@@ -760,11 +699,7 @@ export default function EmployeeTasksPage() {
   const formatDate = (dateString: string) => {
     if (!dateString) return "No date";
     const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
+    return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
   };
 
   const isOverdue = (dueDate: string) => {
@@ -792,9 +727,7 @@ export default function EmployeeTasksPage() {
             {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
               <div>
-                <h1 className="text-4xl font-serif italic text-[#003566]">
-                  My Tasks
-                </h1>
+                <h1 className="text-4xl font-serif italic text-[#003566]">My Tasks</h1>
                 <p className="text-[10px] uppercase tracking-widest text-blue-600 font-black mt-2">
                   Personal & Assigned
                 </p>
@@ -808,7 +741,7 @@ export default function EmployeeTasksPage() {
                     placeholder="SEARCH TASKS..."
                     className="w-full bg-white border border-slate-200 pl-10 pr-4 py-3 text-[10px] font-bold tracking-widest uppercase focus:border-blue-400 outline-none"
                     value={filters.search}
-                    onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
+                    onChange={e => setFilters(prev => ({ ...prev, search: e.target.value }))}
                   />
                 </div>
 
@@ -830,7 +763,10 @@ export default function EmployeeTasksPage() {
                 </div>
 
                 <Button
-                  onClick={() => setIsModalOpen(true)}
+                  onClick={() => {
+                    setEditingTask(undefined);
+                    setIsModalOpen(true);
+                  }}
                   className="bg-[#003566] text-white rounded-none h-12 px-8 uppercase text-xs tracking-widest font-black shadow-lg hover:bg-[#003566]/90"
                 >
                   <Plus size={16} className="mr-2" /> New Task
@@ -845,7 +781,7 @@ export default function EmployeeTasksPage() {
                 <select
                   className="bg-white border border-slate-200 px-3 py-2 text-sm font-medium outline-none rounded"
                   value={filters.status}
-                  onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value as StatusFilter }))}
+                  onChange={e => setFilters(prev => ({ ...prev, status: e.target.value as StatusFilter }))}
                 >
                   <option value="all">All Status</option>
                   <option value="To Do">To Do</option>
@@ -853,12 +789,13 @@ export default function EmployeeTasksPage() {
                   <option value="Done">Done</option>
                 </select>
               </div>
+
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium text-slate-600">Priority:</span>
                 <select
                   className="bg-white border border-slate-200 px-3 py-2 text-sm font-medium outline-none rounded"
                   value={filters.priority}
-                  onChange={(e) => setFilters(prev => ({ ...prev, priority: e.target.value as PriorityFilter }))}
+                  onChange={e => setFilters(prev => ({ ...prev, priority: e.target.value as PriorityFilter }))}
                 >
                   <option value="all">All Priorities</option>
                   <option value="Low">Low</option>
@@ -868,18 +805,20 @@ export default function EmployeeTasksPage() {
                   <option value="Critical">Critical</option>
                 </select>
               </div>
+
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium text-slate-600">Type:</span>
                 <select
                   className="bg-white border border-slate-200 px-3 py-2 text-sm font-medium outline-none rounded"
                   value={filters.type}
-                  onChange={(e) => setFilters(prev => ({ ...prev, type: e.target.value as TypeFilter }))}
+                  onChange={e => setFilters(prev => ({ ...prev, type: e.target.value as TypeFilter }))}
                 >
                   <option value="all">All Types</option>
                   <option value="personal">Personal</option>
                   <option value="assigned">Assigned</option>
                 </select>
               </div>
+
               <Button
                 variant={showDone ? "default" : "outline"}
                 onClick={() => setShowDone(!showDone)}
@@ -908,7 +847,7 @@ export default function EmployeeTasksPage() {
                       <p className="text-slate-400">No tasks found</p>
                     </div>
                   ) : (
-                    filteredTasks.map((task) => (
+                    filteredTasks.map(task => (
                       <motion.div
                         key={task.id}
                         layout
@@ -923,26 +862,17 @@ export default function EmployeeTasksPage() {
                       >
                         {/* Left Section */}
                         <div className="flex items-start gap-4 flex-1">
-                          <div className={cn(
-                            "w-12 h-12 flex items-center justify-center rounded-full border-2",
-                            getPriorityStyles(task.priority)
-                          )}>
+                          <div className={cn("w-12 h-12 flex items-center justify-center rounded-full border-2", getPriorityStyles(task.priority))}>
                             {getPriorityIcon(task.priority)}
                           </div>
 
                           <div className="flex-1">
                             <div className="flex items-center gap-3 mb-2 flex-wrap">
                               <h3 className="text-lg font-bold text-[#003566]">{task.title}</h3>
-                              <span className={cn(
-                                "px-2 py-1 text-xs font-bold uppercase border rounded",
-                                getPriorityStyles(task.priority)
-                              )}>
+                              <span className={cn("px-2 py-1 text-xs font-bold uppercase border rounded", getPriorityStyles(task.priority))}>
                                 {task.priority}
                               </span>
-                              <span className={cn(
-                                "px-2 py-1 text-xs font-bold uppercase border rounded",
-                                getStatusStyles(task.status)
-                              )}>
+                              <span className={cn("px-2 py-1 text-xs font-bold uppercase border rounded", getStatusStyles(task.status))}>
                                 {task.status}
                               </span>
                               {task.type === "personal" && (
@@ -964,22 +894,16 @@ export default function EmployeeTasksPage() {
                             <div className="flex flex-wrap items-center gap-4 text-sm text-slate-500">
                               {task.assigned_to_user && task.type === "assigned" && (
                                 <span className="flex items-center gap-1.5">
-                                  <UserIcon size={14} />
-                                  Assigned to: {task.assigned_to_user.name}
+                                  <UserIcon size={14} /> Assigned to: {task.assigned_to_user.name}
                                 </span>
                               )}
                               {task.created_by_user && task.type === "personal" && (
                                 <span className="flex items-center gap-1.5">
-                                  <UserIcon size={14} />
-                                  Created by you
+                                  <UserIcon size={14} /> Created by you
                                 </span>
                               )}
-                              <span className={cn(
-                                "flex items-center gap-1.5",
-                                isOverdue(task.due_date) && "text-red-600 font-bold"
-                              )}>
-                                <CalendarIcon size={14} />
-                                Due: {formatDate(task.due_date)}
+                              <span className={cn("flex items-center gap-1.5", isOverdue(task.due_date) && "text-red-600 font-bold")}>
+                                <CalendarIcon size={14} /> Due: {formatDate(task.due_date)}
                                 {isOverdue(task.due_date) && " (OVERDUE)"}
                               </span>
                             </div>
@@ -988,7 +912,7 @@ export default function EmployeeTasksPage() {
 
                         {/* Right Section - Actions */}
                         <div className="flex items-center gap-3 flex-wrap">
-                          {/* Assign button / dropdown (only if user can assign: creator or partner? For employee, maybe only creator) */}
+                          {/* Assign button / dropdown (only if user is creator or has permission) */}
                           {(task.created_by === currentUser?.id || currentUser?.role === "Partner") && (
                             <>
                               {!showAssignDropdown[task.id] ? (
@@ -1005,19 +929,15 @@ export default function EmployeeTasksPage() {
                                   <select
                                     className="border border-slate-300 bg-white rounded px-2 py-1 text-sm"
                                     defaultValue=""
-                                    onChange={(e) => handleAssignFromButton(task.id, e.target.value)}
+                                    onChange={e => handleAssignFromButton(task.id, e.target.value)}
                                     autoFocus
                                   >
                                     <option value="">Select employee...</option>
-                                    {users.map((u) => (
+                                    {users.map(u => (
                                       <option key={u.id} value={u.id}>{u.name}</option>
                                     ))}
                                   </select>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => toggleAssignDropdown(task.id)}
-                                  >
+                                  <Button variant="ghost" size="sm" onClick={() => toggleAssignDropdown(task.id)}>
                                     <X size={14} />
                                   </Button>
                                 </div>
@@ -1033,8 +953,7 @@ export default function EmployeeTasksPage() {
                                 className="bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100"
                                 size="sm"
                               >
-                                <CheckCircle2 size={16} className="mr-2" />
-                                Accept
+                                <CheckCircle2 size={16} className="mr-2" /> Accept
                               </Button>
                               <Button
                                 onClick={() => handleRejectTask(task.id)}
@@ -1042,8 +961,7 @@ export default function EmployeeTasksPage() {
                                 size="sm"
                                 className="text-red-600 hover:text-red-700 hover:bg-red-50"
                               >
-                                <X size={16} className="mr-2" />
-                                Reject
+                                <X size={16} className="mr-2" /> Reject
                               </Button>
                             </>
                           )}
@@ -1055,8 +973,7 @@ export default function EmployeeTasksPage() {
                               className="bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100"
                               size="sm"
                             >
-                              <CheckCircle2 size={16} className="mr-2" />
-                              Mark Done
+                              <CheckCircle2 size={16} className="mr-2" /> Mark Done
                             </Button>
                           ) : task.assignment_status !== "pending" && task.status === "Done" ? (
                             <Button
@@ -1090,11 +1007,11 @@ export default function EmployeeTasksPage() {
         </motion.main>
       </div>
 
-      {/* Personal Task Modal */}
       <PersonalTaskModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSubmit={handleCreateTask}
+        task={editingTask}
       />
     </div>
   );
