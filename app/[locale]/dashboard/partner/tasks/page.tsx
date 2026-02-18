@@ -1,3 +1,4 @@
+// app/[locale]/dashboard/employee/tasks/page.tsx
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
@@ -20,10 +21,8 @@ import {
   Clock,
   Shield,
   Info,
-  Edit2,
   ChevronLeft,
   ChevronRight,
-  Save,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -47,9 +46,9 @@ interface Task {
   id: number;
   title: string;
   description?: string;
-  priority: "Low" | "Medium" | "High";
+  priority: "Low" | "Medium" | "High" | "Urgent" | "Critical";
   status: "To Do" | "In Progress" | "Done";
-  due_date?: string;
+  due_date: string;
   assigned_to?: number;
   assigned_to_user?: User;
   created_by?: number;
@@ -60,31 +59,22 @@ interface Task {
   updated_at: string;
 }
 
-// For the modal – no assigned_to, always personal
-interface CreateTaskData {
-  title: string;
-  description: string;
-  priority: Task["priority"];
-  status: Task["status"];
-  due_date: string;
-  type: "personal"; // fixed
-}
-
 type ViewMode = "list" | "calendar";
 type StatusFilter = "all" | "To Do" | "In Progress" | "Done";
-type PriorityFilter = "all" | "Low" | "Medium" | "High";
+type PriorityFilter = "all" | "Low" | "Medium" | "High" | "Urgent" | "Critical";
 type TypeFilter = "all" | "personal" | "assigned";
-type BlockFilter = "active" | "priority" | "completed" | "efficiency" | null;
 
 // ============================================
-// CALENDAR VIEW COMPONENT (unchanged)
+// CALENDAR VIEW COMPONENT (from partner page)
 // ============================================
 function CalendarView({ tasks, onTaskClick }: { tasks: Task[]; onTaskClick?: (task: Task) => void }) {
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
 
   const getPriorityColor = (priority: string): string => {
     switch (priority) {
-      case "High": return "#dc2626";
+      case "Critical": return "#dc2626";
+      case "Urgent": return "#ea580c";
+      case "High": return "#d97706";
       case "Medium": return "#3b82f6";
       case "Low": return "#6b7280";
       default: return "#6b7280";
@@ -281,14 +271,17 @@ function CalendarView({ tasks, onTaskClick }: { tasks: Task[]; onTaskClick?: (ta
                     }}
                   >
                     <div className="flex items-center gap-1">
-                      {task.priority === "High" && (
+                      {task.priority === "Critical" && (
                         <AlertTriangle className="text-red-600" size={10} />
                       )}
-                      {task.priority === "Medium" && (
-                        <Shield className="text-blue-500" size={10} />
+                      {task.priority === "Urgent" && (
+                        <AlertCircle className="text-orange-500" size={10} />
                       )}
-                      {task.priority === "Low" && (
-                        <Info className="text-slate-500" size={10} />
+                      {task.priority === "High" && (
+                        <AlertTriangle className="text-amber-500" size={10} />
+                      )}
+                      {["Medium", "Low"].includes(task.priority) && (
+                        <Clock className="text-blue-500" size={10} />
                       )}
                       <span className="truncate">{task.title}</span>
                     </div>
@@ -312,7 +305,11 @@ function CalendarView({ tasks, onTaskClick }: { tasks: Task[]; onTaskClick?: (ta
         </div>
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded-full bg-red-600"></div>
-          <span className="text-sm text-slate-600">High</span>
+          <span className="text-sm text-slate-600">Critical</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-3 rounded-full bg-orange-500"></div>
+          <span className="text-sm text-slate-600">Urgent</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded-full bg-blue-500"></div>
@@ -328,27 +325,48 @@ function CalendarView({ tasks, onTaskClick }: { tasks: Task[]; onTaskClick?: (ta
 }
 
 // ============================================
-// CREATE TASK MODAL (personal only)
+// PERSONAL TASK MODAL (no assignee)
 // ============================================
-interface CreateTaskModalProps {
+interface PersonalTaskModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: CreateTaskData) => void;
+  onSubmit: (data: any) => void;
+  task?: Task; // for editing? we might not need edit, but keep for completeness
 }
 
-function CreateTaskModal({ isOpen, onClose, onSubmit }: CreateTaskModalProps) {
-  const [formData, setFormData] = useState<CreateTaskData>({
+function PersonalTaskModal({ isOpen, onClose, onSubmit, task }: PersonalTaskModalProps) {
+  const [formData, setFormData] = useState({
     title: "",
     description: "",
-    priority: "Medium",
-    status: "To Do",
+    priority: "Medium" as Task["priority"],
+    status: "To Do" as Task["status"],
     due_date: new Date().toISOString().split("T")[0],
-    type: "personal",
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    if (task) {
+      setFormData({
+        title: task.title || "",
+        description: task.description || "",
+        priority: task.priority || "Medium",
+        status: task.status || "To Do",
+        due_date: task.due_date
+          ? task.due_date.split("T")[0]
+          : new Date().toISOString().split("T")[0],
+      });
+    } else {
+      setFormData({
+        title: "",
+        description: "",
+        priority: "Medium",
+        status: "To Do",
+        due_date: new Date().toISOString().split("T")[0],
+      });
+    }
+    setErrors({});
+  }, [task, isOpen]);
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -361,14 +379,45 @@ function CreateTaskModal({ isOpen, onClose, onSubmit }: CreateTaskModalProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
-    onSubmit(formData);
+    // type is always personal for this modal
+    onSubmit({ ...formData, type: "personal" });
   };
+
+  const handlePrioritySelect = (priority: Task["priority"]) => {
+    setFormData((prev) => ({ ...prev, priority }));
+  };
+
+  const getPriorityIcon = (priority: string) => {
+    switch (priority) {
+      case "Critical": return <AlertTriangle className="text-red-600" size={20} />;
+      case "Urgent": return <AlertCircle className="text-orange-500" size={20} />;
+      case "High": return <AlertTriangle className="text-amber-500" size={20} />;
+      case "Medium": return <Shield className="text-blue-500" size={20} />;
+      case "Low": return <Info className="text-slate-500" size={20} />;
+      default: return <Info size={20} />;
+    }
+  };
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case "Critical": return "bg-red-50 border-red-500 text-red-700";
+      case "Urgent": return "bg-orange-50 border-orange-500 text-orange-700";
+      case "High": return "bg-amber-50 border-amber-500 text-amber-700";
+      case "Medium": return "bg-blue-50 border-blue-500 text-blue-700";
+      case "Low": return "bg-slate-50 border-slate-500 text-slate-700";
+      default: return "bg-slate-50 border-slate-500 text-slate-700";
+    }
+  };
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center p-6 border-b border-slate-200">
-          <h2 className="text-2xl font-bold text-[#003566]">Create Personal Task</h2>
+          <h2 className="text-2xl font-bold text-[#003566]">
+            {task ? "Edit Personal Task" : "Create Personal Task"}
+          </h2>
           <button
             onClick={onClose}
             className="p-2 hover:bg-slate-100 rounded-full transition-colors"
@@ -382,12 +431,13 @@ function CreateTaskModal({ isOpen, onClose, onSubmit }: CreateTaskModalProps) {
             <label className="block text-sm font-medium text-slate-700">Title *</label>
             <input
               type="text"
+              value={formData.title}
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
               className={cn(
                 "w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all",
                 errors.title ? "border-red-500" : "border-slate-200"
               )}
-              value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              placeholder="Enter task title"
             />
             {errors.title && <p className="text-red-500 text-sm">{errors.title}</p>}
           </div>
@@ -395,36 +445,48 @@ function CreateTaskModal({ isOpen, onClose, onSubmit }: CreateTaskModalProps) {
           <div className="space-y-2">
             <label className="block text-sm font-medium text-slate-700">Description</label>
             <textarea
-              rows={3}
-              className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+              placeholder="Enter task description"
+              rows={3}
             />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-slate-700">Priority</label>
-              <select
-                className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                value={formData.priority}
-                onChange={(e) => setFormData({ ...formData, priority: e.target.value as Task["priority"] })}
-              >
-                <option value="Low">Low</option>
-                <option value="Medium">Medium</option>
-                <option value="High">High</option>
-              </select>
+              <label className="block text-sm font-medium text-slate-700">Priority *</label>
+              <div className="grid grid-cols-5 gap-2">
+                {(["Low", "Medium", "High", "Urgent", "Critical"] as const).map((priority) => (
+                  <button
+                    key={priority}
+                    type="button"
+                    onClick={() => handlePrioritySelect(priority)}
+                    className={cn(
+                      "flex flex-col items-center justify-center p-3 border rounded-lg transition-all",
+                      formData.priority === priority
+                        ? getPriorityColor(priority)
+                        : "border-slate-200 hover:border-slate-300"
+                    )}
+                  >
+                    {getPriorityIcon(priority)}
+                    <span className="text-xs mt-1">{priority}</span>
+                  </button>
+                ))}
+              </div>
             </div>
+
             <div className="space-y-2">
               <label className="block text-sm font-medium text-slate-700">Due Date *</label>
               <input
                 type="date"
+                value={formData.due_date}
+                onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
                 className={cn(
                   "w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all",
                   errors.due_date ? "border-red-500" : "border-slate-200"
                 )}
-                value={formData.due_date}
-                onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
+                min={new Date().toISOString().split("T")[0]}
               />
               {errors.due_date && <p className="text-red-500 text-sm">{errors.due_date}</p>}
             </div>
@@ -432,23 +494,43 @@ function CreateTaskModal({ isOpen, onClose, onSubmit }: CreateTaskModalProps) {
 
           <div className="space-y-2">
             <label className="block text-sm font-medium text-slate-700">Status</label>
-            <select
-              className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-              value={formData.status}
-              onChange={(e) => setFormData({ ...formData, status: e.target.value as Task["status"] })}
-            >
-              <option value="To Do">To Do</option>
-              <option value="In Progress">In Progress</option>
-              <option value="Done">Done</option>
-            </select>
+            <div className="flex gap-4">
+              {(["To Do", "In Progress", "Done"] as const).map((status) => (
+                <button
+                  key={status}
+                  type="button"
+                  onClick={() => setFormData((prev) => ({ ...prev, status }))}
+                  className={cn(
+                    "flex-1 py-3 px-4 border rounded-lg text-center transition-all",
+                    formData.status === status
+                      ? status === "Done"
+                        ? "border-emerald-500 bg-emerald-50 text-emerald-700"
+                        : status === "In Progress"
+                        ? "border-blue-500 bg-blue-50 text-blue-700"
+                        : "border-slate-500 bg-slate-50 text-slate-700"
+                      : "border-slate-200 hover:border-slate-300"
+                  )}
+                >
+                  {status}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="flex justify-end gap-4 pt-6 border-t border-slate-200">
-            <Button variant="outline" onClick={onClose} className="px-8 py-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              className="px-8 py-3 border-slate-200 text-slate-600 hover:bg-slate-50"
+            >
               Cancel
             </Button>
-            <Button type="submit" className="px-8 py-3 bg-[#003566] text-white hover:bg-[#003566]/90">
-              Create Task
+            <Button
+              type="submit"
+              className="px-8 py-3 bg-[#003566] text-white hover:bg-[#003566]/90"
+            >
+              {task ? "Update Task" : "Create Task"}
             </Button>
           </div>
         </form>
@@ -458,28 +540,25 @@ function CreateTaskModal({ isOpen, onClose, onSubmit }: CreateTaskModalProps) {
 }
 
 // ============================================
-// MAIN TASKS PAGE
+// EMPLOYEE TASKS PAGE
 // ============================================
-export default function UserTasksPage() {
+export default function EmployeeTasksPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>("list");
-  const [showDone, setShowDone] = useState(false);
+  const [showDone, setShowDone] = useState(true);
   const [filters, setFilters] = useState({
     search: "",
     status: "all" as StatusFilter,
     priority: "all" as PriorityFilter,
     type: "all" as TypeFilter,
   });
-  const [blockFilter, setBlockFilter] = useState<BlockFilter>(null);
 
-  // Modal state
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  // State for toggling assign dropdown per task
+  // State for inline assign dropdown per task
   const [showAssignDropdown, setShowAssignDropdown] = useState<Record<number, boolean>>({});
 
   const API_BASE = "https://schepen-kring.nl/api";
@@ -530,72 +609,38 @@ export default function UserTasksPage() {
     fetchData();
   }, []);
 
-  const metrics = useMemo(() => {
-    const activeTasks = tasks.filter(t => t.status === "To Do").length;
-    const highPriority = tasks.filter(t => t.priority === "High").length;
-    const completedAssets = tasks.filter(t => t.status === "Done").length;
-
-    const today = new Date().toISOString().split("T")[0];
-    const tasksDueToday = tasks.filter(t => t.due_date && t.due_date.startsWith(today));
-    const completedToday = tasksDueToday.filter(t => t.status === "Done").length;
-    const efficiency = tasksDueToday.length > 0 ? Math.round((completedToday / tasksDueToday.length) * 100) : 0;
-
-    return { activeTasks, highPriority, completedAssets, efficiency };
-  }, [tasks]);
-
   const filteredTasks = useMemo(() => {
     let filtered = [...tasks];
 
-    if (blockFilter) {
-      switch (blockFilter) {
-        case "active":
-          filtered = filtered.filter(task => task.status === "To Do");
-          break;
-        case "priority":
-          filtered = filtered.filter(task => task.priority === "High");
-          break;
-        case "completed":
-          filtered = filtered.filter(task => task.status === "Done");
-          break;
-        case "efficiency":
-          const today = new Date().toISOString().split("T")[0];
-          filtered = filtered.filter(task => task.due_date && task.due_date.startsWith(today));
-          break;
-      }
-    }
-
     if (filters.status !== "all") {
-      filtered = filtered.filter(task => task.status === filters.status);
+      filtered = filtered.filter((task) => task.status === filters.status);
     }
     if (filters.priority !== "all") {
-      filtered = filtered.filter(task => task.priority === filters.priority);
+      filtered = filtered.filter((task) => task.priority === filters.priority);
     }
     if (filters.type !== "all") {
-      filtered = filtered.filter(task => task.type === filters.type);
+      filtered = filtered.filter((task) => task.type === filters.type);
     }
     if (filters.search) {
       const searchLower = filters.search.toLowerCase();
-      filtered = filtered.filter(task =>
-        task.title.toLowerCase().includes(searchLower) ||
-        task.description?.toLowerCase().includes(searchLower) ||
-        task.created_by_user?.name.toLowerCase().includes(searchLower)
+      filtered = filtered.filter(
+        (task) =>
+          task.title.toLowerCase().includes(searchLower) ||
+          task.description?.toLowerCase().includes(searchLower) ||
+          task.assigned_to_user?.name.toLowerCase().includes(searchLower)
       );
     }
     if (!showDone) {
-      filtered = filtered.filter(task => task.status !== "Done");
+      filtered = filtered.filter((task) => task.status !== "Done");
     }
 
     return filtered;
-  }, [tasks, filters, showDone, blockFilter]);
-
-  const handleBlockClick = (block: BlockFilter) => {
-    setBlockFilter(prev => prev === block ? null : block);
-  };
+  }, [tasks, filters, showDone]);
 
   // --- CREATE TASK (personal) ---
-  const handleCreateTask = async (data: CreateTaskData) => {
+  const handleCreateTask = async (taskData: any) => {
     try {
-      await axios.post(`${API_BASE}/tasks`, data, getHeaders());
+      await axios.post(`${API_BASE}/tasks`, taskData, getHeaders());
       toast.success("Task created");
       setIsModalOpen(false);
       await fetchData();
@@ -654,11 +699,10 @@ export default function UserTasksPage() {
     }
   };
 
-  // --- ASSIGN TO ANOTHER EMPLOYEE ---
+  // --- ASSIGN TASK TO ANOTHER EMPLOYEE ---
   const handleAssignTask = async (taskId: number, newAssigneeId: string) => {
     if (!newAssigneeId) return;
     try {
-      // Update task: set assigned_to, type=assigned, assignment_status=pending
       await axios.put(`${API_BASE}/tasks/${taskId}`, {
         assigned_to: parseInt(newAssigneeId),
         type: "assigned",
@@ -681,10 +725,12 @@ export default function UserTasksPage() {
     setShowAssignDropdown(prev => ({ ...prev, [taskId]: false }));
   };
 
-  // Helpers for display
+  // Helper functions (same as partner page)
   const getPriorityIcon = (priority: Task["priority"]) => {
     switch (priority) {
-      case "High": return <AlertTriangle className="text-red-600" size={16} />;
+      case "Critical": return <AlertTriangle className="text-red-600" size={16} />;
+      case "Urgent": return <AlertCircle className="text-orange-500" size={16} />;
+      case "High": return <AlertTriangle className="text-amber-500" size={16} />;
       case "Medium": return <Shield className="text-blue-500" size={16} />;
       case "Low": return <Info className="text-slate-500" size={16} />;
       default: return <Info size={16} />;
@@ -693,7 +739,9 @@ export default function UserTasksPage() {
 
   const getPriorityStyles = (priority: Task["priority"]) => {
     switch (priority) {
-      case "High": return "bg-red-50 border-red-200 text-red-700";
+      case "Critical": return "bg-red-50 border-red-200 text-red-700";
+      case "Urgent": return "bg-orange-50 border-orange-200 text-orange-700";
+      case "High": return "bg-amber-50 border-amber-200 text-amber-700";
       case "Medium": return "bg-blue-50 border-blue-200 text-blue-700";
       case "Low": return "bg-slate-50 border-slate-200 text-slate-700";
       default: return "bg-slate-50 border-slate-200 text-slate-700";
@@ -709,7 +757,7 @@ export default function UserTasksPage() {
     }
   };
 
-  const formatDate = (dateString?: string) => {
+  const formatDate = (dateString: string) => {
     if (!dateString) return "No date";
     const date = new Date(dateString);
     return date.toLocaleDateString("en-US", {
@@ -719,7 +767,7 @@ export default function UserTasksPage() {
     });
   };
 
-  const isOverdue = (dueDate?: string) => {
+  const isOverdue = (dueDate: string) => {
     if (!dueDate) return false;
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -728,9 +776,6 @@ export default function UserTasksPage() {
     return due < today && due.toDateString() !== today.toDateString();
   };
 
-  // ============================================
-  // RENDER
-  // ============================================
   return (
     <div className="min-h-screen bg-white text-[#003566]">
       <DashboardHeader />
@@ -747,11 +792,11 @@ export default function UserTasksPage() {
             {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
               <div>
-                <h1 className="text-3xl font-serif italic text-[#003566]">
-                  Task Manifest
+                <h1 className="text-4xl font-serif italic text-[#003566]">
+                  My Tasks
                 </h1>
                 <p className="text-[10px] uppercase tracking-widest text-blue-600 font-black mt-2">
-                  Your Assignments & Personal Tasks
+                  Personal & Assigned
                 </p>
               </div>
 
@@ -793,50 +838,6 @@ export default function UserTasksPage() {
               </div>
             </div>
 
-            {/* Four metric blocks */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div
-                onClick={() => handleBlockClick("active")}
-                className={cn(
-                  "p-6 border rounded-lg cursor-pointer transition-all",
-                  blockFilter === "active" ? "bg-blue-50 border-blue-500" : "bg-white border-slate-200 hover:bg-slate-50"
-                )}
-              >
-                <p className="text-sm uppercase tracking-wider text-slate-500">Active Tasks</p>
-                <p className="text-4xl font-bold text-[#003566]">{metrics.activeTasks}</p>
-              </div>
-              <div
-                onClick={() => handleBlockClick("priority")}
-                className={cn(
-                  "p-6 border rounded-lg cursor-pointer transition-all",
-                  blockFilter === "priority" ? "bg-red-50 border-red-500" : "bg-white border-slate-200 hover:bg-slate-50"
-                )}
-              >
-                <p className="text-sm uppercase tracking-wider text-slate-500">High Priority</p>
-                <p className="text-4xl font-bold text-[#003566]">{metrics.highPriority}</p>
-              </div>
-              <div
-                onClick={() => handleBlockClick("completed")}
-                className={cn(
-                  "p-6 border rounded-lg cursor-pointer transition-all",
-                  blockFilter === "completed" ? "bg-emerald-50 border-emerald-500" : "bg-white border-slate-200 hover:bg-slate-50"
-                )}
-              >
-                <p className="text-sm uppercase tracking-wider text-slate-500">Completed Assets</p>
-                <p className="text-4xl font-bold text-[#003566]">{metrics.completedAssets}</p>
-              </div>
-              <div
-                onClick={() => handleBlockClick("efficiency")}
-                className={cn(
-                  "p-6 border rounded-lg cursor-pointer transition-all",
-                  blockFilter === "efficiency" ? "bg-purple-50 border-purple-500" : "bg-white border-slate-200 hover:bg-slate-50"
-                )}
-              >
-                <p className="text-sm uppercase tracking-wider text-slate-500">User Efficiency</p>
-                <p className="text-4xl font-bold text-[#003566]">{metrics.efficiency}%</p>
-              </div>
-            </div>
-
             {/* Filters */}
             <div className="flex flex-wrap items-center gap-4 p-4 bg-slate-50 border border-slate-200 rounded-lg">
               <div className="flex items-center gap-2">
@@ -863,6 +864,8 @@ export default function UserTasksPage() {
                   <option value="Low">Low</option>
                   <option value="Medium">Medium</option>
                   <option value="High">High</option>
+                  <option value="Urgent">Urgent</option>
+                  <option value="Critical">Critical</option>
                 </select>
               </div>
               <div className="flex items-center gap-2">
@@ -887,204 +890,208 @@ export default function UserTasksPage() {
               </Button>
             </div>
 
-            {/* Conditional rendering: list or calendar */}
-            {viewMode === "calendar" ? (
+            {/* Content */}
+            {loading ? (
+              <div className="flex items-center justify-center p-12">
+                <Loader2 className="animate-spin text-[#003566]" size={32} />
+                <span className="ml-3 text-slate-600">Loading tasks...</span>
+              </div>
+            ) : viewMode === "calendar" ? (
               <div className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
                 <CalendarView tasks={filteredTasks} />
               </div>
             ) : (
               <div className="space-y-4">
-                {loading ? (
-                  <div className="flex items-center justify-center p-12">
-                    <Loader2 className="animate-spin text-[#003566]" size={32} />
-                    <span className="ml-3 text-slate-600">Loading tasks...</span>
-                  </div>
-                ) : filteredTasks.length === 0 ? (
-                  <div className="text-center p-12 border-2 border-dashed border-slate-200 rounded-lg">
-                    <p className="text-slate-400">No tasks found</p>
-                  </div>
-                ) : (
-                  filteredTasks.map((task) => (
-                    <motion.div
-                      key={task.id}
-                      layout
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
-                      className={cn(
-                        "flex flex-col lg:flex-row items-start lg:items-center justify-between p-6 gap-4 border shadow-sm rounded-lg transition-all hover:shadow-md",
-                        task.status === "Done" && "opacity-70",
-                        task.priority === "High" && task.status !== "Done" && "border-l-4 border-l-red-600"
-                      )}
-                    >
-                      {/* Left side: icon + details */}
-                      <div className="flex items-start gap-4 flex-1 min-w-0">
-                        <div className={cn(
-                          "w-12 h-12 flex items-center justify-center rounded-full border-2 shrink-0",
-                          getPriorityStyles(task.priority)
-                        )}>
-                          {getPriorityIcon(task.priority)}
-                        </div>
-
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-3 mb-2 flex-wrap">
-                            <h3 className="text-lg font-bold text-[#003566] truncate max-w-xs">
-                              {task.title}
-                            </h3>
-                            <span className={cn(
-                              "px-2 py-1 text-xs font-bold uppercase border rounded",
-                              getPriorityStyles(task.priority)
-                            )}>
-                              {task.priority}
-                            </span>
-                            <span className={cn(
-                              "px-2 py-1 text-xs font-bold uppercase border rounded",
-                              getStatusStyles(task.status)
-                            )}>
-                              {task.status}
-                            </span>
-                            {task.assignment_status === "pending" && task.assigned_to === currentUser?.id && (
-                              <span className="px-2 py-1 text-xs font-bold uppercase bg-yellow-50 text-yellow-600 border border-yellow-200 rounded">
-                                Pending Acceptance
-                              </span>
-                            )}
+                <AnimatePresence mode="popLayout">
+                  {filteredTasks.length === 0 ? (
+                    <div className="text-center p-12 border-2 border-dashed border-slate-200 rounded-lg">
+                      <p className="text-slate-400">No tasks found</p>
+                    </div>
+                  ) : (
+                    filteredTasks.map((task) => (
+                      <motion.div
+                        key={task.id}
+                        layout
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        className={cn(
+                          "flex flex-col md:flex-row items-start md:items-center justify-between p-6 gap-6 border shadow-sm rounded-lg transition-all hover:shadow-md",
+                          task.status === "Done" && "opacity-70",
+                          task.priority === "Critical" && task.status !== "Done" && "border-l-4 border-l-red-600"
+                        )}
+                      >
+                        {/* Left Section */}
+                        <div className="flex items-start gap-4 flex-1">
+                          <div className={cn(
+                            "w-12 h-12 flex items-center justify-center rounded-full border-2",
+                            getPriorityStyles(task.priority)
+                          )}>
+                            {getPriorityIcon(task.priority)}
                           </div>
 
-                          {task.description && (
-                            <p className="text-sm text-slate-600 mb-3 line-clamp-2">
-                              {task.description}
-                            </p>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-2 flex-wrap">
+                              <h3 className="text-lg font-bold text-[#003566]">{task.title}</h3>
+                              <span className={cn(
+                                "px-2 py-1 text-xs font-bold uppercase border rounded",
+                                getPriorityStyles(task.priority)
+                              )}>
+                                {task.priority}
+                              </span>
+                              <span className={cn(
+                                "px-2 py-1 text-xs font-bold uppercase border rounded",
+                                getStatusStyles(task.status)
+                              )}>
+                                {task.status}
+                              </span>
+                              {task.type === "personal" && (
+                                <span className="px-2 py-1 text-xs font-bold uppercase bg-purple-50 text-purple-600 border border-purple-200 rounded">
+                                  Personal
+                                </span>
+                              )}
+                              {task.assignment_status === "pending" && task.assigned_to === currentUser?.id && (
+                                <span className="px-2 py-1 text-xs font-bold uppercase bg-yellow-50 text-yellow-600 border border-yellow-200 rounded">
+                                  Pending Acceptance
+                                </span>
+                              )}
+                            </div>
+
+                            {task.description && (
+                              <p className="text-sm text-slate-600 mb-3">{task.description}</p>
+                            )}
+
+                            <div className="flex flex-wrap items-center gap-4 text-sm text-slate-500">
+                              {task.assigned_to_user && task.type === "assigned" && (
+                                <span className="flex items-center gap-1.5">
+                                  <UserIcon size={14} />
+                                  Assigned to: {task.assigned_to_user.name}
+                                </span>
+                              )}
+                              {task.created_by_user && task.type === "personal" && (
+                                <span className="flex items-center gap-1.5">
+                                  <UserIcon size={14} />
+                                  Created by you
+                                </span>
+                              )}
+                              <span className={cn(
+                                "flex items-center gap-1.5",
+                                isOverdue(task.due_date) && "text-red-600 font-bold"
+                              )}>
+                                <CalendarIcon size={14} />
+                                Due: {formatDate(task.due_date)}
+                                {isOverdue(task.due_date) && " (OVERDUE)"}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Right Section - Actions */}
+                        <div className="flex items-center gap-3 flex-wrap">
+                          {/* Assign button / dropdown (only if user can assign: creator or partner? For employee, maybe only creator) */}
+                          {(task.created_by === currentUser?.id || currentUser?.role === "Partner") && (
+                            <>
+                              {!showAssignDropdown[task.id] ? (
+                                <Button
+                                  onClick={() => toggleAssignDropdown(task.id)}
+                                  variant="outline"
+                                  size="sm"
+                                  className="text-xs"
+                                >
+                                  <UserIcon size={14} className="mr-1" /> Assign
+                                </Button>
+                              ) : (
+                                <div className="flex items-center gap-2">
+                                  <select
+                                    className="border border-slate-300 bg-white rounded px-2 py-1 text-sm"
+                                    defaultValue=""
+                                    onChange={(e) => handleAssignFromButton(task.id, e.target.value)}
+                                    autoFocus
+                                  >
+                                    <option value="">Select employee...</option>
+                                    {users.map((u) => (
+                                      <option key={u.id} value={u.id}>{u.name}</option>
+                                    ))}
+                                  </select>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => toggleAssignDropdown(task.id)}
+                                  >
+                                    <X size={14} />
+                                  </Button>
+                                </div>
+                              )}
+                            </>
                           )}
 
-                          <div className="flex flex-wrap items-center gap-4 text-sm text-slate-500">
-                            {task.created_by_user && (
-                              <span className="flex items-center gap-1.5">
-                                <UserIcon size={14} />
-                                Created by: {task.created_by_user.name}
-                              </span>
-                            )}
-                            {task.assigned_to_user && task.type === "assigned" && (
-                              <span className="flex items-center gap-1.5">
-                                <UserIcon size={14} />
-                                Assigned to: {task.assigned_to_user.name}
-                              </span>
-                            )}
-                            <span className={cn(
-                              "flex items-center gap-1.5",
-                              isOverdue(task.due_date) && "text-red-600 font-bold"
-                            )}>
-                              <CalendarIcon size={14} />
-                              Due: {formatDate(task.due_date)}
-                              {isOverdue(task.due_date) && " (OVERDUE)"}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Right side: actions */}
-                      <div className="flex items-center gap-3 flex-wrap lg:flex-nowrap">
-                        {/* Assign to another employee button / dropdown */}
-                        {(task.created_by === currentUser?.id || currentUser?.role === "Partner") && (
-                          <>
-                            {!showAssignDropdown[task.id] ? (
+                          {/* Accept/Reject for pending tasks */}
+                          {task.assignment_status === "pending" && task.assigned_to === currentUser?.id && (
+                            <>
                               <Button
-                                onClick={() => toggleAssignDropdown(task.id)}
+                                onClick={() => handleAcceptTask(task.id)}
+                                className="bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100"
+                                size="sm"
+                              >
+                                <CheckCircle2 size={16} className="mr-2" />
+                                Accept
+                              </Button>
+                              <Button
+                                onClick={() => handleRejectTask(task.id)}
                                 variant="outline"
                                 size="sm"
-                                className="text-xs"
+                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
                               >
-                                <UserIcon size={14} className="mr-1" /> Assign
+                                <X size={16} className="mr-2" />
+                                Reject
                               </Button>
-                            ) : (
-                              <div className="flex items-center gap-2">
-                                <select
-                                  className="border border-slate-300 bg-white rounded px-2 py-1 text-sm"
-                                  defaultValue=""
-                                  onChange={(e) => handleAssignFromButton(task.id, e.target.value)}
-                                  autoFocus
-                                >
-                                  <option value="">Select employee...</option>
-                                  {users.map((u) => (
-                                    <option key={u.id} value={u.id}>{u.name}</option>
-                                  ))}
-                                </select>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => toggleAssignDropdown(task.id)}
-                                >
-                                  <X size={14} />
-                                </Button>
-                              </div>
-                            )}
-                          </>
-                        )}
+                            </>
+                          )}
 
-                        {/* Accept/Reject for pending tasks */}
-                        {task.assignment_status === "pending" && task.assigned_to === currentUser?.id && (
-                          <>
+                          {/* Status change */}
+                          {task.assignment_status !== "pending" && task.status !== "Done" ? (
                             <Button
-                              onClick={() => handleAcceptTask(task.id)}
+                              onClick={() => handleStatusChange(task.id, "Done")}
                               className="bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100"
                               size="sm"
                             >
                               <CheckCircle2 size={16} className="mr-2" />
-                              Accept
+                              Mark Done
                             </Button>
+                          ) : task.assignment_status !== "pending" && task.status === "Done" ? (
                             <Button
-                              onClick={() => handleRejectTask(task.id)}
+                              onClick={() => handleStatusChange(task.id, "To Do")}
+                              variant="outline"
+                              size="sm"
+                            >
+                              Re-open
+                            </Button>
+                          ) : null}
+
+                          {/* Delete button (only if creator) */}
+                          {task.created_by === currentUser?.id && (
+                            <Button
+                              onClick={() => handleDeleteTask(task.id)}
                               variant="outline"
                               size="sm"
                               className="text-red-600 hover:text-red-700 hover:bg-red-50"
                             >
-                              <X size={16} className="mr-2" />
-                              Reject
+                              <Trash2 size={16} />
                             </Button>
-                          </>
-                        )}
-
-                        {/* Status change buttons */}
-                        {task.assignment_status !== "pending" && task.status !== "Done" ? (
-                          <Button
-                            onClick={() => handleStatusChange(task.id, "Done")}
-                            className="bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100"
-                            size="sm"
-                          >
-                            <CheckCircle2 size={16} className="mr-2" />
-                            Mark Done
-                          </Button>
-                        ) : task.assignment_status !== "pending" && task.status === "Done" ? (
-                          <Button
-                            onClick={() => handleStatusChange(task.id, "To Do")}
-                            variant="outline"
-                            size="sm"
-                          >
-                            Re‑open
-                          </Button>
-                        ) : null}
-
-                        {/* Delete for creator */}
-                        {task.created_by === currentUser?.id && (
-                          <Button
-                            onClick={() => handleDeleteTask(task.id)}
-                            variant="outline"
-                            size="sm"
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                          >
-                            <Trash2 size={16} />
-                          </Button>
-                        )}
-                      </div>
-                    </motion.div>
-                  ))
-                )}
+                          )}
+                        </div>
+                      </motion.div>
+                    ))
+                  )}
+                </AnimatePresence>
               </div>
             )}
           </div>
         </motion.main>
       </div>
 
-      <CreateTaskModal
+      {/* Personal Task Modal */}
+      <PersonalTaskModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSubmit={handleCreateTask}
