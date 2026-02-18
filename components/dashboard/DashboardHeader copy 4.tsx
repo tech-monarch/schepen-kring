@@ -1,19 +1,22 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import {
+  Anchor,
   Settings,
   LogOut,
   Bell,
   ChevronDown,
   Search,
+  AlertTriangle,
   Check,
   CheckCheck,
   Trash2,
   BellOff,
+  BellRing,
   ArrowRight,
 } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Link, useRouter } from "@/i18n/navigation";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -29,13 +32,17 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Toaster, toast } from "react-hot-toast";
 import Image from "next/image";
 import ANSWER24LOGO from "@/public/schepenkring-logo.png";
+// Import your default profile picture
 import DEFAULT_PFP from "@/components/dashboard/pfp.webp";
 import ReturnToAdmin from "./ReturnToAdmin";
-import * as PusherPushNotifications from "@pusher/push-notifications-web";
+import { Switch } from "@/components/ui/switch"; // Assuming you have a Switch component
 
+// Storage URL constant
 const STORAGE_URL = "https://schepen-kring.nl/storage/";
+// Hardcoded API URL
 const API_URL = "https://schepen-kring.nl/api";
 
+// Notification type
 interface Notification {
   id: number;
   notification: {
@@ -61,228 +68,131 @@ export function DashboardHeader() {
     email: string;
     userType: string;
     profile_image?: string;
-    id?: number;
   } | null>(null);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
-
-  // Toggles
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-  const [pushAlertsEnabled, setPushAlertsEnabled] = useState(true);
-  const [browserPushEnabled, setBrowserPushEnabled] = useState(true);
-
-  // Beams
-  const [beamsInitialized, setBeamsInitialized] = useState(false);
-  const beamsClientRef = useRef<any>(null);
-
   const currentPath = usePathname();
   const router = useRouter();
 
-  // Load user and preferences
+  // Fetch user data
   useEffect(() => {
     const storedUser = localStorage.getItem("user_data");
-    if (storedUser) setUser(JSON.parse(storedUser));
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
 
-    const notifPref = localStorage.getItem("notifications_enabled");
-    if (notifPref !== null) setNotificationsEnabled(notifPref === "true");
-
-    const pushPref = localStorage.getItem("push_alerts_enabled");
-    if (pushPref !== null) setPushAlertsEnabled(pushPref === "true");
-
-    const browserPref = localStorage.getItem("browser_push_enabled");
-    if (browserPref !== null) setBrowserPushEnabled(browserPref === "true");
+    // Load notification preference from localStorage
+    const notificationPref = localStorage.getItem("notifications_enabled");
+    if (notificationPref !== null) {
+      setNotificationsEnabled(notificationPref === "true");
+    }
   }, []);
 
-  // Initialize Beams if enabled
-  const initializeBeams = async () => {
-    if (!user?.id || beamsInitialized) return;
-    try {
-      const client = new PusherPushNotifications.Client({
-        instanceId: process.env.NEXT_PUBLIC_BEAMS_INSTANCE_ID!,
-      });
-      await client.start();
-      beamsClientRef.current = client;
-      setBeamsInitialized(true);
-      await client.addDeviceInterest(`user-${user.id}`);
-      console.log("Beams ready, subscribed to user-" + user.id);
-    } catch (error) {
-      console.error("Beams init failed", error);
-      if (error instanceof Error && error.message.includes("permission")) {
-        toast.error("Please allow browser notifications in your settings.");
-      }
-    }
-  };
-
-  // Auto-initialize Beams if enabled on mount
-  useEffect(() => {
-    if (user?.id && browserPushEnabled && !beamsInitialized) {
-      initializeBeams();
-    }
-  }, [user?.id, browserPushEnabled, beamsInitialized]);
-
-  // Toggle functions
-  const toggleNotifications = () => {
-    const newState = !notificationsEnabled;
-    setNotificationsEnabled(newState);
-    localStorage.setItem("notifications_enabled", newState.toString());
-
-    if (!newState) {
-      setNotifications([]);
-      setUnreadCount(0);
-      // Optionally remove Beams interest if you want to completely disable
-      if (beamsClientRef.current && user?.id && browserPushEnabled) {
-        beamsClientRef.current.removeDeviceInterest(`user-${user.id}`);
-      }
-      toast.success("Notifications disabled");
-    } else {
-      fetchNotifications();
-      fetchUnreadCount();
-      // Re-subscribe Beams if browser push is enabled
-      if (browserPushEnabled && beamsClientRef.current && user?.id) {
-        beamsClientRef.current.addDeviceInterest(`user-${user.id}`);
-      }
-      toast.success("Notifications enabled");
-    }
-  };
-
-  const togglePushAlerts = () => {
-    const newState = !pushAlertsEnabled;
-    setPushAlertsEnabled(newState);
-    localStorage.setItem("push_alerts_enabled", newState.toString());
-    toast.success(newState ? "Toast alerts enabled" : "Toast alerts disabled");
-  };
-
-  const toggleBrowserPush = async () => {
-    const newState = !browserPushEnabled;
-    setBrowserPushEnabled(newState);
-    localStorage.setItem("browser_push_enabled", newState.toString());
-
-    if (newState) {
-      if (!beamsInitialized && user?.id) await initializeBeams();
-      else if (beamsClientRef.current && user?.id) {
-        await beamsClientRef.current.addDeviceInterest(`user-${user.id}`);
-      }
-    } else {
-      if (beamsClientRef.current && user?.id) {
-        await beamsClientRef.current.removeDeviceInterest(`user-${user.id}`);
-      }
-    }
-  };
-
-  // API calls
+  // Fetch notifications
   const fetchNotifications = async () => {
     if (!notificationsEnabled) return;
+    // Skip if notifications are disabled
+
     try {
       setLoading(true);
       const token = localStorage.getItem("auth_token");
-      if (!token) return;
+      if (!token) {
+        console.log("No auth token found");
+        return;
+      }
 
-      const res = await fetch(`${API_URL}/notifications`, {
-        headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+      console.log("Fetching notifications from:", `${API_URL}/notifications`);
+      const response = await fetch(`${API_URL}/notifications`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+        },
       });
-      if (res.ok) {
-        const data = await res.json();
-        setNotifications(data.data || []);
-        setUnreadCount(data.meta?.unread_count || 0);
+      console.log("Response status:", response.status);
+
+      const responseText = await response.text();
+      console.log(
+        "Response text (first 500 chars):",
+        responseText.substring(0, 500),
+      );
+      if (response.ok) {
+        try {
+          const data = JSON.parse(responseText);
+          console.log("Notifications data received:", data);
+          setNotifications(data.data || []);
+          setUnreadCount(data.meta?.unread_count || 0);
+        } catch (jsonError) {
+          console.error("Failed to parse as JSON:", jsonError);
+          setNotifications([]);
+          setUnreadCount(0);
+        }
       } else {
+        console.error("Notifications API error:", responseText);
         toast.error("Failed to load notifications");
       }
     } catch (error) {
       console.error("Error fetching notifications:", error);
+      setNotifications([]);
+      setUnreadCount(0);
     } finally {
       setLoading(false);
     }
   };
 
+  // Fetch unread count separately
   const fetchUnreadCount = async () => {
     if (!notificationsEnabled) return;
+    // Skip if notifications are disabled
+
     try {
       const token = localStorage.getItem("auth_token");
-      if (!token) return;
-      const res = await fetch(`${API_URL}/notifications/unread-count`, {
-        headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+      if (!token) {
+        console.log("No auth token found for unread count");
+        return;
+      }
+
+      const response = await fetch(`${API_URL}/notifications/unread-count`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+        },
       });
-      if (res.ok) {
-        const data = await res.json();
-        setUnreadCount(data.count || 0);
+      if (response.ok) {
+        const text = await response.text();
+        try {
+          const data = JSON.parse(text);
+          setUnreadCount(data.count || 0);
+        } catch (e) {
+          console.error("Failed to parse unread count:", e);
+        }
       }
     } catch (error) {
       console.error("Error fetching unread count:", error);
     }
   };
 
-  const markAsRead = async (notificationId: number) => {
-    try {
-      const token = localStorage.getItem("auth_token");
-      if (!token) return toast.error("No auth token");
+  // Toggle notifications
+  const toggleNotifications = async () => {
+    const newState = !notificationsEnabled;
+    setNotificationsEnabled(newState);
+    localStorage.setItem("notifications_enabled", newState.toString());
 
-      const res = await fetch(`${API_URL}/notifications/${notificationId}/read`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
-      });
-      if (res.ok) {
-        setNotifications((prev) =>
-          prev.map((n) =>
-            n.id === notificationId ? { ...n, read: true, read_at: new Date().toISOString() } : n
-          )
-        );
-        setUnreadCount((prev) => Math.max(0, prev - 1));
-        toast.success("Marked as read");
-      } else {
-        toast.error("Failed to mark as read");
-      }
-    } catch (error) {
-      console.error("Error marking as read:", error);
+    if (newState) {
+      // If enabling notifications, fetch them
+      fetchNotifications();
+      fetchUnreadCount();
+      toast.success("Notifications enabled");
+    } else {
+      // If disabling, clear notifications
+      setNotifications([]);
+      setUnreadCount(0);
+      toast.success("Notifications disabled");
     }
   };
 
-  const markAllAsRead = async () => {
-    try {
-      const token = localStorage.getItem("auth_token");
-      if (!token) return toast.error("No auth token");
-
-      const res = await fetch(`${API_URL}/notifications/read-all`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
-      });
-      if (res.ok) {
-        setNotifications((prev) =>
-          prev.map((n) => ({ ...n, read: true, read_at: new Date().toISOString() }))
-        );
-        setUnreadCount(0);
-        toast.success("All marked as read");
-      } else {
-        toast.error("Failed to mark all as read");
-      }
-    } catch (error) {
-      console.error("Error marking all as read:", error);
-    }
-  };
-
-  const deleteNotification = async (notificationId: number) => {
-    try {
-      const token = localStorage.getItem("auth_token");
-      if (!token) return toast.error("No auth token");
-
-      const res = await fetch(`${API_URL}/notifications/${notificationId}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) {
-        const wasUnread = notifications.find((n) => n.id === notificationId && !n.read);
-        setNotifications((prev) => prev.filter((n) => n.id !== notificationId));
-        if (wasUnread) setUnreadCount((prev) => Math.max(0, prev - 1));
-        toast.success("Notification deleted");
-      } else {
-        toast.error("Failed to delete notification");
-      }
-    } catch (error) {
-      console.error("Error deleting notification:", error);
-    }
-  };
-
-  // Polling for unread count (fallback)
+  // Fetch data on mount and setup polling
   useEffect(() => {
     if (notificationsEnabled) {
       fetchNotifications();
@@ -292,8 +202,11 @@ export function DashboardHeader() {
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handleScroll);
 
+    // Poll for new notifications every 30 seconds only if enabled
     const interval = setInterval(() => {
-      if (notificationsEnabled) fetchUnreadCount();
+      if (notificationsEnabled) {
+        fetchUnreadCount();
+      }
     }, 30000);
 
     return () => {
@@ -302,38 +215,167 @@ export function DashboardHeader() {
     };
   }, [notificationsEnabled]);
 
+  // Mark notification as read
+  const markAsRead = async (notificationId: number) => {
+    try {
+      const token = localStorage.getItem("auth_token");
+      if (!token) {
+        toast.error("No authentication token found");
+        return;
+      }
+
+      const response = await fetch(
+        `${API_URL}/notifications/${notificationId}/read`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+          },
+        },
+      );
+      if (response.ok) {
+        setNotifications((prev) =>
+          prev.map((notif) =>
+            notif.id === notificationId
+              ? { ...notif, read: true, read_at: new Date().toISOString() }
+              : notif,
+          ),
+        );
+        setUnreadCount((prev) => Math.max(0, prev - 1));
+        toast.success("Notification marked as read");
+      } else {
+        const text = await response.text();
+        console.error("Mark as read error:", text);
+        toast.error("Failed to mark as read");
+      }
+    } catch (error) {
+      console.error("Error marking notification as read:", error);
+      toast.error("Failed to mark as read");
+    }
+  };
+
+  // Mark all as read
+  const markAllAsRead = async () => {
+    try {
+      const token = localStorage.getItem("auth_token");
+      if (!token) {
+        toast.error("No authentication token found");
+        return;
+      }
+
+      const response = await fetch(`${API_URL}/notifications/read-all`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+        },
+      });
+      if (response.ok) {
+        setNotifications((prev) =>
+          prev.map((notif) => ({
+            ...notif,
+            read: true,
+            read_at: new Date().toISOString(),
+          })),
+        );
+        setUnreadCount(0);
+        toast.success("All notifications marked as read");
+      } else {
+        const text = await response.text();
+        console.error("Mark all as read error:", text);
+        toast.error("Failed to mark all as read");
+      }
+    } catch (error) {
+      console.error("Error marking all as read:", error);
+      toast.error("Failed to mark all as read");
+    }
+  };
+
+  // Delete notification
+  const deleteNotification = async (notificationId: number) => {
+    try {
+      const token = localStorage.getItem("auth_token");
+      if (!token) {
+        toast.error("No authentication token found");
+        return;
+      }
+
+      const response = await fetch(
+        `${API_URL}/notifications/${notificationId}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+      if (response.ok) {
+        setNotifications((prev) =>
+          prev.filter((notif) => notif.id !== notificationId),
+        );
+        setUnreadCount((prev) => {
+          const notification = notifications.find(
+            (n) => n.id === notificationId,
+          );
+          return notification?.read ? prev : Math.max(0, prev - 1);
+        });
+        toast.success("Notification deleted");
+      } else {
+        const text = await response.text();
+        console.error("Delete notification error:", text);
+        toast.error("Failed to delete notification");
+      }
+    } catch (error) {
+      console.error("Error deleting notification:", error);
+      toast.error("Failed to delete notification");
+    }
+  };
+
   const handleLogout = () => {
     localStorage.removeItem("auth_token");
     localStorage.removeItem("user_data");
     localStorage.removeItem("admin_token");
     localStorage.removeItem("fleet_tasks");
     localStorage.removeItem("task_cache");
+    // Clear sidebar cache on logout
     Object.keys(localStorage).forEach((key) => {
-      if (key.startsWith("sidebar_cache_")) localStorage.removeItem(key);
+      if (key.startsWith("sidebar_cache_")) {
+        localStorage.removeItem(key);
+      }
     });
     router.push("/");
   };
 
-  // Helpers
+  // Format notification time
   const formatTime = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
-    const diffMins = Math.floor((now.getTime() - date.getTime()) / 60000);
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
     if (diffMins < 1) return "Just now";
     if (diffMins < 60) return `${diffMins}m ago`;
-    const diffHours = Math.floor(diffMins / 60);
     if (diffHours < 24) return `${diffHours}h ago`;
-    const diffDays = Math.floor(diffHours / 24);
-    return diffDays < 7 ? `${diffDays}d ago` : date.toLocaleDateString();
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return date.toLocaleDateString();
   };
 
+  // Get notification icon based on type
   const getNotificationIcon = (type: string) => {
     switch (type) {
-      case "success": return "✅";
-      case "warning": return "⚠️";
-      case "error": return "❌";
-      case "system": return "⚙️";
-      default: return "ℹ️";
+      case "success":
+        return "✅";
+      case "warning":
+        return "⚠️";
+      case "error":
+        return "❌";
+      case "system":
+        return "⚙️";
+      default:
+        return "ℹ️";
     }
   };
 
@@ -343,12 +385,12 @@ export function DashboardHeader() {
         "fixed top-0 left-0 right-0 z-50 transition-all duration-500 px-8 h-20 flex items-center justify-between",
         isScrolled
           ? "bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm"
-          : "bg-white border-b border-slate-100"
+          : "bg-white border-b border-slate-100",
       )}
     >
       <Toaster position="top-right" reverseOrder={false} />
 
-      {/* Brand Logo */}
+      {/* Brand Logo Section */}
       <div className="flex items-center gap-12">
         <Link href="#" className="flex items-center group">
           <Image
@@ -361,7 +403,7 @@ export function DashboardHeader() {
           />
         </Link>
 
-        {/* Search Bar */}
+        {/* Global Search Bar */}
         <div className="hidden md:flex items-center bg-slate-50 border border-slate-200 px-4 py-2.5 gap-3 focus-within:border-[#003566] focus-within:bg-white transition-all">
           <Search size={14} className="text-slate-400" />
           <input
@@ -371,20 +413,30 @@ export function DashboardHeader() {
         </div>
       </div>
 
+      {/* Navigation - Fleet Management Link Removed */}
+      <nav className="hidden lg:flex items-center gap-3">
+        {/* Navigation links removed as requested */}
+      </nav>
+
       {/* User Actions */}
       <div className="flex items-center gap-8">
         <ReturnToAdmin />
         <Link href="/yachts">
           <button className="flex items-center gap-3 px-8 py-3 bg-[#003566] text-white text-[9px] font-sans font-bold uppercase tracking-[0.3em] hover:bg-[#001d3d] transition-all group">
             Frontend
-            <ArrowRight size={12} className="group-hover:translate-x-1 transition-transform" />
+            <ArrowRight
+              size={12}
+              className="group-hover:translate-x-1 transition-transform"
+            />
           </button>
         </Link>
 
-        {/* Notifications Dropdown */}
+        {/* Updated Notifications Dropdown with Toggle */}
         <DropdownMenu
           onOpenChange={(open) => {
-            if (open && notificationsEnabled) fetchNotifications();
+            if (open && notificationsEnabled) {
+              fetchNotifications(); // Refresh when dropdown opens
+            }
           }}
         >
           <DropdownMenuTrigger className="relative text-slate-400 hover:text-[#003566] transition-colors outline-none">
@@ -401,102 +453,47 @@ export function DashboardHeader() {
               </span>
             )}
           </DropdownMenuTrigger>
-
           <DropdownMenuContent
             align="end"
             className="w-96 bg-white border border-slate-200 rounded-none shadow-xl p-0 overflow-hidden max-h-[500px]"
           >
-            {/* Header with toggles */}
-            <div className="p-4 border-b border-slate-100 bg-slate-50/50">
-              <div className="flex justify-between items-center">
-                <h3 className="text-[10px] font-black uppercase tracking-widest text-[#003566]">
-                  Notifications
-                </h3>
-                <div className="flex items-center gap-4">
-                  {/* Master toggle */}
-                  <div className="flex items-center gap-2">
-                    <span className="text-[8px] font-bold uppercase tracking-widest text-slate-500">
-                      {notificationsEnabled ? "ON" : "OFF"}
-                    </span>
-                    <button
-                      onClick={toggleNotifications}
-                      className={`relative inline-flex h-5 w-10 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-                        notificationsEnabled ? "bg-blue-600" : "bg-slate-300"
+            <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+              <h3 className="text-[10px] font-black uppercase tracking-widest text-[#003566]">
+                Notifications
+              </h3>
+              <div className="flex items-center gap-4">
+                {/* Notification Toggle */}
+                <div className="flex items-center gap-2">
+                  <span className="text-[8px] font-bold uppercase tracking-widest text-slate-500">
+                    {notificationsEnabled ? "ON" : "OFF"}
+                  </span>
+                  <button
+                    onClick={toggleNotifications}
+                    className={`relative inline-flex h-5 w-10 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                      notificationsEnabled ? "bg-blue-600" : "bg-slate-300"
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                        notificationsEnabled
+                          ? "translate-x-5"
+                          : "translate-x-0.5"
                       }`}
-                    >
-                      <span
-                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                          notificationsEnabled ? "translate-x-5" : "translate-x-0.5"
-                        }`}
-                      />
-                    </button>
-                  </div>
-
-                  {notificationsEnabled && notifications.length > 0 && (
-                    <button
-                      onClick={markAllAsRead}
-                      className="text-[9px] font-bold uppercase tracking-widest text-blue-600 hover:text-blue-700 transition-colors"
-                    >
-                      Mark all as read
-                    </button>
-                  )}
+                    />
+                  </button>
                 </div>
+
+                {notificationsEnabled && notifications.length > 0 && (
+                  <button
+                    onClick={markAllAsRead}
+                    className="text-[9px] font-bold uppercase tracking-widest text-blue-600 hover:text-blue-700 transition-colors"
+                  >
+                    Mark all as read
+                  </button>
+                )}
               </div>
-
-              {/* Toast alerts toggle */}
-              {notificationsEnabled && (
-                <div className="mt-3 flex items-center justify-between border-t border-slate-200 pt-3">
-                  <span className="text-[9px] font-bold uppercase tracking-widest text-slate-600">
-                    Toast Alerts
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[8px] font-bold uppercase tracking-widest text-slate-500">
-                      {pushAlertsEnabled ? "ON" : "OFF"}
-                    </span>
-                    <button
-                      onClick={togglePushAlerts}
-                      className={`relative inline-flex h-4 w-8 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-                        pushAlertsEnabled ? "bg-blue-600" : "bg-slate-300"
-                      }`}
-                    >
-                      <span
-                        className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${
-                          pushAlertsEnabled ? "translate-x-4" : "translate-x-0.5"
-                        }`}
-                      />
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* Browser Push toggle */}
-              {notificationsEnabled && (
-                <div className="mt-3 flex items-center justify-between border-t border-slate-200 pt-3">
-                  <span className="text-[9px] font-bold uppercase tracking-widest text-slate-600">
-                    Browser Push
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[8px] font-bold uppercase tracking-widest text-slate-500">
-                      {browserPushEnabled ? "ON" : "OFF"}
-                    </span>
-                    <button
-                      onClick={toggleBrowserPush}
-                      className={`relative inline-flex h-4 w-8 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-                        browserPushEnabled ? "bg-blue-600" : "bg-slate-300"
-                      }`}
-                    >
-                      <span
-                        className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${
-                          browserPushEnabled ? "translate-x-4" : "translate-x-0.5"
-                        }`}
-                      />
-                    </button>
-                  </div>
-                </div>
-              )}
             </div>
 
-            {/* Notifications list */}
             <div className="max-h-[400px] overflow-y-auto">
               {!notificationsEnabled ? (
                 <div className="p-8 text-center">
@@ -517,7 +514,9 @@ export function DashboardHeader() {
               ) : loading ? (
                 <div className="p-8 text-center">
                   <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#003566] mx-auto"></div>
-                  <p className="text-[9px] text-slate-500 mt-2">Loading notifications...</p>
+                  <p className="text-[9px] text-slate-500 mt-2">
+                    Loading notifications...
+                  </p>
                 </div>
               ) : notifications.length === 0 ? (
                 <div className="p-8 text-center">
@@ -539,13 +538,15 @@ export function DashboardHeader() {
                       key={notification.id}
                       className={cn(
                         "p-4 hover:bg-slate-50 transition-colors relative group",
-                        !notification.read && "bg-blue-50/50"
+                        !notification.read && "bg-blue-50/50",
                       )}
                     >
                       <div className="flex gap-3">
                         <div className="flex-shrink-0 w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center">
                           <span className="text-xs">
-                            {getNotificationIcon(notification.notification.type)}
+                            {getNotificationIcon(
+                              notification.notification.type,
+                            )}
                           </span>
                         </div>
                         <div className="flex-1 min-w-0">
@@ -566,18 +567,23 @@ export function DashboardHeader() {
                                 onClick={() => markAsRead(notification.id)}
                                 className="text-[9px] font-bold uppercase tracking-widest text-blue-600 hover:text-blue-700 flex items-center gap-1"
                               >
-                                <Check size={10} /> Mark as read
+                                <Check size={10} />
+                                Mark as read
                               </button>
                             ) : (
                               <span className="text-[9px] text-green-600 font-bold uppercase tracking-widest flex items-center gap-1">
-                                <CheckCheck size={10} /> Read
+                                <CheckCheck size={10} />
+                                Read
                               </span>
                             )}
                             <button
-                              onClick={() => deleteNotification(notification.id)}
+                              onClick={() =>
+                                deleteNotification(notification.id)
+                              }
                               className="text-[9px] font-bold uppercase tracking-widest text-red-600 hover:text-red-700 flex items-center gap-1 ml-auto"
                             >
-                              <Trash2 size={10} /> Delete
+                              <Trash2 size={10} />
+                              Delete
                             </button>
                           </div>
                         </div>
@@ -590,7 +596,7 @@ export function DashboardHeader() {
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {/* User Menu */}
+        {/* User Menu - Without Logout Confirmation */}
         <DropdownMenu>
           <DropdownMenuTrigger className="flex items-center gap-4 outline-none group">
             <div className="hidden text-right lg:block">
