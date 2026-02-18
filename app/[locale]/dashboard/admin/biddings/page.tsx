@@ -186,24 +186,30 @@ export default function GlobalBidManagementPage() {
   };
 
   // Update stats whenever bids change (based on current page)
-  useEffect(() => {
-    const active = bids.filter((b) => b.status === "active").length;
-    const won = bids.filter((b) => b.status === "won").length;
-    const outbid = bids.filter((b) => b.status === "outbid").length;
-    const cancelled = bids.filter((b) => b.status === "cancelled").length;
-    const totalValue = bids.reduce((sum, b) => sum + (b.amount || 0), 0);
-    const avgBid = bids.length ? totalValue / bids.length : 0;
+useEffect(() => {
+  const active = bids.filter((b) => b.status === "active").length;
+  const won = bids.filter((b) => b.status === "won").length;
+  const outbid = bids.filter((b) => b.status === "outbid").length;
+  const cancelled = bids.filter((b) => b.status === "cancelled").length;
 
-    setStats({
-      total: bids.length,
-      active,
-      won,
-      outbid,
-      cancelled,
-      totalValue,
-      avgBid,
-    });
-  }, [bids]);
+  // Safely parse amounts as floats
+  const totalValue = bids.reduce((sum, b) => {
+    const amount = typeof b.amount === 'string' ? parseFloat(b.amount) : (b.amount || 0);
+    return sum + (isNaN(amount) ? 0 : amount);
+  }, 0);
+
+  const avgBid = bids.length ? totalValue / bids.length : 0;
+
+  setStats({
+    total: bids.length,
+    active,
+    won,
+    outbid,
+    cancelled,
+    totalValue,
+    avgBid,
+  });
+}, [bids]);
 
   // Filtering & sorting (client-side on current page)
 // Replace the existing sorting useEffect with this version
@@ -338,15 +344,15 @@ useEffect(() => {
     e.currentTarget.classList.add("opacity-50", "grayscale");
   };
 
-  const formatCurrency = (amount: number | null | undefined) => {
-    if (amount === null || amount === undefined) return "€ --";
-    return new Intl.NumberFormat("nl-NL", {
-      style: "currency",
-      currency: "EUR",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
-  };
+const formatCurrency = (amount: number | null | undefined) => {
+  if (amount === null || amount === undefined || isNaN(amount)) return "€ --";
+  return new Intl.NumberFormat("nl-NL", {
+    style: "currency",
+    currency: "EUR",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(amount);
+};
 
   const formatDate = (dateString: string) => {
     if (!dateString) return "";
