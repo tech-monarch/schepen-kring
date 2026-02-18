@@ -38,7 +38,7 @@ import DEFAULT_PFP from "@/components/dashboard/pfp.webp";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 
 // Import the lockscreen provider (assumed to be created as per instructions)
-import { LockscreenProvider } from "@/context/LockscreenContext";
+// import { LockscreenProvider } from "@/components/Lockscreen";
 
 const API_BASE = "https://schepen-kring.nl/api";
 const STORAGE_URL = "https://schepen-kring.nl/storage/";
@@ -359,7 +359,6 @@ export default function ProfileSettingsPage() {
   }
 
   return (
-    <LockscreenProvider>
       <div className="min-h-screen bg-white text-[#003566]">
         <DashboardHeader />
         <Toaster position="top-right" />
@@ -915,6 +914,5 @@ export default function ProfileSettingsPage() {
           </motion.main>
         </div>
       </div>
-    </LockscreenProvider>
   );
 }

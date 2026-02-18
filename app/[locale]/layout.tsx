@@ -9,7 +9,7 @@ import Head from "./head";
 import ClientLayout from "./ClientLayout";
 import { Toaster } from "@/components/ui/sonner";
 import ReferralTracker from "@/components/ReferralTracker";
-
+import LockscreenOverlay from "@/components/LockscreenOverlay";
 // Luxury Sans: For UI, Navigation, and Body
 const inter = Inter({
   variable: "--font-inter",
@@ -68,6 +68,8 @@ export default async function RootLayout({
         `}
       >
         <NextIntlClientProvider locale={locale}>
+          
+        <LockscreenOverlay>
           <ClientLayout>
             <ReferralTracker />
             {children}
@@ -85,6 +87,7 @@ export default async function RootLayout({
               }}
             />
           </ClientLayout>
+        </LockscreenOverlay>
         </NextIntlClientProvider>
       </body>
     </html>
