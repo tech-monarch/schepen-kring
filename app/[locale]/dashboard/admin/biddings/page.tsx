@@ -11,6 +11,17 @@ import {
   Award,
   Ship,
   ExternalLink,
+  Search,
+  Filter,
+  RefreshCw,
+  Clock,
+  DollarSign,
+  TrendingUp,
+  Eye,
+  Calendar,
+  User,
+  AlertTriangle,
+  BarChart3,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast, Toaster } from "react-hot-toast";
@@ -24,7 +35,32 @@ document.head.appendChild(fontLink);
 
 const STORAGE_URL = "https://schepen-kring.nl/storage/";
 const PLACEHOLDER_IMAGE =
-  "https://images.unsplash.com/photo-1569263979104-865ab7cd8d13?auto=format&fit=crop&w=1200&q=80";
+  "https://images.unsplash.com/photo-1569263979104-865ab7cd8d13?auto=format&fit=crop&w=600&q=80";
+
+// Bid status configuration (matches partner dashboard)
+const bidStatusConfig: Record<string, { color: string; bg: string; border: string; label: string }> = {
+  active: { color: "text-blue-600", bg: "bg-blue-50", border: "border-blue-100", label: "Active" },
+  outbid: { color: "text-slate-500", bg: "bg-slate-100", border: "border-slate-200", label: "Outbid" },
+  won: { color: "text-emerald-600", bg: "bg-emerald-50", border: "border-emerald-100", label: "Won" },
+  cancelled: { color: "text-red-600", bg: "bg-red-50", border: "border-red-100", label: "Cancelled" },
+};
+
+const statusOptions = [
+  { value: "all", label: "All Status" },
+  { value: "active", label: "Active" },
+  { value: "outbid", label: "Outbid" },
+  { value: "won", label: "Won" },
+  { value: "cancelled", label: "Cancelled" },
+];
+
+const sortOptions = [
+  { value: "created_at-desc", label: "Newest First" },
+  { value: "created_at-asc", label: "Oldest First" },
+  { value: "amount-desc", label: "Amount (High to Low)" },
+  { value: "amount-asc", label: "Amount (Low to High)" },
+  { value: "yacht_name-asc", label: "Yacht Name (A-Z)" },
+  { value: "bidder_name-asc", label: "Bidder Name (A-Z)" },
+];
 
 interface YachtInfo {
   id: number;
@@ -45,6 +81,7 @@ interface Bid {
   user: {
     id: number;
     name: string;
+    email?: string;
   };
   yacht: YachtInfo;
 }
@@ -60,11 +97,25 @@ interface PaginatedResponse {
 export default function GlobalBidManagementPage() {
   const router = useRouter();
   const [bids, setBids] = useState<Bid[]>([]);
+  const [filteredBids, setFilteredBids] = useState<Bid[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionInProgress, setActionInProgress] = useState<number | null>(null);
   const [page, setPage] = useState(1);
   const [lastPage, setLastPage] = useState(1);
   const [total, setTotal] = useState(0);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedStatus, setSelectedStatus] = useState<string>("all");
+  const [sortBy, setSortBy] = useState<string>("created_at");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [stats, setStats] = useState({
+    total: 0,
+    active: 0,
+    won: 0,
+    outbid: 0,
+    cancelled: 0,
+    totalValue: 0,
+    avgBid: 0,
+  });
 
   // ----- Authentication helpers -----
   const getAuthToken = () => {
@@ -134,6 +185,75 @@ export default function GlobalBidManagementPage() {
     }
   };
 
+  // Update stats whenever bids change (based on current page)
+  useEffect(() => {
+    const active = bids.filter((b) => b.status === "active").length;
+    const won = bids.filter((b) => b.status === "won").length;
+    const outbid = bids.filter((b) => b.status === "outbid").length;
+    const cancelled = bids.filter((b) => b.status === "cancelled").length;
+    const totalValue = bids.reduce((sum, b) => sum + (b.amount || 0), 0);
+    const avgBid = bids.length ? totalValue / bids.length : 0;
+
+    setStats({
+      total: bids.length,
+      active,
+      won,
+      outbid,
+      cancelled,
+      totalValue,
+      avgBid,
+    });
+  }, [bids]);
+
+  // Filtering & sorting (client-side on current page)
+// Replace the existing sorting useEffect with this version
+useEffect(() => {
+  let filtered = [...bids];
+
+  if (selectedStatus !== "all") {
+    filtered = filtered.filter((bid) => bid.status === selectedStatus);
+  }
+
+  if (searchQuery) {
+    const query = searchQuery.toLowerCase();
+    filtered = filtered.filter((bid) => {
+      const yachtName = bid.yacht?.boat_name?.toLowerCase() || "";
+      const bidderName = bid.user?.name?.toLowerCase() || "";
+      return yachtName.includes(query) || bidderName.includes(query);
+    });
+  }
+
+  filtered.sort((a, b) => {
+    let aVal: any, bVal: any;
+
+    if (sortBy === "yacht_name") {
+      aVal = a.yacht?.boat_name || "";
+      bVal = b.yacht?.boat_name || "";
+    } else if (sortBy === "bidder_name") {
+      aVal = a.user?.name || "";
+      bVal = b.user?.name || "";
+    } else if (sortBy === "amount") {
+      aVal = a.amount || 0;
+      bVal = b.amount || 0;
+    } else if (sortBy === "created_at") {
+      aVal = new Date(a.created_at || 0).getTime();
+      bVal = new Date(b.created_at || 0).getTime();
+    } else {
+      // fallback (should never happen)
+      aVal = 0;
+      bVal = 0;
+    }
+
+    if (sortOrder === "asc") {
+      return aVal > bVal ? 1 : -1;
+    } else {
+      return aVal < bVal ? 1 : -1;
+    }
+  });
+
+  setFilteredBids(filtered);
+}, [bids, searchQuery, selectedStatus, sortBy, sortOrder]);
+
   // ----- Accept a bid -----
   const handleAcceptBid = async (bidId: number) => {
     const token = getAuthToken();
@@ -159,7 +279,6 @@ export default function GlobalBidManagementPage() {
       }
 
       toast.success("Bod geaccepteerd! Jacht gemarkeerd als verkocht.");
-      // Refresh the list
       fetchBids();
     } catch (error: any) {
       console.error("Accept bid error:", error);
@@ -204,42 +323,47 @@ export default function GlobalBidManagementPage() {
   };
 
   // ----- Helpers -----
-  const formatPrice = (price: number) =>
-    new Intl.NumberFormat("nl-NL", {
+  const getYachtName = (yacht: YachtInfo): string => {
+    return yacht?.boat_name || `Vessel #${yacht?.id}`;
+  };
+
+  const getImageUrl = (imagePath: string | null | undefined) => {
+    if (!imagePath) return PLACEHOLDER_IMAGE;
+    if (imagePath.startsWith("http")) return imagePath;
+    return `${STORAGE_URL}${imagePath}`;
+  };
+
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    e.currentTarget.src = PLACEHOLDER_IMAGE;
+    e.currentTarget.classList.add("opacity-50", "grayscale");
+  };
+
+  const formatCurrency = (amount: number | null | undefined) => {
+    if (amount === null || amount === undefined) return "€ --";
+    return new Intl.NumberFormat("nl-NL", {
+      style: "currency",
+      currency: "EUR",
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
-    }).format(price);
+    }).format(amount);
+  };
 
   const formatDate = (dateString: string) => {
+    if (!dateString) return "";
     return new Date(dateString).toLocaleDateString("nl-NL", {
-      day: "numeric",
-      month: "short",
+      day: "2-digit",
+      month: "2-digit",
       year: "numeric",
       hour: "2-digit",
       minute: "2-digit",
     });
   };
 
-  const getStatusBadge = (status: Bid["status"]) => {
-    const config = {
-      active: { label: "Actief", className: "bg-blue-100 text-blue-800" },
-      outbid: { label: "Overboden", className: "bg-gray-100 text-gray-600" },
-      won: { label: "Geaccepteerd", className: "bg-green-100 text-green-800" },
-      cancelled: { label: "Geannuleerd", className: "bg-red-100 text-red-800" },
-    };
-    const c = config[status] || config.outbid;
-    return (
-      <span className={`inline-block px-3 py-1.5 text-xs font-medium rounded-full ${c.className}`}>
-        {c.label}
-      </span>
-    );
-  };
-
   // ----- Loading state -----
   if (loading && bids.length === 0) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-white font-roboto">
-        <Loader2 className="animate-spin text-[#2a77b1]" size={40} />
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#F8FAFC] font-roboto">
+        <Loader2 className="animate-spin text-[#003566]" size={40} />
         <p className="mt-4 text-[10px] font-black uppercase tracking-[0.4em] text-slate-400">
           Biedingen laden...
         </p>
@@ -248,199 +372,353 @@ export default function GlobalBidManagementPage() {
   }
 
   return (
-  <div className="min-h-screen bg-white text-[#333] font-roboto antialiased flex flex-col -top-40 -left-10">
-    <Toaster position="top-center" />
+    <div className="min-h-screen bg-[#F8FAFC] font-roboto">
+      <Toaster position="top-right" />
 
-    {/* Header */}
-    <header className="w-full bg-white border-b border-gray-200 h-16 flex items-center px-6 justify-between">
-        <Link
-          href="/dashboard" // change to your own dashboard link
-          className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-black transition-colors"
-        >
-          <ArrowLeft size={18} /> Terug naar dashboard
-        </Link>
-        <span className="text-sm font-medium text-gray-500">
-          Totaal biedingen: {total}
-        </span>
-      </header>
+      {/* HEADER (sticky, white, with back button and total) */}
+      <div className="bg-white border-b border-slate-200 sticky top-0 z-30">
+        <div className="max-w-7xl mx-auto px-6 py-6 lg:px-12 flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl lg:text-4xl font-serif italic tracking-tight mb-1">
+              Bid Management
+            </h1>
+            <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400">
+              All offers on vessels
+            </p>
+          </div>
+          <div className="flex items-center gap-4">
+            <Button
+              onClick={fetchBids}
+              className="bg-white text-[#003566] border border-slate-200 hover:bg-slate-50 rounded-none h-12 px-6 font-black uppercase text-[10px] tracking-widest transition-all shadow-sm flex items-center gap-2"
+            >
+              <RefreshCw size={14} />
+              Refresh
+            </Button>
+            <Link
+              href="/dashboard"
+              className="bg-[#003566] text-white hover:bg-blue-800 rounded-none h-12 px-8 font-black uppercase text-[10px] tracking-widest transition-all shadow-lg flex items-center gap-2"
+            >
+              <ArrowLeft size={14} />
+              Dashboard
+            </Link>
+          </div>
+        </div>
+      </div>
 
-      <main className="max-w-7xl mx-auto px-6 py-12">
-        <div className="mb-10">
-          <h1 className="text-3xl font-serif italic text-gray-900 mb-2">
-            Biedingen beheer
-          </h1>
-          <p className="text-gray-600">
-            Alle uitstaande, overboden, geaccepteerde en geannuleerde biedingen.
-          </p>
+      <div className="max-w-7xl mx-auto p-6 lg:p-12 space-y-8">
+        {/* STATS CARDS */}
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+          <div className="bg-white p-4 border border-slate-200 shadow-sm">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Total Bids</p>
+                <p className="text-xl font-bold text-[#003566]">{stats.total}</p>
+              </div>
+              <BarChart3 className="text-blue-600" size={18} />
+            </div>
+          </div>
+          <div className="bg-white p-4 border border-slate-200 shadow-sm">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Active</p>
+                <p className="text-xl font-bold text-blue-600">{stats.active}</p>
+              </div>
+              <Clock className="text-blue-600" size={18} />
+            </div>
+          </div>
+          <div className="bg-white p-4 border border-slate-200 shadow-sm">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Won</p>
+                <p className="text-xl font-bold text-emerald-600">{stats.won}</p>
+              </div>
+              <CheckCircle className="text-emerald-600" size={18} />
+            </div>
+          </div>
+          <div className="bg-white p-4 border border-slate-200 shadow-sm">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Outbid</p>
+                <p className="text-xl font-bold text-slate-500">{stats.outbid}</p>
+              </div>
+              <AlertTriangle className="text-slate-500" size={18} />
+            </div>
+          </div>
+          <div className="bg-white p-4 border border-slate-200 shadow-sm">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Cancelled</p>
+                <p className="text-xl font-bold text-red-600">{stats.cancelled}</p>
+              </div>
+              <XCircle className="text-red-600" size={18} />
+            </div>
+          </div>
+          <div className="bg-white p-4 border border-slate-200 shadow-sm">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Total Value</p>
+                <p className="text-base font-bold text-blue-900">{formatCurrency(stats.totalValue)}</p>
+              </div>
+              <DollarSign className="text-blue-900" size={18} />
+            </div>
+          </div>
+          <div className="bg-white p-4 border border-slate-200 shadow-sm">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Avg. Bid</p>
+                <p className="text-base font-bold text-blue-900">{formatCurrency(stats.avgBid)}</p>
+              </div>
+              <TrendingUp className="text-blue-900" size={18} />
+            </div>
+          </div>
         </div>
 
-        {/* Bids list */}
-        {bids.length === 0 ? (
-          <div className="text-center py-16 border border-dashed border-gray-200 rounded-lg bg-gray-50">
-            <Award size={48} className="mx-auto text-gray-300 mb-4" />
-            <p className="text-gray-500">Er zijn nog geen biedingen geplaatst.</p>
+        {/* SEARCH & FILTERS */}
+        <div className="bg-white p-6 border border-slate-200 shadow-sm">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 items-center">
+            <div className="relative group lg:col-span-2">
+              <Search
+                className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-600 transition-colors"
+                size={18}
+              />
+              <input
+                type="text"
+                placeholder="SEARCH BY YACHT OR BIDDER..."
+                className="w-full bg-slate-50 border border-slate-200 p-3 pl-12 text-[11px] font-black tracking-widest outline-none focus:ring-1 focus:ring-blue-600 transition-all"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+
+            <div className="relative">
+              <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
+              <select
+                className="w-full bg-slate-50 border border-slate-200 p-3 pl-12 text-[11px] font-black tracking-widest outline-none appearance-none"
+                value={selectedStatus}
+                onChange={(e) => setSelectedStatus(e.target.value)}
+              >
+                {statusOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="relative">
+              <select
+                className="w-full bg-slate-50 border border-slate-200 p-3 text-[11px] font-black tracking-widest outline-none"
+                value={`${sortBy}-${sortOrder}`}
+                onChange={(e) => {
+                  const [newSortBy, newSortOrder] = e.target.value.split("-");
+                  setSortBy(newSortBy);
+                  setSortOrder(newSortOrder as "asc" | "desc");
+                }}
+              >
+                {sortOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    Sort: {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
-        ) : (
-          <div className="space-y-6">
-            {bids.map((bid) => (
+        </div>
+
+        {/* EMPTY STATE */}
+        {!loading && filteredBids.length === 0 && (
+          <div className="text-center py-20">
+            <Ship className="mx-auto text-slate-300 mb-4" size={48} />
+            <p className="text-[12px] font-black uppercase tracking-widest text-slate-400 mb-2">
+              No bids found
+            </p>
+            <p className="text-[10px] text-slate-400 mb-6">
+              {searchQuery || selectedStatus !== "all"
+                ? "Try adjusting your search or filters"
+                : "There are no bids on any vessels yet."}
+            </p>
+          </div>
+        )}
+
+        {/* BIDS LIST (table style) */}
+        {!loading && filteredBids.length > 0 && (
+          <div className="bg-white border border-slate-200">
+            {/* Table Header */}
+            <div className="grid grid-cols-12 gap-4 p-4 border-b border-slate-200 bg-slate-50 text-[10px] font-black uppercase tracking-widest text-slate-500">
+              <div className="col-span-3">Yacht</div>
+              <div className="col-span-2">Bidder</div>
+              <div className="col-span-2">Amount</div>
+              <div className="col-span-2">Date</div>
+              <div className="col-span-1">Status</div>
+              <div className="col-span-2 text-right">Actions</div>
+            </div>
+
+            {/* Rows */}
+            {filteredBids.map((bid) => (
               <div
                 key={bid.id}
-                className={cn(
-                  "bg-white border rounded-lg p-5 transition-all hover:shadow-sm",
-                  bid.status === "active"
-                    ? "border-blue-200 bg-blue-50/30"
-                    : "border-gray-200"
-                )}
+                className="grid grid-cols-12 gap-4 p-4 border-b border-slate-100 hover:bg-slate-50 transition-colors items-center"
               >
-                <div className="flex flex-col lg:flex-row lg:items-start gap-5">
-                  {/* Yacht thumbnail & info */}
-                  <div className="flex gap-4 flex-1">
-                    <div className="w-24 h-16 bg-gray-100 rounded-md overflow-hidden flex-shrink-0">
-                      <img
-                        src={
-                          bid.yacht.main_image
-                            ? `${STORAGE_URL}${bid.yacht.main_image}`
-                            : PLACEHOLDER_IMAGE
-                        }
-                        onError={(e) => (e.currentTarget.src = PLACEHOLDER_IMAGE)}
-                        alt={bid.yacht.boat_name}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    <div className="flex-1">
-                      <Link
-                        href={`/nl/yachts/${bid.yacht.id}/${bid.yacht.boat_name
-                          ?.toLowerCase()
-                          .replace(/\s+/g, "-")}`}
-                        className="group inline-flex items-center gap-1.5"
+                {/* Yacht */}
+                <div className="col-span-3 flex items-center gap-3">
+                  <div className="w-12 h-12 bg-slate-100 overflow-hidden flex-shrink-0">
+                    <img
+                      src={getImageUrl(bid.yacht?.main_image)}
+                      onError={handleImageError}
+                      alt={getYachtName(bid.yacht)}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div>
+                    <p className="font-medium text-[#003566]">{getYachtName(bid.yacht)}</p>
+                    {bid.yacht?.vessel_id && (
+                      <p className="text-[9px] text-slate-500">ID: {bid.yacht.vessel_id}</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Bidder */}
+                <div className="col-span-2">
+                  <div className="flex items-center gap-2">
+                    <User size={14} className="text-blue-600" />
+                    <span className="text-sm">{bid.user?.name || "Unknown"}</span>
+                  </div>
+                  {bid.user?.email && (
+                    <p className="text-[9px] text-slate-500 truncate">{bid.user.email}</p>
+                  )}
+                </div>
+
+                {/* Amount */}
+                <div className="col-span-2">
+                  <p className="font-bold text-blue-900">{formatCurrency(bid.amount)}</p>
+                </div>
+
+                {/* Date */}
+                <div className="col-span-2">
+                  <div className="flex items-center gap-2">
+                    <Calendar size={14} className="text-blue-600" />
+                    <span className="text-xs">{formatDate(bid.created_at)}</span>
+                  </div>
+                </div>
+
+                {/* Status */}
+                <div className="col-span-1">
+                  <span
+                    className={cn(
+                      "inline-flex text-[9px] font-black px-2.5 py-1 rounded-full uppercase tracking-widest border",
+                      bidStatusConfig[bid.status]?.color || "text-slate-600",
+                      bidStatusConfig[bid.status]?.bg || "bg-slate-100",
+                      bidStatusConfig[bid.status]?.border || "border-slate-200"
+                    )}
+                  >
+                    {bidStatusConfig[bid.status]?.label || bid.status}
+                  </span>
+                </div>
+
+                {/* Actions */}
+                <div className="col-span-2 flex items-center justify-end gap-2">
+                  <Link
+                    href={`/nl/yachts/${bid.yacht.id}/${bid.yacht.boat_name?.toLowerCase().replace(/\s+/g, "-")}`}
+                    className="p-2 text-blue-600 hover:text-blue-800 transition-colors"
+                    title="View Yacht"
+                  >
+                    <Eye size={16} />
+                  </Link>
+
+                  {bid.status === "active" && (
+                    <>
+                      <button
+                        onClick={() => handleAcceptBid(bid.id)}
+                        disabled={actionInProgress === bid.id}
+                        className="p-2 text-emerald-600 hover:text-emerald-800 transition-colors disabled:opacity-50"
+                        title="Accept Bid"
                       >
-                        <h2 className="text-lg font-serif italic text-[#2a77b1] group-hover:underline notranslate">
-                          {bid.yacht.boat_name}
-                        </h2>
-                        <ExternalLink size={14} className="text-gray-400" />
-                      </Link>
-                      <p className="text-xs text-gray-500 mt-0.5">
-                        REF: {bid.yacht.vessel_id || bid.yacht.id}
-                      </p>
-                      <div className="flex items-center gap-3 mt-2 flex-wrap">
-                        <span className="text-sm bg-gray-100 px-2 py-1 rounded">
-                          {bid.yacht.status}
-                        </span>
-                        <span className="text-sm">
-                          Vraagprijs: €{formatPrice(bid.yacht.price)}
-                        </span>
-                        {bid.yacht.current_bid && (
-                          <span className="text-sm font-medium">
-                            Huidig bod: €{formatPrice(bid.yacht.current_bid)}
-                          </span>
+                        {actionInProgress === bid.id ? (
+                          <Loader2 size={16} className="animate-spin" />
+                        ) : (
+                          <CheckCircle size={16} />
                         )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Bid details & actions */}
-                  <div className="flex flex-col sm:flex-row lg:flex-col xl:flex-row gap-4 lg:gap-3 xl:gap-4 lg:min-w-[300px] xl:min-w-[400px]">
-                    <div className="flex-1 space-y-1.5">
-                      <div className="flex items-center gap-2">
-                        <span className="text-lg font-serif italic">
-                          €{formatPrice(bid.amount)}
-                        </span>
-                        {getStatusBadge(bid.status)}
-                      </div>
-                      <p className="text-sm text-gray-600">
-                        <span className="font-medium">Bieder:</span>{" "}
-                        {bid.user?.name || "Anoniem"}
-                      </p>
-                      <p className="text-sm text-gray-600">
-                        <span className="font-medium">Datum:</span>{" "}
-                        {formatDate(bid.created_at)}
-                      </p>
-                      {bid.finalized_at && (
-                        <p className="text-xs text-gray-500">
-                          Afgerond: {formatDate(bid.finalized_at)}
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Actions - only for active bids */}
-                    {bid.status === "active" && (
-                      <div className="flex flex-row sm:flex-col lg:flex-row xl:flex-col gap-2 self-end sm:self-auto">
-                        <button
-                          onClick={() => handleAcceptBid(bid.id)}
-                          disabled={actionInProgress === bid.id}
-                          className="px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white font-medium rounded-md transition-colors disabled:bg-green-300 flex items-center justify-center gap-2 text-sm"
-                        >
-                          {actionInProgress === bid.id ? (
-                            <Loader2 size={16} className="animate-spin" />
-                          ) : (
-                            <CheckCircle size={16} />
-                          )}
-                          Accepteer
-                        </button>
-                        <button
-                          onClick={() => handleDeclineBid(bid.id)}
-                          disabled={actionInProgress === bid.id}
-                          className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium rounded-md transition-colors disabled:bg-red-300 flex items-center justify-center gap-2 text-sm"
-                        >
-                          {actionInProgress === bid.id ? (
-                            <Loader2 size={16} className="animate-spin" />
-                          ) : (
-                            <XCircle size={16} />
-                          )}
-                          Afwijzen
-                        </button>
-                      </div>
-                    )}
-
-                    {/* Status messages for finalised bids */}
-                    {bid.status === "won" && (
-                      <div className="px-5 py-2.5 bg-green-50 text-green-700 rounded-md text-sm font-medium flex items-center gap-2 self-end">
-                        <CheckCircle size={16} />
-                        Winnend bod
-                      </div>
-                    )}
-                    {bid.status === "cancelled" && (
-                      <div className="px-5 py-2.5 bg-red-50 text-red-700 rounded-md text-sm font-medium flex items-center gap-2 self-end">
-                        <XCircle size={16} />
-                        Geannuleerd
-                      </div>
-                    )}
-                    {bid.status === "outbid" && (
-                      <div className="px-5 py-2.5 bg-gray-100 text-gray-600 rounded-md text-sm font-medium flex items-center gap-2 self-end">
-                        <Award size={16} />
-                        Overboden
-                      </div>
-                    )}
-                  </div>
+                      </button>
+                      <button
+                        onClick={() => handleDeclineBid(bid.id)}
+                        disabled={actionInProgress === bid.id}
+                        className="p-2 text-red-600 hover:text-red-800 transition-colors disabled:opacity-50"
+                        title="Decline Bid"
+                      >
+                        {actionInProgress === bid.id ? (
+                          <Loader2 size={16} className="animate-spin" />
+                        ) : (
+                          <XCircle size={16} />
+                        )}
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             ))}
           </div>
         )}
 
-        {/* Pagination */}
-        {lastPage > 1 && (
-          <div className="mt-12 flex items-center justify-center gap-2">
-            <button
-              onClick={() => setPage((p) => Math.max(p - 1, 1))}
-              disabled={page === 1}
-              className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Vorige
-            </button>
-            <span className="px-4 py-2 text-sm text-gray-700">
-              Pagina {page} van {lastPage}
-            </span>
-            <button
-              onClick={() => setPage((p) => Math.min(p + 1, lastPage))}
-              disabled={page === lastPage}
-              className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Volgende
-            </button>
+        {/* FOOTER with pagination */}
+        {!loading && filteredBids.length > 0 && (
+          <div className="pt-6 border-t border-slate-200">
+            <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+              <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                <span className="text-blue-600">{filteredBids.length}</span> of{" "}
+                <span>{bids.length}</span> bids displayed on this page
+              </div>
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={fetchBids}
+                  className="h-9 px-4 text-[10px] font-black uppercase tracking-widest border border-slate-200 bg-white hover:bg-slate-50 rounded-none flex items-center gap-2"
+                >
+                  <RefreshCw size={12} />
+                  Refresh
+                </button>
+                <button
+                  onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                  className="h-9 px-4 text-[10px] font-black uppercase tracking-widest border border-slate-200 bg-white hover:bg-slate-50 rounded-none"
+                >
+                  Back to Top
+                </button>
+              </div>
+            </div>
+            {/* Pagination controls */}
+            {lastPage > 1 && (
+              <div className="flex justify-center mt-4 gap-2">
+                <button
+                  onClick={() => setPage((p) => Math.max(p - 1, 1))}
+                  disabled={page === 1}
+                  className="px-4 py-2 border border-slate-200 bg-white text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 disabled:opacity-50"
+                >
+                  Previous
+                </button>
+                <span className="px-4 py-2 text-[10px] font-black text-slate-500">
+                  Page {page} of {lastPage}
+                </span>
+                <button
+                  onClick={() => setPage((p) => Math.min(p + 1, lastPage))}
+                  disabled={page === lastPage}
+                  className="px-4 py-2 border border-slate-200 bg-white text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 disabled:opacity-50"
+                >
+                  Next
+                </button>
+              </div>
+            )}
           </div>
         )}
-      </main>
+      </div>
     </div>
   );
 }
+
+// Simple Button component to match the UI (since we don't have the shadcn button)
+const Button = ({ children, className, onClick, ...props }: any) => (
+  <button
+    className={cn("inline-flex items-center justify-center", className)}
+    onClick={onClick}
+    {...props}
+  >
+    {children}
+  </button>
+);
