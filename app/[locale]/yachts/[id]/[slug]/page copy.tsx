@@ -1286,289 +1286,265 @@ export default function YachtTerminalPage() {
             </div>
 
             {/* ----- RIGHT COLUMN (4/12) ----- */}
-            <div className="lg:col-span-1 space-y-8">
-              {/* BIDDING CARD */}
-              <div className="bg-gray-50 border border-gray-200 p-6">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-serif italic text-gray-900">
-                    Bod uitbrengen
-                  </h3>
-                  <span
-                    className={cn(
-                      "text-xs font-medium px-3 py-1.5 rounded-full",
-                      yacht.status === "Sold"
-                        ? "bg-red-100 text-red-800"
-                        : yacht.status === "For Bid"
-                          ? "bg-blue-100 text-blue-800"
-                          : "bg-green-100 text-green-800",
-                    )}
-                  >
-                    {yacht.status === "For Sale"
-                      ? "Te Koop"
-                      : yacht.status === "For Bid"
-                        ? "Veiling Actief"
-                        : "Verkocht"}
-                  </span>
-                </div>
-                <div className="mb-5">
-                  <p className="text-sm text-gray-500 mb-1">
-                    Huidig hoogste bod:
-                  </p>
-                  <p className="text-2xl font-serif italic text-gray-900">
-                    €
-                    {(yacht.current_bid
-                      ? Number(yacht.current_bid)
-                      : Number(yacht.price)
-                    ).toLocaleString("nl-NL")}
-                  </p>
-                  {yacht.status === "For Sale" && (
-                    <p className="text-xs text-gray-500 mt-1">Startprijs</p>
-                  )}
-                </div>
-                {yacht.status !== "Sold" && (
-                  <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-md">
-                    <div className="flex items-start gap-2">
-                      <AlertCircle
-                        size={16}
-                        className="text-amber-600 mt-0.5 flex-shrink-0"
-                      />
-                      <div>
-                        <p className="text-sm font-medium text-amber-800">
-                          Minimaal bod vereist:
-                        </p>
-                        <p className="text-lg font-bold text-amber-900">
-                          €{minBidAmount.toLocaleString("nl-NL")}
-                          <span className="text-sm font-normal text-amber-700 ml-2">
-                            (90% van vraagprijs)
-                          </span>
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                {yacht.status === "Sold" ? (
-                  <div className="text-center py-4 bg-red-50 border border-red-100 rounded-md">
-                    <p className="text-red-600 font-medium">
-                      Dit schip is verkocht
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-4 mt-6">
-                    <div>
-                      <input
-                        type="number"
-                        value={bidAmount}
-                        onChange={(e) => {
-                          setBidAmount(e.target.value);
-                          setBidError("");
-                        }}
-                        placeholder={`Minimaal €${minBidAmount.toLocaleString("nl-NL")}`}
-                        className="w-full border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-gray-500 rounded-none"
-                        step="100"
-                        min={minBidAmount}
-                      />
-                      {bidError && (
-                        <p className="text-red-500 text-xs mt-1">{bidError}</p>
-                      )}
-                    </div>
-                    {isAuthenticated ? (
-                      <button
-                        onClick={placeBid}
-                        disabled={placingBid}
-                        className="w-full bg-gray-900 hover:bg-black text-white py-3 font-medium transition-colors flex items-center justify-center gap-2 disabled:bg-gray-400"
-                      >
-                        {placingBid ? (
-                          <Loader2 className="animate-spin" size={16} />
-                        ) : (
-                          <Gavel size={16} />
-                        )}
-                        {placingBid ? "Plaatsen..." : "Bod plaatsen"}
-                      </button>
-                    ) : (
-                      <button
-                        onClick={handleLoginRedirect}
-                        className="w-full bg-gray-900 hover:bg-black text-white py-3 font-medium transition-colors"
-                      >
-                        Inloggen om te bieden
-                      </button>
-                    )}
-                    {user && (
-                      <p className="text-xs text-gray-500 text-center">
-                        Ingelogd als: {user.name}
-                      </p>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* ----- CONTACT FORM – EXACT REPLICA + AUTO‑FILL ----- */}
-              <div className="bg-gray-50 border border-gray-200 p-6">
-                <h4 className="text-lg font-serif italic text-gray-900 mb-4">
-                  Meer informatie over de
-                  <br />
-                  <span className="notranslate text-[#2a77b1]">
-                    {yacht.boat_name}
-                  </span>
-                </h4>
-                <form onSubmit={handleContactSubmit} className="space-y-4">
-                  <input
-                    type="hidden"
-                    name="g-recaptcha-response"
-                    className="g-recaptcha-response"
-                  />
-                  <input
-                    type="text"
-                    placeholder="Your first and last name*"
-                    className="w-full border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-gray-500 rounded-none"
-                    required
-                    value={contactForm.name}
-                    onChange={(e) =>
-                      setContactForm({ ...contactForm, name: e.target.value })
-                    }
-                  />
-                  <input
-                    type="text"
-                    placeholder="Phone number*"
-                    className="w-full border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-gray-500 rounded-none"
-                    required
-                    value={contactForm.phone}
-                    onChange={(e) =>
-                      setContactForm({ ...contactForm, phone: e.target.value })
-                    }
-                  />
-                  <input
-                    type="email"
-                    placeholder="Email address*"
-                    className="w-full border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-gray-500 rounded-none"
-                    required
-                    value={contactForm.email}
-                    onChange={(e) =>
-                      setContactForm({ ...contactForm, email: e.target.value })
-                    }
-                  />
-                  <p className="text-sm text-gray-700">
-                    I would like the following... *
-                  </p>
-                  <select
-                    className="w-full border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-gray-500 rounded-none bg-white"
-                    value={contactForm.requestType}
-                    onChange={(e) =>
-                      setContactForm({
-                        ...contactForm,
-                        requestType: e.target.value,
-                      })
-                    }
-                  >
-                    <option value="" disabled hidden></option>
-                    <option value="Teruggebeld worden">Get a call back</option>
-                    <option value="Een vrijblijvende afspraak maken">
-                      Make a no-obligation appointment
-                    </option>
-                    <option value="Anders">Other</option>
-                  </select>
-                  <textarea
-                    placeholder="Your comment or question about the Quicksilver 645 Cruiser *"
-                    rows={4}
-                    className="w-full border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-gray-500 rounded-none"
-                    value={contactForm.comment}
-                    onChange={(e) =>
-                      setContactForm({
-                        ...contactForm,
-                        comment: e.target.value,
-                      })
-                    }
-                  ></textarea>
-                  <button
-                    type="submit"
-                    className="w-full bg-[#2a77b1] hover:bg-[#1e5a8a] text-white py-3 font-medium transition-colors rounded-full"
-                  >
-                    Send
-                  </button>
-                  <p className="text-xs text-gray-500 mt-1">* Required field</p>
-                </form>
-              </div>
-
-              {/* TEST SAIL TOGGLE */}
-              <button
-                onClick={() => setShowTestSailForm(!showTestSailForm)}
-                className="w-full border border-gray-300 hover:bg-gray-50 text-gray-700 py-4 font-medium text-center transition-colors flex items-center justify-center gap-2 bg-white"
-              >
-                <Anchor size={18} />
-                {showTestSailForm
-                  ? "Proefvaart formulier verbergen"
-                  : "Proefvaart boeken"}
-              </button>
-
-              {/* TEST SAIL FORM (inline) – auto‑filled already via bookingForm state */}
-              {showTestSailForm && (
-                <TestSailForm
-                  yacht={yacht}
-                  depositAmount={depositAmount}
-                  currentMonth={currentMonth}
-                  calendarDays={calendarDays}
-                  selectedDate={selectedDate}
-                  selectedTime={selectedTime}
-                  availableSlots={availableSlots}
-                  bookingForm={bookingForm}
-                  testSailStatus={testSailStatus}
-                  onPrevMonth={handlePrevMonth}
-                  onNextMonth={handleNextMonth}
-                  onDateSelect={handleDateSelect}
-                  onTimeSelect={setSelectedTime}
-                  onBookingFormChange={setBookingForm}
-                  onBook={handleTestSailBooking}
-                  onCancel={() => setShowTestSailForm(false)}
-                />
-              )}
-
-              {/* BID HISTORY */}
-              <div className="bg-gray-50 border border-gray-200 p-6">
-                <h3 className="text-lg font-serif italic text-gray-900 mb-4 flex items-center gap-2">
-                  <History size={16} className="text-gray-600" />
-                  Bod geschiedenis
-                </h3>
-                <div className="space-y-3 max-h-60 overflow-y-auto">
-                  {bids.length > 0 ? (
-                    bids.map((bid, i) => (
-                      <div
-                        key={bid.id}
-                        className={cn(
-                          "flex justify-between items-center py-3 px-3 rounded border",
-                          i === 0
-                            ? "bg-blue-50 border-blue-200 text-blue-900 font-medium"
-                            : "border-gray-100 text-gray-600",
-                        )}
-                      >
-                        <div>
-                          <span className="text-sm">
-                            {bid.user?.name || "Anonieme bieder"}
-                          </span>
-                          {bid.status === "active" && i === 0 && (
-                            <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded ml-2">
-                              Actief
-                            </span>
-                          )}
-                        </div>
-                        <div className="text-right">
-                          <span className="text-sm font-medium">
-                            €{Number(bid.amount).toLocaleString("nl-NL")}
-                          </span>
-                          <p className="text-xs text-gray-400">
-                            {new Date(bid.created_at).toLocaleDateString(
-                              "nl-NL",
-                            )}
-                          </p>
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-sm text-gray-500 italic text-center py-4">
-                      Nog geen biedingen geregistreerd
-                    </p>
-                  )}
-                </div>
-              </div>
+            {/* ----- RIGHT COLUMN (4/12) ----- */}
+<div className="lg:col-span-1 space-y-8">
+  {/* 🔁 BIDDING CARD – ONLY SHOW IF STATUS IS "For Bid" */}
+  {yacht.status === "For Bid" && (
+    <>
+      <div className="bg-gray-50 border border-gray-200 p-6">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-serif italic text-gray-900">
+            Bod uitbrengen
+          </h3>
+          <span className="text-xs font-medium px-3 py-1.5 rounded-full bg-blue-100 text-blue-800">
+            Veiling Actief
+          </span>
+        </div>
+        <div className="mb-5">
+          <p className="text-sm text-gray-500 mb-1">
+            Huidig hoogste bod:
+          </p>
+          <p className="text-2xl font-serif italic text-gray-900">
+            €
+            {(yacht.current_bid
+              ? Number(yacht.current_bid)
+              : Number(yacht.price)
+            ).toLocaleString("nl-NL")}
+          </p>
+        </div>
+        <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-md">
+          <div className="flex items-start gap-2">
+            <AlertCircle
+              size={16}
+              className="text-amber-600 mt-0.5 shrink-0"
+            />
+            <div>
+              <p className="text-sm font-medium text-amber-800">
+                Minimaal bod vereist:
+              </p>
+              <p className="text-lg font-bold text-amber-900">
+                €{minBidAmount.toLocaleString("nl-NL")}
+                <span className="text-sm font-normal text-amber-700 ml-2">
+                  (90% van vraagprijs)
+                </span>
+              </p>
             </div>
+          </div>
+        </div>
+        <div className="space-y-4 mt-6">
+          <div>
+            <input
+              type="number"
+              value={bidAmount}
+              onChange={(e) => {
+                setBidAmount(e.target.value);
+                setBidError("");
+              }}
+              placeholder={`Minimaal €${minBidAmount.toLocaleString("nl-NL")}`}
+              className="w-full border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-gray-500 rounded-none"
+              step="100"
+              min={minBidAmount}
+            />
+            {bidError && (
+              <p className="text-red-500 text-xs mt-1">{bidError}</p>
+            )}
+          </div>
+          {isAuthenticated ? (
+            <button
+              onClick={placeBid}
+              disabled={placingBid}
+              className="w-full bg-gray-900 hover:bg-black text-white py-3 font-medium transition-colors flex items-center justify-center gap-2 disabled:bg-gray-400"
+            >
+              {placingBid ? (
+                <Loader2 className="animate-spin" size={16} />
+              ) : (
+                <Gavel size={16} />
+              )}
+              {placingBid ? "Plaatsen..." : "Bod plaatsen"}
+            </button>
+          ) : (
+            <button
+              onClick={handleLoginRedirect}
+              className="w-full bg-gray-900 hover:bg-black text-white py-3 font-medium transition-colors"
+            >
+              Inloggen om te bieden
+            </button>
+          )}
+          {user && (
+            <p className="text-xs text-gray-500 text-center">
+              Ingelogd als: {user.name}
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* 📜 BID HISTORY – ONLY SHOW IF STATUS IS "For Bid" */}
+      <div className="bg-gray-50 border border-gray-200 p-6">
+        <h3 className="text-lg font-serif italic text-gray-900 mb-4 flex items-center gap-2">
+          <History size={16} className="text-gray-600" />
+          Bod geschiedenis
+        </h3>
+        <div className="space-y-3 max-h-60 overflow-y-auto">
+          {bids.length > 0 ? (
+            bids.map((bid, i) => (
+              <div
+                key={bid.id}
+                className={cn(
+                  "flex justify-between items-center py-3 px-3 rounded border",
+                  i === 0
+                    ? "bg-blue-50 border-blue-200 text-blue-900 font-medium"
+                    : "border-gray-100 text-gray-600",
+                )}
+              >
+                <div>
+                  <span className="text-sm">
+                    {bid.user?.name || "Anonieme bieder"}
+                  </span>
+                  {bid.status === "active" && i === 0 && (
+                    <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded ml-2">
+                      Actief
+                    </span>
+                  )}
+                </div>
+                <div className="text-right">
+                  <span className="text-sm font-medium">
+                    €{Number(bid.amount).toLocaleString("nl-NL")}
+                  </span>
+                  <p className="text-xs text-gray-400">
+                    {new Date(bid.created_at).toLocaleDateString("nl-NL")}
+                  </p>
+                </div>
+              </div>
+            ))
+          ) : (
+            <p className="text-sm text-gray-500 italic text-center py-4">
+              Nog geen biedingen geregistreerd
+            </p>
+          )}
+        </div>
+      </div>
+    </>
+  )}
+
+  {/* ----- CONTACT FORM – ALWAYS VISIBLE ----- */}
+  <div className="bg-gray-50 border border-gray-200 p-6">
+    <h4 className="text-lg font-serif italic text-gray-900 mb-4">
+      Meer informatie over de
+      <br />
+      <span className="notranslate text-[#2a77b1]">
+        {yacht.boat_name}
+      </span>
+    </h4>
+    <form onSubmit={handleContactSubmit} className="space-y-4">
+      <input
+        type="hidden"
+        name="g-recaptcha-response"
+        className="g-recaptcha-response"
+      />
+      <input
+        type="text"
+        placeholder="Your first and last name*"
+        className="w-full border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-gray-500 rounded-none"
+        required
+        value={contactForm.name}
+        onChange={(e) =>
+          setContactForm({ ...contactForm, name: e.target.value })
+        }
+      />
+      <input
+        type="text"
+        placeholder="Phone number*"
+        className="w-full border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-gray-500 rounded-none"
+        required
+        value={contactForm.phone}
+        onChange={(e) =>
+          setContactForm({ ...contactForm, phone: e.target.value })
+        }
+      />
+      <input
+        type="email"
+        placeholder="Email address*"
+        className="w-full border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-gray-500 rounded-none"
+        required
+        value={contactForm.email}
+        onChange={(e) =>
+          setContactForm({ ...contactForm, email: e.target.value })
+        }
+      />
+      <p className="text-sm text-gray-700">
+        I would like the following... *
+      </p>
+      <select
+        className="w-full border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-gray-500 rounded-none bg-white"
+        value={contactForm.requestType}
+        onChange={(e) =>
+          setContactForm({
+            ...contactForm,
+            requestType: e.target.value,
+          })
+        }
+      >
+        <option value="" disabled hidden></option>
+        <option value="Teruggebeld worden">Get a call back</option>
+        <option value="Een vrijblijvende afspraak maken">
+          Make a no-obligation appointment
+        </option>
+        <option value="Anders">Other</option>
+      </select>
+      <textarea
+        placeholder={`Your comment or question about the ${yacht.boat_name} *`}
+        rows={4}
+        className="w-full border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-gray-500 rounded-none"
+        value={contactForm.comment}
+        onChange={(e) =>
+          setContactForm({
+            ...contactForm,
+            comment: e.target.value,
+          })
+        }
+      ></textarea>
+      <button
+        type="submit"
+        className="w-full bg-[#2a77b1] hover:bg-[#1e5a8a] text-white py-3 font-medium transition-colors rounded-full"
+      >
+        Send
+      </button>
+      <p className="text-xs text-gray-500 mt-1">* Required field</p>
+    </form>
+  </div>
+
+  {/* ⚓ TEST SAIL TOGGLE & FORM – ALWAYS VISIBLE */}
+  <button
+    onClick={() => setShowTestSailForm(!showTestSailForm)}
+    className="w-full border border-gray-300 hover:bg-gray-50 text-gray-700 py-4 font-medium text-center transition-colors flex items-center justify-center gap-2 bg-white"
+  >
+    <Anchor size={18} />
+    {showTestSailForm
+      ? "Proefvaart formulier verbergen"
+      : "Proefvaart boeken"}
+  </button>
+
+  {showTestSailForm && (
+    <TestSailForm
+      yacht={yacht}
+      depositAmount={depositAmount}
+      currentMonth={currentMonth}
+      calendarDays={calendarDays}
+      selectedDate={selectedDate}
+      selectedTime={selectedTime}
+      availableSlots={availableSlots}
+      bookingForm={bookingForm}
+      testSailStatus={testSailStatus}
+      onPrevMonth={handlePrevMonth}
+      onNextMonth={handleNextMonth}
+      onDateSelect={handleDateSelect}
+      onTimeSelect={setSelectedTime}
+      onBookingFormChange={setBookingForm}
+      onBook={handleTestSailBooking}
+      onCancel={() => setShowTestSailForm(false)}
+    />
+  )}
+</div>
           </div>
         </div>
 
