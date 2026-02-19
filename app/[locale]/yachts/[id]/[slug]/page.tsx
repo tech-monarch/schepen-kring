@@ -719,7 +719,7 @@ export default function YachtTerminalPage() {
         .photos-holder-grid {
           position: relative;
           overflow: hidden;
-          max-width: 1400px;
+          width: 1400px;
           margin-left: auto;
           margin-right: auto;
           padding-left: 1.5rem;
@@ -733,7 +733,7 @@ export default function YachtTerminalPage() {
           padding-top: 10px;
           background-color: #f3f4fa;
           height: 500px;
-          max-width: 1400px;
+          width: 1400px;
         }
         .photo-of-object {
           overflow: hidden;
