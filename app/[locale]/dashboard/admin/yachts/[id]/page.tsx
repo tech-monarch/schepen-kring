@@ -24,7 +24,7 @@ import {
   ArrowLeft,
   Calendar,
   Clock,
-  Eye
+  Eye,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -51,9 +51,14 @@ type AvailabilityRule = {
 };
 
 // Spec Checkbox Component
-function SpecCheckbox({ field, label, selectedYacht, onSpecChange }: { 
-  field: string; 
-  label: string; 
+function SpecCheckbox({
+  field,
+  label,
+  selectedYacht,
+  onSpecChange,
+}: {
+  field: string;
+  label: string;
   selectedYacht: any;
   onSpecChange: (field: string, isChecked: boolean) => void;
 }) {
@@ -101,7 +106,7 @@ export default function YachtEditorPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loading, setLoading] = useState(!isNewMode);
   const [errors, setErrors] = useState<any>(null);
-  
+
   // AI & Media State
   const [aiStaging, setAiStaging] = useState<AiStagedImage[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -116,8 +121,10 @@ export default function YachtEditorPage() {
   });
 
   // Availability State
-  const [availabilityRules, setAvailabilityRules] = useState<AvailabilityRule[]>([]);
-  
+  const [availabilityRules, setAvailabilityRules] = useState<
+    AvailabilityRule[]
+  >([]);
+
   // Display Specs State
   const [displaySpecs, setDisplaySpecs] = useState<Record<string, boolean>>({});
 
@@ -169,21 +176,52 @@ export default function YachtEditorPage() {
         if (yacht.display_specs) {
           const specsState: Record<string, boolean> = {};
           const allSpecs = [
-            'builder', 'model', 'year', 'designer', 'where', 'hull_number', 'hull_type',
-            'loa', 'lwl', 'beam', 'draft', 'air_draft', 'displacement', 'ballast', 'passenger_capacity',
-            'hull_colour', 'hull_construction', 'super_structure_colour', 'super_structure_construction',
-            'deck_colour', 'deck_construction', 'cockpit_type', 'control_type',
-            'engine_manufacturer', 'horse_power', 'fuel', 'hours', 'cruising_speed', 'max_speed',
-            'tankage', 'gallons_per_hour', 'starting_type', 'drive_type',
-            'cabins', 'berths', 'toilet', 'shower', 'bath', 'heating'
+            "builder",
+            "model",
+            "year",
+            "designer",
+            "where",
+            "hull_number",
+            "hull_type",
+            "loa",
+            "lwl",
+            "beam",
+            "draft",
+            "air_draft",
+            "displacement",
+            "ballast",
+            "passenger_capacity",
+            "hull_colour",
+            "hull_construction",
+            "super_structure_colour",
+            "super_structure_construction",
+            "deck_colour",
+            "deck_construction",
+            "cockpit_type",
+            "control_type",
+            "engine_manufacturer",
+            "horse_power",
+            "fuel",
+            "hours",
+            "cruising_speed",
+            "max_speed",
+            "tankage",
+            "gallons_per_hour",
+            "starting_type",
+            "drive_type",
+            "cabins",
+            "berths",
+            "toilet",
+            "shower",
+            "bath",
+            "heating",
           ];
-          
-          allSpecs.forEach(spec => {
+
+          allSpecs.forEach((spec) => {
             specsState[spec] = yacht.display_specs.includes(spec);
           });
           setDisplaySpecs(specsState);
         }
-
       } catch (err) {
         console.error("Failed to fetch yacht details", err);
         toast.error("Could not load vessel data.");
@@ -230,42 +268,42 @@ export default function YachtEditorPage() {
     }
   };
 
-const handleAiCategorizer = async (files: FileList | null) => {
-  if (!files || files.length === 0) return;
-  setIsAnalyzing(true);
-  const formData = new FormData();
-  const fileArray = Array.from(files);
-  fileArray.forEach((file) => formData.append("images[]", file));
-  try {
-    toast.loading("Gemini is analyzing assets...", { id: "ai-loading" });
-    
-    let res;
+  const handleAiCategorizer = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    setIsAnalyzing(true);
+    const formData = new FormData();
+    const fileArray = Array.from(files);
+    fileArray.forEach((file) => formData.append("images[]", file));
     try {
-      res = await api.post("/partner/yachts/ai-classify", formData);
-    } catch (aiErr: any) {
-      if (aiErr.response?.status === 403 || aiErr.response?.status === 404) {
-        res = await api.post("/yachts/ai-classify", formData);
-      } else {
-        throw aiErr;
+      toast.loading("Gemini is analyzing assets...", { id: "ai-loading" });
+
+      let res;
+      try {
+        res = await api.post("/partner/yachts/ai-classify", formData);
+      } catch (aiErr: any) {
+        if (aiErr.response?.status === 403 || aiErr.response?.status === 404) {
+          res = await api.post("/yachts/ai-classify", formData);
+        } else {
+          throw aiErr;
+        }
       }
+
+      const analyzedData: AiStagedImage[] = res.data.map(
+        (item: any, index: number) => ({
+          file: fileArray[index],
+          preview: item.preview,
+          category: item.category,
+          originalName: item.originalName,
+        }),
+      );
+      setAiStaging((prev) => [...prev, ...analyzedData]);
+      toast.success("AI Classification complete", { id: "ai-loading" });
+    } catch (err) {
+      toast.error("AI Analysis failed", { id: "ai-loading" });
+    } finally {
+      setIsAnalyzing(false);
     }
-    
-    const analyzedData: AiStagedImage[] = res.data.map(
-      (item: any, index: number) => ({
-        file: fileArray[index],
-        preview: item.preview,
-        category: item.category,
-        originalName: item.originalName,
-      }),
-    );
-    setAiStaging((prev) => [...prev, ...analyzedData]);
-    toast.success("AI Classification complete", { id: "ai-loading" });
-  } catch (err) {
-    toast.error("AI Analysis failed", { id: "ai-loading" });
-  } finally {
-    setIsAnalyzing(false);
-  }
-};
+  };
 
   const approveAiImage = (index: number) => {
     const item = aiStaging[index];
@@ -291,14 +329,21 @@ const handleAiCategorizer = async (files: FileList | null) => {
 
   // Availability Handlers
   const addAvailabilityRule = () => {
-    setAvailabilityRules([...availabilityRules, { day_of_week: 1, start_time: "09:00", end_time: "17:00" }]);
+    setAvailabilityRules([
+      ...availabilityRules,
+      { day_of_week: 1, start_time: "09:00", end_time: "17:00" },
+    ]);
   };
 
   const removeAvailabilityRule = (index: number) => {
     setAvailabilityRules(availabilityRules.filter((_, i) => i !== index));
   };
 
-  const updateAvailabilityRule = (index: number, field: keyof AvailabilityRule, value: any) => {
+  const updateAvailabilityRule = (
+    index: number,
+    field: keyof AvailabilityRule,
+    value: any,
+  ) => {
     const newRules = [...availabilityRules];
     newRules[index] = { ...newRules[index], [field]: value };
     setAvailabilityRules(newRules);
@@ -306,156 +351,237 @@ const handleAiCategorizer = async (files: FileList | null) => {
 
   // Display Specs Handler
   const handleSpecChange = (field: string, isChecked: boolean) => {
-    setDisplaySpecs(prev => ({
+    setDisplaySpecs((prev) => ({
       ...prev,
-      [field]: isChecked
+      [field]: isChecked,
     }));
   };
 
   // --- 3. SIMPLIFIED SUBMIT LOGIC ---
-const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-  e.preventDefault();
-  setIsSubmitting(true);
-  setErrors(null);
-  
-  // Create form data directly without validation
-  const formData = new FormData();
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setErrors(null);
 
-  // Collect all form data
-  const formElements = e.currentTarget.elements;
-  
-  // Add boat name and price first
-  const boatName = (document.querySelector('input[name="boat_name"]') as HTMLInputElement)?.value;
-  const price = (document.querySelector('input[name="price"]') as HTMLInputElement)?.value;
-  const minBidAmount = (document.querySelector('input[name="min_bid_amount"]') as HTMLInputElement)?.value;
-  
-  if (boatName) formData.append('boat_name', boatName);
-  if (price) formData.append('price', price);
-  if (minBidAmount) formData.append('min_bid_amount', minBidAmount);
+    // Create form data directly without validation
+    const formData = new FormData();
 
-  // Add main image if exists
-  if (mainFile) {
-    formData.append('main_image', mainFile);
-  }
+    // Collect all form data
+    const formElements = e.currentTarget.elements;
 
-  // Add all other fields from form
-  const fields = [
-    'year', 'status', 'loa', 'lwl', 'where', 'passenger_capacity',
-    'beam', 'draft', 'air_draft', 'displacement', 'hull_type', 'hull_construction',
-    'hull_colour', 'hull_number', 'designer', 'builder',
-    'engine_manufacturer', 'horse_power', 'hours', 'fuel', 'max_speed',
-    'cruising_speed', 'gallons_per_hour', 'tankage', 'cabins', 'berths',
-    'toilet', 'shower', 'bath', 'heating', 'cockpit_type', 'control_type',
-    'external_url', 'print_url', 'owners_comment', 'reg_details', 
-    'known_defects', 'last_serviced', 'super_structure_colour',
-    'super_structure_construction', 'deck_colour', 'deck_construction',
-    'ballast', 'stern_thruster', 'bow_thruster', 'starting_type', 'drive_type'
-  ];
+    // Add boat name and price first
+    const boatName = (
+      document.querySelector('input[name="boat_name"]') as HTMLInputElement
+    )?.value;
+    const price = (
+      document.querySelector('input[name="price"]') as HTMLInputElement
+    )?.value;
+    const minBidAmount = (
+      document.querySelector('input[name="min_bid_amount"]') as HTMLInputElement
+    )?.value;
 
-  fields.forEach(field => {
-    const element = document.querySelector(`[name="${field}"]`) as HTMLInputElement;
-    if (element && element.value !== undefined && element.value !== '') {
-      formData.append(field, element.value);
+    if (boatName) formData.append("boat_name", boatName);
+    if (price) formData.append("price", price);
+    if (minBidAmount) formData.append("min_bid_amount", minBidAmount);
+
+    // Add main image if exists
+    if (mainFile) {
+      formData.append("main_image", mainFile);
     }
-  });
 
-  // Handle boolean fields - SIMPLIFIED
-  const booleanFields = [
-    'allow_bidding', 'flybridge', 'oven', 'microwave', 'fridge', 'freezer',
-    'air_conditioning', 'navigation_lights', 'compass', 'depth_instrument',
-    'wind_instrument', 'autopilot', 'gps', 'vhf', 'plotter', 'speed_instrument',
-    'radar', 'life_raft', 'epirb', 'bilge_pump', 'fire_extinguisher',
-    'mob_system', 'spinnaker', 'battery', 'battery_charger', 'generator',
-    'inverter', 'television', 'cd_player', 'dvd_player', 'anchor',
-    'spray_hood', 'bimini'
-  ];
+    // Add all other fields from form
+    const fields = [
+      "year",
+      "status",
+      "loa",
+      "lwl",
+      "where",
+      "passenger_capacity",
+      "beam",
+      "draft",
+      "air_draft",
+      "displacement",
+      "hull_type",
+      "hull_construction",
+      "hull_colour",
+      "hull_number",
+      "designer",
+      "builder",
+      "engine_manufacturer",
+      "horse_power",
+      "hours",
+      "fuel",
+      "max_speed",
+      "cruising_speed",
+      "gallons_per_hour",
+      "tankage",
+      "cabins",
+      "berths",
+      "toilet",
+      "shower",
+      "bath",
+      "heating",
+      "cockpit_type",
+      "control_type",
+      "external_url",
+      "print_url",
+      "owners_comment",
+      "reg_details",
+      "known_defects",
+      "last_serviced",
+      "super_structure_colour",
+      "super_structure_construction",
+      "deck_colour",
+      "deck_construction",
+      "ballast",
+      "stern_thruster",
+      "bow_thruster",
+      "starting_type",
+      "drive_type",
+    ];
 
-  booleanFields.forEach(field => {
-    const checkbox = document.querySelector(`[name="${field}"]`) as HTMLInputElement;
-    if (checkbox) {
-      formData.append(field, checkbox.checked ? 'true' : 'false');
-    } else {
-      formData.append(field, 'false');
-    }
-  });
-
-  // Add availability rules
-  if (availabilityRules.length > 0) {
-    formData.append("availability_rules", JSON.stringify(availabilityRules));
-  }
-
-  // Add display specs
-  const selectedSpecs = Object.keys(displaySpecs).filter(key => displaySpecs[key]);
-  if (selectedSpecs.length > 0) {
-    formData.append("display_specs", JSON.stringify(selectedSpecs));
-  }
-
-  try {
-    let finalYachtId = selectedYacht?.id;
-    
-    if (!isNewMode && selectedYacht) {
-      // UPDATE
-      await api.put(`/yachts/${selectedYacht.id}`, formData);
-    } else {
-      // CREATE NEW
-      try {
-        const res = await api.post("/partner/yachts", formData);
-        finalYachtId = res.data.id;
-      } catch (partnerErr: any) {
-        if (partnerErr.response?.status === 403 || partnerErr.response?.status === 404) {
-          const res = await api.post("/yachts", formData);
-          finalYachtId = res.data.id;
-        } else {
-          throw partnerErr;
-        }
+    fields.forEach((field) => {
+      const element = document.querySelector(
+        `[name="${field}"]`,
+      ) as HTMLInputElement;
+      if (element && element.value !== undefined && element.value !== "") {
+        formData.append(field, element.value);
       }
+    });
+
+    // Handle boolean fields - SIMPLIFIED
+    const booleanFields = [
+      "allow_bidding",
+      "flybridge",
+      "oven",
+      "microwave",
+      "fridge",
+      "freezer",
+      "air_conditioning",
+      "navigation_lights",
+      "compass",
+      "depth_instrument",
+      "wind_instrument",
+      "autopilot",
+      "gps",
+      "vhf",
+      "plotter",
+      "speed_instrument",
+      "radar",
+      "life_raft",
+      "epirb",
+      "bilge_pump",
+      "fire_extinguisher",
+      "mob_system",
+      "spinnaker",
+      "battery",
+      "battery_charger",
+      "generator",
+      "inverter",
+      "television",
+      "cd_player",
+      "dvd_player",
+      "anchor",
+      "spray_hood",
+      "bimini",
+    ];
+
+    booleanFields.forEach((field) => {
+      const checkbox = document.querySelector(
+        `[name="${field}"]`,
+      ) as HTMLInputElement;
+      if (checkbox) {
+        formData.append(field, checkbox.checked ? "true" : "false");
+      } else {
+        formData.append(field, "false");
+      }
+    });
+
+    // Add availability rules
+    if (availabilityRules.length > 0) {
+      formData.append("availability_rules", JSON.stringify(availabilityRules));
     }
 
-    // Bulk gallery submission (new files only)
-    for (const cat of Object.keys(galleryState)) {
-      const newFiles = galleryState[cat].filter(
-        (item) => item instanceof File,
-      );
-      if (newFiles.length > 0) {
-        const gData = new FormData();
-        newFiles.forEach((file) => gData.append("images[]", file));
-        gData.append("category", cat);
-        
+    // Add display specs
+    const selectedSpecs = Object.keys(displaySpecs).filter(
+      (key) => displaySpecs[key],
+    );
+    if (selectedSpecs.length > 0) {
+      formData.append("display_specs", JSON.stringify(selectedSpecs));
+    }
+
+    try {
+      let finalYachtId = selectedYacht?.id;
+
+      if (!isNewMode && selectedYacht) {
+        // UPDATE
+        await api.put(`/yachts/${selectedYacht.id}`, formData);
+      } else {
+        // CREATE NEW
         try {
-          await api.post(`/partner/yachts/${finalYachtId}/gallery`, gData);
-        } catch (galleryErr: any) {
-          if (galleryErr.response?.status === 403 || galleryErr.response?.status === 404) {
-            await api.post(`/yachts/${finalYachtId}/gallery`, gData);
+          const res = await api.post("/partner/yachts", formData);
+          finalYachtId = res.data.id;
+        } catch (partnerErr: any) {
+          if (
+            partnerErr.response?.status === 403 ||
+            partnerErr.response?.status === 404
+          ) {
+            const res = await api.post("/yachts", formData);
+            finalYachtId = res.data.id;
           } else {
-            throw galleryErr;
+            throw partnerErr;
           }
         }
       }
-    }
 
-    toast.success(
-      isNewMode
-        ? "Vessel Registered Successfully"
-        : "Manifest Updated Successfully",
-    );
-    router.push("/nl/dashboard/admin/yachts");
-  } catch (err: any) {
-    console.error("Submission error:", err);
-    
-    if (err.response?.status === 422) {
-      setErrors(err.response.data.errors);
-      toast.error("Please check required fields");
-    } else if (err.response?.status === 403) {
-      toast.error("Permission denied.");
-    } else if (err.response?.status === 500) {
-      toast.error("Server error. Please try again.");
-    } else {
-      toast.error(`Error: ${err.response?.data?.message || "System Error"}`);
+      // Bulk gallery submission (new files only)
+      for (const cat of Object.keys(galleryState)) {
+        const newFiles = galleryState[cat].filter(
+          (item) => item instanceof File,
+        );
+        if (newFiles.length > 0) {
+          const gData = new FormData();
+          newFiles.forEach((file) => gData.append("images[]", file));
+          gData.append("category", cat);
+
+          try {
+            await api.post(`/partner/yachts/${finalYachtId}/gallery`, gData);
+          } catch (galleryErr: any) {
+            if (
+              galleryErr.response?.status === 403 ||
+              galleryErr.response?.status === 404
+            ) {
+              await api.post(`/yachts/${finalYachtId}/gallery`, gData);
+            } else {
+              throw galleryErr;
+            }
+          }
+        }
+      }
+
+      toast.success(
+        isNewMode
+          ? "Vessel Registered Successfully"
+          : "Manifest Updated Successfully",
+      );
+      router.push("/nl/dashboard/admin/yachts");
+    } catch (err: any) {
+      console.error("Submission error:", err);
+
+      if (err.response?.status === 422) {
+        setErrors(err.response.data.errors);
+        toast.error("Please check required fields");
+      } else if (err.response?.status === 403) {
+        toast.error("Permission denied.");
+      } else if (err.response?.status === 500) {
+        toast.error("Server error. Please try again.");
+      } else {
+        toast.error(`Error: ${err.response?.data?.message || "System Error"}`);
+      }
+    } finally {
+      setIsSubmitting(false);
     }
-  } finally {
-    setIsSubmitting(false);
-  }
-};
+  };
 
   if (loading) {
     return (
@@ -467,8 +593,7 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] pb-20">
-      <Toaster position="top-right" />
-
+      // <Toaster position="top-right" />
       {/* PAGE HEADER - now relative (not sticky) */}
       <div className="bg-[#003566] text-white p-8 relative shadow-xl flex justify-between items-center">
         <div className="flex items-center gap-6">
@@ -490,7 +615,6 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
           </div>
         </div>
       </div>
-
       <div className="max-w-7xl mx-auto p-6 lg:p-12 pt-16">
         <form onSubmit={handleSubmit} className="space-y-16">
           {/* ERROR SUMMARY */}
@@ -584,7 +708,7 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                 <Input
                   name="min_bid_amount"
                   type="number"
-                  defaultValue={selectedYacht?.min_bid_amount || ''}
+                  defaultValue={selectedYacht?.min_bid_amount || ""}
                   placeholder="Auto-calculates 90% of price if empty"
                   step="1000"
                 />
@@ -893,15 +1017,44 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
               />
               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
                 {[
-                  'allow_bidding', 'flybridge', 'oven', 'microwave', 'fridge', 'freezer',
-                  'air_conditioning', 'navigation_lights', 'compass', 'depth_instrument',
-                  'wind_instrument', 'autopilot', 'gps', 'vhf', 'plotter', 'speed_instrument',
-                  'radar', 'life_raft', 'epirb', 'bilge_pump', 'fire_extinguisher',
-                  'mob_system', 'spinnaker', 'battery', 'battery_charger', 'generator',
-                  'inverter', 'television', 'cd_player', 'dvd_player', 'anchor',
-                  'spray_hood', 'bimini'
+                  "allow_bidding",
+                  "flybridge",
+                  "oven",
+                  "microwave",
+                  "fridge",
+                  "freezer",
+                  "air_conditioning",
+                  "navigation_lights",
+                  "compass",
+                  "depth_instrument",
+                  "wind_instrument",
+                  "autopilot",
+                  "gps",
+                  "vhf",
+                  "plotter",
+                  "speed_instrument",
+                  "radar",
+                  "life_raft",
+                  "epirb",
+                  "bilge_pump",
+                  "fire_extinguisher",
+                  "mob_system",
+                  "spinnaker",
+                  "battery",
+                  "battery_charger",
+                  "generator",
+                  "inverter",
+                  "television",
+                  "cd_player",
+                  "dvd_player",
+                  "anchor",
+                  "spray_hood",
+                  "bimini",
                 ].map((field) => (
-                  <div key={field} className="flex items-center gap-2 bg-slate-50/50 p-3">
+                  <div
+                    key={field}
+                    className="flex items-center gap-2 bg-slate-50/50 p-3"
+                  >
                     <input
                       type="checkbox"
                       name={field}
@@ -913,7 +1066,7 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                       htmlFor={field}
                       className="text-[8px] font-black uppercase tracking-wider text-slate-600 cursor-pointer select-none flex-1"
                     >
-                      {field.replace('_', ' ')}
+                      {field.replace("_", " ")}
                     </label>
                   </div>
                 ))}
@@ -929,81 +1082,135 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
               <p className="text-[9px] text-gray-600 mb-4">
                 Select which specifications to show on the public yacht page
               </p>
-              
+
               <div className="space-y-4">
                 {/* General Specs */}
                 <div className="space-y-2">
-                  <h4 className="text-[9px] font-black uppercase text-gray-700">General</h4>
+                  <h4 className="text-[9px] font-black uppercase text-gray-700">
+                    General
+                  </h4>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                    {['builder', 'model', 'year', 'designer', 'where', 'hull_number', 'hull_type'].map((field) => (
+                    {[
+                      "builder",
+                      "model",
+                      "year",
+                      "designer",
+                      "where",
+                      "hull_number",
+                      "hull_type",
+                    ].map((field) => (
                       <SpecCheckbox
                         key={field}
                         field={field}
-                        label={field.replace('_', ' ')}
+                        label={field.replace("_", " ")}
                         selectedYacht={selectedYacht}
                         onSpecChange={handleSpecChange}
                       />
                     ))}
                   </div>
                 </div>
-                
+
                 {/* Dimensions */}
                 <div className="space-y-2">
-                  <h4 className="text-[9px] font-black uppercase text-gray-700">Dimensions</h4>
+                  <h4 className="text-[9px] font-black uppercase text-gray-700">
+                    Dimensions
+                  </h4>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                    {['loa', 'lwl', 'beam', 'draft', 'air_draft', 'displacement', 'ballast', 'passenger_capacity'].map((field) => (
+                    {[
+                      "loa",
+                      "lwl",
+                      "beam",
+                      "draft",
+                      "air_draft",
+                      "displacement",
+                      "ballast",
+                      "passenger_capacity",
+                    ].map((field) => (
                       <SpecCheckbox
                         key={field}
                         field={field}
-                        label={field.replace('_', ' ')}
+                        label={field.replace("_", " ")}
                         selectedYacht={selectedYacht}
                         onSpecChange={handleSpecChange}
                       />
                     ))}
                   </div>
                 </div>
-                
+
                 {/* Construction */}
                 <div className="space-y-2">
-                  <h4 className="text-[9px] font-black uppercase text-gray-700">Construction</h4>
+                  <h4 className="text-[9px] font-black uppercase text-gray-700">
+                    Construction
+                  </h4>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                    {['hull_colour', 'hull_construction', 'super_structure_colour', 'super_structure_construction', 'deck_colour', 'deck_construction', 'cockpit_type', 'control_type'].map((field) => (
+                    {[
+                      "hull_colour",
+                      "hull_construction",
+                      "super_structure_colour",
+                      "super_structure_construction",
+                      "deck_colour",
+                      "deck_construction",
+                      "cockpit_type",
+                      "control_type",
+                    ].map((field) => (
                       <SpecCheckbox
                         key={field}
                         field={field}
-                        label={field.replace('_', ' ')}
+                        label={field.replace("_", " ")}
                         selectedYacht={selectedYacht}
                         onSpecChange={handleSpecChange}
                       />
                     ))}
                   </div>
                 </div>
-                
+
                 {/* Engine */}
                 <div className="space-y-2">
-                  <h4 className="text-[9px] font-black uppercase text-gray-700">Engine & Performance</h4>
+                  <h4 className="text-[9px] font-black uppercase text-gray-700">
+                    Engine & Performance
+                  </h4>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                    {['engine_manufacturer', 'horse_power', 'fuel', 'hours', 'cruising_speed', 'max_speed', 'tankage', 'gallons_per_hour', 'starting_type', 'drive_type'].map((field) => (
+                    {[
+                      "engine_manufacturer",
+                      "horse_power",
+                      "fuel",
+                      "hours",
+                      "cruising_speed",
+                      "max_speed",
+                      "tankage",
+                      "gallons_per_hour",
+                      "starting_type",
+                      "drive_type",
+                    ].map((field) => (
                       <SpecCheckbox
                         key={field}
                         field={field}
-                        label={field.replace('_', ' ')}
+                        label={field.replace("_", " ")}
                         selectedYacht={selectedYacht}
                         onSpecChange={handleSpecChange}
                       />
                     ))}
                   </div>
                 </div>
-                
+
                 {/* Accommodation */}
                 <div className="space-y-2">
-                  <h4 className="text-[9px] font-black uppercase text-gray-700">Accommodation</h4>
+                  <h4 className="text-[9px] font-black uppercase text-gray-700">
+                    Accommodation
+                  </h4>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                    {['cabins', 'berths', 'toilet', 'shower', 'bath', 'heating'].map((field) => (
+                    {[
+                      "cabins",
+                      "berths",
+                      "toilet",
+                      "shower",
+                      "bath",
+                      "heating",
+                    ].map((field) => (
                       <SpecCheckbox
                         key={field}
                         field={field}
-                        label={field.replace('_', ' ')}
+                        label={field.replace("_", " ")}
                         selectedYacht={selectedYacht}
                         onSpecChange={handleSpecChange}
                       />
@@ -1016,86 +1223,108 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
 
           {/* NEW SECTION: SCHEDULING AUTHORITY */}
           <div className="space-y-8 bg-slate-50 p-10 border border-slate-200 shadow-sm">
-             <div className="flex justify-between items-center border-b border-slate-200 pb-4">
-               <h3 className="text-[12px] font-black uppercase text-[#003566] tracking-[0.4em] flex items-center gap-3 italic">
-                  <Calendar size={20} className="text-blue-600" /> 04. Scheduling Authority
-                </h3>
-                <Button 
-                  type="button" 
-                  onClick={addAvailabilityRule}
-                  className="bg-[#003566] text-white text-[8px] font-black uppercase tracking-widest px-6 h-8"
+            <div className="flex justify-between items-center border-b border-slate-200 pb-4">
+              <h3 className="text-[12px] font-black uppercase text-[#003566] tracking-[0.4em] flex items-center gap-3 italic">
+                <Calendar size={20} className="text-blue-600" /> 04. Scheduling
+                Authority
+              </h3>
+              <Button
+                type="button"
+                onClick={addAvailabilityRule}
+                className="bg-[#003566] text-white text-[8px] font-black uppercase tracking-widest px-6 h-8"
+              >
+                Add Window
+              </Button>
+            </div>
+
+            <div className="space-y-4">
+              {availabilityRules.map((rule, idx) => (
+                <div
+                  key={idx}
+                  className="flex flex-wrap items-end gap-6 bg-white p-4 border border-slate-100 shadow-sm relative group"
                 >
-                  Add Window
-                </Button>
-             </div>
-
-             <div className="space-y-4">
-                {availabilityRules.map((rule, idx) => (
-                  <div key={idx} className="flex flex-wrap items-end gap-6 bg-white p-4 border border-slate-100 shadow-sm relative group">
-                    <div className="flex-1 min-w-[150px]">
-                      <Label>Day of Week</Label>
-                      <select
-                        value={rule.day_of_week}
-                        onChange={(e) => updateAvailabilityRule(idx, 'day_of_week', parseInt(e.target.value))}
-                        className="w-full bg-slate-50 p-2 border-b border-slate-200 text-[#003566] font-bold text-xs outline-none"
-                      >
-                        <option value={1}>Monday</option>
-                        <option value={2}>Tuesday</option>
-                        <option value={3}>Wednesday</option>
-                        <option value={4}>Thursday</option>
-                        <option value={5}>Friday</option>
-                        <option value={6}>Saturday</option>
-                        <option value={0}>Sunday</option>
-                      </select>
-                    </div>
-
-                    <div className="flex-1 min-w-[120px]">
-                      <Label>Start Time</Label>
-                      <div className="flex items-center gap-2 bg-slate-50 p-2 border-b border-slate-200">
-                        <Clock size={12} className="text-slate-400" />
-                        <input 
-                          type="time" 
-                          step="900" 
-                          value={rule.start_time}
-                          onChange={(e) => updateAvailabilityRule(idx, 'start_time', e.target.value)}
-                          className="bg-transparent text-xs font-bold text-[#003566] outline-none w-full"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="flex-1 min-w-[120px]">
-                      <Label>End Time</Label>
-                      <div className="flex items-center gap-2 bg-slate-50 p-2 border-b border-slate-200">
-                        <Clock size={12} className="text-slate-400" />
-                        <input 
-                          type="time" 
-                          step="900" 
-                          value={rule.end_time}
-                          onChange={(e) => updateAvailabilityRule(idx, 'end_time', e.target.value)}
-                          className="bg-transparent text-xs font-bold text-[#003566] outline-none w-full"
-                        />
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => removeAvailabilityRule(idx)}
-                      className="p-2 text-red-400 hover:text-red-600 transition-colors"
+                  <div className="flex-1 min-w-[150px]">
+                    <Label>Day of Week</Label>
+                    <select
+                      value={rule.day_of_week}
+                      onChange={(e) =>
+                        updateAvailabilityRule(
+                          idx,
+                          "day_of_week",
+                          parseInt(e.target.value),
+                        )
+                      }
+                      className="w-full bg-slate-50 p-2 border-b border-slate-200 text-[#003566] font-bold text-xs outline-none"
                     >
-                      <Trash size={16} />
-                    </button>
+                      <option value={1}>Monday</option>
+                      <option value={2}>Tuesday</option>
+                      <option value={3}>Wednesday</option>
+                      <option value={4}>Thursday</option>
+                      <option value={5}>Friday</option>
+                      <option value={6}>Saturday</option>
+                      <option value={0}>Sunday</option>
+                    </select>
                   </div>
-                ))}
 
-                {availabilityRules.length === 0 && (
-                  <div className="text-center py-12 border-2 border-dashed border-slate-200 bg-white">
-                    <Calendar size={32} className="mx-auto text-slate-200 mb-2" />
-                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
-                      No Booking Windows Defined. Test Sails will be disabled.
-                    </p>
+                  <div className="flex-1 min-w-[120px]">
+                    <Label>Start Time</Label>
+                    <div className="flex items-center gap-2 bg-slate-50 p-2 border-b border-slate-200">
+                      <Clock size={12} className="text-slate-400" />
+                      <input
+                        type="time"
+                        step="900"
+                        value={rule.start_time}
+                        onChange={(e) =>
+                          updateAvailabilityRule(
+                            idx,
+                            "start_time",
+                            e.target.value,
+                          )
+                        }
+                        className="bg-transparent text-xs font-bold text-[#003566] outline-none w-full"
+                      />
+                    </div>
                   </div>
-                )}
-             </div>
+
+                  <div className="flex-1 min-w-[120px]">
+                    <Label>End Time</Label>
+                    <div className="flex items-center gap-2 bg-slate-50 p-2 border-b border-slate-200">
+                      <Clock size={12} className="text-slate-400" />
+                      <input
+                        type="time"
+                        step="900"
+                        value={rule.end_time}
+                        onChange={(e) =>
+                          updateAvailabilityRule(
+                            idx,
+                            "end_time",
+                            e.target.value,
+                          )
+                        }
+                        className="bg-transparent text-xs font-bold text-[#003566] outline-none w-full"
+                      />
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => removeAvailabilityRule(idx)}
+                    className="p-2 text-red-400 hover:text-red-600 transition-colors"
+                  >
+                    <Trash size={16} />
+                  </button>
+                </div>
+              ))}
+
+              {availabilityRules.length === 0 && (
+                <div className="text-center py-12 border-2 border-dashed border-slate-200 bg-white">
+                  <Calendar size={32} className="mx-auto text-slate-200 mb-2" />
+                  <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
+                    No Booking Windows Defined. Test Sails will be disabled.
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* 05. AI CARGO DROP */}

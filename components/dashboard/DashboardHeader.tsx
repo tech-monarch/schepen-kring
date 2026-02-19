@@ -179,7 +179,10 @@ export function DashboardHeader() {
       if (!token) return;
 
       const res = await fetch(`${API_URL}/notifications`, {
-        headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+        },
       });
       if (res.ok) {
         const data = await res.json();
@@ -201,7 +204,10 @@ export function DashboardHeader() {
       const token = localStorage.getItem("auth_token");
       if (!token) return;
       const res = await fetch(`${API_URL}/notifications/unread-count`, {
-        headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+        },
       });
       if (res.ok) {
         const data = await res.json();
@@ -217,15 +223,23 @@ export function DashboardHeader() {
       const token = localStorage.getItem("auth_token");
       if (!token) return toast.error("No auth token");
 
-      const res = await fetch(`${API_URL}/notifications/${notificationId}/read`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
-      });
+      const res = await fetch(
+        `${API_URL}/notifications/${notificationId}/read`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+          },
+        },
+      );
       if (res.ok) {
         setNotifications((prev) =>
           prev.map((n) =>
-            n.id === notificationId ? { ...n, read: true, read_at: new Date().toISOString() } : n
-          )
+            n.id === notificationId
+              ? { ...n, read: true, read_at: new Date().toISOString() }
+              : n,
+          ),
         );
         setUnreadCount((prev) => Math.max(0, prev - 1));
         toast.success("Marked as read");
@@ -244,11 +258,18 @@ export function DashboardHeader() {
 
       const res = await fetch(`${API_URL}/notifications/read-all`, {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+        },
       });
       if (res.ok) {
         setNotifications((prev) =>
-          prev.map((n) => ({ ...n, read: true, read_at: new Date().toISOString() }))
+          prev.map((n) => ({
+            ...n,
+            read: true,
+            read_at: new Date().toISOString(),
+          })),
         );
         setUnreadCount(0);
         toast.success("All marked as read");
@@ -270,7 +291,9 @@ export function DashboardHeader() {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
-        const wasUnread = notifications.find((n) => n.id === notificationId && !n.read);
+        const wasUnread = notifications.find(
+          (n) => n.id === notificationId && !n.read,
+        );
         setNotifications((prev) => prev.filter((n) => n.id !== notificationId));
         if (wasUnread) setUnreadCount((prev) => Math.max(0, prev - 1));
         toast.success("Notification deleted");
@@ -329,11 +352,16 @@ export function DashboardHeader() {
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
-      case "success": return "✅";
-      case "warning": return "⚠️";
-      case "error": return "❌";
-      case "system": return "⚙️";
-      default: return "ℹ️";
+      case "success":
+        return "✅";
+      case "warning":
+        return "⚠️";
+      case "error":
+        return "❌";
+      case "system":
+        return "⚙️";
+      default:
+        return "ℹ️";
     }
   };
 
@@ -343,11 +371,10 @@ export function DashboardHeader() {
         "fixed top-0 left-0 right-0 z-50 transition-all duration-500 px-8 h-20 flex items-center justify-between",
         isScrolled
           ? "bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm"
-          : "bg-white border-b border-slate-100"
+          : "bg-white border-b border-slate-100",
       )}
     >
-      <Toaster position="top-right" reverseOrder={false} />
-
+      // <Toaster position="top-right" reverseOrder={false} />
       {/* Brand Logo */}
       <div className="flex items-center gap-12">
         <Link href="#" className="flex items-center group">
@@ -370,14 +397,16 @@ export function DashboardHeader() {
           />
         </div>
       </div>
-
       {/* User Actions */}
       <div className="flex items-center gap-8">
         <ReturnToAdmin />
         <Link href="/yachts">
           <button className="flex items-center gap-3 px-8 py-3 bg-[#003566] text-white text-[9px] font-sans font-bold uppercase tracking-[0.3em] hover:bg-[#001d3d] transition-all group">
             Frontend
-            <ArrowRight size={12} className="group-hover:translate-x-1 transition-transform" />
+            <ArrowRight
+              size={12}
+              className="group-hover:translate-x-1 transition-transform"
+            />
           </button>
         </Link>
 
@@ -426,7 +455,9 @@ export function DashboardHeader() {
                     >
                       <span
                         className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                          notificationsEnabled ? "translate-x-5" : "translate-x-0.5"
+                          notificationsEnabled
+                            ? "translate-x-5"
+                            : "translate-x-0.5"
                         }`}
                       />
                     </button>
@@ -461,7 +492,9 @@ export function DashboardHeader() {
                     >
                       <span
                         className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${
-                          pushAlertsEnabled ? "translate-x-4" : "translate-x-0.5"
+                          pushAlertsEnabled
+                            ? "translate-x-4"
+                            : "translate-x-0.5"
                         }`}
                       />
                     </button>
@@ -487,7 +520,9 @@ export function DashboardHeader() {
                     >
                       <span
                         className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${
-                          browserPushEnabled ? "translate-x-4" : "translate-x-0.5"
+                          browserPushEnabled
+                            ? "translate-x-4"
+                            : "translate-x-0.5"
                         }`}
                       />
                     </button>
@@ -517,7 +552,9 @@ export function DashboardHeader() {
               ) : loading ? (
                 <div className="p-8 text-center">
                   <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#003566] mx-auto"></div>
-                  <p className="text-[9px] text-slate-500 mt-2">Loading notifications...</p>
+                  <p className="text-[9px] text-slate-500 mt-2">
+                    Loading notifications...
+                  </p>
                 </div>
               ) : notifications.length === 0 ? (
                 <div className="p-8 text-center">
@@ -539,13 +576,15 @@ export function DashboardHeader() {
                       key={notification.id}
                       className={cn(
                         "p-4 hover:bg-slate-50 transition-colors relative group",
-                        !notification.read && "bg-blue-50/50"
+                        !notification.read && "bg-blue-50/50",
                       )}
                     >
                       <div className="flex gap-3">
                         <div className="flex-shrink-0 w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center">
                           <span className="text-xs">
-                            {getNotificationIcon(notification.notification.type)}
+                            {getNotificationIcon(
+                              notification.notification.type,
+                            )}
                           </span>
                         </div>
                         <div className="flex-1 min-w-0">
@@ -574,7 +613,9 @@ export function DashboardHeader() {
                               </span>
                             )}
                             <button
-                              onClick={() => deleteNotification(notification.id)}
+                              onClick={() =>
+                                deleteNotification(notification.id)
+                              }
                               className="text-[9px] font-bold uppercase tracking-widest text-red-600 hover:text-red-700 flex items-center gap-1 ml-auto"
                             >
                               <Trash2 size={10} /> Delete

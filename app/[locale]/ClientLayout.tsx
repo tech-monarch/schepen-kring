@@ -79,7 +79,6 @@ export default function ClientLayout({
     <AuthProvider>
       <ServiceWorkerRegistration />
       <TranslationPreloader />
-
       {/* IMPERSONATION BANNER */}
       {/* {isAdminImpersonating && (
         <div className="fixed top-0 left-0 right-0 z-[9999] bg-amber-600 text-white px-4 py-2 flex items-center justify-between shadow-lg">
@@ -100,13 +99,9 @@ export default function ClientLayout({
           </Button>
         </div>
       )} */}
-
       <NotificationBanner />
-
       {isDashboardPage || isUserTypePage ? null : <Header />}
-
       <PWALoader />
-
       {/* Main content area: 
           If impersonating, we add extra padding (pt-10) so the 
           banner doesn't cover the top of your dashboard.
@@ -119,17 +114,15 @@ export default function ClientLayout({
       >
         {children}
       </main>
-{/* 
+      {/* 
       {!isDashboardChatPage &&
         !widgetLoading &&
         isLoggedIn &&
         widgetSettings && (
           <ChatWidget {...({ settings: widgetSettings } as any)} />
         )} */}
-
       {isDashboardPage || isUserTypePage ? null : <Footer />}
-
-      <ToastContainer position="top-right" autoClose={5000} />
+      // <ToastContainer position="top-right" autoClose={5000} />
     </AuthProvider>
   );
 }

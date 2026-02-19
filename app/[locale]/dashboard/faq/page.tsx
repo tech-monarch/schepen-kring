@@ -3,20 +3,20 @@
 
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { 
-  Search, 
-  HelpCircle, 
-  ThumbsUp, 
-  ThumbsDown, 
-  Bot, 
-  RefreshCw, 
-  ChevronDown, 
-  ChevronUp, 
-  Plus, 
+import {
+  Search,
+  HelpCircle,
+  ThumbsUp,
+  ThumbsDown,
+  Bot,
+  RefreshCw,
+  ChevronDown,
+  ChevronUp,
+  Plus,
   Trash2,
   X,
   Filter,
-  BarChart
+  BarChart,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Toaster, toast } from "react-hot-toast";
@@ -37,7 +37,12 @@ interface Faq {
 
 export default function FAQPage() {
   const [faqs, setFaqs] = useState<Faq[]>([]);
-  const [categories, setCategories] = useState<string[]>(["General", "Booking", "Technical", "Payment"]);
+  const [categories, setCategories] = useState<string[]>([
+    "General",
+    "Booking",
+    "Technical",
+    "Payment",
+  ]);
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
@@ -55,7 +60,7 @@ export default function FAQPage() {
   const [newFaq, setNewFaq] = useState({
     question: "",
     answer: "",
-    category: "General"
+    category: "General",
   });
   const [isAdmin, setIsAdmin] = useState(false);
 
@@ -77,12 +82,20 @@ export default function FAQPage() {
     try {
       setLoading(true);
       const params = new URLSearchParams();
-      if (selectedCategory !== "all") params.append("category", selectedCategory);
+      if (selectedCategory !== "all")
+        params.append("category", selectedCategory);
       if (searchQuery) params.append("search", searchQuery);
-      
+
       const response = await axios.get(`${API_BASE}/faqs?${params.toString()}`);
       setFaqs(response.data.faqs?.data || response.data.faqs || []);
-      setCategories(response.data.categories || ["General", "Booking", "Technical", "Payment"]);
+      setCategories(
+        response.data.categories || [
+          "General",
+          "Booking",
+          "Technical",
+          "Payment",
+        ],
+      );
     } catch (error: any) {
       console.error("Error fetching FAQs:", error);
       toast.error("Failed to load FAQs");
@@ -103,20 +116,20 @@ export default function FAQPage() {
   const askGemini = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!aiQuery.trim()) return;
-    
+
     setAiLoading(true);
     try {
       const response = await axios.post(`${API_BASE}/faqs/ask-gemini`, {
-        question: aiQuery
+        question: aiQuery,
       });
-      
+
       setAiAnswer({
         question: aiQuery,
         answer: response.data.answer,
         sources: response.data.sources,
-        timestamp: response.data.timestamp
+        timestamp: response.data.timestamp,
       });
-      
+
       setAiQuery("");
       toast.success("AI answered your question!");
     } catch (error: any) {
@@ -152,12 +165,12 @@ export default function FAQPage() {
     try {
       const token = localStorage.getItem("auth_token");
       await axios.post(`${API_BASE}/faqs`, newFaq, {
-        headers: { 
+        headers: {
           Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
+          "Content-Type": "application/json",
+        },
       });
-      
+
       toast.success("FAQ added successfully!");
       setNewFaq({ question: "", answer: "", category: "General" });
       setShowAddForm(false);
@@ -170,13 +183,13 @@ export default function FAQPage() {
 
   const handleDeleteFaq = async (id: number) => {
     if (!confirm("Are you sure you want to delete this FAQ?")) return;
-    
+
     try {
       const token = localStorage.getItem("auth_token");
       await axios.delete(`${API_BASE}/faqs/${id}`, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       });
-      
+
       toast.success("FAQ deleted!");
       fetchFaqs();
       fetchStats();
@@ -188,9 +201,13 @@ export default function FAQPage() {
   const trainGemini = async () => {
     try {
       const token = localStorage.getItem("auth_token");
-      await axios.post(`${API_BASE}/faqs/train-gemini`, {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await axios.post(
+        `${API_BASE}/faqs/train-gemini`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
       toast.success("Gemini AI trained with latest FAQs!");
     } catch (error: any) {
       toast.error("Failed to train AI");
@@ -199,8 +216,7 @@ export default function FAQPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-blue-50 p-6">
-      <Toaster position="top-right" />
-      
+      // <Toaster position="top-right" />
       {/* Header */}
       <div className="max-w-6xl mx-auto">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10">
@@ -212,7 +228,7 @@ export default function FAQPage() {
               AI-Powered • {stats?.total_faqs || 0} FAQs Available
             </p>
           </div>
-          
+
           {isAdmin && (
             <div className="flex gap-4 mt-4 md:mt-0">
               <button
@@ -240,8 +256,12 @@ export default function FAQPage() {
                   <HelpCircle className="text-blue-600" size={20} />
                 </div>
                 <div>
-                  <p className="text-[8px] uppercase tracking-widest text-slate-400 font-black">Total FAQs</p>
-                  <p className="text-2xl font-serif text-[#003566]">{stats.total_faqs}</p>
+                  <p className="text-[8px] uppercase tracking-widest text-slate-400 font-black">
+                    Total FAQs
+                  </p>
+                  <p className="text-2xl font-serif text-[#003566]">
+                    {stats.total_faqs}
+                  </p>
                 </div>
               </div>
             </div>
@@ -251,8 +271,12 @@ export default function FAQPage() {
                   <BarChart className="text-green-600" size={20} />
                 </div>
                 <div>
-                  <p className="text-[8px] uppercase tracking-widest text-slate-400 font-black">Total Views</p>
-                  <p className="text-2xl font-serif text-[#003566]">{stats.total_views}</p>
+                  <p className="text-[8px] uppercase tracking-widest text-slate-400 font-black">
+                    Total Views
+                  </p>
+                  <p className="text-2xl font-serif text-[#003566]">
+                    {stats.total_views}
+                  </p>
                 </div>
               </div>
             </div>
@@ -262,8 +286,12 @@ export default function FAQPage() {
                   <ThumbsUp className="text-emerald-600" size={20} />
                 </div>
                 <div>
-                  <p className="text-[8px] uppercase tracking-widest text-slate-400 font-black">Helpful Votes</p>
-                  <p className="text-2xl font-serif text-[#003566]">{stats.total_helpful}</p>
+                  <p className="text-[8px] uppercase tracking-widest text-slate-400 font-black">
+                    Helpful Votes
+                  </p>
+                  <p className="text-2xl font-serif text-[#003566]">
+                    {stats.total_helpful}
+                  </p>
                 </div>
               </div>
             </div>
@@ -273,8 +301,12 @@ export default function FAQPage() {
                   <Filter className="text-amber-600" size={20} />
                 </div>
                 <div>
-                  <p className="text-[8px] uppercase tracking-widest text-slate-400 font-black">Categories</p>
-                  <p className="text-2xl font-serif text-[#003566]">{stats.categories?.length || 0}</p>
+                  <p className="text-[8px] uppercase tracking-widest text-slate-400 font-black">
+                    Categories
+                  </p>
+                  <p className="text-2xl font-serif text-[#003566]">
+                    {stats.categories?.length || 0}
+                  </p>
                 </div>
               </div>
             </div>
@@ -288,13 +320,15 @@ export default function FAQPage() {
               <Bot className="text-white" size={24} />
             </div>
             <div>
-              <h2 className="text-2xl font-serif text-[#003566]">Ask Maritime AI Assistant</h2>
+              <h2 className="text-2xl font-serif text-[#003566]">
+                Ask Maritime AI Assistant
+              </h2>
               <p className="text-[10px] uppercase tracking-widest text-slate-400 font-black">
                 Trained on {stats?.total_faqs || 0} FAQs
               </p>
             </div>
           </div>
-          
+
           <form onSubmit={askGemini} className="mb-8">
             <div className="relative">
               <input
@@ -314,7 +348,7 @@ export default function FAQPage() {
               </button>
             </div>
           </form>
-          
+
           {/* AI Answer */}
           {aiAnswer && (
             <motion.div
@@ -324,8 +358,12 @@ export default function FAQPage() {
             >
               <div className="flex justify-between items-start mb-4">
                 <div>
-                  <p className="text-[10px] uppercase tracking-widest text-blue-600 font-black">AI Answer</p>
-                  <p className="text-sm text-slate-700 mt-2 font-medium">{aiAnswer.question}</p>
+                  <p className="text-[10px] uppercase tracking-widest text-blue-600 font-black">
+                    AI Answer
+                  </p>
+                  <p className="text-sm text-slate-700 mt-2 font-medium">
+                    {aiAnswer.question}
+                  </p>
                 </div>
                 <button
                   onClick={() => setAiAnswer(null)}
@@ -335,11 +373,14 @@ export default function FAQPage() {
                 </button>
               </div>
               <div className="bg-white p-4 border border-slate-100 rounded-md">
-                <p className="text-slate-700 whitespace-pre-wrap">{aiAnswer.answer}</p>
+                <p className="text-slate-700 whitespace-pre-wrap">
+                  {aiAnswer.answer}
+                </p>
               </div>
               <div className="mt-4">
                 <p className="text-[8px] text-slate-400">
-                  Sources: {aiAnswer.sources} FAQs • Gemini Pro • {aiAnswer.timestamp}
+                  Sources: {aiAnswer.sources} FAQs • Gemini Pro •{" "}
+                  {aiAnswer.timestamp}
                 </p>
               </div>
             </motion.div>
@@ -356,7 +397,9 @@ export default function FAQPage() {
               className="bg-white border border-slate-200 p-8 mb-10 overflow-hidden rounded-lg shadow-lg"
             >
               <div className="flex justify-between items-center mb-6">
-                <h3 className="text-xl font-serif text-[#003566]">Add New FAQ</h3>
+                <h3 className="text-xl font-serif text-[#003566]">
+                  Add New FAQ
+                </h3>
                 <button
                   onClick={() => setShowAddForm(false)}
                   className="text-slate-400 hover:text-slate-600"
@@ -372,26 +415,30 @@ export default function FAQPage() {
                   <input
                     type="text"
                     value={newFaq.question}
-                    onChange={(e) => setNewFaq({...newFaq, question: e.target.value})}
+                    onChange={(e) =>
+                      setNewFaq({ ...newFaq, question: e.target.value })
+                    }
                     className="w-full border border-slate-200 p-3 text-sm outline-none focus:border-blue-400 rounded"
                     placeholder="Enter question..."
                     required
                   />
                 </div>
-                
+
                 <div>
                   <label className="text-[10px] uppercase tracking-widest text-slate-600 font-black block mb-2">
                     Answer
                   </label>
                   <textarea
                     value={newFaq.answer}
-                    onChange={(e) => setNewFaq({...newFaq, answer: e.target.value})}
+                    onChange={(e) =>
+                      setNewFaq({ ...newFaq, answer: e.target.value })
+                    }
                     className="w-full border border-slate-200 p-4 text-sm outline-none focus:border-blue-400 min-h-[150px] rounded"
                     placeholder="Enter detailed answer..."
                     required
                   />
                 </div>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className="text-[10px] uppercase tracking-widest text-slate-600 font-black block mb-2">
@@ -399,15 +446,19 @@ export default function FAQPage() {
                     </label>
                     <select
                       value={newFaq.category}
-                      onChange={(e) => setNewFaq({...newFaq, category: e.target.value})}
+                      onChange={(e) =>
+                        setNewFaq({ ...newFaq, category: e.target.value })
+                      }
                       className="w-full border border-slate-200 p-3 text-sm outline-none rounded"
                     >
                       {categories.map((cat) => (
-                        <option key={cat} value={cat}>{cat}</option>
+                        <option key={cat} value={cat}>
+                          {cat}
+                        </option>
                       ))}
                     </select>
                   </div>
-                  
+
                   <div className="flex items-end gap-4">
                     <button
                       type="submit"
@@ -432,7 +483,10 @@ export default function FAQPage() {
         {/* Search and Filter */}
         <div className="flex flex-col md:flex-row gap-4 mb-10">
           <div className="relative flex-1">
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400" size={16} />
+            <Search
+              className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400"
+              size={16}
+            />
             <input
               type="text"
               value={searchQuery}
@@ -441,7 +495,7 @@ export default function FAQPage() {
               className="w-full bg-white border border-slate-200 pl-12 pr-4 py-3 text-[10px] font-bold uppercase tracking-widest outline-none focus:border-blue-400 rounded"
             />
           </div>
-          
+
           <div className="flex gap-2 flex-wrap">
             <button
               onClick={() => setSelectedCategory("all")}
@@ -453,7 +507,7 @@ export default function FAQPage() {
             >
               All
             </button>
-            
+
             {categories.map((category) => (
               <button
                 key={category}
@@ -474,13 +528,19 @@ export default function FAQPage() {
         {loading ? (
           <div className="text-center py-20">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#003566] mx-auto"></div>
-            <p className="text-[10px] uppercase tracking-widest text-slate-400 mt-4">Loading FAQs...</p>
+            <p className="text-[10px] uppercase tracking-widest text-slate-400 mt-4">
+              Loading FAQs...
+            </p>
           </div>
         ) : faqs.length === 0 ? (
           <div className="text-center py-20 bg-white border border-slate-200 rounded-lg">
             <HelpCircle className="mx-auto text-slate-300" size={48} />
-            <p className="text-[10px] uppercase tracking-widest text-slate-400 mt-4">No FAQs found</p>
-            <p className="text-sm text-slate-500 mt-2">Try a different search or category</p>
+            <p className="text-[10px] uppercase tracking-widest text-slate-400 mt-4">
+              No FAQs found
+            </p>
+            <p className="text-sm text-slate-500 mt-2">
+              Try a different search or category
+            </p>
           </div>
         ) : (
           <div className="space-y-4">
@@ -493,7 +553,9 @@ export default function FAQPage() {
               >
                 <div
                   className="p-6 cursor-pointer flex justify-between items-start"
-                  onClick={() => setExpandedId(expandedId === faq.id ? null : faq.id)}
+                  onClick={() =>
+                    setExpandedId(expandedId === faq.id ? null : faq.id)
+                  }
                 >
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-3">
@@ -504,7 +566,9 @@ export default function FAQPage() {
                         {faq.views} views • {faq.helpful || 0} helpful
                       </span>
                     </div>
-                    <h3 className="text-lg font-medium text-slate-800">{faq.question}</h3>
+                    <h3 className="text-lg font-medium text-slate-800">
+                      {faq.question}
+                    </h3>
                   </div>
                   <div className="flex items-center gap-4 ml-4">
                     {isAdmin && (
@@ -528,7 +592,7 @@ export default function FAQPage() {
                     </div>
                   </div>
                 </div>
-                
+
                 <AnimatePresence>
                   {expandedId === faq.id && (
                     <motion.div
@@ -541,29 +605,35 @@ export default function FAQPage() {
                         <div className="text-slate-700 mb-6 whitespace-pre-wrap">
                           {faq.answer}
                         </div>
-                        
+
                         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                           <div className="flex gap-4">
                             <button
                               onClick={() => rateHelpful(faq.id)}
                               className="flex items-center gap-2 text-emerald-600 hover:text-emerald-700 text-[10px] font-black uppercase tracking-widest"
                             >
-                              <ThumbsUp size={14} /> Helpful ({faq.helpful || 0})
+                              <ThumbsUp size={14} /> Helpful ({faq.helpful || 0}
+                              )
                             </button>
                             <button
                               onClick={() => rateNotHelpful(faq.id)}
                               className="flex items-center gap-2 text-amber-600 hover:text-amber-700 text-[10px] font-black uppercase tracking-widest"
                             >
-                              <ThumbsDown size={14} /> Not Helpful ({faq.not_helpful || 0})
+                              <ThumbsDown size={14} /> Not Helpful (
+                              {faq.not_helpful || 0})
                             </button>
                           </div>
-                          
+
                           <p className="text-[8px] text-slate-400">
-                            Added {new Date(faq.created_at).toLocaleDateString('en-US', {
-                              year: 'numeric',
-                              month: 'short',
-                              day: 'numeric'
-                            })}
+                            Added{" "}
+                            {new Date(faq.created_at).toLocaleDateString(
+                              "en-US",
+                              {
+                                year: "numeric",
+                                month: "short",
+                                day: "numeric",
+                              },
+                            )}
                           </p>
                         </div>
                       </div>
@@ -574,7 +644,7 @@ export default function FAQPage() {
             ))}
           </div>
         )}
-        
+
         {/* Footer */}
         <div className="mt-20 pt-10 border-t border-slate-200 text-center">
           <p className="text-[10px] uppercase tracking-widest text-slate-400 font-black">

@@ -35,11 +35,34 @@ const PLACEHOLDER_IMAGE =
   "https://images.unsplash.com/photo-1569263979104-865ab7cd8d13?auto=format&fit=crop&w=600&q=80";
 
 // Bid status configuration
-const bidStatusConfig: Record<string, { color: string; bg: string; border: string; label: string }> = {
-  active: { color: "text-blue-600", bg: "bg-blue-50", border: "border-blue-100", label: "Active" },
-  outbid: { color: "text-slate-500", bg: "bg-slate-100", border: "border-slate-200", label: "Outbid" },
-  won: { color: "text-emerald-600", bg: "bg-emerald-50", border: "border-emerald-100", label: "Won" },
-  cancelled: { color: "text-red-600", bg: "bg-red-50", border: "border-red-100", label: "Cancelled" },
+const bidStatusConfig: Record<
+  string,
+  { color: string; bg: string; border: string; label: string }
+> = {
+  active: {
+    color: "text-blue-600",
+    bg: "bg-blue-50",
+    border: "border-blue-100",
+    label: "Active",
+  },
+  outbid: {
+    color: "text-slate-500",
+    bg: "bg-slate-100",
+    border: "border-slate-200",
+    label: "Outbid",
+  },
+  won: {
+    color: "text-emerald-600",
+    bg: "bg-emerald-50",
+    border: "border-emerald-100",
+    label: "Won",
+  },
+  cancelled: {
+    color: "text-red-600",
+    bg: "bg-red-50",
+    border: "border-red-100",
+    label: "Cancelled",
+  },
 };
 
 const statusOptions = [
@@ -112,8 +135,13 @@ export default function PartnerBidsPage() {
       const active = bidsData.filter((b: any) => b.status === "active").length;
       const won = bidsData.filter((b: any) => b.status === "won").length;
       const outbid = bidsData.filter((b: any) => b.status === "outbid").length;
-      const cancelled = bidsData.filter((b: any) => b.status === "cancelled").length;
-      const totalValue = bidsData.reduce((sum: number, b: any) => sum + (parseFloat(b.amount) || 0), 0);
+      const cancelled = bidsData.filter(
+        (b: any) => b.status === "cancelled",
+      ).length;
+      const totalValue = bidsData.reduce(
+        (sum: number, b: any) => sum + (parseFloat(b.amount) || 0),
+        0,
+      );
       const avgBid = bidsData.length ? totalValue / bidsData.length : 0;
 
       setStats({
@@ -269,13 +297,12 @@ export default function PartnerBidsPage() {
   // ------------------------------------------------------------------------
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
-      <Toaster position="top-right" />
+      // <Toaster position="top-right" />
       <Sidebar onCollapse={setIsSidebarCollapsed} />
-
       <div
         className={cn(
           "transition-all duration-300 ease-in-out",
-          isSidebarCollapsed ? "ml-20" : "ml-64"
+          isSidebarCollapsed ? "ml-20" : "ml-64",
         )}
       >
         {/* HEADER */}
@@ -314,8 +341,12 @@ export default function PartnerBidsPage() {
             <div className="bg-white p-4 border border-slate-200 shadow-sm">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Total Bids</p>
-                  <p className="text-xl font-bold text-[#003566]">{stats.total}</p>
+                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">
+                    Total Bids
+                  </p>
+                  <p className="text-xl font-bold text-[#003566]">
+                    {stats.total}
+                  </p>
                 </div>
                 <BarChart3 className="text-blue-600" size={18} />
               </div>
@@ -323,8 +354,12 @@ export default function PartnerBidsPage() {
             <div className="bg-white p-4 border border-slate-200 shadow-sm">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Active</p>
-                  <p className="text-xl font-bold text-blue-600">{stats.active}</p>
+                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">
+                    Active
+                  </p>
+                  <p className="text-xl font-bold text-blue-600">
+                    {stats.active}
+                  </p>
                 </div>
                 <Clock className="text-blue-600" size={18} />
               </div>
@@ -332,8 +367,12 @@ export default function PartnerBidsPage() {
             <div className="bg-white p-4 border border-slate-200 shadow-sm">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Won</p>
-                  <p className="text-xl font-bold text-emerald-600">{stats.won}</p>
+                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">
+                    Won
+                  </p>
+                  <p className="text-xl font-bold text-emerald-600">
+                    {stats.won}
+                  </p>
                 </div>
                 <CheckCircle className="text-emerald-600" size={18} />
               </div>
@@ -341,8 +380,12 @@ export default function PartnerBidsPage() {
             <div className="bg-white p-4 border border-slate-200 shadow-sm">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Outbid</p>
-                  <p className="text-xl font-bold text-slate-500">{stats.outbid}</p>
+                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">
+                    Outbid
+                  </p>
+                  <p className="text-xl font-bold text-slate-500">
+                    {stats.outbid}
+                  </p>
                 </div>
                 <AlertTriangle className="text-slate-500" size={18} />
               </div>
@@ -350,8 +393,12 @@ export default function PartnerBidsPage() {
             <div className="bg-white p-4 border border-slate-200 shadow-sm">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Cancelled</p>
-                  <p className="text-xl font-bold text-red-600">{stats.cancelled}</p>
+                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">
+                    Cancelled
+                  </p>
+                  <p className="text-xl font-bold text-red-600">
+                    {stats.cancelled}
+                  </p>
                 </div>
                 <XCircle className="text-red-600" size={18} />
               </div>
@@ -359,8 +406,12 @@ export default function PartnerBidsPage() {
             <div className="bg-white p-4 border border-slate-200 shadow-sm">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Total Value</p>
-                  <p className="text-base font-bold text-blue-900">{formatCurrency(stats.totalValue)}</p>
+                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">
+                    Total Value
+                  </p>
+                  <p className="text-base font-bold text-blue-900">
+                    {formatCurrency(stats.totalValue)}
+                  </p>
                 </div>
                 <DollarSign className="text-blue-900" size={18} />
               </div>
@@ -368,8 +419,12 @@ export default function PartnerBidsPage() {
             <div className="bg-white p-4 border border-slate-200 shadow-sm">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Avg. Bid</p>
-                  <p className="text-base font-bold text-blue-900">{formatCurrency(stats.avgBid)}</p>
+                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">
+                    Avg. Bid
+                  </p>
+                  <p className="text-base font-bold text-blue-900">
+                    {formatCurrency(stats.avgBid)}
+                  </p>
                 </div>
                 <TrendingUp className="text-blue-900" size={18} />
               </div>
@@ -394,7 +449,10 @@ export default function PartnerBidsPage() {
               </div>
 
               <div className="relative">
-                <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
+                <Filter
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300"
+                  size={18}
+                />
                 <select
                   className="w-full bg-slate-50 border border-slate-200 p-3 pl-12 text-[11px] font-black tracking-widest outline-none appearance-none"
                   value={selectedStatus}
@@ -431,7 +489,10 @@ export default function PartnerBidsPage() {
           {/* LOADING STATE */}
           {loading && (
             <div className="col-span-full py-20 text-center">
-              <Loader2 className="animate-spin mx-auto text-blue-600" size={40} />
+              <Loader2
+                className="animate-spin mx-auto text-blue-600"
+                size={40}
+              />
               <p className="mt-4 text-[10px] font-black uppercase tracking-widest text-slate-400">
                 Loading bids...
               </p>
@@ -490,9 +551,13 @@ export default function PartnerBidsPage() {
                       />
                     </div>
                     <div>
-                      <p className="font-medium text-[#003566]">{getYachtName(bid.yacht)}</p>
+                      <p className="font-medium text-[#003566]">
+                        {getYachtName(bid.yacht)}
+                      </p>
                       {bid.yacht?.vessel_id && (
-                        <p className="text-[9px] text-slate-500">ID: {bid.yacht.vessel_id}</p>
+                        <p className="text-[9px] text-slate-500">
+                          ID: {bid.yacht.vessel_id}
+                        </p>
                       )}
                     </div>
                   </div>
@@ -501,23 +566,31 @@ export default function PartnerBidsPage() {
                   <div className="col-span-2">
                     <div className="flex items-center gap-2">
                       <User size={14} className="text-blue-600" />
-                      <span className="text-sm">{bid.user?.name || "Unknown"}</span>
+                      <span className="text-sm">
+                        {bid.user?.name || "Unknown"}
+                      </span>
                     </div>
                     {bid.user?.email && (
-                      <p className="text-[9px] text-slate-500 truncate">{bid.user.email}</p>
+                      <p className="text-[9px] text-slate-500 truncate">
+                        {bid.user.email}
+                      </p>
                     )}
                   </div>
 
                   {/* Amount */}
                   <div className="col-span-2">
-                    <p className="font-bold text-blue-900">{formatCurrency(bid.amount)}</p>
+                    <p className="font-bold text-blue-900">
+                      {formatCurrency(bid.amount)}
+                    </p>
                   </div>
 
                   {/* Date */}
                   <div className="col-span-2">
                     <div className="flex items-center gap-2">
                       <Calendar size={14} className="text-blue-600" />
-                      <span className="text-xs">{formatDate(bid.created_at)}</span>
+                      <span className="text-xs">
+                        {formatDate(bid.created_at)}
+                      </span>
                     </div>
                   </div>
 
@@ -528,7 +601,8 @@ export default function PartnerBidsPage() {
                         "inline-flex text-[9px] font-black px-2.5 py-1 rounded-full uppercase tracking-widest border",
                         bidStatusConfig[bid.status]?.color || "text-slate-600",
                         bidStatusConfig[bid.status]?.bg || "bg-slate-100",
-                        bidStatusConfig[bid.status]?.border || "border-slate-200"
+                        bidStatusConfig[bid.status]?.border ||
+                          "border-slate-200",
                       )}
                     >
                       {bidStatusConfig[bid.status]?.label || bid.status}
@@ -538,7 +612,11 @@ export default function PartnerBidsPage() {
                   {/* Actions */}
                   <div className="col-span-2 flex items-center justify-end gap-2">
                     <button
-                      onClick={() => router.push(`/nl/dashboard/partner/yachts/${bid.yacht_id}`)}
+                      onClick={() =>
+                        router.push(
+                          `/nl/dashboard/partner/yachts/${bid.yacht_id}`,
+                        )
+                      }
                       className="p-2 text-blue-600 hover:text-blue-800 transition-colors"
                       title="View Yacht"
                     >
@@ -584,16 +662,22 @@ export default function PartnerBidsPage() {
             <div className="pt-6 border-t border-slate-200">
               <div className="flex flex-col md:flex-row justify-between items-center gap-4">
                 <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                  <span className="text-blue-600">{filteredBids.length}</span> of{" "}
-                  <span>{bids.length}</span> bids displayed
+                  <span className="text-blue-600">{filteredBids.length}</span>{" "}
+                  of <span>{bids.length}</span> bids displayed
                 </div>
                 <div className="flex items-center gap-4">
-                  <Button onClick={fetchData} variant="outline" className="h-9 px-4 text-[10px] font-black uppercase tracking-widest">
+                  <Button
+                    onClick={fetchData}
+                    variant="outline"
+                    className="h-9 px-4 text-[10px] font-black uppercase tracking-widest"
+                  >
                     <RefreshCw size={12} className="mr-2" />
                     Refresh
                   </Button>
                   <Button
-                    onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                    onClick={() =>
+                      window.scrollTo({ top: 0, behavior: "smooth" })
+                    }
                     variant="outline"
                     className="h-9 px-4 text-[10px] font-black uppercase tracking-widest"
                   >

@@ -68,26 +68,26 @@ export default async function RootLayout({
         `}
       >
         <NextIntlClientProvider locale={locale}>
-          
-        <LockscreenOverlay>
-          <ClientLayout>
-            <ReferralTracker />
-            {children}
-            {/* Custom styled Toaster for the theme */}
-            <Toaster
-              theme="dark"
-              position="top-right"
-              toastOptions={{
-                style: {
-                  background: "#141414",
-                  border: "1px solid rgba(197, 165, 114, 0.2)",
-                  color: "#fff",
-                  borderRadius: "0px",
-                },
-              }}
-            />
-          </ClientLayout>
-        </LockscreenOverlay>
+          <LockscreenOverlay>
+            <ClientLayout>
+              <ReferralTracker />
+              {children}
+              {/* Custom styled Toaster for the theme */}
+              //{" "}
+              <Toaster
+                theme="dark"
+                position="top-right"
+                toastOptions={{
+                  style: {
+                    background: "#141414",
+                    border: "1px solid rgba(197, 165, 114, 0.2)",
+                    color: "#fff",
+                    borderRadius: "0px",
+                  },
+                }}
+              />
+            </ClientLayout>
+          </LockscreenOverlay>
         </NextIntlClientProvider>
       </body>
     </html>

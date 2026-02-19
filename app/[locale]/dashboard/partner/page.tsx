@@ -47,14 +47,52 @@ const STORAGE_URL = "https://schepen-kring.nl/storage/";
 const PLACEHOLDER_IMAGE =
   "https://images.unsplash.com/photo-1569263979104-865ab7cd8d13?auto=format&fit=crop&w=600&q=80";
 
-const statusConfig: Record<string, { color: string; bg: string; border: string; label: string }> = {
-  "For Sale": { color: "text-emerald-600", bg: "bg-emerald-50", border: "border-emerald-100", label: "For Sale" },
-  "For Bid": { color: "text-blue-600", bg: "bg-blue-50", border: "border-blue-100", label: "For Bid" },
-  Sold: { color: "text-amber-600", bg: "bg-amber-50", border: "border-amber-100", label: "Sold" },
-  Draft: { color: "text-slate-500", bg: "bg-slate-100", border: "border-slate-200", label: "Draft" },
-  Active: { color: "text-emerald-600", bg: "bg-emerald-50", border: "border-emerald-100", label: "Active" },
-  Inactive: { color: "text-red-600", bg: "bg-red-50", border: "border-red-100", label: "Inactive" },
-  Maintenance: { color: "text-orange-600", bg: "bg-orange-50", border: "border-orange-100", label: "Maintenance" },
+const statusConfig: Record<
+  string,
+  { color: string; bg: string; border: string; label: string }
+> = {
+  "For Sale": {
+    color: "text-emerald-600",
+    bg: "bg-emerald-50",
+    border: "border-emerald-100",
+    label: "For Sale",
+  },
+  "For Bid": {
+    color: "text-blue-600",
+    bg: "bg-blue-50",
+    border: "border-blue-100",
+    label: "For Bid",
+  },
+  Sold: {
+    color: "text-amber-600",
+    bg: "bg-amber-50",
+    border: "border-amber-100",
+    label: "Sold",
+  },
+  Draft: {
+    color: "text-slate-500",
+    bg: "bg-slate-100",
+    border: "border-slate-200",
+    label: "Draft",
+  },
+  Active: {
+    color: "text-emerald-600",
+    bg: "bg-emerald-50",
+    border: "border-emerald-100",
+    label: "Active",
+  },
+  Inactive: {
+    color: "text-red-600",
+    bg: "bg-red-50",
+    border: "border-red-100",
+    label: "Inactive",
+  },
+  Maintenance: {
+    color: "text-orange-600",
+    bg: "bg-orange-50",
+    border: "border-orange-100",
+    label: "Maintenance",
+  },
 };
 
 const statusOptions = [
@@ -122,17 +160,24 @@ export default function PartnerFleetManagementPage() {
       const forSale = yachts.filter((y: any) => y.status === "For Sale").length;
       const forBid = yachts.filter((y: any) => y.status === "For Bid").length;
       const sold = yachts.filter((y: any) => y.status === "Sold").length;
-      const draft = yachts.filter((y: any) => y.status === "Draft" || !y.status).length;
+      const draft = yachts.filter(
+        (y: any) => y.status === "Draft" || !y.status,
+      ).length;
       const active = yachts.filter((y: any) => y.status === "Active").length;
-      const inactive = yachts.filter((y: any) => y.status === "Inactive").length;
+      const inactive = yachts.filter(
+        (y: any) => y.status === "Inactive",
+      ).length;
 
       const totalValue = yachts.reduce((sum: number, y: any) => {
         const price = parseFloat(y.price) || 0;
         return sum + price;
       }, 0);
 
-      const pricedYachts = yachts.filter((y: any) => y.price && !isNaN(parseFloat(y.price)));
-      const avgPrice = pricedYachts.length > 0 ? totalValue / pricedYachts.length : 0;
+      const pricedYachts = yachts.filter(
+        (y: any) => y.price && !isNaN(parseFloat(y.price)),
+      );
+      const avgPrice =
+        pricedYachts.length > 0 ? totalValue / pricedYachts.length : 0;
 
       setStats({
         total: yachts.length,
@@ -172,7 +217,9 @@ export default function PartnerFleetManagementPage() {
 
   const handleDelete = async (yacht: any) => {
     const yachtName = getDisplayName(yacht);
-    const confirmed = window.confirm(`Are you sure you want to permanently remove "${yachtName}" from your fleet?`);
+    const confirmed = window.confirm(
+      `Are you sure you want to permanently remove "${yachtName}" from your fleet?`,
+    );
     if (!confirmed) return;
 
     try {
@@ -202,7 +249,9 @@ export default function PartnerFleetManagementPage() {
       fetchFleet();
     } catch (err: any) {
       console.error("Duplicate failed:", err);
-      toast.error(err.response?.data?.message || "Failed to duplicate vessel", { id: "duplicate" });
+      toast.error(err.response?.data?.message || "Failed to duplicate vessel", {
+        id: "duplicate",
+      });
     }
   };
 
@@ -284,7 +333,8 @@ export default function PartnerFleetManagementPage() {
         model.includes(query);
 
       const yachtStatus = yacht.status || "Draft";
-      const matchesStatus = selectedStatus === "all" || yachtStatus === selectedStatus;
+      const matchesStatus =
+        selectedStatus === "all" || yachtStatus === selectedStatus;
 
       return matchesSearch && matchesStatus;
     })
@@ -301,7 +351,17 @@ export default function PartnerFleetManagementPage() {
         bValue = b[sortBy] || "";
       }
 
-      if (["price", "year", "loa", "beam", "draft", "horse_power", "hours"].includes(sortBy)) {
+      if (
+        [
+          "price",
+          "year",
+          "loa",
+          "beam",
+          "draft",
+          "horse_power",
+          "hours",
+        ].includes(sortBy)
+      ) {
         const aNum = parseFloat(aValue) || 0;
         const bNum = parseFloat(bValue) || 0;
         return sortOrder === "asc" ? aNum - bNum : bNum - aNum;
@@ -315,7 +375,9 @@ export default function PartnerFleetManagementPage() {
 
       const aStr = safeString(aValue);
       const bStr = safeString(bValue);
-      return sortOrder === "asc" ? aStr.localeCompare(bStr) : bStr.localeCompare(aStr);
+      return sortOrder === "asc"
+        ? aStr.localeCompare(bStr)
+        : bStr.localeCompare(aStr);
     });
 
   const handleSortChange = (value: string) => {
@@ -333,7 +395,9 @@ export default function PartnerFleetManagementPage() {
         onClick={() => setViewMode("grid")}
         className={cn(
           "px-4 py-2 text-[10px] font-black uppercase tracking-widest transition-colors",
-          viewMode === "grid" ? "bg-[#003566] text-white" : "bg-white text-slate-600 hover:bg-slate-50"
+          viewMode === "grid"
+            ? "bg-[#003566] text-white"
+            : "bg-white text-slate-600 hover:bg-slate-50",
         )}
       >
         <Grid3x3 size={14} />
@@ -342,7 +406,9 @@ export default function PartnerFleetManagementPage() {
         onClick={() => setViewMode("list")}
         className={cn(
           "px-4 py-2 text-[10px] font-black uppercase tracking-widest transition-colors border-l border-slate-200",
-          viewMode === "list" ? "bg-[#003566] text-white" : "bg-white text-slate-600 hover:bg-slate-50"
+          viewMode === "list"
+            ? "bg-[#003566] text-white"
+            : "bg-white text-slate-600 hover:bg-slate-50",
         )}
       >
         <List size={14} />
@@ -353,7 +419,10 @@ export default function PartnerFleetManagementPage() {
   const SpecTooltip = ({ yacht }: { yacht: any }) => {
     const specs = [];
 
-    if (yacht.engine_manufacturer) specs.push(`Engine: ${yacht.engine_manufacturer} ${yacht.horse_power || ""}`);
+    if (yacht.engine_manufacturer)
+      specs.push(
+        `Engine: ${yacht.engine_manufacturer} ${yacht.horse_power || ""}`,
+      );
     if (yacht.fuel) specs.push(`Fuel: ${yacht.fuel}`);
     if (yacht.cruising_speed) specs.push(`Cruise: ${yacht.cruising_speed} kn`);
     if (yacht.max_speed) specs.push(`Max: ${yacht.max_speed} kn`);
@@ -361,10 +430,12 @@ export default function PartnerFleetManagementPage() {
     if (yacht.berths) specs.push(`Berths: ${yacht.berths}`);
     if (yacht.toilet) specs.push(`Toilets: ${yacht.toilet}`);
     if (yacht.shower) specs.push(`Showers: ${yacht.shower}`);
-    if (yacht.passenger_capacity) specs.push(`Passengers: ${yacht.passenger_capacity}`);
+    if (yacht.passenger_capacity)
+      specs.push(`Passengers: ${yacht.passenger_capacity}`);
     if (yacht.draft) specs.push(`Draft: ${yacht.draft} m`);
     if (yacht.air_draft) specs.push(`Air Draft: ${yacht.air_draft} m`);
-    if (yacht.displacement) specs.push(`Displacement: ${yacht.displacement} kg`);
+    if (yacht.displacement)
+      specs.push(`Displacement: ${yacht.displacement} kg`);
     if (yacht.ballast) specs.push(`Ballast: ${yacht.ballast}`);
     if (yacht.hull_type) specs.push(`Hull: ${yacht.hull_type}`);
     if (yacht.designer) specs.push(`Designer: ${yacht.designer}`);
@@ -386,15 +457,14 @@ export default function PartnerFleetManagementPage() {
   // ------------------------------------------------------------------------
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
-      <Toaster position="top-right" />
+      // <Toaster position="top-right" />
       {/* Sidebar - fixed */}
       <Sidebar onCollapse={setIsSidebarCollapsed} />
-
       {/* Main content - shifts based on sidebar state */}
       <div
         className={cn(
           "transition-all duration-300 ease-in-out",
-          isSidebarCollapsed ? "ml-20" : "ml-64"
+          isSidebarCollapsed ? "ml-20" : "ml-64",
         )}
       >
         {/* HEADER */}
@@ -433,8 +503,12 @@ export default function PartnerFleetManagementPage() {
             <div className="bg-white p-4 border border-slate-200 shadow-sm">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Total</p>
-                  <p className="text-xl font-bold text-[#003566]">{stats.total}</p>
+                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">
+                    Total
+                  </p>
+                  <p className="text-xl font-bold text-[#003566]">
+                    {stats.total}
+                  </p>
                 </div>
                 <BarChart3 className="text-blue-600" size={18} />
               </div>
@@ -442,8 +516,12 @@ export default function PartnerFleetManagementPage() {
             <div className="bg-white p-4 border border-slate-200 shadow-sm">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">For Sale</p>
-                  <p className="text-xl font-bold text-emerald-600">{stats.forSale}</p>
+                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">
+                    For Sale
+                  </p>
+                  <p className="text-xl font-bold text-emerald-600">
+                    {stats.forSale}
+                  </p>
                 </div>
                 <Euro className="text-emerald-600" size={18} />
               </div>
@@ -451,8 +529,12 @@ export default function PartnerFleetManagementPage() {
             <div className="bg-white p-4 border border-slate-200 shadow-sm">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">For Bid</p>
-                  <p className="text-xl font-bold text-blue-600">{stats.forBid}</p>
+                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">
+                    For Bid
+                  </p>
+                  <p className="text-xl font-bold text-blue-600">
+                    {stats.forBid}
+                  </p>
                 </div>
                 <Users className="text-blue-600" size={18} />
               </div>
@@ -460,8 +542,12 @@ export default function PartnerFleetManagementPage() {
             <div className="bg-white p-4 border border-slate-200 shadow-sm">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Sold</p>
-                  <p className="text-xl font-bold text-amber-600">{stats.sold}</p>
+                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">
+                    Sold
+                  </p>
+                  <p className="text-xl font-bold text-amber-600">
+                    {stats.sold}
+                  </p>
                 </div>
                 <CheckCircle className="text-amber-600" size={18} />
               </div>
@@ -469,8 +555,12 @@ export default function PartnerFleetManagementPage() {
             <div className="bg-white p-4 border border-slate-200 shadow-sm">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Draft</p>
-                  <p className="text-xl font-bold text-slate-500">{stats.draft}</p>
+                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">
+                    Draft
+                  </p>
+                  <p className="text-xl font-bold text-slate-500">
+                    {stats.draft}
+                  </p>
                 </div>
                 <AlertTriangle className="text-slate-500" size={18} />
               </div>
@@ -478,8 +568,12 @@ export default function PartnerFleetManagementPage() {
             <div className="bg-white p-4 border border-slate-200 shadow-sm">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Fleet Value</p>
-                  <p className="text-base font-bold text-blue-900">{formatCurrency(stats.totalValue)}</p>
+                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">
+                    Fleet Value
+                  </p>
+                  <p className="text-base font-bold text-blue-900">
+                    {formatCurrency(stats.totalValue)}
+                  </p>
                 </div>
                 <DollarSign className="text-blue-900" size={18} />
               </div>
@@ -487,8 +581,12 @@ export default function PartnerFleetManagementPage() {
             <div className="bg-white p-4 border border-slate-200 shadow-sm">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Avg. Price</p>
-                  <p className="text-base font-bold text-blue-900">{formatCurrency(stats.avgPrice)}</p>
+                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">
+                    Avg. Price
+                  </p>
+                  <p className="text-base font-bold text-blue-900">
+                    {formatCurrency(stats.avgPrice)}
+                  </p>
                 </div>
                 <TrendingUp className="text-blue-900" size={18} />
               </div>
@@ -496,9 +594,14 @@ export default function PartnerFleetManagementPage() {
             <div className="bg-white p-4 border border-slate-200 shadow-sm">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Last Sync</p>
+                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">
+                    Last Sync
+                  </p>
                   <p className="text-[9px] font-bold text-slate-600">
-                    {new Date().toLocaleTimeString("nl-NL", { hour: "2-digit", minute: "2-digit" })}
+                    {new Date().toLocaleTimeString("nl-NL", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
                   </p>
                 </div>
                 <Clock className="text-slate-400" size={18} />
@@ -524,7 +627,10 @@ export default function PartnerFleetManagementPage() {
               </div>
 
               <div className="relative">
-                <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
+                <Filter
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300"
+                  size={18}
+                />
                 <select
                   className="w-full bg-slate-50 border border-slate-200 p-3 pl-12 text-[11px] font-black tracking-widest outline-none appearance-none"
                   value={selectedStatus}
@@ -561,7 +667,10 @@ export default function PartnerFleetManagementPage() {
           {/* LOADING STATE */}
           {loading && (
             <div className="col-span-full py-20 text-center">
-              <Loader2 className="animate-spin mx-auto text-blue-600" size={40} />
+              <Loader2
+                className="animate-spin mx-auto text-blue-600"
+                size={40}
+              />
               <p className="mt-4 text-[10px] font-black uppercase tracking-widest text-slate-400">
                 Loading Your Fleet...
               </p>
@@ -591,380 +700,458 @@ export default function PartnerFleetManagementPage() {
           )}
 
           {/* GRID VIEW */}
-          {!loading && viewMode === "grid" && filteredAndSortedFleet.length > 0 && (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-              {filteredAndSortedFleet.map((yacht) => (
-                <div
-                  key={yacht.id}
-                  className="bg-white border border-slate-200 group overflow-hidden flex flex-col hover:shadow-xl transition-all duration-300 relative"
-                >
-                  {/* IMAGE SECTION */}
-                  <div className="h-64 bg-slate-100 overflow-hidden relative">
-                    <img
-                      src={getImageUrl(yacht.main_image)}
-                      onError={handleImageError}
-                      alt={getDisplayName(yacht)}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
-
-                    {yacht.vessel_id && (
-                      <div className="absolute top-3 left-3 bg-black/80 text-white text-[8px] font-black uppercase tracking-widest px-2 py-1 flex items-center gap-1">
-                        {yacht.vessel_id}
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            copyToClipboard(yacht.vessel_id);
-                          }}
-                          className="ml-1 hover:text-blue-300"
-                        >
-                          <Clipboard size={10} />
-                        </button>
-                      </div>
-                    )}
-
-                    <div className="absolute top-3 right-3">
-                      <span
-                        className={cn(
-                          "text-[8px] font-black px-3 py-1 rounded-full uppercase tracking-widest border",
-                          getStatusConfig(yacht.status).color,
-                          getStatusConfig(yacht.status).bg,
-                          getStatusConfig(yacht.status).border
-                        )}
-                      >
-                        {getYachtStatus(yacht)}
-                      </span>
-                    </div>
-
-                    {/* ACTION OVERLAY */}
-                    <div className="absolute inset-0 bg-[#003566]/90 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-3 p-6">
-                      <button
-                        onClick={() => router.push(`/nl/dashboard/partner/yachts/${yacht.id}/edit`)}
-                        className="w-full max-w-[200px] bg-white text-[#003566] px-4 py-3 font-black uppercase text-[9px] tracking-widest hover:bg-blue-600 hover:text-white transition-all flex items-center justify-center gap-2"
-                      >
-                        <Edit3 size={12} />
-                        Edit Vessel
-                      </button>
-
-                      <button
-                        onClick={() => router.push(`/nl/dashboard/partner/yachts/${yacht.id}`)}
-                        className="w-full max-w-[200px] bg-blue-600 text-white px-4 py-3 font-black uppercase text-[9px] tracking-widest hover:bg-blue-700 transition-all flex items-center justify-center gap-2"
-                      >
-                        <Eye size={12} />
-                        View Details
-                      </button>
-
-                      <button
-                        onClick={() => handleDuplicate(yacht)}
-                        className="w-full max-w-[200px] bg-amber-600 text-white px-4 py-3 font-black uppercase text-[9px] tracking-widest hover:bg-amber-700 transition-all flex items-center justify-center gap-2"
-                      >
-                        <Copy size={12} />
-                        Duplicate
-                      </button>
-
-                      <button
-                        onClick={() => handleDelete(yacht)}
-                        disabled={isSubmitting}
-                        className="w-full max-w-[200px] bg-red-600 text-white px-4 py-3 font-black uppercase text-[9px] tracking-widest hover:bg-red-700 transition-all flex items-center justify-center gap-2"
-                      >
-                        {isSubmitting ? <Loader2 className="animate-spin" size={12} /> : <Trash size={12} />}
-                        Delete Vessel
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* DETAILS SECTION – NAME ABOVE PRICE */}
-                  <div className="p-5 space-y-3 flex-1 flex flex-col">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h3 className="text-lg font-serif italic mb-1 line-clamp-1 text-blue-900">
-                          {getDisplayName(yacht)}
-                        </h3>
-                        <p className="text-lg font-bold text-blue-900">{formatCurrency(yacht.price)}</p>
-                        {yacht.min_bid_amount && (
-                          <p className="text-[9px] text-slate-500 mt-1">
-                            Min. Bid: {formatCurrency(yacht.min_bid_amount)}
-                          </p>
-                        )}
-                      </div>
-                      {yacht.passenger_capacity && (
-                        <div className="flex items-center gap-1 bg-slate-100 px-2 py-1 rounded">
-                          <Users size={12} className="text-blue-600" />
-                          <span className="text-[9px] font-bold text-slate-700">{yacht.passenger_capacity}</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* SPEC ROW */}
-                    <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100">
-                      <div className="space-y-1">
-                        <p className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Dimensions</p>
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2 text-[10px] text-slate-600">
-                            <Maximize2 size={12} className="text-blue-600" />
-                            <span>{formatLength(yacht.loa)} LOA</span>
-                          </div>
-                          {yacht.beam && (
-                            <div className="flex items-center gap-2 text-[10px] text-slate-600">
-                              <Maximize2 size={12} className="text-blue-600 rotate-90" />
-                              <span>{yacht.beam}m Beam</span>
-                            </div>
-                          )}
-                          {yacht.draft && (
-                            <div className="flex items-center gap-2 text-[10px] text-slate-600">
-                              <Anchor size={12} className="text-blue-600" />
-                              <span>Draft {yacht.draft}m</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="space-y-1">
-                        <p className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Performance</p>
-                        <div className="space-y-1">
-                          {yacht.engine_manufacturer && (
-                            <div className="flex items-center gap-2 text-[10px] text-slate-600">
-                              <Fuel size={12} className="text-blue-600" />
-                              <span className="truncate">{yacht.engine_manufacturer}</span>
-                            </div>
-                          )}
-                          {yacht.horse_power && (
-                            <div className="flex items-center gap-2 text-[10px] text-slate-600">
-                              <Gauge size={12} className="text-blue-600" />
-                              <span>{yacht.horse_power} HP</span>
-                            </div>
-                          )}
-                          {yacht.hours && (
-                            <div className="flex items-center gap-2 text-[10px] text-slate-600">
-                              <Clock size={12} className="text-blue-600" />
-                              <span>{yacht.hours} hrs</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* ACCOMMODATION QUICK VIEW */}
-                    {(yacht.cabins || yacht.berths || yacht.toilet) && (
-                      <div className="flex items-center gap-3 text-[9px] text-slate-600 border-t border-slate-100 pt-2">
-                        {yacht.cabins && (
-                          <div className="flex items-center gap-1">
-                            <Bed size={12} className="text-blue-600" />
-                            <span>{yacht.cabins} Cabins</span>
-                          </div>
-                        )}
-                        {yacht.berths && (
-                          <div className="flex items-center gap-1">
-                            <Bed size={12} className="text-blue-600" />
-                            <span>{yacht.berths} Berths</span>
-                          </div>
-                        )}
-                        {yacht.toilet && (
-                          <div className="flex items-center gap-1">
-                            <Bath size={12} className="text-blue-600" />
-                            <span>{yacht.toilet} Toilet</span>
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {/* FOOTER */}
-                    <div className="pt-2 border-t border-slate-100 mt-auto flex justify-between items-center relative group">
-                      <button
-                        onClick={() => router.push(`/nl/dashboard/partner/yachts/${yacht.id}`)}
-                        className="text-[9px] font-black uppercase text-blue-600 tracking-widest hover:text-blue-800 transition-colors flex items-center gap-1"
-                      >
-                        Manage Vessel
-                        <ChevronRight size={12} />
-                      </button>
-
-                      <SpecTooltip yacht={yacht} />
-
-                      {yacht.updated_at && (
-                        <span className="text-[7px] text-slate-400">
-                          Updated {new Date(yacht.updated_at).toLocaleDateString("nl-NL")}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* LIST VIEW */}
-          {!loading && viewMode === "list" && filteredAndSortedFleet.length > 0 && (
-            <div className="bg-white border border-slate-200">
-              <div className="grid grid-cols-12 gap-4 p-4 border-b border-slate-200 bg-slate-50 text-[10px] font-black uppercase tracking-widest text-slate-500">
-                <div className="col-span-3">Vessel</div>
-                <div className="col-span-2">Price / Bid</div>
-                <div className="col-span-3">Specifications</div>
-                <div className="col-span-2">Status / Location</div>
-                <div className="col-span-2 text-right">Actions</div>
-              </div>
-
-              {filteredAndSortedFleet.map((yacht) => (
-                <div
-                  key={yacht.id}
-                  className="grid grid-cols-12 gap-4 p-4 border-b border-slate-100 hover:bg-slate-50 transition-colors items-center relative group"
-                >
-                  <div className="col-span-3 flex items-center gap-3">
-                    <div className="w-16 h-12 bg-slate-100 overflow-hidden flex-shrink-0">
+          {!loading &&
+            viewMode === "grid" &&
+            filteredAndSortedFleet.length > 0 && (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                {filteredAndSortedFleet.map((yacht) => (
+                  <div
+                    key={yacht.id}
+                    className="bg-white border border-slate-200 group overflow-hidden flex flex-col hover:shadow-xl transition-all duration-300 relative"
+                  >
+                    {/* IMAGE SECTION */}
+                    <div className="h-64 bg-slate-100 overflow-hidden relative">
                       <img
                         src={getImageUrl(yacht.main_image)}
                         onError={handleImageError}
                         alt={getDisplayName(yacht)}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                       />
-                    </div>
-                    <div>
-                      <p className="font-medium text-[#003566]">
-                        {getDisplayName(yacht)}
-                      </p>
+
                       {yacht.vessel_id && (
-                        <p className="text-[9px] text-slate-500 font-medium flex items-center gap-1">
-                          ID: {yacht.vessel_id}
-                          <button onClick={() => copyToClipboard(yacht.vessel_id)} className="hover:text-blue-600">
+                        <div className="absolute top-3 left-3 bg-black/80 text-white text-[8px] font-black uppercase tracking-widest px-2 py-1 flex items-center gap-1">
+                          {yacht.vessel_id}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              copyToClipboard(yacht.vessel_id);
+                            }}
+                            className="ml-1 hover:text-blue-300"
+                          >
                             <Clipboard size={10} />
                           </button>
+                        </div>
+                      )}
+
+                      <div className="absolute top-3 right-3">
+                        <span
+                          className={cn(
+                            "text-[8px] font-black px-3 py-1 rounded-full uppercase tracking-widest border",
+                            getStatusConfig(yacht.status).color,
+                            getStatusConfig(yacht.status).bg,
+                            getStatusConfig(yacht.status).border,
+                          )}
+                        >
+                          {getYachtStatus(yacht)}
+                        </span>
+                      </div>
+
+                      {/* ACTION OVERLAY */}
+                      <div className="absolute inset-0 bg-[#003566]/90 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-3 p-6">
+                        <button
+                          onClick={() =>
+                            router.push(
+                              `/nl/dashboard/partner/yachts/${yacht.id}/edit`,
+                            )
+                          }
+                          className="w-full max-w-[200px] bg-white text-[#003566] px-4 py-3 font-black uppercase text-[9px] tracking-widest hover:bg-blue-600 hover:text-white transition-all flex items-center justify-center gap-2"
+                        >
+                          <Edit3 size={12} />
+                          Edit Vessel
+                        </button>
+
+                        <button
+                          onClick={() =>
+                            router.push(
+                              `/nl/dashboard/partner/yachts/${yacht.id}`,
+                            )
+                          }
+                          className="w-full max-w-[200px] bg-blue-600 text-white px-4 py-3 font-black uppercase text-[9px] tracking-widest hover:bg-blue-700 transition-all flex items-center justify-center gap-2"
+                        >
+                          <Eye size={12} />
+                          View Details
+                        </button>
+
+                        <button
+                          onClick={() => handleDuplicate(yacht)}
+                          className="w-full max-w-[200px] bg-amber-600 text-white px-4 py-3 font-black uppercase text-[9px] tracking-widest hover:bg-amber-700 transition-all flex items-center justify-center gap-2"
+                        >
+                          <Copy size={12} />
+                          Duplicate
+                        </button>
+
+                        <button
+                          onClick={() => handleDelete(yacht)}
+                          disabled={isSubmitting}
+                          className="w-full max-w-[200px] bg-red-600 text-white px-4 py-3 font-black uppercase text-[9px] tracking-widest hover:bg-red-700 transition-all flex items-center justify-center gap-2"
+                        >
+                          {isSubmitting ? (
+                            <Loader2 className="animate-spin" size={12} />
+                          ) : (
+                            <Trash size={12} />
+                          )}
+                          Delete Vessel
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* DETAILS SECTION – NAME ABOVE PRICE */}
+                    <div className="p-5 space-y-3 flex-1 flex flex-col">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h3 className="text-lg font-serif italic mb-1 line-clamp-1 text-blue-900">
+                            {getDisplayName(yacht)}
+                          </h3>
+                          <p className="text-lg font-bold text-blue-900">
+                            {formatCurrency(yacht.price)}
+                          </p>
+                          {yacht.min_bid_amount && (
+                            <p className="text-[9px] text-slate-500 mt-1">
+                              Min. Bid: {formatCurrency(yacht.min_bid_amount)}
+                            </p>
+                          )}
+                        </div>
+                        {yacht.passenger_capacity && (
+                          <div className="flex items-center gap-1 bg-slate-100 px-2 py-1 rounded">
+                            <Users size={12} className="text-blue-600" />
+                            <span className="text-[9px] font-bold text-slate-700">
+                              {yacht.passenger_capacity}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* SPEC ROW */}
+                      <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100">
+                        <div className="space-y-1">
+                          <p className="text-[9px] font-black uppercase text-slate-400 tracking-widest">
+                            Dimensions
+                          </p>
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2 text-[10px] text-slate-600">
+                              <Maximize2 size={12} className="text-blue-600" />
+                              <span>{formatLength(yacht.loa)} LOA</span>
+                            </div>
+                            {yacht.beam && (
+                              <div className="flex items-center gap-2 text-[10px] text-slate-600">
+                                <Maximize2
+                                  size={12}
+                                  className="text-blue-600 rotate-90"
+                                />
+                                <span>{yacht.beam}m Beam</span>
+                              </div>
+                            )}
+                            {yacht.draft && (
+                              <div className="flex items-center gap-2 text-[10px] text-slate-600">
+                                <Anchor size={12} className="text-blue-600" />
+                                <span>Draft {yacht.draft}m</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="space-y-1">
+                          <p className="text-[9px] font-black uppercase text-slate-400 tracking-widest">
+                            Performance
+                          </p>
+                          <div className="space-y-1">
+                            {yacht.engine_manufacturer && (
+                              <div className="flex items-center gap-2 text-[10px] text-slate-600">
+                                <Fuel size={12} className="text-blue-600" />
+                                <span className="truncate">
+                                  {yacht.engine_manufacturer}
+                                </span>
+                              </div>
+                            )}
+                            {yacht.horse_power && (
+                              <div className="flex items-center gap-2 text-[10px] text-slate-600">
+                                <Gauge size={12} className="text-blue-600" />
+                                <span>{yacht.horse_power} HP</span>
+                              </div>
+                            )}
+                            {yacht.hours && (
+                              <div className="flex items-center gap-2 text-[10px] text-slate-600">
+                                <Clock size={12} className="text-blue-600" />
+                                <span>{yacht.hours} hrs</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* ACCOMMODATION QUICK VIEW */}
+                      {(yacht.cabins || yacht.berths || yacht.toilet) && (
+                        <div className="flex items-center gap-3 text-[9px] text-slate-600 border-t border-slate-100 pt-2">
+                          {yacht.cabins && (
+                            <div className="flex items-center gap-1">
+                              <Bed size={12} className="text-blue-600" />
+                              <span>{yacht.cabins} Cabins</span>
+                            </div>
+                          )}
+                          {yacht.berths && (
+                            <div className="flex items-center gap-1">
+                              <Bed size={12} className="text-blue-600" />
+                              <span>{yacht.berths} Berths</span>
+                            </div>
+                          )}
+                          {yacht.toilet && (
+                            <div className="flex items-center gap-1">
+                              <Bath size={12} className="text-blue-600" />
+                              <span>{yacht.toilet} Toilet</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* FOOTER */}
+                      <div className="pt-2 border-t border-slate-100 mt-auto flex justify-between items-center relative group">
+                        <button
+                          onClick={() =>
+                            router.push(
+                              `/nl/dashboard/partner/yachts/${yacht.id}`,
+                            )
+                          }
+                          className="text-[9px] font-black uppercase text-blue-600 tracking-widest hover:text-blue-800 transition-colors flex items-center gap-1"
+                        >
+                          Manage Vessel
+                          <ChevronRight size={12} />
+                        </button>
+
+                        <SpecTooltip yacht={yacht} />
+
+                        {yacht.updated_at && (
+                          <span className="text-[7px] text-slate-400">
+                            Updated{" "}
+                            {new Date(yacht.updated_at).toLocaleDateString(
+                              "nl-NL",
+                            )}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+          {/* LIST VIEW */}
+          {!loading &&
+            viewMode === "list" &&
+            filteredAndSortedFleet.length > 0 && (
+              <div className="bg-white border border-slate-200">
+                <div className="grid grid-cols-12 gap-4 p-4 border-b border-slate-200 bg-slate-50 text-[10px] font-black uppercase tracking-widest text-slate-500">
+                  <div className="col-span-3">Vessel</div>
+                  <div className="col-span-2">Price / Bid</div>
+                  <div className="col-span-3">Specifications</div>
+                  <div className="col-span-2">Status / Location</div>
+                  <div className="col-span-2 text-right">Actions</div>
+                </div>
+
+                {filteredAndSortedFleet.map((yacht) => (
+                  <div
+                    key={yacht.id}
+                    className="grid grid-cols-12 gap-4 p-4 border-b border-slate-100 hover:bg-slate-50 transition-colors items-center relative group"
+                  >
+                    <div className="col-span-3 flex items-center gap-3">
+                      <div className="w-16 h-12 bg-slate-100 overflow-hidden flex-shrink-0">
+                        <img
+                          src={getImageUrl(yacht.main_image)}
+                          onError={handleImageError}
+                          alt={getDisplayName(yacht)}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div>
+                        <p className="font-medium text-[#003566]">
+                          {getDisplayName(yacht)}
+                        </p>
+                        {yacht.vessel_id && (
+                          <p className="text-[9px] text-slate-500 font-medium flex items-center gap-1">
+                            ID: {yacht.vessel_id}
+                            <button
+                              onClick={() => copyToClipboard(yacht.vessel_id)}
+                              className="hover:text-blue-600"
+                            >
+                              <Clipboard size={10} />
+                            </button>
+                          </p>
+                        )}
+                        {yacht.builder && (
+                          <p className="text-[9px] text-slate-500">
+                            {yacht.builder}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="col-span-2">
+                      <p className="font-bold text-blue-900">
+                        {formatCurrency(yacht.price)}
+                      </p>
+                      {yacht.min_bid_amount && (
+                        <p className="text-[8px] text-slate-500">
+                          Min bid: {formatCurrency(yacht.min_bid_amount)}
                         </p>
                       )}
-                      {yacht.builder && <p className="text-[9px] text-slate-500">{yacht.builder}</p>}
                     </div>
-                  </div>
 
-                  <div className="col-span-2">
-                    <p className="font-bold text-blue-900">{formatCurrency(yacht.price)}</p>
-                    {yacht.min_bid_amount && (
-                      <p className="text-[8px] text-slate-500">Min bid: {formatCurrency(yacht.min_bid_amount)}</p>
-                    )}
-                  </div>
-
-                  <div className="col-span-3">
-                    <div className="grid grid-cols-2 gap-2 text-[10px]">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-1.5">
-                          <Maximize2 size={11} className="text-blue-600" />
-                          <span>{formatLength(yacht.loa)} LOA</span>
+                    <div className="col-span-3">
+                      <div className="grid grid-cols-2 gap-2 text-[10px]">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-1.5">
+                            <Maximize2 size={11} className="text-blue-600" />
+                            <span>{formatLength(yacht.loa)} LOA</span>
+                          </div>
+                          {yacht.beam && (
+                            <div className="flex items-center gap-1.5">
+                              <Maximize2
+                                size={11}
+                                className="text-blue-600 rotate-90"
+                              />
+                              <span>{yacht.beam}m Beam</span>
+                            </div>
+                          )}
+                          {yacht.year && (
+                            <div className="flex items-center gap-1.5">
+                              <Calendar size={11} className="text-blue-600" />
+                              <span>{yacht.year}</span>
+                            </div>
+                          )}
                         </div>
-                        {yacht.beam && (
-                          <div className="flex items-center gap-1.5">
-                            <Maximize2 size={11} className="text-blue-600 rotate-90" />
-                            <span>{yacht.beam}m Beam</span>
-                          </div>
-                        )}
-                        {yacht.year && (
-                          <div className="flex items-center gap-1.5">
-                            <Calendar size={11} className="text-blue-600" />
-                            <span>{yacht.year}</span>
-                          </div>
-                        )}
+                        <div className="space-y-1">
+                          {yacht.engine_manufacturer && (
+                            <div className="flex items-center gap-1.5">
+                              <Fuel size={11} className="text-blue-600" />
+                              <span className="truncate">
+                                {yacht.engine_manufacturer}
+                              </span>
+                            </div>
+                          )}
+                          {yacht.horse_power && (
+                            <div className="flex items-center gap-1.5">
+                              <Gauge size={11} className="text-blue-600" />
+                              <span>{yacht.horse_power} HP</span>
+                            </div>
+                          )}
+                          {yacht.cabins && (
+                            <div className="flex items-center gap-1.5">
+                              <Bed size={11} className="text-blue-600" />
+                              <span>{yacht.cabins} Cabins</span>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                      <div className="space-y-1">
-                        {yacht.engine_manufacturer && (
-                          <div className="flex items-center gap-1.5">
-                            <Fuel size={11} className="text-blue-600" />
-                            <span className="truncate">{yacht.engine_manufacturer}</span>
-                          </div>
-                        )}
-                        {yacht.horse_power && (
-                          <div className="flex items-center gap-1.5">
-                            <Gauge size={11} className="text-blue-600" />
-                            <span>{yacht.horse_power} HP</span>
-                          </div>
-                        )}
-                        {yacht.cabins && (
-                          <div className="flex items-center gap-1.5">
-                            <Bed size={11} className="text-blue-600" />
-                            <span>{yacht.cabins} Cabins</span>
+                    </div>
+
+                    <div className="col-span-2">
+                      <div className="space-y-1.5">
+                        <span
+                          className={cn(
+                            "inline-flex text-[9px] font-black px-2.5 py-1 rounded-full uppercase tracking-widest border",
+                            getStatusConfig(yacht.status).color,
+                            getStatusConfig(yacht.status).bg,
+                            getStatusConfig(yacht.status).border,
+                          )}
+                        >
+                          {getYachtStatus(yacht)}
+                        </span>
+                        {yacht.where && (
+                          <div className="flex items-center gap-1.5 text-[10px] text-slate-600">
+                            <MapPin size={11} className="text-blue-600" />
+                            <span className="truncate">{yacht.where}</span>
                           </div>
                         )}
                       </div>
                     </div>
-                  </div>
 
-                  <div className="col-span-2">
-                    <div className="space-y-1.5">
-                      <span
-                        className={cn(
-                          "inline-flex text-[9px] font-black px-2.5 py-1 rounded-full uppercase tracking-widest border",
-                          getStatusConfig(yacht.status).color,
-                          getStatusConfig(yacht.status).bg,
-                          getStatusConfig(yacht.status).border
-                        )}
+                    <div className="col-span-2 flex items-center justify-end gap-2">
+                      <button
+                        onClick={() =>
+                          router.push(
+                            `/nl/dashboard/partner/yachts/${yacht.id}/edit`,
+                          )
+                        }
+                        className="p-2 text-blue-600 hover:text-blue-800 transition-colors"
+                        title="Edit"
                       >
-                        {getYachtStatus(yacht)}
-                      </span>
-                      {yacht.where && (
-                        <div className="flex items-center gap-1.5 text-[10px] text-slate-600">
-                          <MapPin size={11} className="text-blue-600" />
-                          <span className="truncate">{yacht.where}</span>
-                        </div>
-                      )}
+                        <Edit3 size={16} />
+                      </button>
+                      <button
+                        onClick={() =>
+                          router.push(
+                            `/nl/dashboard/partner/yachts/${yacht.id}`,
+                          )
+                        }
+                        className="p-2 text-emerald-600 hover:text-emerald-800 transition-colors"
+                        title="View Details"
+                      >
+                        <Eye size={16} />
+                      </button>
+                      <button
+                        onClick={() => handleDuplicate(yacht)}
+                        className="p-2 text-amber-600 hover:text-amber-800 transition-colors"
+                        title="Duplicate"
+                      >
+                        <Copy size={16} />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(yacht)}
+                        disabled={isSubmitting}
+                        className="p-2 text-red-600 hover:text-red-800 transition-colors"
+                        title="Delete"
+                      >
+                        <Trash size={16} />
+                      </button>
+                    </div>
+
+                    <div className="absolute left-0 -bottom-2 translate-y-full hidden group-hover:block z-50">
+                      <div className="bg-slate-900 text-white text-[9px] p-2 rounded shadow-lg max-w-xs">
+                        {yacht.air_draft && (
+                          <span>Air Draft: {yacht.air_draft}m • </span>
+                        )}
+                        {yacht.displacement && (
+                          <span>Disp: {yacht.displacement}kg • </span>
+                        )}
+                        {yacht.ballast && (
+                          <span>Ballast: {yacht.ballast} • </span>
+                        )}
+                        {yacht.passenger_capacity && (
+                          <span>Pass: {yacht.passenger_capacity} • </span>
+                        )}
+                        {yacht.fuel && <span>Fuel: {yacht.fuel} • </span>}
+                        {yacht.cruising_speed && (
+                          <span>Cruise: {yacht.cruising_speed}kn</span>
+                        )}
+                      </div>
                     </div>
                   </div>
-
-                  <div className="col-span-2 flex items-center justify-end gap-2">
-                    <button
-                      onClick={() => router.push(`/nl/dashboard/partner/yachts/${yacht.id}/edit`)}
-                      className="p-2 text-blue-600 hover:text-blue-800 transition-colors"
-                      title="Edit"
-                    >
-                      <Edit3 size={16} />
-                    </button>
-                    <button
-                      onClick={() => router.push(`/nl/dashboard/partner/yachts/${yacht.id}`)}
-                      className="p-2 text-emerald-600 hover:text-emerald-800 transition-colors"
-                      title="View Details"
-                    >
-                      <Eye size={16} />
-                    </button>
-                    <button
-                      onClick={() => handleDuplicate(yacht)}
-                      className="p-2 text-amber-600 hover:text-amber-800 transition-colors"
-                      title="Duplicate"
-                    >
-                      <Copy size={16} />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(yacht)}
-                      disabled={isSubmitting}
-                      className="p-2 text-red-600 hover:text-red-800 transition-colors"
-                      title="Delete"
-                    >
-                      <Trash size={16} />
-                    </button>
-                  </div>
-
-                  <div className="absolute left-0 -bottom-2 translate-y-full hidden group-hover:block z-50">
-                    <div className="bg-slate-900 text-white text-[9px] p-2 rounded shadow-lg max-w-xs">
-                      {yacht.air_draft && <span>Air Draft: {yacht.air_draft}m • </span>}
-                      {yacht.displacement && <span>Disp: {yacht.displacement}kg • </span>}
-                      {yacht.ballast && <span>Ballast: {yacht.ballast} • </span>}
-                      {yacht.passenger_capacity && <span>Pass: {yacht.passenger_capacity} • </span>}
-                      {yacht.fuel && <span>Fuel: {yacht.fuel} • </span>}
-                      {yacht.cruising_speed && <span>Cruise: {yacht.cruising_speed}kn</span>}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+            )}
 
           {/* FOOTER */}
           {!loading && filteredAndSortedFleet.length > 0 && (
             <div className="pt-6 border-t border-slate-200">
               <div className="flex flex-col md:flex-row justify-between items-center gap-4">
                 <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                  <span className="text-blue-600">{filteredAndSortedFleet.length}</span> of{" "}
-                  <span>{fleet.length}</span> vessels displayed
+                  <span className="text-blue-600">
+                    {filteredAndSortedFleet.length}
+                  </span>{" "}
+                  of <span>{fleet.length}</span> vessels displayed
                 </div>
                 <div className="flex items-center gap-4">
-                  <Button onClick={fetchFleet} variant="outline" className="h-9 px-4 text-[10px] font-black uppercase tracking-widest">
+                  <Button
+                    onClick={fetchFleet}
+                    variant="outline"
+                    className="h-9 px-4 text-[10px] font-black uppercase tracking-widest"
+                  >
                     <RefreshCw size={12} className="mr-2" />
                     Refresh
                   </Button>
                   <Button
-                    onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                    onClick={() =>
+                      window.scrollTo({ top: 0, behavior: "smooth" })
+                    }
                     variant="outline"
                     className="h-9 px-4 text-[10px] font-black uppercase tracking-widest"
                   >

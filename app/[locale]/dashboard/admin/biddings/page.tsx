@@ -38,11 +38,34 @@ const PLACEHOLDER_IMAGE =
   "https://images.unsplash.com/photo-1569263979104-865ab7cd8d13?auto=format&fit=crop&w=600&q=80";
 
 // Bid status configuration (matches partner dashboard)
-const bidStatusConfig: Record<string, { color: string; bg: string; border: string; label: string }> = {
-  active: { color: "text-blue-600", bg: "bg-blue-50", border: "border-blue-100", label: "Active" },
-  outbid: { color: "text-slate-500", bg: "bg-slate-100", border: "border-slate-200", label: "Outbid" },
-  won: { color: "text-emerald-600", bg: "bg-emerald-50", border: "border-emerald-100", label: "Won" },
-  cancelled: { color: "text-red-600", bg: "bg-red-50", border: "border-red-100", label: "Cancelled" },
+const bidStatusConfig: Record<
+  string,
+  { color: string; bg: string; border: string; label: string }
+> = {
+  active: {
+    color: "text-blue-600",
+    bg: "bg-blue-50",
+    border: "border-blue-100",
+    label: "Active",
+  },
+  outbid: {
+    color: "text-slate-500",
+    bg: "bg-slate-100",
+    border: "border-slate-200",
+    label: "Outbid",
+  },
+  won: {
+    color: "text-emerald-600",
+    bg: "bg-emerald-50",
+    border: "border-emerald-100",
+    label: "Won",
+  },
+  cancelled: {
+    color: "text-red-600",
+    bg: "bg-red-50",
+    border: "border-red-100",
+    label: "Cancelled",
+  },
 };
 
 const statusOptions = [
@@ -160,9 +183,12 @@ export default function GlobalBidManagementPage() {
       };
       if (token) headers["Authorization"] = `Bearer ${token}`;
 
-      const res = await fetch(`https://schepen-kring.nl/api/bids?page=${page}`, {
-        headers,
-      });
+      const res = await fetch(
+        `https://schepen-kring.nl/api/bids?page=${page}`,
+        {
+          headers,
+        },
+      );
 
       if (!res.ok) {
         if (res.status === 401) {
@@ -186,79 +212,80 @@ export default function GlobalBidManagementPage() {
   };
 
   // Update stats whenever bids change (based on current page)
-useEffect(() => {
-  const active = bids.filter((b) => b.status === "active").length;
-  const won = bids.filter((b) => b.status === "won").length;
-  const outbid = bids.filter((b) => b.status === "outbid").length;
-  const cancelled = bids.filter((b) => b.status === "cancelled").length;
+  useEffect(() => {
+    const active = bids.filter((b) => b.status === "active").length;
+    const won = bids.filter((b) => b.status === "won").length;
+    const outbid = bids.filter((b) => b.status === "outbid").length;
+    const cancelled = bids.filter((b) => b.status === "cancelled").length;
 
-  // Safely parse amounts as floats
-  const totalValue = bids.reduce((sum, b) => {
-    const amount = typeof b.amount === 'string' ? parseFloat(b.amount) : (b.amount || 0);
-    return sum + (isNaN(amount) ? 0 : amount);
-  }, 0);
+    // Safely parse amounts as floats
+    const totalValue = bids.reduce((sum, b) => {
+      const amount =
+        typeof b.amount === "string" ? parseFloat(b.amount) : b.amount || 0;
+      return sum + (isNaN(amount) ? 0 : amount);
+    }, 0);
 
-  const avgBid = bids.length ? totalValue / bids.length : 0;
+    const avgBid = bids.length ? totalValue / bids.length : 0;
 
-  setStats({
-    total: bids.length,
-    active,
-    won,
-    outbid,
-    cancelled,
-    totalValue,
-    avgBid,
-  });
-}, [bids]);
+    setStats({
+      total: bids.length,
+      active,
+      won,
+      outbid,
+      cancelled,
+      totalValue,
+      avgBid,
+    });
+  }, [bids]);
 
   // Filtering & sorting (client-side on current page)
-// Replace the existing sorting useEffect with this version
-useEffect(() => {
-  let filtered = [...bids];
+  // Replace the existing sorting useEffect with this version
+  useEffect(() => {
+    let filtered = [...bids];
 
-  if (selectedStatus !== "all") {
-    filtered = filtered.filter((bid) => bid.status === selectedStatus);
-  }
+    if (selectedStatus !== "all") {
+      filtered = filtered.filter((bid) => bid.status === selectedStatus);
+    }
 
-  if (searchQuery) {
-    const query = searchQuery.toLowerCase();
-    filtered = filtered.filter((bid) => {
-      const yachtName = bid.yacht?.boat_name?.toLowerCase() || "";
-      const bidderName = bid.user?.name?.toLowerCase() || "";
-      return yachtName.includes(query) || bidderName.includes(query);
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter((bid) => {
+        const yachtName = bid.yacht?.boat_name?.toLowerCase() || "";
+        const bidderName = bid.user?.name?.toLowerCase() || "";
+        return yachtName.includes(query) || bidderName.includes(query);
+      });
+    }
+
+    filtered.sort((a, b) => {
+      let aVal: any, bVal: any;
+
+      if (sortBy === "yacht_name") {
+        aVal = a.yacht?.boat_name || "";
+        bVal = b.yacht?.boat_name || "";
+      } else if (sortBy === "bidder_name") {
+        aVal = a.user?.name || "";
+        bVal = b.user?.name || "";
+      } else if (sortBy === "amount") {
+        aVal = a.amount || 0;
+        bVal = b.amount || 0;
+      } else if (sortBy === "created_at") {
+        aVal = new Date(a.created_at || 0).getTime();
+        bVal = new Date(b.created_at || 0).getTime();
+      } else {
+        // fallback (should never happen)
+        aVal = 0;
+        bVal = 0;
+      }
+
+      if (sortOrder === "asc") {
+        return aVal > bVal ? 1 : -1;
+      } else {
+        return aVal < bVal ? 1 : -1;
+      }
     });
-  }
 
-  filtered.sort((a, b) => {
-    let aVal: any, bVal: any;
-
-    if (sortBy === "yacht_name") {
-      aVal = a.yacht?.boat_name || "";
-      bVal = b.yacht?.boat_name || "";
-    } else if (sortBy === "bidder_name") {
-      aVal = a.user?.name || "";
-      bVal = b.user?.name || "";
-    } else if (sortBy === "amount") {
-      aVal = a.amount || 0;
-      bVal = b.amount || 0;
-    } else if (sortBy === "created_at") {
-      aVal = new Date(a.created_at || 0).getTime();
-      bVal = new Date(b.created_at || 0).getTime();
-    } else {
-      // fallback (should never happen)
-      aVal = 0;
-      bVal = 0;
-    }
-
-    if (sortOrder === "asc") {
-      return aVal > bVal ? 1 : -1;
-    } else {
-      return aVal < bVal ? 1 : -1;
-    }
-  });
-
-  setFilteredBids(filtered);
-}, [bids, searchQuery, selectedStatus, sortBy, sortOrder]);
+    setFilteredBids(filtered);
+  }, [bids, searchQuery, selectedStatus, sortBy, sortOrder]);
 
   // ----- Accept a bid -----
   const handleAcceptBid = async (bidId: number) => {
@@ -271,13 +298,16 @@ useEffect(() => {
 
     setActionInProgress(bidId);
     try {
-      const response = await fetch(`https://schepen-kring.nl/api/bids/${bidId}/accept`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: "application/json",
+      const response = await fetch(
+        `https://schepen-kring.nl/api/bids/${bidId}/accept`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+          },
         },
-      });
+      );
 
       if (!response.ok) {
         const error = await response.json();
@@ -305,13 +335,16 @@ useEffect(() => {
 
     setActionInProgress(bidId);
     try {
-      const response = await fetch(`https://schepen-kring.nl/api/bids/${bidId}/decline`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: "application/json",
+      const response = await fetch(
+        `https://schepen-kring.nl/api/bids/${bidId}/decline`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+          },
         },
-      });
+      );
 
       if (!response.ok) {
         const error = await response.json();
@@ -344,15 +377,15 @@ useEffect(() => {
     e.currentTarget.classList.add("opacity-50", "grayscale");
   };
 
-const formatCurrency = (amount: number | null | undefined) => {
-  if (amount === null || amount === undefined || isNaN(amount)) return "€ --";
-  return new Intl.NumberFormat("nl-NL", {
-    style: "currency",
-    currency: "EUR",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount);
-};
+  const formatCurrency = (amount: number | null | undefined) => {
+    if (amount === null || amount === undefined || isNaN(amount)) return "€ --";
+    return new Intl.NumberFormat("nl-NL", {
+      style: "currency",
+      currency: "EUR",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount);
+  };
 
   const formatDate = (dateString: string) => {
     if (!dateString) return "";
@@ -379,8 +412,7 @@ const formatCurrency = (amount: number | null | undefined) => {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] font-roboto">
-      <Toaster position="top-right" />
-
+      // <Toaster position="top-right" />
       {/* HEADER (sticky, white, with back button and total) */}
       <div className="bg-white border-b border-slate-200 sticky top-0 z-30">
         <div className="max-w-7xl mx-auto px-6 py-6 lg:px-12 flex justify-between items-center">
@@ -410,15 +442,18 @@ const formatCurrency = (amount: number | null | undefined) => {
           </div>
         </div>
       </div>
-
       <div className="max-w-7xl mx-auto p-6 lg:p-12 space-y-8">
         {/* STATS CARDS */}
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
           <div className="bg-white p-4 border border-slate-200 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Total Bids</p>
-                <p className="text-xl font-bold text-[#003566]">{stats.total}</p>
+                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">
+                  Total Bids
+                </p>
+                <p className="text-xl font-bold text-[#003566]">
+                  {stats.total}
+                </p>
               </div>
               <BarChart3 className="text-blue-600" size={18} />
             </div>
@@ -426,8 +461,12 @@ const formatCurrency = (amount: number | null | undefined) => {
           <div className="bg-white p-4 border border-slate-200 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Active</p>
-                <p className="text-xl font-bold text-blue-600">{stats.active}</p>
+                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">
+                  Active
+                </p>
+                <p className="text-xl font-bold text-blue-600">
+                  {stats.active}
+                </p>
               </div>
               <Clock className="text-blue-600" size={18} />
             </div>
@@ -435,8 +474,12 @@ const formatCurrency = (amount: number | null | undefined) => {
           <div className="bg-white p-4 border border-slate-200 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Won</p>
-                <p className="text-xl font-bold text-emerald-600">{stats.won}</p>
+                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">
+                  Won
+                </p>
+                <p className="text-xl font-bold text-emerald-600">
+                  {stats.won}
+                </p>
               </div>
               <CheckCircle className="text-emerald-600" size={18} />
             </div>
@@ -444,8 +487,12 @@ const formatCurrency = (amount: number | null | undefined) => {
           <div className="bg-white p-4 border border-slate-200 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Outbid</p>
-                <p className="text-xl font-bold text-slate-500">{stats.outbid}</p>
+                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">
+                  Outbid
+                </p>
+                <p className="text-xl font-bold text-slate-500">
+                  {stats.outbid}
+                </p>
               </div>
               <AlertTriangle className="text-slate-500" size={18} />
             </div>
@@ -453,8 +500,12 @@ const formatCurrency = (amount: number | null | undefined) => {
           <div className="bg-white p-4 border border-slate-200 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Cancelled</p>
-                <p className="text-xl font-bold text-red-600">{stats.cancelled}</p>
+                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">
+                  Cancelled
+                </p>
+                <p className="text-xl font-bold text-red-600">
+                  {stats.cancelled}
+                </p>
               </div>
               <XCircle className="text-red-600" size={18} />
             </div>
@@ -462,8 +513,12 @@ const formatCurrency = (amount: number | null | undefined) => {
           <div className="bg-white p-4 border border-slate-200 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Total Value</p>
-                <p className="text-base font-bold text-blue-900">{formatCurrency(stats.totalValue)}</p>
+                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">
+                  Total Value
+                </p>
+                <p className="text-base font-bold text-blue-900">
+                  {formatCurrency(stats.totalValue)}
+                </p>
               </div>
               <DollarSign className="text-blue-900" size={18} />
             </div>
@@ -471,8 +526,12 @@ const formatCurrency = (amount: number | null | undefined) => {
           <div className="bg-white p-4 border border-slate-200 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Avg. Bid</p>
-                <p className="text-base font-bold text-blue-900">{formatCurrency(stats.avgBid)}</p>
+                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">
+                  Avg. Bid
+                </p>
+                <p className="text-base font-bold text-blue-900">
+                  {formatCurrency(stats.avgBid)}
+                </p>
               </div>
               <TrendingUp className="text-blue-900" size={18} />
             </div>
@@ -497,7 +556,10 @@ const formatCurrency = (amount: number | null | undefined) => {
             </div>
 
             <div className="relative">
-              <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
+              <Filter
+                className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300"
+                size={18}
+              />
               <select
                 className="w-full bg-slate-50 border border-slate-200 p-3 pl-12 text-[11px] font-black tracking-widest outline-none appearance-none"
                 value={selectedStatus}
@@ -576,9 +638,13 @@ const formatCurrency = (amount: number | null | undefined) => {
                     />
                   </div>
                   <div>
-                    <p className="font-medium text-[#003566]">{getYachtName(bid.yacht)}</p>
+                    <p className="font-medium text-[#003566]">
+                      {getYachtName(bid.yacht)}
+                    </p>
                     {bid.yacht?.vessel_id && (
-                      <p className="text-[9px] text-slate-500">ID: {bid.yacht.vessel_id}</p>
+                      <p className="text-[9px] text-slate-500">
+                        ID: {bid.yacht.vessel_id}
+                      </p>
                     )}
                   </div>
                 </div>
@@ -587,23 +653,31 @@ const formatCurrency = (amount: number | null | undefined) => {
                 <div className="col-span-2">
                   <div className="flex items-center gap-2">
                     <User size={14} className="text-blue-600" />
-                    <span className="text-sm">{bid.user?.name || "Unknown"}</span>
+                    <span className="text-sm">
+                      {bid.user?.name || "Unknown"}
+                    </span>
                   </div>
                   {bid.user?.email && (
-                    <p className="text-[9px] text-slate-500 truncate">{bid.user.email}</p>
+                    <p className="text-[9px] text-slate-500 truncate">
+                      {bid.user.email}
+                    </p>
                   )}
                 </div>
 
                 {/* Amount */}
                 <div className="col-span-2">
-                  <p className="font-bold text-blue-900">{formatCurrency(bid.amount)}</p>
+                  <p className="font-bold text-blue-900">
+                    {formatCurrency(bid.amount)}
+                  </p>
                 </div>
 
                 {/* Date */}
                 <div className="col-span-2">
                   <div className="flex items-center gap-2">
                     <Calendar size={14} className="text-blue-600" />
-                    <span className="text-xs">{formatDate(bid.created_at)}</span>
+                    <span className="text-xs">
+                      {formatDate(bid.created_at)}
+                    </span>
                   </div>
                 </div>
 
@@ -614,7 +688,7 @@ const formatCurrency = (amount: number | null | undefined) => {
                       "inline-flex text-[9px] font-black px-2.5 py-1 rounded-full uppercase tracking-widest border",
                       bidStatusConfig[bid.status]?.color || "text-slate-600",
                       bidStatusConfig[bid.status]?.bg || "bg-slate-100",
-                      bidStatusConfig[bid.status]?.border || "border-slate-200"
+                      bidStatusConfig[bid.status]?.border || "border-slate-200",
                     )}
                   >
                     {bidStatusConfig[bid.status]?.label || bid.status}
@@ -682,7 +756,9 @@ const formatCurrency = (amount: number | null | undefined) => {
                   Refresh
                 </button>
                 <button
-                  onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                  onClick={() =>
+                    window.scrollTo({ top: 0, behavior: "smooth" })
+                  }
                   className="h-9 px-4 text-[10px] font-black uppercase tracking-widest border border-slate-200 bg-white hover:bg-slate-50 rounded-none"
                 >
                   Back to Top

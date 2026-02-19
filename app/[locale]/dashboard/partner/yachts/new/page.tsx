@@ -32,7 +32,6 @@ import { cn } from "@/lib/utils";
 import { toast, Toaster } from "react-hot-toast";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 
-
 const PLACEHOLDER_IMAGE =
   "https://images.unsplash.com/photo-1569263979104-865ab7cd8d13?auto=format&fit=crop&w=600&q=80";
 
@@ -96,8 +95,8 @@ export default function PartnerCreateYachtPage() {
   // State ----------------------------------------------------------------
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<any>(null);
-      // Sidebar State
-      const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  // Sidebar State
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   const [aiStaging, setAiStaging] = useState<AiStagedImage[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -111,7 +110,9 @@ export default function PartnerCreateYachtPage() {
     General: [],
   });
 
-  const [availabilityRules, setAvailabilityRules] = useState<AvailabilityRule[]>([]);
+  const [availabilityRules, setAvailabilityRules] = useState<
+    AvailabilityRule[]
+  >([]);
   const [displaySpecs, setDisplaySpecs] = useState<Record<string, boolean>>({});
 
   // Handlers -------------------------------------------------------------
@@ -143,7 +144,7 @@ export default function PartnerCreateYachtPage() {
           preview: item.preview,
           category: item.category,
           originalName: item.originalName,
-        })
+        }),
       );
       setAiStaging((prev) => [...prev, ...analyzedData]);
       toast.success("AI Classification complete", { id: "ai-loading" });
@@ -190,7 +191,7 @@ export default function PartnerCreateYachtPage() {
   const updateAvailabilityRule = (
     index: number,
     field: keyof AvailabilityRule,
-    value: any
+    value: any,
   ) => {
     const newRules = [...availabilityRules];
     newRules[index] = { ...newRules[index], [field]: value };
@@ -212,7 +213,9 @@ export default function PartnerCreateYachtPage() {
     const formData = new FormData();
 
     // 1. Required field
-    const boatName = (document.querySelector('input[name="boat_name"]') as HTMLInputElement)?.value;
+    const boatName = (
+      document.querySelector('input[name="boat_name"]') as HTMLInputElement
+    )?.value;
     if (!boatName) {
       toast.error("Vessel name is required");
       setIsSubmitting(false);
@@ -227,16 +230,53 @@ export default function PartnerCreateYachtPage() {
 
     // 3. Text / numeric fields – only if they have a value
     const fields = [
-      "price", "min_bid_amount", "year", "status", "loa", "lwl", "where",
-      "passenger_capacity", "beam", "draft", "air_draft", "displacement",
-      "ballast", "hull_type", "hull_construction", "hull_colour", "hull_number",
-      "designer", "builder", "engine_manufacturer", "horse_power", "hours",
-      "fuel", "max_speed", "cruising_speed", "gallons_per_hour", "tankage",
-      "cabins", "berths", "toilet", "shower", "bath", "heating",
-      "cockpit_type", "control_type", "external_url", "print_url",
-      "owners_comment", "reg_details", "known_defects", "last_serviced",
-      "super_structure_colour", "super_structure_construction",
-      "deck_colour", "deck_construction", "starting_type", "drive_type",
+      "price",
+      "min_bid_amount",
+      "year",
+      "status",
+      "loa",
+      "lwl",
+      "where",
+      "passenger_capacity",
+      "beam",
+      "draft",
+      "air_draft",
+      "displacement",
+      "ballast",
+      "hull_type",
+      "hull_construction",
+      "hull_colour",
+      "hull_number",
+      "designer",
+      "builder",
+      "engine_manufacturer",
+      "horse_power",
+      "hours",
+      "fuel",
+      "max_speed",
+      "cruising_speed",
+      "gallons_per_hour",
+      "tankage",
+      "cabins",
+      "berths",
+      "toilet",
+      "shower",
+      "bath",
+      "heating",
+      "cockpit_type",
+      "control_type",
+      "external_url",
+      "print_url",
+      "owners_comment",
+      "reg_details",
+      "known_defects",
+      "last_serviced",
+      "super_structure_colour",
+      "super_structure_construction",
+      "deck_colour",
+      "deck_construction",
+      "starting_type",
+      "drive_type",
     ];
 
     fields.forEach((field) => {
@@ -244,24 +284,58 @@ export default function PartnerCreateYachtPage() {
         | HTMLInputElement
         | HTMLSelectElement
         | HTMLTextAreaElement;
-      if (element && element.value !== undefined && element.value.trim() !== "") {
+      if (
+        element &&
+        element.value !== undefined &&
+        element.value.trim() !== ""
+      ) {
         formData.append(field, element.value);
       }
     });
 
     // 4. Boolean fields – always send "true" or "false"
     const booleanFields = [
-      "allow_bidding", "flybridge", "oven", "microwave", "fridge", "freezer",
-      "air_conditioning", "navigation_lights", "compass", "depth_instrument",
-      "wind_instrument", "autopilot", "gps", "vhf", "plotter", "speed_instrument",
-      "radar", "life_raft", "epirb", "bilge_pump", "fire_extinguisher",
-      "mob_system", "spinnaker", "battery", "battery_charger", "generator",
-      "inverter", "television", "cd_player", "dvd_player", "anchor",
-      "spray_hood", "bimini", "stern_thruster", "bow_thruster",
+      "allow_bidding",
+      "flybridge",
+      "oven",
+      "microwave",
+      "fridge",
+      "freezer",
+      "air_conditioning",
+      "navigation_lights",
+      "compass",
+      "depth_instrument",
+      "wind_instrument",
+      "autopilot",
+      "gps",
+      "vhf",
+      "plotter",
+      "speed_instrument",
+      "radar",
+      "life_raft",
+      "epirb",
+      "bilge_pump",
+      "fire_extinguisher",
+      "mob_system",
+      "spinnaker",
+      "battery",
+      "battery_charger",
+      "generator",
+      "inverter",
+      "television",
+      "cd_player",
+      "dvd_player",
+      "anchor",
+      "spray_hood",
+      "bimini",
+      "stern_thruster",
+      "bow_thruster",
     ];
 
     booleanFields.forEach((field) => {
-      const checkbox = document.querySelector(`[name="${field}"]`) as HTMLInputElement;
+      const checkbox = document.querySelector(
+        `[name="${field}"]`,
+      ) as HTMLInputElement;
       formData.append(field, checkbox?.checked ? "true" : "false");
     });
 
@@ -271,7 +345,9 @@ export default function PartnerCreateYachtPage() {
     }
 
     // 6. Display specs – only if at least one spec is selected
-    const selectedSpecs = Object.keys(displaySpecs).filter((key) => displaySpecs[key]);
+    const selectedSpecs = Object.keys(displaySpecs).filter(
+      (key) => displaySpecs[key],
+    );
     if (selectedSpecs.length > 0) {
       formData.append("display_specs", JSON.stringify(selectedSpecs));
     }
@@ -306,7 +382,10 @@ export default function PartnerCreateYachtPage() {
     } catch (err: any) {
       console.error("Submission error:", err);
       if (err.response) {
-        const serverMessage = err.response.data?.message || err.response.data?.error || "Unknown server error";
+        const serverMessage =
+          err.response.data?.message ||
+          err.response.data?.error ||
+          "Unknown server error";
         toast.error(`Server error: ${serverMessage}`);
         console.error("Server response:", err.response.data);
       } else {
@@ -326,9 +405,8 @@ export default function PartnerCreateYachtPage() {
   // ----------------------------------------------------------------------
   return (
     <div className="min-h-screen bg-[#F8FAFC] pb-20">
-      <Toaster position="top-right" />
-
-                    <Sidebar onCollapse={setIsSidebarCollapsed} />
+      // <Toaster position="top-right" />
+      <Sidebar onCollapse={setIsSidebarCollapsed} />
       {/* ========== ADMIN‑STYLE STICKY HEADER ========== */}
       <div className="bg-[#003566] text-white p-8 sticky top-0 z-40 shadow-xl flex justify-between items-center">
         <div className="flex items-center gap-6">
@@ -348,7 +426,6 @@ export default function PartnerCreateYachtPage() {
           </div>
         </div>
       </div>
-
       <div className="max-w-7xl mx-auto p-6 lg:p-12">
         <form onSubmit={handleSubmit} className="space-y-16">
           {/* ERROR SUMMARY */}
@@ -373,7 +450,9 @@ export default function PartnerCreateYachtPage() {
               <Camera size={16} /> 01. Primary Vessel Photo
             </label>
             <div
-              onClick={() => document.getElementById("main_image_input")?.click()}
+              onClick={() =>
+                document.getElementById("main_image_input")?.click()
+              }
               className="h-80 lg:h-96 bg-white border-2 border-dashed border-slate-200 relative flex items-center justify-center cursor-pointer overflow-hidden shadow-inner group transition-all hover:border-blue-400"
             >
               <input
@@ -418,7 +497,11 @@ export default function PartnerCreateYachtPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               <div className="space-y-2">
                 <Label>Vessel Name *</Label>
-                <Input name="boat_name" placeholder="e.g. M/Y NOBILITY" required />
+                <Input
+                  name="boat_name"
+                  placeholder="e.g. M/Y NOBILITY"
+                  required
+                />
               </div>
               <div className="space-y-2">
                 <Label>Price (€)</Label>
@@ -467,7 +550,11 @@ export default function PartnerCreateYachtPage() {
               </div>
               <div className="space-y-2">
                 <Label>Passenger Capacity</Label>
-                <Input name="passenger_capacity" type="number" placeholder="12" />
+                <Input
+                  name="passenger_capacity"
+                  type="number"
+                  placeholder="12"
+                />
               </div>
             </div>
           </div>
@@ -481,7 +568,10 @@ export default function PartnerCreateYachtPage() {
             {/* Hull & Dimensions */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
               <div className="space-y-6">
-                <SectionHeader icon={<Ship size={14} />} title="Hull & Dimensions" />
+                <SectionHeader
+                  icon={<Ship size={14} />}
+                  title="Hull & Dimensions"
+                />
                 <div className="grid grid-cols-2 gap-6">
                   <div className="space-y-1">
                     <Label>Beam (m)</Label>
@@ -533,7 +623,10 @@ export default function PartnerCreateYachtPage() {
                   </div>
                   <div className="space-y-1">
                     <Label>Superstructure Construction</Label>
-                    <Input name="super_structure_construction" placeholder="GRP" />
+                    <Input
+                      name="super_structure_construction"
+                      placeholder="GRP"
+                    />
                   </div>
                   <div className="space-y-1">
                     <Label>Deck Colour</Label>
@@ -548,47 +641,90 @@ export default function PartnerCreateYachtPage() {
 
               {/* Engine & Performance */}
               <div className="space-y-6">
-                <SectionHeader icon={<Zap size={14} />} title="Engine & Performance" />
+                <SectionHeader
+                  icon={<Zap size={14} />}
+                  title="Engine & Performance"
+                />
                 <div className="bg-slate-50 p-6 border border-slate-100 grid grid-cols-2 gap-6">
                   <div className="space-y-1">
                     <Label>Engine Manufacturer</Label>
-                    <Input name="engine_manufacturer" placeholder="e.g. CAT" className="bg-white" />
+                    <Input
+                      name="engine_manufacturer"
+                      placeholder="e.g. CAT"
+                      className="bg-white"
+                    />
                   </div>
                   <div className="space-y-1">
                     <Label>Horse Power</Label>
-                    <Input name="horse_power" placeholder="e.g. 2x1500HP" className="bg-white" />
+                    <Input
+                      name="horse_power"
+                      placeholder="e.g. 2x1500HP"
+                      className="bg-white"
+                    />
                   </div>
                   <div className="space-y-1">
                     <Label>Engine Hours</Label>
-                    <Input name="hours" placeholder="450" className="bg-white" />
+                    <Input
+                      name="hours"
+                      placeholder="450"
+                      className="bg-white"
+                    />
                   </div>
                   <div className="space-y-1">
                     <Label>Fuel Type</Label>
-                    <Input name="fuel" placeholder="Diesel" className="bg-white" />
+                    <Input
+                      name="fuel"
+                      placeholder="Diesel"
+                      className="bg-white"
+                    />
                   </div>
                   <div className="space-y-1">
                     <Label>Max Speed (kn)</Label>
-                    <Input name="max_speed" placeholder="35" className="bg-white" />
+                    <Input
+                      name="max_speed"
+                      placeholder="35"
+                      className="bg-white"
+                    />
                   </div>
                   <div className="space-y-1">
                     <Label>Cruising Speed (kn)</Label>
-                    <Input name="cruising_speed" placeholder="25" className="bg-white" />
+                    <Input
+                      name="cruising_speed"
+                      placeholder="25"
+                      className="bg-white"
+                    />
                   </div>
                   <div className="space-y-1">
                     <Label>Gallons per Hour</Label>
-                    <Input name="gallons_per_hour" placeholder="50" className="bg-white" />
+                    <Input
+                      name="gallons_per_hour"
+                      placeholder="50"
+                      className="bg-white"
+                    />
                   </div>
                   <div className="space-y-1">
                     <Label>Tankage</Label>
-                    <Input name="tankage" placeholder="2000L" className="bg-white" />
+                    <Input
+                      name="tankage"
+                      placeholder="2000L"
+                      className="bg-white"
+                    />
                   </div>
                   <div className="space-y-1">
                     <Label>Starting Type</Label>
-                    <Input name="starting_type" placeholder="e.g. Electric" className="bg-white" />
+                    <Input
+                      name="starting_type"
+                      placeholder="e.g. Electric"
+                      className="bg-white"
+                    />
                   </div>
                   <div className="space-y-1">
                     <Label>Drive Type</Label>
-                    <Input name="drive_type" placeholder="e.g. Shaft" className="bg-white" />
+                    <Input
+                      name="drive_type"
+                      placeholder="e.g. Shaft"
+                      className="bg-white"
+                    />
                   </div>
                 </div>
               </div>
@@ -596,7 +732,10 @@ export default function PartnerCreateYachtPage() {
 
             {/* Accommodation & Facilities */}
             <div className="space-y-6">
-              <SectionHeader icon={<Bed size={14} />} title="Accommodation & Facilities" />
+              <SectionHeader
+                icon={<Bed size={14} />}
+                title="Accommodation & Facilities"
+              />
               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
                 <div className="space-y-1">
                   <Label>Cabins</Label>
@@ -635,7 +774,10 @@ export default function PartnerCreateYachtPage() {
 
             {/* Additional / Broker Fields */}
             <div className="space-y-6">
-              <SectionHeader icon={<Box size={14} />} title="Additional Details" />
+              <SectionHeader
+                icon={<Box size={14} />}
+                title="Additional Details"
+              />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-1">
                   <Label>External URL</Label>
@@ -647,7 +789,10 @@ export default function PartnerCreateYachtPage() {
                 </div>
                 <div className="space-y-1">
                   <Label>Registration Details</Label>
-                  <Input name="reg_details" placeholder="Registration number, flag, etc." />
+                  <Input
+                    name="reg_details"
+                    placeholder="Registration number, flag, etc."
+                  />
                 </div>
                 <div className="space-y-1">
                   <Label>Known Defects</Label>
@@ -670,7 +815,10 @@ export default function PartnerCreateYachtPage() {
 
             {/* Equipment Checkboxes (full list) */}
             <div className="space-y-6">
-              <SectionHeader icon={<CheckSquare size={14} />} title="Equipment & Features" />
+              <SectionHeader
+                icon={<CheckSquare size={14} />}
+                title="Equipment & Features"
+              />
               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
                 {[
                   "allow_bidding",
@@ -709,7 +857,10 @@ export default function PartnerCreateYachtPage() {
                   "stern_thruster",
                   "bow_thruster",
                 ].map((field) => (
-                  <div key={field} className="flex items-center gap-2 bg-slate-50/50 p-3">
+                  <div
+                    key={field}
+                    className="flex items-center gap-2 bg-slate-50/50 p-3"
+                  >
                     <input
                       type="checkbox"
                       name={field}
@@ -732,7 +883,8 @@ export default function PartnerCreateYachtPage() {
           <div className="space-y-8 bg-slate-50 p-10 border border-slate-200 shadow-sm">
             <div className="flex justify-between items-center border-b border-slate-200 pb-4">
               <h3 className="text-[12px] font-black uppercase text-[#003566] tracking-[0.4em] flex items-center gap-3 italic">
-                <Calendar size={20} className="text-blue-600" /> 04. Scheduling Authority
+                <Calendar size={20} className="text-blue-600" /> 04. Scheduling
+                Authority
               </h3>
               <Button
                 type="button"
@@ -754,7 +906,11 @@ export default function PartnerCreateYachtPage() {
                     <select
                       value={rule.day_of_week}
                       onChange={(e) =>
-                        updateAvailabilityRule(idx, "day_of_week", parseInt(e.target.value))
+                        updateAvailabilityRule(
+                          idx,
+                          "day_of_week",
+                          parseInt(e.target.value),
+                        )
                       }
                       className="w-full bg-slate-50 p-2 border-b border-slate-200 text-[#003566] font-bold text-xs outline-none"
                     >
@@ -776,7 +932,13 @@ export default function PartnerCreateYachtPage() {
                         type="time"
                         step="900"
                         value={rule.start_time}
-                        onChange={(e) => updateAvailabilityRule(idx, "start_time", e.target.value)}
+                        onChange={(e) =>
+                          updateAvailabilityRule(
+                            idx,
+                            "start_time",
+                            e.target.value,
+                          )
+                        }
                         className="bg-transparent text-xs font-bold text-[#003566] outline-none w-full"
                       />
                     </div>
@@ -790,7 +952,13 @@ export default function PartnerCreateYachtPage() {
                         type="time"
                         step="900"
                         value={rule.end_time}
-                        onChange={(e) => updateAvailabilityRule(idx, "end_time", e.target.value)}
+                        onChange={(e) =>
+                          updateAvailabilityRule(
+                            idx,
+                            "end_time",
+                            e.target.value,
+                          )
+                        }
                         className="bg-transparent text-xs font-bold text-[#003566] outline-none w-full"
                       />
                     </div>
@@ -819,7 +987,10 @@ export default function PartnerCreateYachtPage() {
 
           {/* --- DISPLAY SPECIFICATIONS (Public visibility) --- */}
           <div className="space-y-6 bg-white p-6 border border-slate-200">
-            <SectionHeader icon={<Eye size={14} />} title="Display Specifications" />
+            <SectionHeader
+              icon={<Eye size={14} />}
+              title="Display Specifications"
+            />
             <p className="text-[9px] text-gray-600 mb-4">
               Select which specifications to show on the public yacht page
             </p>
@@ -827,41 +998,60 @@ export default function PartnerCreateYachtPage() {
             <div className="space-y-4">
               {/* General */}
               <div className="space-y-2">
-                <h4 className="text-[9px] font-black uppercase text-gray-700">General</h4>
+                <h4 className="text-[9px] font-black uppercase text-gray-700">
+                  General
+                </h4>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                  {["builder", "model", "year", "designer", "where", "hull_number", "hull_type"].map(
-                    (field) => (
-                      <SpecCheckbox
-                        key={field}
-                        field={field}
-                        label={field.replace(/_/g, " ")}
-                        onSpecChange={handleSpecChange}
-                      />
-                    )
-                  )}
+                  {[
+                    "builder",
+                    "model",
+                    "year",
+                    "designer",
+                    "where",
+                    "hull_number",
+                    "hull_type",
+                  ].map((field) => (
+                    <SpecCheckbox
+                      key={field}
+                      field={field}
+                      label={field.replace(/_/g, " ")}
+                      onSpecChange={handleSpecChange}
+                    />
+                  ))}
                 </div>
               </div>
 
               {/* Dimensions */}
               <div className="space-y-2">
-                <h4 className="text-[9px] font-black uppercase text-gray-700">Dimensions</h4>
+                <h4 className="text-[9px] font-black uppercase text-gray-700">
+                  Dimensions
+                </h4>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                  {["loa", "lwl", "beam", "draft", "air_draft", "displacement", "ballast", "passenger_capacity"].map(
-                    (field) => (
-                      <SpecCheckbox
-                        key={field}
-                        field={field}
-                        label={field.replace(/_/g, " ")}
-                        onSpecChange={handleSpecChange}
-                      />
-                    )
-                  )}
+                  {[
+                    "loa",
+                    "lwl",
+                    "beam",
+                    "draft",
+                    "air_draft",
+                    "displacement",
+                    "ballast",
+                    "passenger_capacity",
+                  ].map((field) => (
+                    <SpecCheckbox
+                      key={field}
+                      field={field}
+                      label={field.replace(/_/g, " ")}
+                      onSpecChange={handleSpecChange}
+                    />
+                  ))}
                 </div>
               </div>
 
               {/* Construction */}
               <div className="space-y-2">
-                <h4 className="text-[9px] font-black uppercase text-gray-700">Construction</h4>
+                <h4 className="text-[9px] font-black uppercase text-gray-700">
+                  Construction
+                </h4>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                   {[
                     "hull_colour",
@@ -885,7 +1075,9 @@ export default function PartnerCreateYachtPage() {
 
               {/* Engine */}
               <div className="space-y-2">
-                <h4 className="text-[9px] font-black uppercase text-gray-700">Engine & Performance</h4>
+                <h4 className="text-[9px] font-black uppercase text-gray-700">
+                  Engine & Performance
+                </h4>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                   {[
                     "engine_manufacturer",
@@ -911,9 +1103,18 @@ export default function PartnerCreateYachtPage() {
 
               {/* Accommodation */}
               <div className="space-y-2">
-                <h4 className="text-[9px] font-black uppercase text-gray-700">Accommodation</h4>
+                <h4 className="text-[9px] font-black uppercase text-gray-700">
+                  Accommodation
+                </h4>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                  {["cabins", "berths", "toilet", "shower", "bath", "heating"].map((field) => (
+                  {[
+                    "cabins",
+                    "berths",
+                    "toilet",
+                    "shower",
+                    "bath",
+                    "heating",
+                  ].map((field) => (
                     <SpecCheckbox
                       key={field}
                       field={field}
@@ -938,7 +1139,11 @@ export default function PartnerCreateYachtPage() {
                 </p>
               </div>
               <label className="cursor-pointer bg-blue-600 text-white px-10 py-4 text-[10px] font-black uppercase tracking-widest hover:bg-blue-500 transition-all flex items-center gap-2 shadow-xl">
-                {isAnalyzing ? <Loader2 className="animate-spin" /> : <Upload size={14} />}
+                {isAnalyzing ? (
+                  <Loader2 className="animate-spin" />
+                ) : (
+                  <Upload size={14} />
+                )}
                 {isAnalyzing ? "Analyzing..." : "Select Images"}
                 <input
                   type="file"
@@ -993,7 +1198,9 @@ export default function PartnerCreateYachtPage() {
                         <button
                           type="button"
                           onClick={() =>
-                            setAiStaging((prev) => prev.filter((_, i) => i !== idx))
+                            setAiStaging((prev) =>
+                              prev.filter((_, i) => i !== idx),
+                            )
                           }
                           className="bg-red-600/20 text-red-400 border border-red-600/30 px-3 py-2 hover:bg-red-600 hover:text-white"
                         >
@@ -1022,7 +1229,9 @@ export default function PartnerCreateYachtPage() {
                       multiple
                       className="hidden"
                       accept="image/*"
-                      onChange={(e) => handleGalleryAdd(category, e.target.files)}
+                      onChange={(e) =>
+                        handleGalleryAdd(category, e.target.files)
+                      }
                     />
                   </label>
                 </div>
@@ -1031,7 +1240,10 @@ export default function PartnerCreateYachtPage() {
                 {galleryState[category].length > 0 && (
                   <div className="p-4 grid grid-cols-4 lg:grid-cols-8 gap-2">
                     {galleryState[category].map((file, i) => (
-                      <div key={i} className="aspect-square bg-slate-100 relative group">
+                      <div
+                        key={i}
+                        className="aspect-square bg-slate-100 relative group"
+                      >
                         <img
                           src={URL.createObjectURL(file)}
                           className="w-full h-full object-cover"
@@ -1042,7 +1254,9 @@ export default function PartnerCreateYachtPage() {
                           onClick={() =>
                             setGalleryState((prev) => ({
                               ...prev,
-                              [category]: prev[category].filter((_, idx) => idx !== i),
+                              [category]: prev[category].filter(
+                                (_, idx) => idx !== i,
+                              ),
                             }))
                           }
                           className="absolute inset-0 bg-red-600/80 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white"
@@ -1082,7 +1296,13 @@ export default function PartnerCreateYachtPage() {
 // Helper Components
 // ----------------------------------------------------------------------
 
-function Label({ children, htmlFor }: { children: React.ReactNode; htmlFor?: string }) {
+function Label({
+  children,
+  htmlFor,
+}: {
+  children: React.ReactNode;
+  htmlFor?: string;
+}) {
   return (
     <label
       htmlFor={htmlFor}
@@ -1099,13 +1319,19 @@ function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
       {...props}
       className={cn(
         "w-full bg-transparent border-b border-slate-200 py-2.5 text-xs font-bold text-[#003566] outline-none focus:border-blue-600 focus:bg-white/50 transition-all placeholder:text-slate-300",
-        props.className
+        props.className,
       )}
     />
   );
 }
 
-function SectionHeader({ icon, title }: { icon: React.ReactNode; title: string }) {
+function SectionHeader({
+  icon,
+  title,
+}: {
+  icon: React.ReactNode;
+  title: string;
+}) {
   return (
     <h4 className="text-[10px] font-black uppercase tracking-widest text-blue-600 flex items-center gap-2 mb-4">
       {icon} {title}

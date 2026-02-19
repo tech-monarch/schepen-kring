@@ -254,7 +254,7 @@ export default function YachtTerminalPage() {
       setContactForm({
         name: userData.name || "",
         email: userData.email || "",
-        phone: userData.mobile || "",          // Changed from phone_number to mobile
+        phone: userData.mobile || "", // Changed from phone_number to mobile
         requestType: "",
         comment: "",
       });
@@ -263,7 +263,7 @@ export default function YachtTerminalPage() {
       setBookingForm({
         name: userData.name || "",
         email: userData.email || "",
-        phone: userData.mobile || "",          // Changed from phone_number to mobile
+        phone: userData.mobile || "", // Changed from phone_number to mobile
         notes: "",
       });
     } else {
@@ -712,8 +712,7 @@ export default function YachtTerminalPage() {
 
   return (
     <div className="min-h-screen bg-white text-[#333] selection:bg-blue-100 font-roboto antialiased">
-      <Toaster position="top-center" />
-
+      // <Toaster position="top-center" />
       {/* ----- EXACT PHOTO GRID CSS (from original) ----- */}
       <style>{`
         .photos-holder-grid {
@@ -786,7 +785,6 @@ export default function YachtTerminalPage() {
           display: none !important;
         }
       `}</style>
-
       <main className="font-roboto">
         {/* ----- PHOTO GRID – EXACT LAYOUT ----- */}
         <div className="photos-holder-grid">
@@ -1301,7 +1299,7 @@ export default function YachtTerminalPage() {
                     </div>
                     <div className="mb-5">
                       <p className="text-sm text-gray-500 mb-1">
-                        Huidig hoogste bod:
+                        prijs?
                       </p>
                       <p className="text-2xl font-serif italic text-gray-900">
                         €
@@ -1345,7 +1343,9 @@ export default function YachtTerminalPage() {
                           min={minBidAmount}
                         />
                         {bidError && (
-                          <p className="text-red-500 text-xs mt-1">{bidError}</p>
+                          <p className="text-red-500 text-xs mt-1">
+                            {bidError}
+                          </p>
                         )}
                       </div>
                       {isAuthenticated ? (
@@ -1410,7 +1410,9 @@ export default function YachtTerminalPage() {
                                 €{Number(bid.amount).toLocaleString("nl-NL")}
                               </span>
                               <p className="text-xs text-gray-400">
-                                {new Date(bid.created_at).toLocaleDateString("nl-NL")}
+                                {new Date(bid.created_at).toLocaleDateString(
+                                  "nl-NL",
+                                )}
                               </p>
                             </div>
                           </div>
@@ -1563,7 +1565,6 @@ export default function YachtTerminalPage() {
           </a>
         </div>
       </main>
-
       {/* ----- PHOTO GALLERY MODAL (unchanged) ----- */}
       <AnimatePresence>
         {showPhotoGallery && (
@@ -1642,7 +1643,6 @@ export default function YachtTerminalPage() {
           </motion.div>
         )}
       </AnimatePresence>
-
       {/* ----- BUY NOW MODAL (unchanged) ----- */}
       <AnimatePresence>
         {paymentMode === "buy_now" && (

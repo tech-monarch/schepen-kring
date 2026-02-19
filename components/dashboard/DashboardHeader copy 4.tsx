@@ -388,8 +388,7 @@ export function DashboardHeader() {
           : "bg-white border-b border-slate-100",
       )}
     >
-      <Toaster position="top-right" reverseOrder={false} />
-
+      // <Toaster position="top-right" reverseOrder={false} />
       {/* Brand Logo Section */}
       <div className="flex items-center gap-12">
         <Link href="#" className="flex items-center group">
@@ -412,12 +411,10 @@ export function DashboardHeader() {
           />
         </div>
       </div>
-
       {/* Navigation - Fleet Management Link Removed */}
       <nav className="hidden lg:flex items-center gap-3">
         {/* Navigation links removed as requested */}
       </nav>
-
       {/* User Actions */}
       <div className="flex items-center gap-8">
         <ReturnToAdmin />

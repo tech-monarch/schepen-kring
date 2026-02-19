@@ -76,12 +76,18 @@ function CalendarView({ tasks, onTaskClick }: CalendarViewProps) {
 
   const getPriorityColor = (priority: string): string => {
     switch (priority) {
-      case "Critical": return "#dc2626";
-      case "Urgent": return "#ea580c";
-      case "High": return "#d97706";
-      case "Medium": return "#3b82f6";
-      case "Low": return "#6b7280";
-      default: return "#6b7280";
+      case "Critical":
+        return "#dc2626";
+      case "Urgent":
+        return "#ea580c";
+      case "High":
+        return "#d97706";
+      case "Medium":
+        return "#3b82f6";
+      case "Low":
+        return "#6b7280";
+      default:
+        return "#6b7280";
     }
   };
 
@@ -102,7 +108,7 @@ function CalendarView({ tasks, onTaskClick }: CalendarViewProps) {
   };
 
   const prevMonth = () => {
-    setCurrentDate(prev => {
+    setCurrentDate((prev) => {
       const newDate = new Date(prev);
       newDate.setMonth(newDate.getMonth() - 1);
       return newDate;
@@ -110,7 +116,7 @@ function CalendarView({ tasks, onTaskClick }: CalendarViewProps) {
   };
 
   const nextMonth = () => {
-    setCurrentDate(prev => {
+    setCurrentDate((prev) => {
       const newDate = new Date(prev);
       newDate.setMonth(newDate.getMonth() + 1);
       return newDate;
@@ -122,8 +128,12 @@ function CalendarView({ tasks, onTaskClick }: CalendarViewProps) {
   };
 
   const getTasksForDay = (day: number) => {
-    const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
-    return tasks.filter(task => {
+    const date = new Date(
+      currentDate.getFullYear(),
+      currentDate.getMonth(),
+      day,
+    );
+    return tasks.filter((task) => {
       if (!task.due_date) return false;
       const taskDate = new Date(task.due_date);
       return (
@@ -138,14 +148,22 @@ function CalendarView({ tasks, onTaskClick }: CalendarViewProps) {
     const { daysInMonth, startingDay } = getDaysInMonth(currentDate);
     const days = [];
 
-    const prevMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 0);
+    const prevMonth = new Date(
+      currentDate.getFullYear(),
+      currentDate.getMonth(),
+      0,
+    );
     const prevMonthDays = prevMonth.getDate();
 
     for (let i = 0; i < startingDay; i++) {
       days.push({
         day: prevMonthDays - startingDay + i + 1,
         isCurrentMonth: false,
-        date: new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, prevMonthDays - startingDay + i + 1),
+        date: new Date(
+          currentDate.getFullYear(),
+          currentDate.getMonth() - 1,
+          prevMonthDays - startingDay + i + 1,
+        ),
       });
     }
 
@@ -162,7 +180,11 @@ function CalendarView({ tasks, onTaskClick }: CalendarViewProps) {
       days.push({
         day: i,
         isCurrentMonth: false,
-        date: new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, i),
+        date: new Date(
+          currentDate.getFullYear(),
+          currentDate.getMonth() + 1,
+          i,
+        ),
       });
     }
 
@@ -201,8 +223,11 @@ function CalendarView({ tasks, onTaskClick }: CalendarViewProps) {
       </div>
 
       <div className="grid grid-cols-7 gap-px bg-slate-200 rounded-lg overflow-hidden">
-        {weekDays.map(day => (
-          <div key={day} className="bg-slate-50 p-3 text-center text-sm font-medium text-slate-600">
+        {weekDays.map((day) => (
+          <div
+            key={day}
+            className="bg-slate-50 p-3 text-center text-sm font-medium text-slate-600"
+          >
             {day}
           </div>
         ))}
@@ -220,7 +245,7 @@ function CalendarView({ tasks, onTaskClick }: CalendarViewProps) {
               className={cn(
                 "min-h-[120px] bg-white p-2 border border-slate-100",
                 !isCurrentMonth && "bg-slate-50",
-                isToday && "bg-blue-50"
+                isToday && "bg-blue-50",
               )}
             >
               <div className="flex justify-between items-center mb-1">
@@ -228,7 +253,7 @@ function CalendarView({ tasks, onTaskClick }: CalendarViewProps) {
                   className={cn(
                     "text-sm font-medium",
                     isCurrentMonth ? "text-slate-900" : "text-slate-400",
-                    isToday && "text-blue-600 font-bold"
+                    isToday && "text-blue-600 font-bold",
                   )}
                 >
                   {day}
@@ -241,7 +266,7 @@ function CalendarView({ tasks, onTaskClick }: CalendarViewProps) {
               </div>
 
               <div className="space-y-1 max-h-20 overflow-y-auto">
-                {dayTasks.slice(0, 3).map(task => (
+                {dayTasks.slice(0, 3).map((task) => (
                   <div
                     key={task.id}
                     className="text-xs p-1 rounded border-l-2 cursor-pointer hover:opacity-90"
@@ -250,22 +275,32 @@ function CalendarView({ tasks, onTaskClick }: CalendarViewProps) {
                       backgroundColor: `${getPriorityColor(task.priority)}10`,
                       color: getPriorityColor(task.priority),
                     }}
-                    onClick={e => {
+                    onClick={(e) => {
                       e.stopPropagation();
                       onTaskClick?.(task);
                     }}
                   >
                     <div className="flex items-center gap-1">
-                      {task.priority === "Critical" && <AlertTriangle className="text-red-600" size={10} />}
-                      {task.priority === "Urgent" && <AlertCircle className="text-orange-500" size={10} />}
-                      {task.priority === "High" && <AlertTriangle className="text-amber-500" size={10} />}
-                      {["Medium", "Low"].includes(task.priority) && <Clock className="text-blue-500" size={10} />}
+                      {task.priority === "Critical" && (
+                        <AlertTriangle className="text-red-600" size={10} />
+                      )}
+                      {task.priority === "Urgent" && (
+                        <AlertCircle className="text-orange-500" size={10} />
+                      )}
+                      {task.priority === "High" && (
+                        <AlertTriangle className="text-amber-500" size={10} />
+                      )}
+                      {["Medium", "Low"].includes(task.priority) && (
+                        <Clock className="text-blue-500" size={10} />
+                      )}
                       <span className="truncate">{task.title}</span>
                     </div>
                   </div>
                 ))}
                 {dayTasks.length > 3 && (
-                  <div className="text-xs text-slate-500 text-center">+{dayTasks.length - 3} more</div>
+                  <div className="text-xs text-slate-500 text-center">
+                    +{dayTasks.length - 3} more
+                  </div>
                 )}
               </div>
             </div>
@@ -331,7 +366,9 @@ function TaskModal({ isOpen, onClose, onSubmit, task, users }: TaskModalProps) {
         priority: task.priority || "Medium",
         status: task.status || "To Do",
         assigned_to: task.assigned_to?.toString() || "",
-        due_date: task.due_date ? task.due_date.split("T")[0] : new Date().toISOString().split("T")[0],
+        due_date: task.due_date
+          ? task.due_date.split("T")[0]
+          : new Date().toISOString().split("T")[0],
         type: task.type || "assigned",
       });
     } else {
@@ -370,28 +407,40 @@ function TaskModal({ isOpen, onClose, onSubmit, task, users }: TaskModalProps) {
   };
 
   const handlePrioritySelect = (priority: Task["priority"]) => {
-    setFormData(prev => ({ ...prev, priority }));
+    setFormData((prev) => ({ ...prev, priority }));
   };
 
   const getPriorityIcon = (priority: string) => {
     switch (priority) {
-      case "Critical": return <AlertTriangle className="text-red-600" size={20} />;
-      case "Urgent": return <AlertCircle className="text-orange-500" size={20} />;
-      case "High": return <AlertTriangle className="text-amber-500" size={20} />;
-      case "Medium": return <Shield className="text-blue-500" size={20} />;
-      case "Low": return <Info className="text-slate-500" size={20} />;
-      default: return <Info size={20} />;
+      case "Critical":
+        return <AlertTriangle className="text-red-600" size={20} />;
+      case "Urgent":
+        return <AlertCircle className="text-orange-500" size={20} />;
+      case "High":
+        return <AlertTriangle className="text-amber-500" size={20} />;
+      case "Medium":
+        return <Shield className="text-blue-500" size={20} />;
+      case "Low":
+        return <Info className="text-slate-500" size={20} />;
+      default:
+        return <Info size={20} />;
     }
   };
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case "Critical": return "bg-red-50 border-red-500 text-red-700";
-      case "Urgent": return "bg-orange-50 border-orange-500 text-orange-700";
-      case "High": return "bg-amber-50 border-amber-500 text-amber-700";
-      case "Medium": return "bg-blue-50 border-blue-500 text-blue-700";
-      case "Low": return "bg-slate-50 border-slate-500 text-slate-700";
-      default: return "bg-slate-50 border-slate-500 text-slate-700";
+      case "Critical":
+        return "bg-red-50 border-red-500 text-red-700";
+      case "Urgent":
+        return "bg-orange-50 border-orange-500 text-orange-700";
+      case "High":
+        return "bg-amber-50 border-amber-500 text-amber-700";
+      case "Medium":
+        return "bg-blue-50 border-blue-500 text-blue-700";
+      case "Low":
+        return "bg-slate-50 border-slate-500 text-slate-700";
+      default:
+        return "bg-slate-50 border-slate-500 text-slate-700";
     }
   };
 
@@ -414,28 +463,34 @@ function TaskModal({ isOpen, onClose, onSubmit, task, users }: TaskModalProps) {
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           <div className="space-y-2">
-            <label className="block text-sm font-medium text-slate-700">Task Type</label>
+            <label className="block text-sm font-medium text-slate-700">
+              Task Type
+            </label>
             <div className="flex gap-4">
               <button
                 type="button"
-                onClick={() => setFormData(prev => ({ ...prev, type: "assigned" }))}
+                onClick={() =>
+                  setFormData((prev) => ({ ...prev, type: "assigned" }))
+                }
                 className={cn(
                   "flex-1 py-3 px-4 border rounded-lg text-center transition-all",
                   formData.type === "assigned"
                     ? "border-blue-500 bg-blue-50 text-blue-700"
-                    : "border-slate-200 hover:border-slate-300"
+                    : "border-slate-200 hover:border-slate-300",
                 )}
               >
                 Assigned Task
               </button>
               <button
                 type="button"
-                onClick={() => setFormData(prev => ({ ...prev, type: "personal" }))}
+                onClick={() =>
+                  setFormData((prev) => ({ ...prev, type: "personal" }))
+                }
                 className={cn(
                   "flex-1 py-3 px-4 border rounded-lg text-center transition-all",
                   formData.type === "personal"
                     ? "border-purple-500 bg-purple-50 text-purple-700"
-                    : "border-slate-200 hover:border-slate-300"
+                    : "border-slate-200 hover:border-slate-300",
                 )}
               >
                 Personal Task
@@ -444,25 +499,38 @@ function TaskModal({ isOpen, onClose, onSubmit, task, users }: TaskModalProps) {
           </div>
 
           <div className="space-y-2">
-            <label className="block text-sm font-medium text-slate-700">Task Title *</label>
+            <label className="block text-sm font-medium text-slate-700">
+              Task Title *
+            </label>
             <input
               type="text"
               value={formData.title}
-              onChange={e => setFormData(prev => ({ ...prev, title: e.target.value }))}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, title: e.target.value }))
+              }
               className={cn(
                 "w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all",
-                errors.title ? "border-red-500" : "border-slate-200"
+                errors.title ? "border-red-500" : "border-slate-200",
               )}
               placeholder="Enter task title"
             />
-            {errors.title && <p className="text-red-500 text-sm">{errors.title}</p>}
+            {errors.title && (
+              <p className="text-red-500 text-sm">{errors.title}</p>
+            )}
           </div>
 
           <div className="space-y-2">
-            <label className="block text-sm font-medium text-slate-700">Description</label>
+            <label className="block text-sm font-medium text-slate-700">
+              Description
+            </label>
             <textarea
               value={formData.description}
-              onChange={e => setFormData(prev => ({ ...prev, description: e.target.value }))}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  description: e.target.value,
+                }))
+              }
               className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
               placeholder="Enter task description"
               rows={3}
@@ -471,40 +539,50 @@ function TaskModal({ isOpen, onClose, onSubmit, task, users }: TaskModalProps) {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-slate-700">Priority *</label>
+              <label className="block text-sm font-medium text-slate-700">
+                Priority *
+              </label>
               <div className="grid grid-cols-5 gap-2">
-                {(["Low", "Medium", "High", "Urgent", "Critical"] as const).map(priority => (
-                  <button
-                    key={priority}
-                    type="button"
-                    onClick={() => handlePrioritySelect(priority)}
-                    className={cn(
-                      "flex flex-col items-center justify-center p-3 border rounded-lg transition-all",
-                      formData.priority === priority
-                        ? getPriorityColor(priority)
-                        : "border-slate-200 hover:border-slate-300"
-                    )}
-                  >
-                    {getPriorityIcon(priority)}
-                    <span className="text-xs mt-1">{priority}</span>
-                  </button>
-                ))}
+                {(["Low", "Medium", "High", "Urgent", "Critical"] as const).map(
+                  (priority) => (
+                    <button
+                      key={priority}
+                      type="button"
+                      onClick={() => handlePrioritySelect(priority)}
+                      className={cn(
+                        "flex flex-col items-center justify-center p-3 border rounded-lg transition-all",
+                        formData.priority === priority
+                          ? getPriorityColor(priority)
+                          : "border-slate-200 hover:border-slate-300",
+                      )}
+                    >
+                      {getPriorityIcon(priority)}
+                      <span className="text-xs mt-1">{priority}</span>
+                    </button>
+                  ),
+                )}
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-slate-700">Due Date *</label>
+              <label className="block text-sm font-medium text-slate-700">
+                Due Date *
+              </label>
               <input
                 type="date"
                 value={formData.due_date}
-                onChange={e => setFormData(prev => ({ ...prev, due_date: e.target.value }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, due_date: e.target.value }))
+                }
                 className={cn(
                   "w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all",
-                  errors.due_date ? "border-red-500" : "border-slate-200"
+                  errors.due_date ? "border-red-500" : "border-slate-200",
                 )}
                 min={new Date().toISOString().split("T")[0]}
               />
-              {errors.due_date && <p className="text-red-500 text-sm">{errors.due_date}</p>}
+              {errors.due_date && (
+                <p className="text-red-500 text-sm">{errors.due_date}</p>
+              )}
             </div>
           </div>
 
@@ -514,43 +592,54 @@ function TaskModal({ isOpen, onClose, onSubmit, task, users }: TaskModalProps) {
             </label>
             <select
               value={formData.assigned_to}
-              onChange={e => setFormData(prev => ({ ...prev, assigned_to: e.target.value }))}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  assigned_to: e.target.value,
+                }))
+              }
               className={cn(
                 "w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all",
-                errors.assigned_to ? "border-red-500" : "border-slate-200"
+                errors.assigned_to ? "border-red-500" : "border-slate-200",
               )}
               disabled={formData.type === "personal"}
             >
               <option value="">Select user</option>
-              {users.map(user => (
+              {users.map((user) => (
                 <option key={user.id} value={user.id}>
                   {user.name} ({user.role})
                 </option>
               ))}
             </select>
-            {errors.assigned_to && <p className="text-red-500 text-sm">{errors.assigned_to}</p>}
+            {errors.assigned_to && (
+              <p className="text-red-500 text-sm">{errors.assigned_to}</p>
+            )}
             {formData.type === "personal" && (
-              <p className="text-sm text-slate-500">Personal tasks will be assigned to you automatically</p>
+              <p className="text-sm text-slate-500">
+                Personal tasks will be assigned to you automatically
+              </p>
             )}
           </div>
 
           <div className="space-y-2">
-            <label className="block text-sm font-medium text-slate-700">Status</label>
+            <label className="block text-sm font-medium text-slate-700">
+              Status
+            </label>
             <div className="flex gap-4">
-              {(["To Do", "In Progress", "Done"] as const).map(status => (
+              {(["To Do", "In Progress", "Done"] as const).map((status) => (
                 <button
                   key={status}
                   type="button"
-                  onClick={() => setFormData(prev => ({ ...prev, status }))}
+                  onClick={() => setFormData((prev) => ({ ...prev, status }))}
                   className={cn(
                     "flex-1 py-3 px-4 border rounded-lg text-center transition-all",
                     formData.status === status
                       ? status === "Done"
                         ? "border-emerald-500 bg-emerald-50 text-emerald-700"
                         : status === "In Progress"
-                        ? "border-blue-500 bg-blue-50 text-blue-700"
-                        : "border-slate-500 bg-slate-50 text-slate-700"
-                      : "border-slate-200 hover:border-slate-300"
+                          ? "border-blue-500 bg-blue-50 text-blue-700"
+                          : "border-slate-500 bg-slate-50 text-slate-700"
+                      : "border-slate-200 hover:border-slate-300",
                   )}
                 >
                   {status}
@@ -635,19 +724,22 @@ export default function AdminTaskBoardPage() {
 
   const filteredTasks = useMemo(() => {
     let filtered = [...tasks];
-    if (filters.status !== "all") filtered = filtered.filter(t => t.status === filters.status);
-    if (filters.priority !== "all") filtered = filtered.filter(t => t.priority === filters.priority);
-    if (filters.type !== "all") filtered = filtered.filter(t => t.type === filters.type);
+    if (filters.status !== "all")
+      filtered = filtered.filter((t) => t.status === filters.status);
+    if (filters.priority !== "all")
+      filtered = filtered.filter((t) => t.priority === filters.priority);
+    if (filters.type !== "all")
+      filtered = filtered.filter((t) => t.type === filters.type);
     if (filters.search) {
       const searchLower = filters.search.toLowerCase();
       filtered = filtered.filter(
-        t =>
+        (t) =>
           t.title.toLowerCase().includes(searchLower) ||
           t.description?.toLowerCase().includes(searchLower) ||
-          t.assigned_to_user?.name.toLowerCase().includes(searchLower)
+          t.assigned_to_user?.name.toLowerCase().includes(searchLower),
       );
     }
-    if (!showDone) filtered = filtered.filter(t => t.status !== "Done");
+    if (!showDone) filtered = filtered.filter((t) => t.status !== "Done");
     return filtered;
   }, [tasks, filters, showDone]);
 
@@ -656,14 +748,21 @@ export default function AdminTaskBoardPage() {
       const token = localStorage.getItem("auth_token");
       if (!token) throw new Error("No token");
 
-      const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
+      const headers = {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      };
       const dataToSend = {
         ...taskData,
-        assigned_to: taskData.assigned_to ? parseInt(taskData.assigned_to) : null,
+        assigned_to: taskData.assigned_to
+          ? parseInt(taskData.assigned_to)
+          : null,
       };
 
       if (editingTask) {
-        await axios.put(`${API_BASE}/tasks/${editingTask.id}`, dataToSend, { headers });
+        await axios.put(`${API_BASE}/tasks/${editingTask.id}`, dataToSend, {
+          headers,
+        });
         toast.success("Task updated");
       } else {
         await axios.post(`${API_BASE}/tasks`, dataToSend, { headers });
@@ -689,10 +788,19 @@ export default function AdminTaskBoardPage() {
     }
   };
 
-  const handleStatusChange = async (taskId: number, newStatus: Task["status"]) => {
+  const handleStatusChange = async (
+    taskId: number,
+    newStatus: Task["status"],
+  ) => {
     try {
-      await axios.patch(`${API_BASE}/tasks/${taskId}/status`, { status: newStatus }, getHeaders());
-      setTasks(prev => prev.map(t => (t.id === taskId ? { ...t, status: newStatus } : t)));
+      await axios.patch(
+        `${API_BASE}/tasks/${taskId}/status`,
+        { status: newStatus },
+        getHeaders(),
+      );
+      setTasks((prev) =>
+        prev.map((t) => (t.id === taskId ? { ...t, status: newStatus } : t)),
+      );
       toast.success("Status updated");
     } catch (error: any) {
       toast.error(error.response?.data?.error || "Failed to update status");
@@ -702,39 +810,59 @@ export default function AdminTaskBoardPage() {
   // Helper functions (icons, styles, etc.)
   const getPriorityIcon = (priority: Task["priority"]) => {
     switch (priority) {
-      case "Critical": return <AlertTriangle className="text-red-600" size={16} />;
-      case "Urgent": return <AlertCircle className="text-orange-500" size={16} />;
-      case "High": return <AlertTriangle className="text-amber-500" size={16} />;
-      case "Medium": return <Shield className="text-blue-500" size={16} />;
-      case "Low": return <Info className="text-slate-500" size={16} />;
-      default: return <Info size={16} />;
+      case "Critical":
+        return <AlertTriangle className="text-red-600" size={16} />;
+      case "Urgent":
+        return <AlertCircle className="text-orange-500" size={16} />;
+      case "High":
+        return <AlertTriangle className="text-amber-500" size={16} />;
+      case "Medium":
+        return <Shield className="text-blue-500" size={16} />;
+      case "Low":
+        return <Info className="text-slate-500" size={16} />;
+      default:
+        return <Info size={16} />;
     }
   };
 
   const getPriorityStyles = (priority: Task["priority"]) => {
     switch (priority) {
-      case "Critical": return "bg-red-50 border-red-200 text-red-700";
-      case "Urgent": return "bg-orange-50 border-orange-200 text-orange-700";
-      case "High": return "bg-amber-50 border-amber-200 text-amber-700";
-      case "Medium": return "bg-blue-50 border-blue-200 text-blue-700";
-      case "Low": return "bg-slate-50 border-slate-200 text-slate-700";
-      default: return "bg-slate-50 border-slate-200 text-slate-700";
+      case "Critical":
+        return "bg-red-50 border-red-200 text-red-700";
+      case "Urgent":
+        return "bg-orange-50 border-orange-200 text-orange-700";
+      case "High":
+        return "bg-amber-50 border-amber-200 text-amber-700";
+      case "Medium":
+        return "bg-blue-50 border-blue-200 text-blue-700";
+      case "Low":
+        return "bg-slate-50 border-slate-200 text-slate-700";
+      default:
+        return "bg-slate-50 border-slate-200 text-slate-700";
     }
   };
 
   const getStatusStyles = (status: Task["status"]) => {
     switch (status) {
-      case "Done": return "bg-emerald-50 text-emerald-600 border-emerald-200";
-      case "In Progress": return "bg-blue-50 text-blue-600 border-blue-200";
-      case "To Do": return "bg-slate-50 text-slate-600 border-slate-200";
-      default: return "bg-slate-50 text-slate-600 border-slate-200";
+      case "Done":
+        return "bg-emerald-50 text-emerald-600 border-emerald-200";
+      case "In Progress":
+        return "bg-blue-50 text-blue-600 border-blue-200";
+      case "To Do":
+        return "bg-slate-50 text-slate-600 border-slate-200";
+      default:
+        return "bg-slate-50 text-slate-600 border-slate-200";
     }
   };
 
   const formatDate = (dateString: string) => {
     if (!dateString) return "No date";
     const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
   };
 
   const isOverdue = (dueDate: string) => {
@@ -749,15 +877,16 @@ export default function AdminTaskBoardPage() {
   return (
     <div className="min-h-screen bg-white text-[#003566]">
       <DashboardHeader />
-      <Toaster position="top-right" />
-
+      // <Toaster position="top-right" />
       <div className="flex">
         <main className="flex-1 p-6 bg-white min-h-[calc(100vh-80px)]">
           <div className="max-w-7xl mx-auto space-y-6">
             {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
               <div>
-                <h1 className="text-4xl font-serif italic text-[#003566]">Task Oversight</h1>
+                <h1 className="text-4xl font-serif italic text-[#003566]">
+                  Task Oversight
+                </h1>
                 <p className="text-[10px] uppercase tracking-widest text-blue-600 font-black mt-2">
                   Fleet Management & Command
                 </p>
@@ -765,13 +894,21 @@ export default function AdminTaskBoardPage() {
 
               <div className="flex flex-col md:flex-row w-full md:w-auto gap-4">
                 <div className="relative w-full md:w-64">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
+                  <Search
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                    size={14}
+                  />
                   <input
                     type="text"
                     placeholder="SEARCH TASKS..."
                     className="w-full bg-white border border-slate-200 pl-10 pr-4 py-3 text-[10px] font-bold tracking-widest uppercase focus:border-blue-400 outline-none"
                     value={filters.search}
-                    onChange={e => setFilters(prev => ({ ...prev, search: e.target.value }))}
+                    onChange={(e) =>
+                      setFilters((prev) => ({
+                        ...prev,
+                        search: e.target.value,
+                      }))
+                    }
                   />
                 </div>
 
@@ -807,11 +944,18 @@ export default function AdminTaskBoardPage() {
             {/* Filters */}
             <div className="flex flex-wrap items-center gap-4 p-4 bg-slate-50 border border-slate-200 rounded-lg">
               <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-slate-600">Status:</span>
+                <span className="text-sm font-medium text-slate-600">
+                  Status:
+                </span>
                 <select
                   className="bg-white border border-slate-200 px-3 py-2 text-sm font-medium outline-none rounded"
                   value={filters.status}
-                  onChange={e => setFilters(prev => ({ ...prev, status: e.target.value as StatusFilter }))}
+                  onChange={(e) =>
+                    setFilters((prev) => ({
+                      ...prev,
+                      status: e.target.value as StatusFilter,
+                    }))
+                  }
                 >
                   <option value="all">All Status</option>
                   <option value="To Do">To Do</option>
@@ -821,11 +965,18 @@ export default function AdminTaskBoardPage() {
               </div>
 
               <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-slate-600">Priority:</span>
+                <span className="text-sm font-medium text-slate-600">
+                  Priority:
+                </span>
                 <select
                   className="bg-white border border-slate-200 px-3 py-2 text-sm font-medium outline-none rounded"
                   value={filters.priority}
-                  onChange={e => setFilters(prev => ({ ...prev, priority: e.target.value as PriorityFilter }))}
+                  onChange={(e) =>
+                    setFilters((prev) => ({
+                      ...prev,
+                      priority: e.target.value as PriorityFilter,
+                    }))
+                  }
                 >
                   <option value="all">All Priorities</option>
                   <option value="Low">Low</option>
@@ -837,11 +988,18 @@ export default function AdminTaskBoardPage() {
               </div>
 
               <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-slate-600">Type:</span>
+                <span className="text-sm font-medium text-slate-600">
+                  Type:
+                </span>
                 <select
                   className="bg-white border border-slate-200 px-3 py-2 text-sm font-medium outline-none rounded"
                   value={filters.type}
-                  onChange={e => setFilters(prev => ({ ...prev, type: e.target.value as TypeFilter }))}
+                  onChange={(e) =>
+                    setFilters((prev) => ({
+                      ...prev,
+                      type: e.target.value as TypeFilter,
+                    }))
+                  }
                 >
                   <option value="all">All Types</option>
                   <option value="assigned">Assigned</option>
@@ -872,13 +1030,15 @@ export default function AdminTaskBoardPage() {
                     <div className="text-center p-12 border-2 border-dashed border-slate-200 rounded-lg">
                       <p className="text-slate-400">No tasks found</p>
                       <p className="text-sm text-slate-300 mt-2">
-                        {filters.search || filters.status !== "all" || filters.priority !== "all"
+                        {filters.search ||
+                        filters.status !== "all" ||
+                        filters.priority !== "all"
                           ? "Try changing your filters"
                           : "Create your first task"}
                       </p>
                     </div>
                   ) : (
-                    filteredTasks.map(task => (
+                    filteredTasks.map((task) => (
                       <motion.div
                         key={task.id}
                         layout
@@ -888,21 +1048,40 @@ export default function AdminTaskBoardPage() {
                         className={cn(
                           "flex flex-col md:flex-row items-start md:items-center justify-between p-6 gap-6 border shadow-sm rounded-lg transition-all hover:shadow-md",
                           task.status === "Done" && "opacity-70",
-                          task.priority === "Critical" && task.status !== "Done" && "border-l-4 border-l-red-600"
+                          task.priority === "Critical" &&
+                            task.status !== "Done" &&
+                            "border-l-4 border-l-red-600",
                         )}
                       >
                         <div className="flex items-start gap-4 flex-1">
-                          <div className={cn("w-12 h-12 flex items-center justify-center rounded-full border-2", getPriorityStyles(task.priority))}>
+                          <div
+                            className={cn(
+                              "w-12 h-12 flex items-center justify-center rounded-full border-2",
+                              getPriorityStyles(task.priority),
+                            )}
+                          >
                             {getPriorityIcon(task.priority)}
                           </div>
 
                           <div className="flex-1">
                             <div className="flex items-center gap-3 mb-2 flex-wrap">
-                              <h3 className="text-lg font-bold text-[#003566]">{task.title}</h3>
-                              <span className={cn("px-2 py-1 text-xs font-bold uppercase border rounded", getPriorityStyles(task.priority))}>
+                              <h3 className="text-lg font-bold text-[#003566]">
+                                {task.title}
+                              </h3>
+                              <span
+                                className={cn(
+                                  "px-2 py-1 text-xs font-bold uppercase border rounded",
+                                  getPriorityStyles(task.priority),
+                                )}
+                              >
                                 {task.priority}
                               </span>
-                              <span className={cn("px-2 py-1 text-xs font-bold uppercase border rounded", getStatusStyles(task.status))}>
+                              <span
+                                className={cn(
+                                  "px-2 py-1 text-xs font-bold uppercase border rounded",
+                                  getStatusStyles(task.status),
+                                )}
+                              >
                                 {task.status}
                               </span>
                               {task.type === "personal" && (
@@ -918,17 +1097,27 @@ export default function AdminTaskBoardPage() {
                             </div>
 
                             {task.description && (
-                              <p className="text-sm text-slate-600 mb-3">{task.description}</p>
+                              <p className="text-sm text-slate-600 mb-3">
+                                {task.description}
+                              </p>
                             )}
 
                             <div className="flex flex-wrap items-center gap-4 text-sm text-slate-500">
                               {task.assigned_to_user && (
                                 <span className="flex items-center gap-1.5">
-                                  <UserIcon size={14} /> {task.assigned_to_user.name}
+                                  <UserIcon size={14} />{" "}
+                                  {task.assigned_to_user.name}
                                 </span>
                               )}
-                              <span className={cn("flex items-center gap-1.5", isOverdue(task.due_date) && "text-red-600 font-bold")}>
-                                <CalendarIcon size={14} /> Due: {formatDate(task.due_date)}
+                              <span
+                                className={cn(
+                                  "flex items-center gap-1.5",
+                                  isOverdue(task.due_date) &&
+                                    "text-red-600 font-bold",
+                                )}
+                              >
+                                <CalendarIcon size={14} /> Due:{" "}
+                                {formatDate(task.due_date)}
                                 {isOverdue(task.due_date) && " (OVERDUE)"}
                               </span>
                             </div>
@@ -938,15 +1127,20 @@ export default function AdminTaskBoardPage() {
                         <div className="flex items-center gap-3">
                           {task.status !== "Done" ? (
                             <Button
-                              onClick={() => handleStatusChange(task.id, "Done")}
+                              onClick={() =>
+                                handleStatusChange(task.id, "Done")
+                              }
                               className="bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100"
                               size="sm"
                             >
-                              <CheckCircle2 size={16} className="mr-2" /> Mark Done
+                              <CheckCircle2 size={16} className="mr-2" /> Mark
+                              Done
                             </Button>
                           ) : (
                             <Button
-                              onClick={() => handleStatusChange(task.id, "To Do")}
+                              onClick={() =>
+                                handleStatusChange(task.id, "To Do")
+                              }
                               variant="outline"
                               size="sm"
                             >
@@ -983,7 +1177,7 @@ export default function AdminTaskBoardPage() {
               <div className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
                 <CalendarView
                   tasks={filteredTasks}
-                  onTaskClick={task => {
+                  onTaskClick={(task) => {
                     setEditingTask(task);
                     setIsModalOpen(true);
                   }}
@@ -993,7 +1187,6 @@ export default function AdminTaskBoardPage() {
           </div>
         </main>
       </div>
-
       <TaskModal
         isOpen={isModalOpen}
         onClose={() => {

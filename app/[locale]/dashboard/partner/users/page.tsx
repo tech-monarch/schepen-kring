@@ -3,9 +3,24 @@
 import { useState, useEffect, useMemo } from "react";
 import axios from "axios";
 import {
-  UserPlus, Trash2, X, Eye, EyeOff, UserCircle, Mail, Phone,
-  RefreshCw, Briefcase, UserCheck, Loader2, BadgeDollarSign,
-  Link as LinkIcon, Copy, ChevronDown, ChevronUp, Settings
+  UserPlus,
+  Trash2,
+  X,
+  Eye,
+  EyeOff,
+  UserCircle,
+  Mail,
+  Phone,
+  RefreshCw,
+  Briefcase,
+  UserCheck,
+  Loader2,
+  BadgeDollarSign,
+  Link as LinkIcon,
+  Copy,
+  ChevronDown,
+  ChevronUp,
+  Settings,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -39,9 +54,13 @@ export default function PartnerUserManagementPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [selectedUserPermissions, setSelectedUserPermissions] = useState<Record<number, UserPagePermission[]>>({});
+  const [selectedUserPermissions, setSelectedUserPermissions] = useState<
+    Record<number, UserPagePermission[]>
+  >({});
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const [expandedPermissions, setExpandedPermissions] = useState<Record<number, boolean>>({});
+  const [expandedPermissions, setExpandedPermissions] = useState<
+    Record<number, boolean>
+  >({});
 
   // New User Form State
   const [newUser, setNewUser] = useState({
@@ -55,7 +74,10 @@ export default function PartnerUserManagementPage() {
 
   const API_BASE = "https://schepen-kring.nl/api";
   const getHeaders = () => ({
-    headers: { Authorization: `Bearer ${localStorage.getItem("auth_token")}`, Accept: "application/json" },
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+      Accept: "application/json",
+    },
   });
 
   const fetchCurrentUser = async () => {
@@ -77,7 +99,9 @@ export default function PartnerUserManagementPage() {
     try {
       const [uRes, pRes] = await Promise.all([
         axios.get(`${API_BASE}/partner/users`, getHeaders()),
-        axios.get(`${API_BASE}/page-permissions`, getHeaders()).catch(() => ({ data: [] })),
+        axios
+          .get(`${API_BASE}/page-permissions`, getHeaders())
+          .catch(() => ({ data: [] })),
       ]);
       setUsers(uRes.data);
       setPagePermissions(pRes.data);
@@ -96,8 +120,14 @@ export default function PartnerUserManagementPage() {
 
   const fetchUserPermissions = async (userId: number) => {
     try {
-      const response = await axios.get(`${API_BASE}/users/${userId}/page-permissions`, getHeaders());
-      setSelectedUserPermissions(prev => ({ ...prev, [userId]: response.data }));
+      const response = await axios.get(
+        `${API_BASE}/users/${userId}/page-permissions`,
+        getHeaders(),
+      );
+      setSelectedUserPermissions((prev) => ({
+        ...prev,
+        [userId]: response.data,
+      }));
     } catch (error) {
       console.error("Failed to fetch user permissions:", error);
     }
@@ -107,13 +137,26 @@ export default function PartnerUserManagementPage() {
     e.preventDefault();
     try {
       toast.loading("Creating user...", { id: "create" });
-      const res = await axios.post(`${API_BASE}/partner/users`, newUser, getHeaders());
+      const res = await axios.post(
+        `${API_BASE}/partner/users`,
+        newUser,
+        getHeaders(),
+      );
       setUsers([...users, res.data]);
       setIsModalOpen(false);
-      setNewUser({ name: "", email: "", password: "", role: "Employee", access_level: "Limited", status: "Active" });
+      setNewUser({
+        name: "",
+        email: "",
+        password: "",
+        role: "Employee",
+        access_level: "Limited",
+        status: "Active",
+      });
       toast.success("User created.", { id: "create" });
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Creation failed.", { id: "create" });
+      toast.error(err.response?.data?.message || "Creation failed.", {
+        id: "create",
+      });
     }
   };
 
@@ -121,7 +164,7 @@ export default function PartnerUserManagementPage() {
     try {
       toast.loading("Deleting user...", { id: "delete" });
       await axios.delete(`${API_BASE}/partner/users/${userId}`, getHeaders());
-      setUsers(users.filter(u => u.id !== userId));
+      setUsers(users.filter((u) => u.id !== userId));
       const newPermissions = { ...selectedUserPermissions };
       delete newPermissions[userId];
       setSelectedUserPermissions(newPermissions);
@@ -131,22 +174,32 @@ export default function PartnerUserManagementPage() {
     }
   };
 
-  const updateUserPermission = async (userId: number, pageKey: string, value: PermissionValue) => {
+  const updateUserPermission = async (
+    userId: number,
+    pageKey: string,
+    value: PermissionValue,
+  ) => {
     try {
       await axios.post(
         `${API_BASE}/users/${userId}/page-permissions/update`,
         { page_key: pageKey, permission_value: value },
-        getHeaders()
+        getHeaders(),
       );
-      setSelectedUserPermissions(prev => {
+      setSelectedUserPermissions((prev) => {
         const userPerms = prev[userId] || [];
-        const updatedPerms = userPerms.map(perm =>
-          perm.page_key === pageKey ? { ...perm, permission_value: value } : perm
+        const updatedPerms = userPerms.map((perm) =>
+          perm.page_key === pageKey
+            ? { ...perm, permission_value: value }
+            : perm,
         );
-        if (!updatedPerms.find(p => p.page_key === pageKey)) {
-          const page = pagePermissions.find(p => p.page_key === pageKey);
+        if (!updatedPerms.find((p) => p.page_key === pageKey)) {
+          const page = pagePermissions.find((p) => p.page_key === pageKey);
           if (page) {
-            updatedPerms.push({ page_key: pageKey, page_name: page.page_name, permission_value: value });
+            updatedPerms.push({
+              page_key: pageKey,
+              page_name: page.page_name,
+              permission_value: value,
+            });
           }
         }
         return { ...prev, [userId]: updatedPerms };
@@ -159,10 +212,17 @@ export default function PartnerUserManagementPage() {
 
   const resetUserPermissions = async (userId: number) => {
     try {
-      await axios.post(`${API_BASE}/users/${userId}/page-permissions/reset`, {}, getHeaders());
-      setSelectedUserPermissions(prev => {
+      await axios.post(
+        `${API_BASE}/users/${userId}/page-permissions/reset`,
+        {},
+        getHeaders(),
+      );
+      setSelectedUserPermissions((prev) => {
         const userPerms = prev[userId] || [];
-        const resetPerms = userPerms.map(perm => ({ ...perm, permission_value: 0 as PermissionValue }));
+        const resetPerms = userPerms.map((perm) => ({
+          ...perm,
+          permission_value: 0 as PermissionValue,
+        }));
         return { ...prev, [userId]: resetPerms };
       });
       toast.success("Permissions reset");
@@ -171,22 +231,36 @@ export default function PartnerUserManagementPage() {
     }
   };
 
-  const getPermissionValue = (userId: number, pageKey: string): PermissionValue => {
-    return selectedUserPermissions[userId]?.find(p => p.page_key === pageKey)?.permission_value ?? 0;
+  const getPermissionValue = (
+    userId: number,
+    pageKey: string,
+  ): PermissionValue => {
+    return (
+      selectedUserPermissions[userId]?.find((p) => p.page_key === pageKey)
+        ?.permission_value ?? 0
+    );
   };
 
   const filteredUsers = useMemo(() => {
-    return users.filter(u =>
-      u.role === activeTab &&
-      (u.name.toLowerCase().includes(searchQuery.toLowerCase()) || u.email.toLowerCase().includes(searchQuery.toLowerCase()))
+    return users.filter(
+      (u) =>
+        u.role === activeTab &&
+        (u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          u.email.toLowerCase().includes(searchQuery.toLowerCase())),
     );
   }, [users, searchQuery, activeTab]);
 
   const togglePermissions = (userId: number) => {
-    setExpandedPermissions(prev => ({ ...prev, [userId]: !prev[userId] }));
+    setExpandedPermissions((prev) => ({ ...prev, [userId]: !prev[userId] }));
   };
 
-  const PermissionDropdown = ({ userId, page }: { userId: number, page: PagePermission }) => {
+  const PermissionDropdown = ({
+    userId,
+    page,
+  }: {
+    userId: number;
+    page: PagePermission;
+  }) => {
     const currentValue = getPermissionValue(userId, page.page_key);
 
     const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -200,16 +274,23 @@ export default function PartnerUserManagementPage() {
         onChange={handleChange}
         className="border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium rounded shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 cursor-pointer text-gray-900"
       >
-        <option value={0} className="text-gray-900">Default</option>
-        <option value={1} className="text-gray-900">Allow</option>
-        <option value={2} className="text-gray-900">Deny</option>
+        <option value={0} className="text-gray-900">
+          Default
+        </option>
+        <option value={1} className="text-gray-900">
+          Allow
+        </option>
+        <option value={2} className="text-gray-900">
+          Deny
+        </option>
       </select>
     );
   };
 
-  const referralLink = currentUser?.role === "Partner" && currentUser?.partner_token
-    ? `${window.location.origin}/nl/login/${currentUser.partner_token}`
-    : null;
+  const referralLink =
+    currentUser?.role === "Partner" && currentUser?.partner_token
+      ? `${window.location.origin}/nl/login/${currentUser.partner_token}`
+      : null;
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -221,15 +302,16 @@ export default function PartnerUserManagementPage() {
       <Sidebar onCollapse={setIsSidebarCollapsed} />
       <main
         className="flex-1 transition-all duration-300 bg-white"
-        style={{ marginLeft: isSidebarCollapsed ? '80px' : '280px' }}
+        style={{ marginLeft: isSidebarCollapsed ? "80px" : "280px" }}
       >
         <div className="space-y-8 p-8 max-w-7xl mx-auto">
-          <Toaster position="top-right" />
-
+          // <Toaster position="top-right" />
           {/* HEADER */}
           <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-gray-200 pb-8">
             <div>
-              <h1 className="text-4xl font-serif italic text-gray-900">Harbor Personnel</h1>
+              <h1 className="text-4xl font-serif italic text-gray-900">
+                Harbor Personnel
+              </h1>
               <p className="text-xs uppercase tracking-[0.3em] text-blue-700 font-bold mt-2">
                 Manage employees, customers & sellers
               </p>
@@ -250,7 +332,6 @@ export default function PartnerUserManagementPage() {
               </Button>
             </div>
           </div>
-
           {/* REFERRAL LINK SECTION */}
           {referralLink && (
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -259,8 +340,12 @@ export default function PartnerUserManagementPage() {
                   <LinkIcon className="w-4 h-4 text-blue-800" />
                 </div>
                 <div>
-                  <p className="text-xs font-bold uppercase tracking-wider text-blue-800">Your Unique Referral Link</p>
-                  <p className="text-sm text-gray-900 font-mono break-all">{referralLink}</p>
+                  <p className="text-xs font-bold uppercase tracking-wider text-blue-800">
+                    Your Unique Referral Link
+                  </p>
+                  <p className="text-sm text-gray-900 font-mono break-all">
+                    {referralLink}
+                  </p>
                 </div>
               </div>
               <Button
@@ -271,36 +356,50 @@ export default function PartnerUserManagementPage() {
               </Button>
             </div>
           )}
-
           {/* TABS */}
           <div className="flex flex-wrap gap-1 border-b border-gray-200">
-            {(["Employee", "Customer", "Seller"] as UserCategory[]).map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={cn(
-                  "flex items-center gap-2 px-6 py-3 text-xs font-bold uppercase tracking-wider transition-all relative",
-                  activeTab === tab ? "text-gray-900" : "text-gray-600 hover:text-gray-800"
-                )}
-              >
-                {tab === "Employee" ? <Briefcase size={16} /> :
-                 tab === "Customer" ? <UserCircle size={16} /> :
-                 <BadgeDollarSign size={16} />}
-                {tab}s
-                {activeTab === tab && (
-                  <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#003566]" />
-                )}
-              </button>
-            ))}
+            {(["Employee", "Customer", "Seller"] as UserCategory[]).map(
+              (tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={cn(
+                    "flex items-center gap-2 px-6 py-3 text-xs font-bold uppercase tracking-wider transition-all relative",
+                    activeTab === tab
+                      ? "text-gray-900"
+                      : "text-gray-600 hover:text-gray-800",
+                  )}
+                >
+                  {tab === "Employee" ? (
+                    <Briefcase size={16} />
+                  ) : tab === "Customer" ? (
+                    <UserCircle size={16} />
+                  ) : (
+                    <BadgeDollarSign size={16} />
+                  )}
+                  {tab}s
+                  {activeTab === tab && (
+                    <motion.div
+                      layoutId="activeTab"
+                      className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#003566]"
+                    />
+                  )}
+                </button>
+              ),
+            )}
           </div>
-
           {/* USER LIST */}
           <div className="grid grid-cols-1 gap-6 pb-20">
             {loading ? (
-              <Loader2 className="animate-spin mx-auto mt-20 text-gray-400" size={48} />
+              <Loader2
+                className="animate-spin mx-auto mt-20 text-gray-400"
+                size={48}
+              />
             ) : filteredUsers.length === 0 ? (
               <div className="text-center py-20 text-gray-500">
-                <p className="text-xs font-bold uppercase tracking-wider">No users found</p>
+                <p className="text-xs font-bold uppercase tracking-wider">
+                  No users found
+                </p>
               </div>
             ) : (
               filteredUsers.map((user) => (
@@ -315,27 +414,42 @@ export default function PartnerUserManagementPage() {
                       <div className="flex items-center gap-4">
                         <div className="w-16 h-16 bg-gray-100 border border-gray-200 rounded-full flex items-center justify-center text-gray-700 overflow-hidden">
                           {user.profile_image ? (
-                            <img src={user.profile_image} alt={user.name} className="w-full h-full object-cover" />
+                            <img
+                              src={user.profile_image}
+                              alt={user.name}
+                              className="w-full h-full object-cover"
+                            />
                           ) : (
                             <UserCheck size={32} />
                           )}
                         </div>
                         <div>
-                          <h3 className="text-xl font-serif italic text-gray-900">{user.name}</h3>
+                          <h3 className="text-xl font-serif italic text-gray-900">
+                            {user.name}
+                          </h3>
                           <p className="text-xs text-blue-700 font-bold uppercase tracking-wider mt-1">
                             {user.access_level} CLEARANCE
                           </p>
                         </div>
                       </div>
                       <div className="space-y-2 text-sm text-gray-800">
-                        <div className="flex items-center gap-2"><Mail size={16} className="text-gray-600" /> {user.email}</div>
+                        <div className="flex items-center gap-2">
+                          <Mail size={16} className="text-gray-600" />{" "}
+                          {user.email}
+                        </div>
                         {user.phone_number && (
-                          <div className="flex items-center gap-2"><Phone size={16} className="text-gray-600" /> {user.phone_number}</div>
+                          <div className="flex items-center gap-2">
+                            <Phone size={16} className="text-gray-600" />{" "}
+                            {user.phone_number}
+                          </div>
                         )}
                       </div>
                       <div className="flex gap-4 pt-4 border-t border-gray-100">
                         <button
-                          onClick={() => { if(confirm("Delete this user?")) handleDeleteUser(user.id); }}
+                          onClick={() => {
+                            if (confirm("Delete this user?"))
+                              handleDeleteUser(user.id);
+                          }}
                           className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-red-600 hover:text-red-800"
                         >
                           <Trash2 size={16} /> Terminate
@@ -380,18 +494,29 @@ export default function PartnerUserManagementPage() {
                             >
                               <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
                                 <p className="text-[10px] font-bold uppercase text-gray-600 mb-3 tracking-wider">
-                                  Page Access Control (0=Default, 1=Allow, 2=Deny)
+                                  Page Access Control (0=Default, 1=Allow,
+                                  2=Deny)
                                 </p>
                                 <div className="space-y-3">
                                   {pagePermissions.map((page) => (
-                                    <div key={page.id} className="flex items-center justify-between border-b border-gray-200 pb-3 last:border-0">
+                                    <div
+                                      key={page.id}
+                                      className="flex items-center justify-between border-b border-gray-200 pb-3 last:border-0"
+                                    >
                                       <div className="pr-4">
-                                        <p className="text-sm font-semibold text-gray-900">{page.page_name}</p>
+                                        <p className="text-sm font-semibold text-gray-900">
+                                          {page.page_name}
+                                        </p>
                                         {page.description && (
-                                          <p className="text-xs text-gray-600 mt-0.5">{page.description}</p>
+                                          <p className="text-xs text-gray-600 mt-0.5">
+                                            {page.description}
+                                          </p>
                                         )}
                                       </div>
-                                      <PermissionDropdown userId={user.id} page={page} />
+                                      <PermissionDropdown
+                                        userId={user.id}
+                                        page={page}
+                                      />
                                     </div>
                                   ))}
                                 </div>
@@ -406,7 +531,6 @@ export default function PartnerUserManagementPage() {
               ))
             )}
           </div>
-
           {/* CREATE MODAL */}
           <AnimatePresence>
             {isModalOpen && (
@@ -431,7 +555,9 @@ export default function PartnerUserManagementPage() {
                     <X size={20} />
                   </button>
                   <div className="mb-6">
-                    <h2 className="text-2xl font-serif italic text-gray-900">Add New User</h2>
+                    <h2 className="text-2xl font-serif italic text-gray-900">
+                      Add New User
+                    </h2>
                     <p className="text-xs font-bold uppercase tracking-wider text-blue-700 mt-1">
                       Create employee, customer or seller
                     </p>
@@ -447,7 +573,9 @@ export default function PartnerUserManagementPage() {
                           required
                           className="w-full border border-gray-300 rounded-md px-4 py-2.5 text-sm outline-none focus:border-blue-500 text-gray-900"
                           value={newUser.name}
-                          onChange={(e) => setNewUser({...newUser, name: e.target.value})}
+                          onChange={(e) =>
+                            setNewUser({ ...newUser, name: e.target.value })
+                          }
                           placeholder="John Doe"
                         />
                       </div>
@@ -460,7 +588,9 @@ export default function PartnerUserManagementPage() {
                           type="email"
                           className="w-full border border-gray-300 rounded-md px-4 py-2.5 text-sm outline-none focus:border-blue-500 text-gray-900"
                           value={newUser.email}
-                          onChange={(e) => setNewUser({...newUser, email: e.target.value})}
+                          onChange={(e) =>
+                            setNewUser({ ...newUser, email: e.target.value })
+                          }
                           placeholder="user@example.com"
                         />
                       </div>
@@ -475,7 +605,9 @@ export default function PartnerUserManagementPage() {
                         type={showPassword ? "text" : "password"}
                         className="w-full border border-gray-300 rounded-md px-4 py-2.5 text-sm outline-none focus:border-blue-500 text-gray-900 pr-12"
                         value={newUser.password}
-                        onChange={(e) => setNewUser({...newUser, password: e.target.value})}
+                        onChange={(e) =>
+                          setNewUser({ ...newUser, password: e.target.value })
+                        }
                         placeholder="••••••••"
                       />
                       <button
@@ -483,7 +615,11 @@ export default function PartnerUserManagementPage() {
                         onClick={() => setShowPassword(!showPassword)}
                         className="absolute right-3 top-9 text-gray-600 hover:text-gray-900"
                       >
-                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                        {showPassword ? (
+                          <EyeOff size={18} />
+                        ) : (
+                          <Eye size={18} />
+                        )}
                       </button>
                     </div>
 
@@ -495,7 +631,12 @@ export default function PartnerUserManagementPage() {
                         <select
                           className="w-full border border-gray-300 rounded-md px-3 py-2.5 text-sm outline-none text-gray-900"
                           value={newUser.role}
-                          onChange={(e) => setNewUser({...newUser, role: e.target.value as UserCategory})}
+                          onChange={(e) =>
+                            setNewUser({
+                              ...newUser,
+                              role: e.target.value as UserCategory,
+                            })
+                          }
                         >
                           <option value="Employee">Employee</option>
                           <option value="Customer">Customer</option>
@@ -509,7 +650,14 @@ export default function PartnerUserManagementPage() {
                         <select
                           className="w-full border border-gray-300 rounded-md px-3 py-2.5 text-sm outline-none text-gray-900"
                           value={newUser.access_level}
-                          onChange={(e) => setNewUser({...newUser, access_level: e.target.value as "Limited" | "Full"})}
+                          onChange={(e) =>
+                            setNewUser({
+                              ...newUser,
+                              access_level: e.target.value as
+                                | "Limited"
+                                | "Full",
+                            })
+                          }
                         >
                           <option value="Limited">Limited</option>
                           <option value="Full">Full</option>
@@ -522,7 +670,15 @@ export default function PartnerUserManagementPage() {
                         <select
                           className="w-full border border-gray-300 rounded-md px-3 py-2.5 text-sm outline-none text-gray-900"
                           value={newUser.status}
-                          onChange={(e) => setNewUser({...newUser, status: e.target.value as "Active" | "Inactive" | "Pending"})}
+                          onChange={(e) =>
+                            setNewUser({
+                              ...newUser,
+                              status: e.target.value as
+                                | "Active"
+                                | "Inactive"
+                                | "Pending",
+                            })
+                          }
                         >
                           <option value="Active">Active</option>
                           <option value="Inactive">Inactive</option>

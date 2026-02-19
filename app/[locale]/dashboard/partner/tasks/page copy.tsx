@@ -74,16 +74,22 @@ interface CalendarViewProps {
 
 function CalendarView({ tasks, onTaskClick }: CalendarViewProps) {
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
-  
+
   // Get priority color
   const getPriorityColor = (priority: string): string => {
     switch (priority) {
-      case "Critical": return "#dc2626";
-      case "Urgent": return "#ea580c";
-      case "High": return "#d97706";
-      case "Medium": return "#3b82f6";
-      case "Low": return "#6b7280";
-      default: return "#6b7280";
+      case "Critical":
+        return "#dc2626";
+      case "Urgent":
+        return "#ea580c";
+      case "High":
+        return "#d97706";
+      case "Medium":
+        return "#3b82f6";
+      case "Low":
+        return "#6b7280";
+      default:
+        return "#6b7280";
     }
   };
 
@@ -95,21 +101,21 @@ function CalendarView({ tasks, onTaskClick }: CalendarViewProps) {
     const lastDay = new Date(year, month + 1, 0);
     const daysInMonth = lastDay.getDate();
     const startingDay = firstDay.getDay();
-    
+
     return { firstDay, lastDay, daysInMonth, startingDay };
   };
 
   // Get week days
   const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-  
+
   // Get month name
   const getMonthName = (date: Date) => {
-    return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    return date.toLocaleDateString("en-US", { month: "long", year: "numeric" });
   };
 
   // Navigate to previous month
   const prevMonth = () => {
-    setCurrentDate(prev => {
+    setCurrentDate((prev) => {
       const newDate = new Date(prev);
       newDate.setMonth(newDate.getMonth() - 1);
       return newDate;
@@ -118,7 +124,7 @@ function CalendarView({ tasks, onTaskClick }: CalendarViewProps) {
 
   // Navigate to next month
   const nextMonth = () => {
-    setCurrentDate(prev => {
+    setCurrentDate((prev) => {
       const newDate = new Date(prev);
       newDate.setMonth(newDate.getMonth() + 1);
       return newDate;
@@ -132,13 +138,19 @@ function CalendarView({ tasks, onTaskClick }: CalendarViewProps) {
 
   // Get tasks for a specific day
   const getTasksForDay = (day: number) => {
-    const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
-    return tasks.filter(task => {
+    const date = new Date(
+      currentDate.getFullYear(),
+      currentDate.getMonth(),
+      day,
+    );
+    return tasks.filter((task) => {
       if (!task.due_date) return false;
       const taskDate = new Date(task.due_date);
-      return taskDate.getDate() === day &&
-             taskDate.getMonth() === currentDate.getMonth() &&
-             taskDate.getFullYear() === currentDate.getFullYear();
+      return (
+        taskDate.getDate() === day &&
+        taskDate.getMonth() === currentDate.getMonth() &&
+        taskDate.getFullYear() === currentDate.getFullYear()
+      );
     });
   };
 
@@ -146,38 +158,50 @@ function CalendarView({ tasks, onTaskClick }: CalendarViewProps) {
   const getCalendarGrid = () => {
     const { daysInMonth, startingDay } = getDaysInMonth(currentDate);
     const days = [];
-    
+
     // Previous month days
-    const prevMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 0);
+    const prevMonth = new Date(
+      currentDate.getFullYear(),
+      currentDate.getMonth(),
+      0,
+    );
     const prevMonthDays = prevMonth.getDate();
-    
+
     for (let i = 0; i < startingDay; i++) {
       days.push({
         day: prevMonthDays - startingDay + i + 1,
         isCurrentMonth: false,
-        date: new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, prevMonthDays - startingDay + i + 1)
+        date: new Date(
+          currentDate.getFullYear(),
+          currentDate.getMonth() - 1,
+          prevMonthDays - startingDay + i + 1,
+        ),
       });
     }
-    
+
     // Current month days
     for (let i = 1; i <= daysInMonth; i++) {
       days.push({
         day: i,
         isCurrentMonth: true,
-        date: new Date(currentDate.getFullYear(), currentDate.getMonth(), i)
+        date: new Date(currentDate.getFullYear(), currentDate.getMonth(), i),
       });
     }
-    
+
     // Next month days
     const totalCells = 42; // 6 weeks
     for (let i = 1; days.length < totalCells; i++) {
       days.push({
         day: i,
         isCurrentMonth: false,
-        date: new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, i)
+        date: new Date(
+          currentDate.getFullYear(),
+          currentDate.getMonth() + 1,
+          i,
+        ),
       });
     }
-    
+
     return days;
   };
 
@@ -186,7 +210,6 @@ function CalendarView({ tasks, onTaskClick }: CalendarViewProps) {
 
   return (
     <div className="bg-white p-6 rounded-lg border border-slate-200">
-      
       {/* Calendar Header */}
       <div className="flex flex-col md:flex-row justify-between items-center mb-6">
         <div className="flex items-center gap-4 mb-4 md:mb-0">
@@ -217,34 +240,40 @@ function CalendarView({ tasks, onTaskClick }: CalendarViewProps) {
       {/* Calendar Grid */}
       <div className="grid grid-cols-7 gap-px bg-slate-200 rounded-lg overflow-hidden">
         {/* Week Days Header */}
-        {weekDays.map(day => (
-          <div key={day} className="bg-slate-50 p-3 text-center text-sm font-medium text-slate-600">
+        {weekDays.map((day) => (
+          <div
+            key={day}
+            className="bg-slate-50 p-3 text-center text-sm font-medium text-slate-600"
+          >
             {day}
           </div>
         ))}
-        
+
         {/* Calendar Days */}
         {calendarGrid.map(({ day, isCurrentMonth, date }, index) => {
           const dayTasks = getTasksForDay(day);
-          const isToday = date.getDate() === today.getDate() &&
-                         date.getMonth() === today.getMonth() &&
-                         date.getFullYear() === today.getFullYear();
-          
+          const isToday =
+            date.getDate() === today.getDate() &&
+            date.getMonth() === today.getMonth() &&
+            date.getFullYear() === today.getFullYear();
+
           return (
             <div
               key={index}
               className={cn(
                 "min-h-[120px] bg-white p-2 border border-slate-100",
                 !isCurrentMonth && "bg-slate-50",
-                isToday && "bg-blue-50"
+                isToday && "bg-blue-50",
               )}
             >
               <div className="flex justify-between items-center mb-1">
-                <span className={cn(
-                  "text-sm font-medium",
-                  isCurrentMonth ? "text-slate-900" : "text-slate-400",
-                  isToday && "text-blue-600 font-bold"
-                )}>
+                <span
+                  className={cn(
+                    "text-sm font-medium",
+                    isCurrentMonth ? "text-slate-900" : "text-slate-400",
+                    isToday && "text-blue-600 font-bold",
+                  )}
+                >
                   {day}
                 </span>
                 {dayTasks.length > 0 && (
@@ -253,10 +282,10 @@ function CalendarView({ tasks, onTaskClick }: CalendarViewProps) {
                   </span>
                 )}
               </div>
-              
+
               {/* Tasks for this day */}
               <div className="space-y-1 max-h-20 overflow-y-auto">
-                {dayTasks.slice(0, 3).map(task => (
+                {dayTasks.slice(0, 3).map((task) => (
                   <div
                     key={task.id}
                     className="text-xs p-1 rounded border-l-2 cursor-pointer hover:opacity-90"
@@ -271,10 +300,18 @@ function CalendarView({ tasks, onTaskClick }: CalendarViewProps) {
                     }}
                   >
                     <div className="flex items-center gap-1">
-                      {task.priority === "Critical" && <AlertTriangle className="text-red-600" size={10} />}
-                      {task.priority === "Urgent" && <AlertCircle className="text-orange-500" size={10} />}
-                      {task.priority === "High" && <AlertTriangle className="text-amber-500" size={10} />}
-                      {["Medium", "Low"].includes(task.priority) && <Clock className="text-blue-500" size={10} />}
+                      {task.priority === "Critical" && (
+                        <AlertTriangle className="text-red-600" size={10} />
+                      )}
+                      {task.priority === "Urgent" && (
+                        <AlertCircle className="text-orange-500" size={10} />
+                      )}
+                      {task.priority === "High" && (
+                        <AlertTriangle className="text-amber-500" size={10} />
+                      )}
+                      {["Medium", "Low"].includes(task.priority) && (
+                        <Clock className="text-blue-500" size={10} />
+                      )}
                       <span className="truncate">{task.title}</span>
                     </div>
                   </div>
@@ -289,7 +326,7 @@ function CalendarView({ tasks, onTaskClick }: CalendarViewProps) {
           );
         })}
       </div>
-      
+
       {/* Legend */}
       <div className="flex flex-wrap gap-4 mt-6 pt-6 border-t border-slate-200">
         <div className="flex items-center gap-2">
@@ -346,7 +383,9 @@ function TaskModal({ isOpen, onClose, onSubmit, task }: TaskModalProps) {
         description: task.description || "",
         priority: task.priority || "Medium",
         status: task.status || "To Do",
-        due_date: task.due_date ? task.due_date.split("T")[0] : new Date().toISOString().split("T")[0],
+        due_date: task.due_date
+          ? task.due_date.split("T")[0]
+          : new Date().toISOString().split("T")[0],
         type: "personal",
       });
     } else {
@@ -364,11 +403,11 @@ function TaskModal({ isOpen, onClose, onSubmit, task }: TaskModalProps) {
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
-    
+
     if (!formData.title.trim()) {
       newErrors.title = "Title is required";
     }
-    
+
     if (!formData.due_date) {
       newErrors.due_date = "Due date is required";
     }
@@ -379,7 +418,7 @@ function TaskModal({ isOpen, onClose, onSubmit, task }: TaskModalProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
@@ -388,28 +427,40 @@ function TaskModal({ isOpen, onClose, onSubmit, task }: TaskModalProps) {
   };
 
   const handlePrioritySelect = (priority: Task["priority"]) => {
-    setFormData(prev => ({ ...prev, priority }));
+    setFormData((prev) => ({ ...prev, priority }));
   };
 
   const getPriorityIcon = (priority: string) => {
     switch (priority) {
-      case "Critical": return <AlertTriangle className="text-red-600" size={20} />;
-      case "Urgent": return <AlertCircle className="text-orange-500" size={20} />;
-      case "High": return <AlertTriangle className="text-amber-500" size={20} />;
-      case "Medium": return <Shield className="text-blue-500" size={20} />;
-      case "Low": return <Info className="text-slate-500" size={20} />;
-      default: return <Info size={20} />;
+      case "Critical":
+        return <AlertTriangle className="text-red-600" size={20} />;
+      case "Urgent":
+        return <AlertCircle className="text-orange-500" size={20} />;
+      case "High":
+        return <AlertTriangle className="text-amber-500" size={20} />;
+      case "Medium":
+        return <Shield className="text-blue-500" size={20} />;
+      case "Low":
+        return <Info className="text-slate-500" size={20} />;
+      default:
+        return <Info size={20} />;
     }
   };
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case "Critical": return "bg-red-50 border-red-500 text-red-700";
-      case "Urgent": return "bg-orange-50 border-orange-500 text-orange-700";
-      case "High": return "bg-amber-50 border-amber-500 text-amber-700";
-      case "Medium": return "bg-blue-50 border-blue-500 text-blue-700";
-      case "Low": return "bg-slate-50 border-slate-500 text-slate-700";
-      default: return "bg-slate-50 border-slate-500 text-slate-700";
+      case "Critical":
+        return "bg-red-50 border-red-500 text-red-700";
+      case "Urgent":
+        return "bg-orange-50 border-orange-500 text-orange-700";
+      case "High":
+        return "bg-amber-50 border-amber-500 text-amber-700";
+      case "Medium":
+        return "bg-blue-50 border-blue-500 text-blue-700";
+      case "Low":
+        return "bg-slate-50 border-slate-500 text-slate-700";
+      default:
+        return "bg-slate-50 border-slate-500 text-slate-700";
     }
   };
 
@@ -441,10 +492,12 @@ function TaskModal({ isOpen, onClose, onSubmit, task }: TaskModalProps) {
             <input
               type="text"
               value={formData.title}
-              onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, title: e.target.value }))
+              }
               className={cn(
                 "w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all",
-                errors.title ? "border-red-500" : "border-slate-200"
+                errors.title ? "border-red-500" : "border-slate-200",
               )}
               placeholder="Enter task title"
             />
@@ -460,7 +513,12 @@ function TaskModal({ isOpen, onClose, onSubmit, task }: TaskModalProps) {
             </label>
             <textarea
               value={formData.description}
-              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  description: e.target.value,
+                }))
+              }
               className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
               placeholder="Enter task description"
               rows={3}
@@ -474,22 +532,24 @@ function TaskModal({ isOpen, onClose, onSubmit, task }: TaskModalProps) {
                 Priority *
               </label>
               <div className="grid grid-cols-5 gap-2">
-                {(["Low", "Medium", "High", "Urgent", "Critical"] as const).map((priority) => (
-                  <button
-                    key={priority}
-                    type="button"
-                    onClick={() => handlePrioritySelect(priority)}
-                    className={cn(
-                      "flex flex-col items-center justify-center p-3 border rounded-lg transition-all",
-                      formData.priority === priority
-                        ? getPriorityColor(priority)
-                        : "border-slate-200 hover:border-slate-300"
-                    )}
-                  >
-                    {getPriorityIcon(priority)}
-                    <span className="text-xs mt-1">{priority}</span>
-                  </button>
-                ))}
+                {(["Low", "Medium", "High", "Urgent", "Critical"] as const).map(
+                  (priority) => (
+                    <button
+                      key={priority}
+                      type="button"
+                      onClick={() => handlePrioritySelect(priority)}
+                      className={cn(
+                        "flex flex-col items-center justify-center p-3 border rounded-lg transition-all",
+                        formData.priority === priority
+                          ? getPriorityColor(priority)
+                          : "border-slate-200 hover:border-slate-300",
+                      )}
+                    >
+                      {getPriorityIcon(priority)}
+                      <span className="text-xs mt-1">{priority}</span>
+                    </button>
+                  ),
+                )}
               </div>
             </div>
 
@@ -501,10 +561,12 @@ function TaskModal({ isOpen, onClose, onSubmit, task }: TaskModalProps) {
               <input
                 type="date"
                 value={formData.due_date}
-                onChange={(e) => setFormData(prev => ({ ...prev, due_date: e.target.value }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, due_date: e.target.value }))
+                }
                 className={cn(
                   "w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all",
-                  errors.due_date ? "border-red-500" : "border-slate-200"
+                  errors.due_date ? "border-red-500" : "border-slate-200",
                 )}
                 min={new Date().toISOString().split("T")[0]}
               />
@@ -524,14 +586,16 @@ function TaskModal({ isOpen, onClose, onSubmit, task }: TaskModalProps) {
                 <button
                   key={status}
                   type="button"
-                  onClick={() => setFormData(prev => ({ ...prev, status }))}
+                  onClick={() => setFormData((prev) => ({ ...prev, status }))}
                   className={cn(
                     "flex-1 py-3 px-4 border rounded-lg text-center transition-all",
                     formData.status === status
-                      ? status === "Done" ? "border-emerald-500 bg-emerald-50 text-emerald-700"
-                      : status === "In Progress" ? "border-blue-500 bg-blue-50 text-blue-700"
-                      : "border-slate-500 bg-slate-50 text-slate-700"
-                      : "border-slate-200 hover:border-slate-300"
+                      ? status === "Done"
+                        ? "border-emerald-500 bg-emerald-50 text-emerald-700"
+                        : status === "In Progress"
+                          ? "border-blue-500 bg-blue-50 text-blue-700"
+                          : "border-slate-500 bg-slate-50 text-slate-700"
+                      : "border-slate-200 hover:border-slate-300",
                   )}
                 >
                   {status}
@@ -607,7 +671,6 @@ export default function UserTasksPage() {
       // - Personal tasks created by the user (user_id = user.id)
       const tasksRes = await axios.get(`${API_BASE}/tasks/my`, { headers });
       setTasks(tasksRes.data);
-      
     } catch (error: any) {
       console.error("Error fetching tasks:", error);
       toast.error(error.response?.data?.error || "Failed to load tasks");
@@ -622,31 +685,32 @@ export default function UserTasksPage() {
 
     // Apply status filter
     if (filters.status !== "all") {
-      filtered = filtered.filter(task => task.status === filters.status);
+      filtered = filtered.filter((task) => task.status === filters.status);
     }
 
     // Apply priority filter
     if (filters.priority !== "all") {
-      filtered = filtered.filter(task => task.priority === filters.priority);
+      filtered = filtered.filter((task) => task.priority === filters.priority);
     }
 
     // Apply type filter
     if (filters.type !== "all") {
-      filtered = filtered.filter(task => task.type === filters.type);
+      filtered = filtered.filter((task) => task.type === filters.type);
     }
 
     // Apply search filter
     if (filters.search) {
       const searchLower = filters.search.toLowerCase();
-      filtered = filtered.filter(task =>
-        task.title.toLowerCase().includes(searchLower) ||
-        task.description?.toLowerCase().includes(searchLower)
+      filtered = filtered.filter(
+        (task) =>
+          task.title.toLowerCase().includes(searchLower) ||
+          task.description?.toLowerCase().includes(searchLower),
       );
     }
 
     // Apply showDone filter
     if (!showDone) {
-      filtered = filtered.filter(task => task.status !== "Done");
+      filtered = filtered.filter((task) => task.status !== "Done");
     }
 
     return filtered;
@@ -668,7 +732,9 @@ export default function UserTasksPage() {
 
       if (editingTask) {
         // Update task
-        await axios.put(`${API_BASE}/tasks/${editingTask.id}`, taskData, { headers });
+        await axios.put(`${API_BASE}/tasks/${editingTask.id}`, taskData, {
+          headers,
+        });
         toast.success("Task updated successfully");
       } else {
         // Create task
@@ -679,7 +745,6 @@ export default function UserTasksPage() {
       await fetchData();
       setIsModalOpen(false);
       setEditingTask(undefined);
-      
     } catch (error: any) {
       console.error("Error saving task:", error);
       toast.error(error.response?.data?.error || "Failed to save task");
@@ -697,7 +762,6 @@ export default function UserTasksPage() {
       await axios.delete(`${API_BASE}/tasks/${taskId}`, { headers });
       toast.success("Task deleted successfully");
       await fetchData();
-      
     } catch (error: any) {
       console.error("Error deleting task:", error);
       toast.error(error.response?.data?.error || "Failed to delete task");
@@ -705,7 +769,10 @@ export default function UserTasksPage() {
   };
 
   // Handle status change
-  const handleStatusChange = async (taskId: number | string, newStatus: Task["status"]) => {
+  const handleStatusChange = async (
+    taskId: number | string,
+    newStatus: Task["status"],
+  ) => {
     try {
       const token = localStorage.getItem("auth_token");
       const headers = { Authorization: `Bearer ${token}` };
@@ -713,13 +780,15 @@ export default function UserTasksPage() {
       await axios.patch(
         `${API_BASE}/tasks/${taskId}/status`,
         { status: newStatus },
-        { headers }
+        { headers },
       );
 
-      setTasks(prev => prev.map(task => 
-        task.id === taskId ? { ...task, status: newStatus } : task
-      ));
-      
+      setTasks((prev) =>
+        prev.map((task) =>
+          task.id === taskId ? { ...task, status: newStatus } : task,
+        ),
+      );
+
       toast.success("Status updated");
     } catch (error: any) {
       console.error("Error updating status:", error);
@@ -730,34 +799,50 @@ export default function UserTasksPage() {
   // Get priority icon
   const getPriorityIcon = (priority: Task["priority"]) => {
     switch (priority) {
-      case "Critical": return <AlertTriangle className="text-red-600" size={16} />;
-      case "Urgent": return <AlertCircle className="text-orange-500" size={16} />;
-      case "High": return <AlertTriangle className="text-amber-500" size={16} />;
-      case "Medium": return <Shield className="text-blue-500" size={16} />;
-      case "Low": return <Info className="text-slate-500" size={16} />;
-      default: return <Info size={16} />;
+      case "Critical":
+        return <AlertTriangle className="text-red-600" size={16} />;
+      case "Urgent":
+        return <AlertCircle className="text-orange-500" size={16} />;
+      case "High":
+        return <AlertTriangle className="text-amber-500" size={16} />;
+      case "Medium":
+        return <Shield className="text-blue-500" size={16} />;
+      case "Low":
+        return <Info className="text-slate-500" size={16} />;
+      default:
+        return <Info size={16} />;
     }
   };
 
   // Get priority styles
   const getPriorityStyles = (priority: Task["priority"]) => {
     switch (priority) {
-      case "Critical": return "bg-red-50 border-red-200 text-red-700";
-      case "Urgent": return "bg-orange-50 border-orange-200 text-orange-700";
-      case "High": return "bg-amber-50 border-amber-200 text-amber-700";
-      case "Medium": return "bg-blue-50 border-blue-200 text-blue-700";
-      case "Low": return "bg-slate-50 border-slate-200 text-slate-700";
-      default: return "bg-slate-50 border-slate-200 text-slate-700";
+      case "Critical":
+        return "bg-red-50 border-red-200 text-red-700";
+      case "Urgent":
+        return "bg-orange-50 border-orange-200 text-orange-700";
+      case "High":
+        return "bg-amber-50 border-amber-200 text-amber-700";
+      case "Medium":
+        return "bg-blue-50 border-blue-200 text-blue-700";
+      case "Low":
+        return "bg-slate-50 border-slate-200 text-slate-700";
+      default:
+        return "bg-slate-50 border-slate-200 text-slate-700";
     }
   };
 
   // Get status styles
   const getStatusStyles = (status: Task["status"]) => {
     switch (status) {
-      case "Done": return "bg-emerald-50 text-emerald-600 border-emerald-200";
-      case "In Progress": return "bg-blue-50 text-blue-600 border-blue-200";
-      case "To Do": return "bg-slate-50 text-slate-600 border-slate-200";
-      default: return "bg-slate-50 text-slate-600 border-slate-200";
+      case "Done":
+        return "bg-emerald-50 text-emerald-600 border-emerald-200";
+      case "In Progress":
+        return "bg-blue-50 text-blue-600 border-blue-200";
+      case "To Do":
+        return "bg-slate-50 text-slate-600 border-slate-200";
+      default:
+        return "bg-slate-50 text-slate-600 border-slate-200";
     }
   };
 
@@ -785,11 +870,10 @@ export default function UserTasksPage() {
   return (
     <div className="min-h-screen bg-white text-[#003566]">
       <DashboardHeader />
-      <Toaster position="top-right" />
-      
+      // <Toaster position="top-right" />
       <div className="flex pt-20">
         <Sidebar onCollapse={setIsSidebarCollapsed} />
-        
+
         <motion.main
           animate={{ marginLeft: isSidebarCollapsed ? 80 : 256 }}
           className="flex-1 p-6 bg-white min-h-[calc(100vh-80px)] z-30 -mt-20"
@@ -809,13 +893,21 @@ export default function UserTasksPage() {
               <div className="flex flex-col md:flex-row w-full md:w-auto gap-4">
                 {/* Search */}
                 <div className="relative w-full md:w-64">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
+                  <Search
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                    size={14}
+                  />
                   <input
                     type="text"
                     placeholder="SEARCH TASKS..."
                     className="w-full bg-white border border-slate-200 pl-10 pr-4 py-3 text-[10px] font-bold tracking-widest uppercase focus:border-blue-400 outline-none"
                     value={filters.search}
-                    onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
+                    onChange={(e) =>
+                      setFilters((prev) => ({
+                        ...prev,
+                        search: e.target.value,
+                      }))
+                    }
                   />
                 </div>
 
@@ -856,11 +948,18 @@ export default function UserTasksPage() {
             <div className="flex flex-wrap items-center gap-4 p-4 bg-slate-50 border border-slate-200 rounded-lg">
               {/* Status Filter */}
               <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-slate-600">Status:</span>
+                <span className="text-sm font-medium text-slate-600">
+                  Status:
+                </span>
                 <select
                   className="bg-white border border-slate-200 px-3 py-2 text-sm font-medium outline-none rounded"
                   value={filters.status}
-                  onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value as StatusFilter }))}
+                  onChange={(e) =>
+                    setFilters((prev) => ({
+                      ...prev,
+                      status: e.target.value as StatusFilter,
+                    }))
+                  }
                 >
                   <option value="all">All Status</option>
                   <option value="To Do">To Do</option>
@@ -871,11 +970,18 @@ export default function UserTasksPage() {
 
               {/* Priority Filter */}
               <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-slate-600">Priority:</span>
+                <span className="text-sm font-medium text-slate-600">
+                  Priority:
+                </span>
                 <select
                   className="bg-white border border-slate-200 px-3 py-2 text-sm font-medium outline-none rounded"
                   value={filters.priority}
-                  onChange={(e) => setFilters(prev => ({ ...prev, priority: e.target.value as PriorityFilter }))}
+                  onChange={(e) =>
+                    setFilters((prev) => ({
+                      ...prev,
+                      priority: e.target.value as PriorityFilter,
+                    }))
+                  }
                 >
                   <option value="all">All Priorities</option>
                   <option value="Low">Low</option>
@@ -888,11 +994,18 @@ export default function UserTasksPage() {
 
               {/* Type Filter */}
               <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-slate-600">Type:</span>
+                <span className="text-sm font-medium text-slate-600">
+                  Type:
+                </span>
                 <select
                   className="bg-white border border-slate-200 px-3 py-2 text-sm font-medium outline-none rounded"
                   value={filters.type}
-                  onChange={(e) => setFilters(prev => ({ ...prev, type: e.target.value as TypeFilter }))}
+                  onChange={(e) =>
+                    setFilters((prev) => ({
+                      ...prev,
+                      type: e.target.value as TypeFilter,
+                    }))
+                  }
                 >
                   <option value="all">All Types</option>
                   <option value="assigned">Assigned</option>
@@ -925,7 +1038,9 @@ export default function UserTasksPage() {
                     <div className="text-center p-12 border-2 border-dashed border-slate-200 rounded-lg">
                       <p className="text-slate-400">No tasks found</p>
                       <p className="text-sm text-slate-300 mt-2">
-                        {filters.search || filters.status !== "all" || filters.priority !== "all"
+                        {filters.search ||
+                        filters.status !== "all" ||
+                        filters.priority !== "all"
                           ? "Try changing your filters"
                           : "Create your first task"}
                       </p>
@@ -941,16 +1056,20 @@ export default function UserTasksPage() {
                         className={cn(
                           "flex flex-col md:flex-row items-start md:items-center justify-between p-6 gap-6 border shadow-sm rounded-lg transition-all hover:shadow-md",
                           task.status === "Done" && "opacity-70",
-                          task.priority === "Critical" && task.status !== "Done" && "border-l-4 border-l-red-600 animate-pulse"
+                          task.priority === "Critical" &&
+                            task.status !== "Done" &&
+                            "border-l-4 border-l-red-600 animate-pulse",
                         )}
                       >
                         {/* Left Section */}
                         <div className="flex items-start gap-4 flex-1">
                           {/* Priority Icon */}
-                          <div className={cn(
-                            "w-12 h-12 flex items-center justify-center rounded-full border-2",
-                            getPriorityStyles(task.priority)
-                          )}>
+                          <div
+                            className={cn(
+                              "w-12 h-12 flex items-center justify-center rounded-full border-2",
+                              getPriorityStyles(task.priority),
+                            )}
+                          >
                             {getPriorityIcon(task.priority)}
                           </div>
 
@@ -960,16 +1079,20 @@ export default function UserTasksPage() {
                               <h3 className="text-lg font-bold text-[#003566]">
                                 {task.title}
                               </h3>
-                              <span className={cn(
-                                "px-2 py-1 text-xs font-bold uppercase border rounded",
-                                getPriorityStyles(task.priority)
-                              )}>
+                              <span
+                                className={cn(
+                                  "px-2 py-1 text-xs font-bold uppercase border rounded",
+                                  getPriorityStyles(task.priority),
+                                )}
+                              >
                                 {task.priority}
                               </span>
-                              <span className={cn(
-                                "px-2 py-1 text-xs font-bold uppercase border rounded",
-                                getStatusStyles(task.status)
-                              )}>
+                              <span
+                                className={cn(
+                                  "px-2 py-1 text-xs font-bold uppercase border rounded",
+                                  getStatusStyles(task.status),
+                                )}
+                              >
                                 {task.status}
                               </span>
                               {task.type === "personal" && (
@@ -986,22 +1109,26 @@ export default function UserTasksPage() {
                             )}
 
                             <div className="flex flex-wrap items-center gap-4 text-sm text-slate-500">
-                              {task.assigned_to_user && task.type === "assigned" && (
-                                <span className="flex items-center gap-1.5">
-                                  <UserIcon size={14} />
-                                  {task.assigned_to_user.name}
-                                </span>
-                              )}
+                              {task.assigned_to_user &&
+                                task.type === "assigned" && (
+                                  <span className="flex items-center gap-1.5">
+                                    <UserIcon size={14} />
+                                    {task.assigned_to_user.name}
+                                  </span>
+                                )}
                               {task.yacht && (
                                 <span className="flex items-center gap-1.5">
                                   <Shield size={14} />
                                   {task.yacht.name}
                                 </span>
                               )}
-                              <span className={cn(
-                                "flex items-center gap-1.5",
-                                isOverdue(task.due_date) && "text-red-600 font-bold"
-                              )}>
+                              <span
+                                className={cn(
+                                  "flex items-center gap-1.5",
+                                  isOverdue(task.due_date) &&
+                                    "text-red-600 font-bold",
+                                )}
+                              >
                                 <CalendarIcon size={14} />
                                 Due: {formatDate(task.due_date)}
                                 {isOverdue(task.due_date) && " (OVERDUE)"}
@@ -1015,7 +1142,9 @@ export default function UserTasksPage() {
                           {/* Status Change */}
                           {task.status !== "Done" ? (
                             <Button
-                              onClick={() => handleStatusChange(task.id, "Done")}
+                              onClick={() =>
+                                handleStatusChange(task.id, "Done")
+                              }
                               className="bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100"
                               size="sm"
                             >
@@ -1024,7 +1153,9 @@ export default function UserTasksPage() {
                             </Button>
                           ) : (
                             <Button
-                              onClick={() => handleStatusChange(task.id, "To Do")}
+                              onClick={() =>
+                                handleStatusChange(task.id, "To Do")
+                              }
                               variant="outline"
                               size="sm"
                             >
@@ -1066,8 +1197,8 @@ export default function UserTasksPage() {
             ) : (
               /* Calendar View */
               <div className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
-                <CalendarView 
-                  tasks={filteredTasks} 
+                <CalendarView
+                  tasks={filteredTasks}
                   onTaskClick={(task) => {
                     if (task.type === "personal") {
                       setEditingTask(task);
@@ -1080,7 +1211,6 @@ export default function UserTasksPage() {
           </div>
         </motion.main>
       </div>
-
       {/* Task Modal */}
       <TaskModal
         isOpen={isModalOpen}

@@ -78,7 +78,13 @@ function SpecCheckbox({
 }
 
 // Step Indicator (numbers only)
-function StepIndicator({ currentStep, steps }: { currentStep: number; steps: string[] }) {
+function StepIndicator({
+  currentStep,
+  steps,
+}: {
+  currentStep: number;
+  steps: string[];
+}) {
   return (
     <div className="flex items-center justify-center space-x-6 py-6">
       {steps.map((_, index) => {
@@ -93,8 +99,8 @@ function StepIndicator({ currentStep, steps }: { currentStep: number; steps: str
                 isActive
                   ? "bg-[#003566] text-white"
                   : isCompleted
-                  ? "bg-blue-400 text-white"
-                  : "bg-slate-200 text-slate-500"
+                    ? "bg-blue-400 text-white"
+                    : "bg-slate-200 text-slate-500",
               )}
             >
               {isCompleted ? <CheckCircle size={18} /> : stepNumber}
@@ -220,7 +226,9 @@ export default function OnboardingYachtSetup() {
   });
 
   // Availability rules
-  const [availabilityRules, setAvailabilityRules] = useState<AvailabilityRule[]>([]);
+  const [availabilityRules, setAvailabilityRules] = useState<
+    AvailabilityRule[]
+  >([]);
 
   // Display specs
   const [displaySpecs, setDisplaySpecs] = useState<Record<string, boolean>>({});
@@ -236,7 +244,11 @@ export default function OnboardingYachtSetup() {
 
   // Handlers ----------------------------------------------------------------
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >,
+  ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
@@ -274,7 +286,7 @@ export default function OnboardingYachtSetup() {
           preview: item.preview,
           category: item.category,
           originalName: item.originalName,
-        })
+        }),
       );
       setAiStaging((prev) => [...prev, ...analyzedData]);
       toast.success("AI Classification complete", { id: "ai-loading" });
@@ -297,7 +309,10 @@ export default function OnboardingYachtSetup() {
   const approveAllAi = () => {
     const updatedGallery = { ...galleryState };
     aiStaging.forEach((item) => {
-      updatedGallery[item.category] = [...updatedGallery[item.category], item.file];
+      updatedGallery[item.category] = [
+        ...updatedGallery[item.category],
+        item.file,
+      ];
     });
     setGalleryState(updatedGallery);
     setAiStaging([]);
@@ -319,7 +334,7 @@ export default function OnboardingYachtSetup() {
   const updateAvailabilityRule = (
     index: number,
     field: keyof AvailabilityRule,
-    value: any
+    value: any,
   ) => {
     const newRules = [...availabilityRules];
     newRules[index] = { ...newRules[index], [field]: value };
@@ -361,39 +376,81 @@ export default function OnboardingYachtSetup() {
     try {
       // 1. Create the yacht with all text fields and main image
       const yachtData = new FormData();
-      
+
       // Required
       yachtData.append("boat_name", formData.boat_name);
-      
+
       // Optional text fields (only if they have a value)
       const textFields = [
-        "price", "min_bid_amount", "year", "loa", "lwl", "where", "status",
-        "passenger_capacity", "beam", "draft", "air_draft", "displacement",
-        "ballast", "hull_type", "hull_construction", "hull_colour", "hull_number",
-        "designer", "builder", "engine_manufacturer", "horse_power", "hours",
-        "fuel", "max_speed", "cruising_speed", "gallons_per_hour", "tankage",
-        "cabins", "berths", "toilet", "shower", "bath", "heating", "cockpit_type",
-        "control_type", "external_url", "print_url", "owners_comment",
-        "reg_details", "known_defects", "last_serviced", "super_structure_colour",
-        "super_structure_construction", "deck_colour", "deck_construction",
-        "starting_type", "drive_type"
+        "price",
+        "min_bid_amount",
+        "year",
+        "loa",
+        "lwl",
+        "where",
+        "status",
+        "passenger_capacity",
+        "beam",
+        "draft",
+        "air_draft",
+        "displacement",
+        "ballast",
+        "hull_type",
+        "hull_construction",
+        "hull_colour",
+        "hull_number",
+        "designer",
+        "builder",
+        "engine_manufacturer",
+        "horse_power",
+        "hours",
+        "fuel",
+        "max_speed",
+        "cruising_speed",
+        "gallons_per_hour",
+        "tankage",
+        "cabins",
+        "berths",
+        "toilet",
+        "shower",
+        "bath",
+        "heating",
+        "cockpit_type",
+        "control_type",
+        "external_url",
+        "print_url",
+        "owners_comment",
+        "reg_details",
+        "known_defects",
+        "last_serviced",
+        "super_structure_colour",
+        "super_structure_construction",
+        "deck_colour",
+        "deck_construction",
+        "starting_type",
+        "drive_type",
       ];
-      textFields.forEach(field => {
+      textFields.forEach((field) => {
         if (formData[field]) yachtData.append(field, formData[field]);
       });
 
       // Boolean fields (send as "true"/"false")
-      Object.keys(booleanFields).forEach(field => {
+      Object.keys(booleanFields).forEach((field) => {
         yachtData.append(field, booleanFields[field] ? "true" : "false");
       });
 
       // Availability rules (JSON string)
       if (availabilityRules.length > 0) {
-        yachtData.append("availability_rules", JSON.stringify(availabilityRules));
+        yachtData.append(
+          "availability_rules",
+          JSON.stringify(availabilityRules),
+        );
       }
 
       // Display specs (JSON array of selected fields)
-      const selectedSpecs = Object.keys(displaySpecs).filter(key => displaySpecs[key]);
+      const selectedSpecs = Object.keys(displaySpecs).filter(
+        (key) => displaySpecs[key],
+      );
       if (selectedSpecs.length > 0) {
         yachtData.append("display_specs", JSON.stringify(selectedSpecs));
       }
@@ -422,7 +479,10 @@ export default function OnboardingYachtSetup() {
           const galleryFormData = new FormData();
           files.forEach((file) => galleryFormData.append("images[]", file));
           galleryFormData.append("category", category);
-          await api.post(`/partner/yachts/${newYachtId}/gallery`, galleryFormData);
+          await api.post(
+            `/partner/yachts/${newYachtId}/gallery`,
+            galleryFormData,
+          );
         }
       }
 
@@ -430,7 +490,8 @@ export default function OnboardingYachtSetup() {
       router.push("/nl/dashboard/partner");
     } catch (err: any) {
       console.error("Submission error:", err);
-      const serverMessage = err.response?.data?.message || err.message || "An error occurred";
+      const serverMessage =
+        err.response?.data?.message || err.message || "An error occurred";
       toast.error(`Error: ${serverMessage}`);
       if (err.response?.status === 422) {
         setErrors(err.response.data.errors);
@@ -452,7 +513,9 @@ export default function OnboardingYachtSetup() {
                 <Camera size={16} /> 01. Primary Vessel Photo
               </label>
               <div
-                onClick={() => document.getElementById("main_image_input")?.click()}
+                onClick={() =>
+                  document.getElementById("main_image_input")?.click()
+                }
                 className="h-80 lg:h-96 bg-white border-2 border-dashed border-slate-200 relative flex items-center justify-center cursor-pointer overflow-hidden shadow-inner group transition-all hover:border-blue-400"
               >
                 <input
@@ -476,7 +539,10 @@ export default function OnboardingYachtSetup() {
                   />
                 ) : (
                   <div className="text-center">
-                    <Upload className="mx-auto text-slate-200 mb-4 group-hover:text-blue-600 transition-colors" size={48} />
+                    <Upload
+                      className="mx-auto text-slate-200 mb-4 group-hover:text-blue-600 transition-colors"
+                      size={48}
+                    />
                     <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest group-hover:text-blue-600 transition-colors">
                       Click to Upload Main Photo
                     </p>
@@ -493,31 +559,71 @@ export default function OnboardingYachtSetup() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 <div className="space-y-2">
                   <Label>Vessel Name *</Label>
-                  <Input name="boat_name" value={formData.boat_name} onChange={handleInputChange} placeholder="e.g. M/Y NOBILITY" required />
+                  <Input
+                    name="boat_name"
+                    value={formData.boat_name}
+                    onChange={handleInputChange}
+                    placeholder="e.g. M/Y NOBILITY"
+                    required
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>Price (€)</Label>
-                  <Input name="price" type="number" value={formData.price} onChange={handleInputChange} placeholder="1500000" />
+                  <Input
+                    name="price"
+                    type="number"
+                    value={formData.price}
+                    onChange={handleInputChange}
+                    placeholder="1500000"
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>Minimum Bid Amount (€)</Label>
-                  <Input name="min_bid_amount" type="number" value={formData.min_bid_amount} onChange={handleInputChange} placeholder="Auto-calculates 90% of price if empty" step="1000" />
+                  <Input
+                    name="min_bid_amount"
+                    type="number"
+                    value={formData.min_bid_amount}
+                    onChange={handleInputChange}
+                    placeholder="Auto-calculates 90% of price if empty"
+                    step="1000"
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>Year Built</Label>
-                  <Input name="year" type="number" value={formData.year} onChange={handleInputChange} placeholder="2024" />
+                  <Input
+                    name="year"
+                    type="number"
+                    value={formData.year}
+                    onChange={handleInputChange}
+                    placeholder="2024"
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>LOA (m)</Label>
-                  <Input name="loa" value={formData.loa} onChange={handleInputChange} placeholder="45.5" />
+                  <Input
+                    name="loa"
+                    value={formData.loa}
+                    onChange={handleInputChange}
+                    placeholder="45.5"
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>LWL (m)</Label>
-                  <Input name="lwl" value={formData.lwl} onChange={handleInputChange} placeholder="40.2" />
+                  <Input
+                    name="lwl"
+                    value={formData.lwl}
+                    onChange={handleInputChange}
+                    placeholder="40.2"
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>Location</Label>
-                  <Input name="where" value={formData.where} onChange={handleInputChange} placeholder="e.g. Monaco" />
+                  <Input
+                    name="where"
+                    value={formData.where}
+                    onChange={handleInputChange}
+                    placeholder="e.g. Monaco"
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>Status</Label>
@@ -535,7 +641,13 @@ export default function OnboardingYachtSetup() {
                 </div>
                 <div className="space-y-2">
                   <Label>Passenger Capacity</Label>
-                  <Input name="passenger_capacity" type="number" value={formData.passenger_capacity} onChange={handleInputChange} placeholder="12" />
+                  <Input
+                    name="passenger_capacity"
+                    type="number"
+                    value={formData.passenger_capacity}
+                    onChange={handleInputChange}
+                    placeholder="12"
+                  />
                 </div>
               </div>
             </div>
@@ -552,114 +664,255 @@ export default function OnboardingYachtSetup() {
             {/* Hull & Dimensions */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
               <div className="space-y-6">
-                <SectionHeader icon={<Ship size={14} />} title="Hull & Dimensions" />
+                <SectionHeader
+                  icon={<Ship size={14} />}
+                  title="Hull & Dimensions"
+                />
                 <div className="grid grid-cols-2 gap-6">
                   <div className="space-y-1">
                     <Label>Beam (m)</Label>
-                    <Input name="beam" value={formData.beam} onChange={handleInputChange} placeholder="8.5" />
+                    <Input
+                      name="beam"
+                      value={formData.beam}
+                      onChange={handleInputChange}
+                      placeholder="8.5"
+                    />
                   </div>
                   <div className="space-y-1">
                     <Label>Draft (m)</Label>
-                    <Input name="draft" value={formData.draft} onChange={handleInputChange} placeholder="2.1" />
+                    <Input
+                      name="draft"
+                      value={formData.draft}
+                      onChange={handleInputChange}
+                      placeholder="2.1"
+                    />
                   </div>
                   <div className="space-y-1">
                     <Label>Air Draft (m)</Label>
-                    <Input name="air_draft" value={formData.air_draft} onChange={handleInputChange} placeholder="4.5" />
+                    <Input
+                      name="air_draft"
+                      value={formData.air_draft}
+                      onChange={handleInputChange}
+                      placeholder="4.5"
+                    />
                   </div>
                   <div className="space-y-1">
                     <Label>Displacement (kg)</Label>
-                    <Input name="displacement" value={formData.displacement} onChange={handleInputChange} placeholder="12000" />
+                    <Input
+                      name="displacement"
+                      value={formData.displacement}
+                      onChange={handleInputChange}
+                      placeholder="12000"
+                    />
                   </div>
                   <div className="space-y-1">
                     <Label>Ballast</Label>
-                    <Input name="ballast" value={formData.ballast} onChange={handleInputChange} placeholder="e.g. 4000 kg" />
+                    <Input
+                      name="ballast"
+                      value={formData.ballast}
+                      onChange={handleInputChange}
+                      placeholder="e.g. 4000 kg"
+                    />
                   </div>
                   <div className="space-y-1">
                     <Label>Hull Type</Label>
-                    <Input name="hull_type" value={formData.hull_type} onChange={handleInputChange} placeholder="e.g. Monohull" />
+                    <Input
+                      name="hull_type"
+                      value={formData.hull_type}
+                      onChange={handleInputChange}
+                      placeholder="e.g. Monohull"
+                    />
                   </div>
                   <div className="space-y-1">
                     <Label>Hull Construction</Label>
-                    <Input name="hull_construction" value={formData.hull_construction} onChange={handleInputChange} placeholder="e.g. GRP" />
+                    <Input
+                      name="hull_construction"
+                      value={formData.hull_construction}
+                      onChange={handleInputChange}
+                      placeholder="e.g. GRP"
+                    />
                   </div>
                   <div className="space-y-1">
                     <Label>Hull Colour</Label>
-                    <Input name="hull_colour" value={formData.hull_colour} onChange={handleInputChange} placeholder="White" />
+                    <Input
+                      name="hull_colour"
+                      value={formData.hull_colour}
+                      onChange={handleInputChange}
+                      placeholder="White"
+                    />
                   </div>
                   <div className="space-y-1">
                     <Label>Hull Number</Label>
-                    <Input name="hull_number" value={formData.hull_number} onChange={handleInputChange} placeholder="HULL001" />
+                    <Input
+                      name="hull_number"
+                      value={formData.hull_number}
+                      onChange={handleInputChange}
+                      placeholder="HULL001"
+                    />
                   </div>
                   <div className="space-y-1">
                     <Label>Designer</Label>
-                    <Input name="designer" value={formData.designer} onChange={handleInputChange} placeholder="e.g. Naval Architect" />
+                    <Input
+                      name="designer"
+                      value={formData.designer}
+                      onChange={handleInputChange}
+                      placeholder="e.g. Naval Architect"
+                    />
                   </div>
                   <div className="space-y-1">
                     <Label>Builder</Label>
-                    <Input name="builder" value={formData.builder} onChange={handleInputChange} placeholder="e.g. Ferretti" />
+                    <Input
+                      name="builder"
+                      value={formData.builder}
+                      onChange={handleInputChange}
+                      placeholder="e.g. Ferretti"
+                    />
                   </div>
                   <div className="space-y-1">
                     <Label>Superstructure Colour</Label>
-                    <Input name="super_structure_colour" value={formData.super_structure_colour} onChange={handleInputChange} placeholder="White" />
+                    <Input
+                      name="super_structure_colour"
+                      value={formData.super_structure_colour}
+                      onChange={handleInputChange}
+                      placeholder="White"
+                    />
                   </div>
                   <div className="space-y-1">
                     <Label>Superstructure Construction</Label>
-                    <Input name="super_structure_construction" value={formData.super_structure_construction} onChange={handleInputChange} placeholder="GRP" />
+                    <Input
+                      name="super_structure_construction"
+                      value={formData.super_structure_construction}
+                      onChange={handleInputChange}
+                      placeholder="GRP"
+                    />
                   </div>
                   <div className="space-y-1">
                     <Label>Deck Colour</Label>
-                    <Input name="deck_colour" value={formData.deck_colour} onChange={handleInputChange} placeholder="Teak" />
+                    <Input
+                      name="deck_colour"
+                      value={formData.deck_colour}
+                      onChange={handleInputChange}
+                      placeholder="Teak"
+                    />
                   </div>
                   <div className="space-y-1">
                     <Label>Deck Construction</Label>
-                    <Input name="deck_construction" value={formData.deck_construction} onChange={handleInputChange} placeholder="Teak" />
+                    <Input
+                      name="deck_construction"
+                      value={formData.deck_construction}
+                      onChange={handleInputChange}
+                      placeholder="Teak"
+                    />
                   </div>
                 </div>
               </div>
 
               {/* Engine & Performance */}
               <div className="space-y-6">
-                <SectionHeader icon={<Zap size={14} />} title="Engine & Performance" />
+                <SectionHeader
+                  icon={<Zap size={14} />}
+                  title="Engine & Performance"
+                />
                 <div className="bg-slate-50 p-6 border border-slate-100 grid grid-cols-2 gap-6">
                   <div className="space-y-1">
                     <Label>Engine Manufacturer</Label>
-                    <Input name="engine_manufacturer" value={formData.engine_manufacturer} onChange={handleInputChange} placeholder="e.g. CAT" className="bg-white" />
+                    <Input
+                      name="engine_manufacturer"
+                      value={formData.engine_manufacturer}
+                      onChange={handleInputChange}
+                      placeholder="e.g. CAT"
+                      className="bg-white"
+                    />
                   </div>
                   <div className="space-y-1">
                     <Label>Horse Power</Label>
-                    <Input name="horse_power" value={formData.horse_power} onChange={handleInputChange} placeholder="e.g. 2x1500HP" className="bg-white" />
+                    <Input
+                      name="horse_power"
+                      value={formData.horse_power}
+                      onChange={handleInputChange}
+                      placeholder="e.g. 2x1500HP"
+                      className="bg-white"
+                    />
                   </div>
                   <div className="space-y-1">
                     <Label>Engine Hours</Label>
-                    <Input name="hours" value={formData.hours} onChange={handleInputChange} placeholder="450" className="bg-white" />
+                    <Input
+                      name="hours"
+                      value={formData.hours}
+                      onChange={handleInputChange}
+                      placeholder="450"
+                      className="bg-white"
+                    />
                   </div>
                   <div className="space-y-1">
                     <Label>Fuel Type</Label>
-                    <Input name="fuel" value={formData.fuel} onChange={handleInputChange} placeholder="Diesel" className="bg-white" />
+                    <Input
+                      name="fuel"
+                      value={formData.fuel}
+                      onChange={handleInputChange}
+                      placeholder="Diesel"
+                      className="bg-white"
+                    />
                   </div>
                   <div className="space-y-1">
                     <Label>Max Speed (kn)</Label>
-                    <Input name="max_speed" value={formData.max_speed} onChange={handleInputChange} placeholder="35" className="bg-white" />
+                    <Input
+                      name="max_speed"
+                      value={formData.max_speed}
+                      onChange={handleInputChange}
+                      placeholder="35"
+                      className="bg-white"
+                    />
                   </div>
                   <div className="space-y-1">
                     <Label>Cruising Speed (kn)</Label>
-                    <Input name="cruising_speed" value={formData.cruising_speed} onChange={handleInputChange} placeholder="25" className="bg-white" />
+                    <Input
+                      name="cruising_speed"
+                      value={formData.cruising_speed}
+                      onChange={handleInputChange}
+                      placeholder="25"
+                      className="bg-white"
+                    />
                   </div>
                   <div className="space-y-1">
                     <Label>Gallons per Hour</Label>
-                    <Input name="gallons_per_hour" value={formData.gallons_per_hour} onChange={handleInputChange} placeholder="50" className="bg-white" />
+                    <Input
+                      name="gallons_per_hour"
+                      value={formData.gallons_per_hour}
+                      onChange={handleInputChange}
+                      placeholder="50"
+                      className="bg-white"
+                    />
                   </div>
                   <div className="space-y-1">
                     <Label>Tankage</Label>
-                    <Input name="tankage" value={formData.tankage} onChange={handleInputChange} placeholder="2000L" className="bg-white" />
+                    <Input
+                      name="tankage"
+                      value={formData.tankage}
+                      onChange={handleInputChange}
+                      placeholder="2000L"
+                      className="bg-white"
+                    />
                   </div>
                   <div className="space-y-1">
                     <Label>Starting Type</Label>
-                    <Input name="starting_type" value={formData.starting_type} onChange={handleInputChange} placeholder="e.g. Electric" className="bg-white" />
+                    <Input
+                      name="starting_type"
+                      value={formData.starting_type}
+                      onChange={handleInputChange}
+                      placeholder="e.g. Electric"
+                      className="bg-white"
+                    />
                   </div>
                   <div className="space-y-1">
                     <Label>Drive Type</Label>
-                    <Input name="drive_type" value={formData.drive_type} onChange={handleInputChange} placeholder="e.g. Shaft" className="bg-white" />
+                    <Input
+                      name="drive_type"
+                      value={formData.drive_type}
+                      onChange={handleInputChange}
+                      placeholder="e.g. Shaft"
+                      className="bg-white"
+                    />
                   </div>
                 </div>
               </div>
@@ -667,66 +920,138 @@ export default function OnboardingYachtSetup() {
 
             {/* Accommodation & Facilities */}
             <div className="space-y-6">
-              <SectionHeader icon={<Bed size={14} />} title="Accommodation & Facilities" />
+              <SectionHeader
+                icon={<Bed size={14} />}
+                title="Accommodation & Facilities"
+              />
               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
                 <div className="space-y-1">
                   <Label>Cabins</Label>
-                  <Input name="cabins" type="number" value={formData.cabins} onChange={handleInputChange} placeholder="3" />
+                  <Input
+                    name="cabins"
+                    type="number"
+                    value={formData.cabins}
+                    onChange={handleInputChange}
+                    placeholder="3"
+                  />
                 </div>
                 <div className="space-y-1">
                   <Label>Berths</Label>
-                  <Input name="berths" value={formData.berths} onChange={handleInputChange} placeholder="6" />
+                  <Input
+                    name="berths"
+                    value={formData.berths}
+                    onChange={handleInputChange}
+                    placeholder="6"
+                  />
                 </div>
                 <div className="space-y-1">
                   <Label>Toilet</Label>
-                  <Input name="toilet" value={formData.toilet} onChange={handleInputChange} placeholder="2" />
+                  <Input
+                    name="toilet"
+                    value={formData.toilet}
+                    onChange={handleInputChange}
+                    placeholder="2"
+                  />
                 </div>
                 <div className="space-y-1">
                   <Label>Shower</Label>
-                  <Input name="shower" value={formData.shower} onChange={handleInputChange} placeholder="2" />
+                  <Input
+                    name="shower"
+                    value={formData.shower}
+                    onChange={handleInputChange}
+                    placeholder="2"
+                  />
                 </div>
                 <div className="space-y-1">
                   <Label>Bath</Label>
-                  <Input name="bath" value={formData.bath} onChange={handleInputChange} placeholder="1" />
+                  <Input
+                    name="bath"
+                    value={formData.bath}
+                    onChange={handleInputChange}
+                    placeholder="1"
+                  />
                 </div>
                 <div className="space-y-1">
                   <Label>Heating</Label>
-                  <Input name="heating" value={formData.heating} onChange={handleInputChange} placeholder="Central heating" />
+                  <Input
+                    name="heating"
+                    value={formData.heating}
+                    onChange={handleInputChange}
+                    placeholder="Central heating"
+                  />
                 </div>
                 <div className="space-y-1">
                   <Label>Cockpit Type</Label>
-                  <Input name="cockpit_type" value={formData.cockpit_type} onChange={handleInputChange} placeholder="Open/Closed" />
+                  <Input
+                    name="cockpit_type"
+                    value={formData.cockpit_type}
+                    onChange={handleInputChange}
+                    placeholder="Open/Closed"
+                  />
                 </div>
                 <div className="space-y-1">
                   <Label>Control Type</Label>
-                  <Input name="control_type" value={formData.control_type} onChange={handleInputChange} placeholder="Wheel/Joystick" />
+                  <Input
+                    name="control_type"
+                    value={formData.control_type}
+                    onChange={handleInputChange}
+                    placeholder="Wheel/Joystick"
+                  />
                 </div>
               </div>
             </div>
 
             {/* Additional / Broker Fields */}
             <div className="space-y-6">
-              <SectionHeader icon={<Box size={14} />} title="Additional Details" />
+              <SectionHeader
+                icon={<Box size={14} />}
+                title="Additional Details"
+              />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-1">
                   <Label>External URL</Label>
-                  <Input name="external_url" value={formData.external_url} onChange={handleInputChange} placeholder="https://..." />
+                  <Input
+                    name="external_url"
+                    value={formData.external_url}
+                    onChange={handleInputChange}
+                    placeholder="https://..."
+                  />
                 </div>
                 <div className="space-y-1">
                   <Label>Print URL</Label>
-                  <Input name="print_url" value={formData.print_url} onChange={handleInputChange} placeholder="https://..." />
+                  <Input
+                    name="print_url"
+                    value={formData.print_url}
+                    onChange={handleInputChange}
+                    placeholder="https://..."
+                  />
                 </div>
                 <div className="space-y-1">
                   <Label>Registration Details</Label>
-                  <Input name="reg_details" value={formData.reg_details} onChange={handleInputChange} placeholder="Registration number, flag, etc." />
+                  <Input
+                    name="reg_details"
+                    value={formData.reg_details}
+                    onChange={handleInputChange}
+                    placeholder="Registration number, flag, etc."
+                  />
                 </div>
                 <div className="space-y-1">
                   <Label>Known Defects</Label>
-                  <Input name="known_defects" value={formData.known_defects} onChange={handleInputChange} placeholder="Any known issues" />
+                  <Input
+                    name="known_defects"
+                    value={formData.known_defects}
+                    onChange={handleInputChange}
+                    placeholder="Any known issues"
+                  />
                 </div>
                 <div className="space-y-1">
                   <Label>Last Serviced</Label>
-                  <Input name="last_serviced" value={formData.last_serviced} onChange={handleInputChange} placeholder="2024-05-01" />
+                  <Input
+                    name="last_serviced"
+                    value={formData.last_serviced}
+                    onChange={handleInputChange}
+                    placeholder="2024-05-01"
+                  />
                 </div>
                 <div className="space-y-1">
                   <Label>Owner's Comments</Label>
@@ -743,10 +1068,16 @@ export default function OnboardingYachtSetup() {
 
             {/* Equipment Checkboxes */}
             <div className="space-y-6">
-              <SectionHeader icon={<CheckSquare size={14} />} title="Equipment & Features" />
+              <SectionHeader
+                icon={<CheckSquare size={14} />}
+                title="Equipment & Features"
+              />
               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
                 {Object.keys(booleanFields).map((field) => (
-                  <div key={field} className="flex items-center gap-2 bg-slate-50/50 p-3">
+                  <div
+                    key={field}
+                    className="flex items-center gap-2 bg-slate-50/50 p-3"
+                  >
                     <input
                       type="checkbox"
                       name={field}
@@ -773,7 +1104,8 @@ export default function OnboardingYachtSetup() {
           <div className="space-y-8 bg-slate-50 p-10 border border-slate-200 shadow-sm">
             <div className="flex justify-between items-center border-b border-slate-200 pb-4">
               <h3 className="text-[12px] font-black uppercase text-[#003566] tracking-[0.4em] flex items-center gap-3 italic">
-                <Calendar size={20} className="text-blue-600" /> Scheduling Authority
+                <Calendar size={20} className="text-blue-600" /> Scheduling
+                Authority
               </h3>
               <Button
                 type="button"
@@ -795,7 +1127,11 @@ export default function OnboardingYachtSetup() {
                     <select
                       value={rule.day_of_week}
                       onChange={(e) =>
-                        updateAvailabilityRule(idx, "day_of_week", parseInt(e.target.value))
+                        updateAvailabilityRule(
+                          idx,
+                          "day_of_week",
+                          parseInt(e.target.value),
+                        )
                       }
                       className="w-full bg-slate-50 p-2 border-b border-slate-200 text-[#003566] font-bold text-xs outline-none"
                     >
@@ -817,7 +1153,13 @@ export default function OnboardingYachtSetup() {
                         type="time"
                         step="900"
                         value={rule.start_time}
-                        onChange={(e) => updateAvailabilityRule(idx, "start_time", e.target.value)}
+                        onChange={(e) =>
+                          updateAvailabilityRule(
+                            idx,
+                            "start_time",
+                            e.target.value,
+                          )
+                        }
                         className="bg-transparent text-xs font-bold text-[#003566] outline-none w-full"
                       />
                     </div>
@@ -831,7 +1173,13 @@ export default function OnboardingYachtSetup() {
                         type="time"
                         step="900"
                         value={rule.end_time}
-                        onChange={(e) => updateAvailabilityRule(idx, "end_time", e.target.value)}
+                        onChange={(e) =>
+                          updateAvailabilityRule(
+                            idx,
+                            "end_time",
+                            e.target.value,
+                          )
+                        }
                         className="bg-transparent text-xs font-bold text-[#003566] outline-none w-full"
                       />
                     </div>
@@ -862,7 +1210,10 @@ export default function OnboardingYachtSetup() {
       case 4:
         return (
           <div className="space-y-6 bg-white p-6 border border-slate-200">
-            <SectionHeader icon={<Eye size={14} />} title="Display Specifications" />
+            <SectionHeader
+              icon={<Eye size={14} />}
+              title="Display Specifications"
+            />
             <p className="text-[9px] text-gray-600 mb-4">
               Select which specifications to show on the public yacht page
             </p>
@@ -870,43 +1221,62 @@ export default function OnboardingYachtSetup() {
             <div className="space-y-4">
               {/* General */}
               <div className="space-y-2">
-                <h4 className="text-[9px] font-black uppercase text-gray-700">General</h4>
+                <h4 className="text-[9px] font-black uppercase text-gray-700">
+                  General
+                </h4>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                  {["builder", "model", "year", "designer", "where", "hull_number", "hull_type"].map(
-                    (field) => (
-                      <SpecCheckbox
-                        key={field}
-                        field={field}
-                        label={field.replace(/_/g, " ")}
-                        onSpecChange={handleSpecChange}
-                        checked={displaySpecs[field] || false}
-                      />
-                    )
-                  )}
+                  {[
+                    "builder",
+                    "model",
+                    "year",
+                    "designer",
+                    "where",
+                    "hull_number",
+                    "hull_type",
+                  ].map((field) => (
+                    <SpecCheckbox
+                      key={field}
+                      field={field}
+                      label={field.replace(/_/g, " ")}
+                      onSpecChange={handleSpecChange}
+                      checked={displaySpecs[field] || false}
+                    />
+                  ))}
                 </div>
               </div>
 
               {/* Dimensions */}
               <div className="space-y-2">
-                <h4 className="text-[9px] font-black uppercase text-gray-700">Dimensions</h4>
+                <h4 className="text-[9px] font-black uppercase text-gray-700">
+                  Dimensions
+                </h4>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                  {["loa", "lwl", "beam", "draft", "air_draft", "displacement", "ballast", "passenger_capacity"].map(
-                    (field) => (
-                      <SpecCheckbox
-                        key={field}
-                        field={field}
-                        label={field.replace(/_/g, " ")}
-                        onSpecChange={handleSpecChange}
-                        checked={displaySpecs[field] || false}
-                      />
-                    )
-                  )}
+                  {[
+                    "loa",
+                    "lwl",
+                    "beam",
+                    "draft",
+                    "air_draft",
+                    "displacement",
+                    "ballast",
+                    "passenger_capacity",
+                  ].map((field) => (
+                    <SpecCheckbox
+                      key={field}
+                      field={field}
+                      label={field.replace(/_/g, " ")}
+                      onSpecChange={handleSpecChange}
+                      checked={displaySpecs[field] || false}
+                    />
+                  ))}
                 </div>
               </div>
 
               {/* Construction */}
               <div className="space-y-2">
-                <h4 className="text-[9px] font-black uppercase text-gray-700">Construction</h4>
+                <h4 className="text-[9px] font-black uppercase text-gray-700">
+                  Construction
+                </h4>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                   {[
                     "hull_colour",
@@ -931,7 +1301,9 @@ export default function OnboardingYachtSetup() {
 
               {/* Engine */}
               <div className="space-y-2">
-                <h4 className="text-[9px] font-black uppercase text-gray-700">Engine & Performance</h4>
+                <h4 className="text-[9px] font-black uppercase text-gray-700">
+                  Engine & Performance
+                </h4>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                   {[
                     "engine_manufacturer",
@@ -958,9 +1330,18 @@ export default function OnboardingYachtSetup() {
 
               {/* Accommodation */}
               <div className="space-y-2">
-                <h4 className="text-[9px] font-black uppercase text-gray-700">Accommodation</h4>
+                <h4 className="text-[9px] font-black uppercase text-gray-700">
+                  Accommodation
+                </h4>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                  {["cabins", "berths", "toilet", "shower", "bath", "heating"].map((field) => (
+                  {[
+                    "cabins",
+                    "berths",
+                    "toilet",
+                    "shower",
+                    "bath",
+                    "heating",
+                  ].map((field) => (
                     <SpecCheckbox
                       key={field}
                       field={field}
@@ -983,14 +1364,19 @@ export default function OnboardingYachtSetup() {
               <div className="flex justify-between items-start">
                 <div>
                   <h3 className="text-[12px] font-black uppercase text-blue-400 tracking-[0.4em] flex items-center gap-3 italic">
-                    <Sparkles size={20} className="fill-blue-400" /> Upload Media
+                    <Sparkles size={20} className="fill-blue-400" /> Upload
+                    Media
                   </h3>
                   <p className="text-[9px] text-slate-500 font-bold uppercase mt-2 tracking-widest italic">
                     Select all images. Our AI will sort them automatically.
                   </p>
                 </div>
                 <label className="cursor-pointer bg-blue-600 text-white px-10 py-4 text-[10px] font-black uppercase tracking-widest hover:bg-blue-500 transition-all flex items-center gap-2 shadow-xl">
-                  {isAnalyzing ? <Loader2 className="animate-spin" /> : <Upload size={14} />}
+                  {isAnalyzing ? (
+                    <Loader2 className="animate-spin" />
+                  ) : (
+                    <Upload size={14} />
+                  )}
                   {isAnalyzing ? "Analyzing..." : "Select Images"}
                   <input
                     type="file"
@@ -1045,7 +1431,9 @@ export default function OnboardingYachtSetup() {
                           <button
                             type="button"
                             onClick={() =>
-                              setAiStaging((prev) => prev.filter((_, i) => i !== idx))
+                              setAiStaging((prev) =>
+                                prev.filter((_, i) => i !== idx),
+                              )
                             }
                             className="bg-red-600/20 text-red-400 border border-red-600/30 px-3 py-2 hover:bg-red-600 hover:text-white"
                           >
@@ -1074,7 +1462,9 @@ export default function OnboardingYachtSetup() {
                         multiple
                         className="hidden"
                         accept="image/*"
-                        onChange={(e) => handleGalleryAdd(category, e.target.files)}
+                        onChange={(e) =>
+                          handleGalleryAdd(category, e.target.files)
+                        }
                       />
                     </label>
                   </div>
@@ -1083,7 +1473,10 @@ export default function OnboardingYachtSetup() {
                   {galleryState[category].length > 0 && (
                     <div className="p-4 grid grid-cols-4 lg:grid-cols-8 gap-2">
                       {galleryState[category].map((file, i) => (
-                        <div key={i} className="aspect-square bg-slate-100 relative group">
+                        <div
+                          key={i}
+                          className="aspect-square bg-slate-100 relative group"
+                        >
                           <img
                             src={URL.createObjectURL(file)}
                             className="w-full h-full object-cover"
@@ -1094,7 +1487,9 @@ export default function OnboardingYachtSetup() {
                             onClick={() =>
                               setGalleryState((prev) => ({
                                 ...prev,
-                                [category]: prev[category].filter((_, idx) => idx !== i),
+                                [category]: prev[category].filter(
+                                  (_, idx) => idx !== i,
+                                ),
                               }))
                             }
                             className="absolute inset-0 bg-red-600/80 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white"
@@ -1118,18 +1513,17 @@ export default function OnboardingYachtSetup() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] pb-20 pt-30">
-      <Toaster position="top-right" />
-
+      // <Toaster position="top-right" />
       {/* Simple Header */}
       <div className="bg-white border-b border-slate-200 px-6 py-4">
         <div className="max-w-7xl mx-auto">
-          <h1 className="text-xl font-serif italic text-[#003566]">Create Vessel</h1>
+          <h1 className="text-xl font-serif italic text-[#003566]">
+            Create Vessel
+          </h1>
         </div>
       </div>
-
       {/* Step Indicator (numbers only) */}
       <StepIndicator currentStep={currentStep} steps={steps} />
-
       <div className="max-w-7xl mx-auto p-6 lg:p-12">
         {/* Error Summary */}
         {errors && (
@@ -1193,7 +1587,13 @@ export default function OnboardingYachtSetup() {
 }
 
 // Helper Components
-function Label({ children, htmlFor }: { children: React.ReactNode; htmlFor?: string }) {
+function Label({
+  children,
+  htmlFor,
+}: {
+  children: React.ReactNode;
+  htmlFor?: string;
+}) {
   return (
     <label
       htmlFor={htmlFor}
@@ -1210,13 +1610,19 @@ function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
       {...props}
       className={cn(
         "w-full bg-transparent border-b border-slate-200 py-2.5 text-xs font-bold text-[#003566] outline-none focus:border-blue-600 focus:bg-white/50 transition-all placeholder:text-slate-300",
-        props.className
+        props.className,
       )}
     />
   );
 }
 
-function SectionHeader({ icon, title }: { icon: React.ReactNode; title: string }) {
+function SectionHeader({
+  icon,
+  title,
+}: {
+  icon: React.ReactNode;
+  title: string;
+}) {
   return (
     <h4 className="text-[10px] font-black uppercase tracking-widest text-blue-600 flex items-center gap-2 mb-4">
       {icon} {title}

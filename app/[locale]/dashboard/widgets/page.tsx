@@ -86,8 +86,7 @@ export default function AnalyticsPage() {
   return (
     <div className="min-h-screen bg-white text-[#003566]">
       <DashboardHeader />
-      <Toaster position="top-right" />
-
+      // <Toaster position="top-right" />
       <div className="flex pt-20">
         {/* COLLAPSIBLE SIDEBAR */}
         <Sidebar onCollapse={setIsSidebarCollapsed} />

@@ -128,7 +128,7 @@ export default function ProfileSettingsPage() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isSearchingAddress, setIsSearchingAddress] = useState(false);
   const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(
-    null
+    null,
   );
 
   useEffect(() => {
@@ -208,8 +208,8 @@ export default function ProfileSettingsPage() {
     try {
       const response = await fetch(
         `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
-          query
-        )}&countrycodes=nl&limit=5&addressdetails=1`
+          query,
+        )}&countrycodes=nl&limit=5&addressdetails=1`,
       );
       const data = await response.json();
 
@@ -359,8 +359,7 @@ export default function ProfileSettingsPage() {
   return (
     <div className="min-h-screen bg-white text-[#003566]">
       <DashboardHeader />
-      <Toaster position="top-right" />
-
+      // <Toaster position="top-right" />
       <div className="flex pt-20">
         <Sidebar onCollapse={setIsSidebarCollapsed} />
 
@@ -378,7 +377,10 @@ export default function ProfileSettingsPage() {
               </p>
             </div>
 
-            <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-12 mt-8">
+            <form
+              onSubmit={handleSubmit}
+              className="grid grid-cols-1 lg:grid-cols-3 gap-12 mt-8"
+            >
               {/* Left column – Profile image (always visible) */}
               <div className="lg:col-span-1">
                 <div className="bg-white border border-slate-100 p-8 text-center shadow-sm sticky top-24">
@@ -442,7 +444,7 @@ export default function ProfileSettingsPage() {
                             | "personal"
                             | "address"
                             | "security"
-                            | "password"
+                            | "password",
                         )
                       }
                       className={`px-6 py-3 text-[10px] font-black uppercase tracking-[0.2em] transition-all border-b-2 ${
@@ -485,7 +487,10 @@ export default function ProfileSettingsPage() {
                             type="email"
                             value={formData.email}
                             onChange={(e) =>
-                              setFormData({ ...formData, email: e.target.value })
+                              setFormData({
+                                ...formData,
+                                email: e.target.value,
+                              })
                             }
                             className="w-full bg-transparent border-b border-slate-200 py-2 text-sm font-bold text-[#003566] outline-none focus:border-[#003566] transition-all lowercase"
                             required
@@ -500,7 +505,10 @@ export default function ProfileSettingsPage() {
                             type="text"
                             value={formData.phone_number}
                             onChange={(e) =>
-                              setFormData({ ...formData, phone_number: e.target.value })
+                              setFormData({
+                                ...formData,
+                                phone_number: e.target.value,
+                              })
                             }
                             className="w-full bg-transparent border-b border-slate-200 py-2 text-sm font-bold text-[#003566] outline-none focus:border-[#003566]"
                           />
@@ -514,7 +522,10 @@ export default function ProfileSettingsPage() {
                             type="text"
                             value={formData.mobile}
                             onChange={(e) =>
-                              setFormData({ ...formData, mobile: e.target.value })
+                              setFormData({
+                                ...formData,
+                                mobile: e.target.value,
+                              })
                             }
                             className="w-full bg-transparent border-b border-slate-200 py-2 text-sm font-bold text-[#003566] outline-none focus:border-[#003566]"
                           />
@@ -536,7 +547,10 @@ export default function ProfileSettingsPage() {
                             type="text"
                             value={formData.relationNumber}
                             onChange={(e) =>
-                              setFormData({ ...formData, relationNumber: e.target.value })
+                              setFormData({
+                                ...formData,
+                                relationNumber: e.target.value,
+                              })
                             }
                             className="w-full bg-transparent border-b border-slate-200 py-1 text-sm font-bold text-[#003566] outline-none focus:border-[#003566]"
                           />
@@ -550,7 +564,10 @@ export default function ProfileSettingsPage() {
                             type="text"
                             value={formData.firstName}
                             onChange={(e) =>
-                              setFormData({ ...formData, firstName: e.target.value })
+                              setFormData({
+                                ...formData,
+                                firstName: e.target.value,
+                              })
                             }
                             className="w-full bg-transparent border-b border-slate-200 py-1 text-sm font-bold text-[#003566] outline-none focus:border-[#003566]"
                           />
@@ -564,7 +581,10 @@ export default function ProfileSettingsPage() {
                             type="text"
                             value={formData.lastName}
                             onChange={(e) =>
-                              setFormData({ ...formData, lastName: e.target.value })
+                              setFormData({
+                                ...formData,
+                                lastName: e.target.value,
+                              })
                             }
                             className="w-full bg-transparent border-b border-slate-200 py-1 text-sm font-bold text-[#003566] outline-none focus:border-[#003566]"
                           />
@@ -578,7 +598,10 @@ export default function ProfileSettingsPage() {
                             type="text"
                             value={formData.prefix}
                             onChange={(e) =>
-                              setFormData({ ...formData, prefix: e.target.value })
+                              setFormData({
+                                ...formData,
+                                prefix: e.target.value,
+                              })
                             }
                             className="w-full bg-transparent border-b border-slate-200 py-1 text-sm font-bold text-[#003566] outline-none focus:border-[#003566]"
                           />
@@ -592,7 +615,10 @@ export default function ProfileSettingsPage() {
                             type="text"
                             value={formData.initials}
                             onChange={(e) =>
-                              setFormData({ ...formData, initials: e.target.value })
+                              setFormData({
+                                ...formData,
+                                initials: e.target.value,
+                              })
                             }
                             className="w-full bg-transparent border-b border-slate-200 py-1 text-sm font-bold text-[#003566] outline-none focus:border-[#003566]"
                           />
@@ -606,7 +632,10 @@ export default function ProfileSettingsPage() {
                             type="text"
                             value={formData.title}
                             onChange={(e) =>
-                              setFormData({ ...formData, title: e.target.value })
+                              setFormData({
+                                ...formData,
+                                title: e.target.value,
+                              })
                             }
                             className="w-full bg-transparent border-b border-slate-200 py-1 text-sm font-bold text-[#003566] outline-none focus:border-[#003566]"
                           />
@@ -620,7 +649,10 @@ export default function ProfileSettingsPage() {
                             type="text"
                             value={formData.salutation}
                             onChange={(e) =>
-                              setFormData({ ...formData, salutation: e.target.value })
+                              setFormData({
+                                ...formData,
+                                salutation: e.target.value,
+                              })
                             }
                             className="w-full bg-transparent border-b border-slate-200 py-1 text-sm font-bold text-[#003566] outline-none focus:border-[#003566]"
                           />
@@ -634,7 +666,10 @@ export default function ProfileSettingsPage() {
                             type="text"
                             value={formData.attentionOf}
                             onChange={(e) =>
-                              setFormData({ ...formData, attentionOf: e.target.value })
+                              setFormData({
+                                ...formData,
+                                attentionOf: e.target.value,
+                              })
                             }
                             className="w-full bg-transparent border-b border-slate-200 py-1 text-sm font-bold text-[#003566] outline-none focus:border-[#003566]"
                           />
@@ -648,7 +683,10 @@ export default function ProfileSettingsPage() {
                             type="text"
                             value={formData.identification}
                             onChange={(e) =>
-                              setFormData({ ...formData, identification: e.target.value })
+                              setFormData({
+                                ...formData,
+                                identification: e.target.value,
+                              })
                             }
                             className="w-full bg-transparent border-b border-slate-200 py-1 text-sm font-bold text-[#003566] outline-none focus:border-[#003566]"
                           />
@@ -662,7 +700,10 @@ export default function ProfileSettingsPage() {
                             type="date"
                             value={formData.dateOfBirth}
                             onChange={(e) =>
-                              setFormData({ ...formData, dateOfBirth: e.target.value })
+                              setFormData({
+                                ...formData,
+                                dateOfBirth: e.target.value,
+                              })
                             }
                             className="w-full bg-transparent border-b border-slate-200 py-1 text-sm font-bold text-[#003566] outline-none focus:border-[#003566]"
                           />
@@ -676,7 +717,10 @@ export default function ProfileSettingsPage() {
                             type="url"
                             value={formData.website}
                             onChange={(e) =>
-                              setFormData({ ...formData, website: e.target.value })
+                              setFormData({
+                                ...formData,
+                                website: e.target.value,
+                              })
                             }
                             className="w-full bg-transparent border-b border-slate-200 py-1 text-sm font-bold text-[#003566] outline-none focus:border-[#003566]"
                           />
@@ -722,7 +766,10 @@ export default function ProfileSettingsPage() {
                             type="text"
                             value={formData.street}
                             onChange={(e) =>
-                              setFormData({ ...formData, street: e.target.value })
+                              setFormData({
+                                ...formData,
+                                street: e.target.value,
+                              })
                             }
                             className="w-full bg-transparent border-b border-slate-200 py-2 text-sm font-bold text-[#003566] outline-none focus:border-[#003566]"
                           />
@@ -735,7 +782,10 @@ export default function ProfileSettingsPage() {
                             type="text"
                             value={formData.houseNumber}
                             onChange={(e) =>
-                              setFormData({ ...formData, houseNumber: e.target.value })
+                              setFormData({
+                                ...formData,
+                                houseNumber: e.target.value,
+                              })
                             }
                             className="w-full bg-transparent border-b border-slate-200 py-2 text-sm font-bold text-[#003566] outline-none focus:border-[#003566]"
                           />
@@ -750,7 +800,9 @@ export default function ProfileSettingsPage() {
                           <input
                             type="text"
                             value={formData.address}
-                            onChange={(e) => handleAddressChange(e.target.value)}
+                            onChange={(e) =>
+                              handleAddressChange(e.target.value)
+                            }
                             onFocus={() => {
                               if (formData.address.length >= 3) {
                                 searchAddress(formData.address);
@@ -777,10 +829,15 @@ export default function ProfileSettingsPage() {
                                   key={`${suggestion.lat}-${suggestion.lon}-${index}`}
                                   type="button"
                                   className="w-full text-left px-4 py-3 hover:bg-slate-50 text-sm text-slate-700 border-b border-slate-100 last:border-b-0"
-                                  onClick={() => handleAddressSelect(suggestion)}
+                                  onClick={() =>
+                                    handleAddressSelect(suggestion)
+                                  }
                                 >
                                   <div className="flex items-start gap-2">
-                                    <Search size={12} className="text-slate-400 mt-0.5 flex-shrink-0" />
+                                    <Search
+                                      size={12}
+                                      className="text-slate-400 mt-0.5 flex-shrink-0"
+                                    />
                                     <div className="text-left">
                                       <p className="font-medium">
                                         {suggestion.display_name.split(",")[0]}
@@ -823,7 +880,10 @@ export default function ProfileSettingsPage() {
                             type="text"
                             value={formData.state}
                             onChange={(e) =>
-                              setFormData({ ...formData, state: e.target.value })
+                              setFormData({
+                                ...formData,
+                                state: e.target.value,
+                              })
                             }
                             className="w-full bg-transparent border-b border-slate-200 py-2 text-sm font-bold text-[#003566] outline-none focus:border-[#003566]"
                           />
@@ -836,7 +896,10 @@ export default function ProfileSettingsPage() {
                             type="text"
                             value={formData.postcode}
                             onChange={(e) =>
-                              setFormData({ ...formData, postcode: e.target.value })
+                              setFormData({
+                                ...formData,
+                                postcode: e.target.value,
+                              })
                             }
                             className="w-full bg-transparent border-b border-slate-200 py-2 text-sm font-bold text-[#003566] outline-none focus:border-[#003566] uppercase"
                             placeholder="1234 AB"
@@ -851,7 +914,10 @@ export default function ProfileSettingsPage() {
                         <select
                           value={formData.country}
                           onChange={(e) =>
-                            setFormData({ ...formData, country: e.target.value })
+                            setFormData({
+                              ...formData,
+                              country: e.target.value,
+                            })
                           }
                           className="w-full bg-transparent border-b border-slate-200 py-2 text-sm font-bold text-[#003566] outline-none focus:border-[#003566]"
                         >
@@ -882,13 +948,15 @@ export default function ProfileSettingsPage() {
                             onChange={(e) =>
                               setFormData({
                                 ...formData,
-                                lockscreen_timeout: parseInt(e.target.value) || 10,
+                                lockscreen_timeout:
+                                  parseInt(e.target.value) || 10,
                               })
                             }
                             className="w-full bg-transparent border-b border-slate-200 py-2 text-sm font-bold text-[#003566] outline-none focus:border-[#003566]"
                           />
                           <p className="text-[8px] text-slate-400 mt-1">
-                            After this many minutes of inactivity, the screen will lock.
+                            After this many minutes of inactivity, the screen
+                            will lock.
                           </p>
                         </div>
 
@@ -901,7 +969,10 @@ export default function ProfileSettingsPage() {
                             maxLength={4}
                             value={formData.lockscreen_code}
                             onChange={(e) =>
-                              setFormData({ ...formData, lockscreen_code: e.target.value })
+                              setFormData({
+                                ...formData,
+                                lockscreen_code: e.target.value,
+                              })
                             }
                             placeholder="1234"
                             className="w-full bg-transparent border-b border-slate-200 py-2 text-sm font-bold text-[#003566] outline-none focus:border-[#003566]"
@@ -1003,7 +1074,11 @@ export default function ProfileSettingsPage() {
                               }
                               className="absolute right-2 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-[#003566]"
                             >
-                              {showPasswords.new ? <EyeOff size={14} /> : <Eye size={14} />}
+                              {showPasswords.new ? (
+                                <EyeOff size={14} />
+                              ) : (
+                                <Eye size={14} />
+                              )}
                             </button>
                           </div>
                         </div>

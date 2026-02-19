@@ -280,8 +280,7 @@ export default function YachtEditorPage() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] pb-20">
-      <Toaster position="top-right" />
-
+      // <Toaster position="top-right" />
       {/* PAGE HEADER */}
       <div className="bg-[#003566] text-white p-8 sticky top-0 z-40 shadow-xl flex justify-between items-center">
         <div className="flex items-center gap-6">
@@ -303,7 +302,6 @@ export default function YachtEditorPage() {
           </div>
         </div>
       </div>
-
       <div className="max-w-7xl mx-auto p-6 lg:p-12">
         <form onSubmit={handleSubmit} className="space-y-16">
           {/* ERROR SUMMARY */}

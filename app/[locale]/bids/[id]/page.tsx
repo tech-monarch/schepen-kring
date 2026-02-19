@@ -147,8 +147,7 @@ export default function LiveAuctionPage() {
 
   return (
     <div className="min-h-screen bg-white text-[#003566] flex flex-col md:flex-row">
-      <Toaster position="top-center" />
-
+      // <Toaster position="top-center" />
       {/* LEFT: VISUALS & HISTORY */}
       <div className="w-full md:w-1/2 lg:w-3/5 bg-slate-50 relative flex flex-col">
         {/* Back Nav */}
@@ -241,7 +240,6 @@ export default function LiveAuctionPage() {
           </div>
         </div>
       </div>
-
       {/* RIGHT: ACTION CENTER */}
       <div className="w-full md:w-1/2 lg:w-2/5 bg-white p-8 md:p-16 flex flex-col justify-center border-l border-slate-100">
         <div className="max-w-md mx-auto w-full space-y-12">
@@ -328,7 +326,6 @@ export default function LiveAuctionPage() {
           </div>
         </div>
       </div>
-
       {/* 4. PAYMENT MODAL (DUMMY GATEWAY) */}
       <AnimatePresence>
         {isTestSailModalOpen && (

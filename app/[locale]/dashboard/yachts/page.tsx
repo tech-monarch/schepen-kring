@@ -26,7 +26,7 @@ import {
   Settings,
   MoreHorizontal,
   Grid3x3,
-  List
+  List,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast, Toaster } from "react-hot-toast";
@@ -38,38 +38,76 @@ const PLACEHOLDER_IMAGE =
   "https://images.unsplash.com/photo-1569263979104-865ab7cd8d13?auto=format&fit=crop&w=600&q=80";
 
 // Status badge configuration
-const statusConfig: Record<string, { color: string; bg: string; border: string; label: string }> = {
-  'For Sale': { color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-100', label: 'For Sale' },
-  'For Bid': { color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-100', label: 'For Bid' },
-  'Sold': { color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-100', label: 'Sold' },
-  'Draft': { color: 'text-slate-500', bg: 'bg-slate-100', border: 'border-slate-200', label: 'Draft' },
-  'Active': { color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-100', label: 'Active' },
-  'Inactive': { color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-100', label: 'Inactive' },
-  'Maintenance': { color: 'text-orange-600', bg: 'bg-orange-50', border: 'border-orange-100', label: 'Maintenance' },
+const statusConfig: Record<
+  string,
+  { color: string; bg: string; border: string; label: string }
+> = {
+  "For Sale": {
+    color: "text-emerald-600",
+    bg: "bg-emerald-50",
+    border: "border-emerald-100",
+    label: "For Sale",
+  },
+  "For Bid": {
+    color: "text-blue-600",
+    bg: "bg-blue-50",
+    border: "border-blue-100",
+    label: "For Bid",
+  },
+  Sold: {
+    color: "text-amber-600",
+    bg: "bg-amber-50",
+    border: "border-amber-100",
+    label: "Sold",
+  },
+  Draft: {
+    color: "text-slate-500",
+    bg: "bg-slate-100",
+    border: "border-slate-200",
+    label: "Draft",
+  },
+  Active: {
+    color: "text-emerald-600",
+    bg: "bg-emerald-50",
+    border: "border-emerald-100",
+    label: "Active",
+  },
+  Inactive: {
+    color: "text-red-600",
+    bg: "bg-red-50",
+    border: "border-red-100",
+    label: "Inactive",
+  },
+  Maintenance: {
+    color: "text-orange-600",
+    bg: "bg-orange-50",
+    border: "border-orange-100",
+    label: "Maintenance",
+  },
 };
 
 // Status options
 const statusOptions = [
-  { value: 'all', label: 'All Status' },
-  { value: 'For Sale', label: 'For Sale' },
-  { value: 'For Bid', label: 'For Bid' },
-  { value: 'Sold', label: 'Sold' },
-  { value: 'Draft', label: 'Draft' },
-  { value: 'Active', label: 'Active' },
-  { value: 'Inactive', label: 'Inactive' },
-  { value: 'Maintenance', label: 'Maintenance' },
+  { value: "all", label: "All Status" },
+  { value: "For Sale", label: "For Sale" },
+  { value: "For Bid", label: "For Bid" },
+  { value: "Sold", label: "Sold" },
+  { value: "Draft", label: "Draft" },
+  { value: "Active", label: "Active" },
+  { value: "Inactive", label: "Inactive" },
+  { value: "Maintenance", label: "Maintenance" },
 ];
 
 // Sort options
 const sortOptions = [
-  { value: 'boat_name-asc', label: 'Name (A-Z)' },
-  { value: 'boat_name-desc', label: 'Name (Z-A)' },
-  { value: 'price-desc', label: 'Price (High to Low)' },
-  { value: 'price-asc', label: 'Price (Low to High)' },
-  { value: 'year-desc', label: 'Year (New to Old)' },
-  { value: 'year-asc', label: 'Year (Old to New)' },
-  { value: 'created_at-desc', label: 'Recently Added' },
-  { value: 'updated_at-desc', label: 'Recently Updated' },
+  { value: "boat_name-asc", label: "Name (A-Z)" },
+  { value: "boat_name-desc", label: "Name (Z-A)" },
+  { value: "price-desc", label: "Price (High to Low)" },
+  { value: "price-asc", label: "Price (Low to High)" },
+  { value: "year-desc", label: "Year (New to Old)" },
+  { value: "year-asc", label: "Year (Old to New)" },
+  { value: "created_at-desc", label: "Recently Added" },
+  { value: "updated_at-desc", label: "Recently Updated" },
 ];
 
 export default function FleetManagementPage() {
@@ -78,9 +116,9 @@ export default function FleetManagementPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [selectedStatus, setSelectedStatus] = useState<string>('all');
-  const [sortBy, setSortBy] = useState<string>('boat_name');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [selectedStatus, setSelectedStatus] = useState<string>("all");
+  const [sortBy, setSortBy] = useState<string>("boat_name");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [stats, setStats] = useState({
     total: 0,
@@ -91,7 +129,7 @@ export default function FleetManagementPage() {
     active: 0,
     inactive: 0,
   });
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
   // Fetch fleet
   const fetchFleet = async () => {
@@ -99,16 +137,17 @@ export default function FleetManagementPage() {
       setLoading(true);
       const res = await api.get("/yachts");
       setFleet(res.data || []);
-      
+
       // Calculate stats
       const statsData = {
         total: res.data.length,
-        forSale: res.data.filter((y: any) => y.status === 'For Sale').length,
-        forBid: res.data.filter((y: any) => y.status === 'For Bid').length,
-        sold: res.data.filter((y: any) => y.status === 'Sold').length,
-        draft: res.data.filter((y: any) => y.status === 'Draft' || !y.status).length,
-        active: res.data.filter((y: any) => y.status === 'Active').length,
-        inactive: res.data.filter((y: any) => y.status === 'Inactive').length,
+        forSale: res.data.filter((y: any) => y.status === "For Sale").length,
+        forBid: res.data.filter((y: any) => y.status === "For Bid").length,
+        sold: res.data.filter((y: any) => y.status === "Sold").length,
+        draft: res.data.filter((y: any) => y.status === "Draft" || !y.status)
+          .length,
+        active: res.data.filter((y: any) => y.status === "Active").length,
+        inactive: res.data.filter((y: any) => y.status === "Inactive").length,
       };
       setStats(statsData);
     } catch (err: any) {
@@ -129,7 +168,7 @@ export default function FleetManagementPage() {
   };
 
   const handleDelete = async (yacht: any) => {
-    const yachtName = yacht.boat_name || yacht.name || 'Unnamed Vessel';
+    const yachtName = yacht.boat_name || yacht.name || "Unnamed Vessel";
     const confirmed = window.confirm(
       `CRITICAL ACTION: Are you sure you want to permanently remove "${yachtName}" from the registry?`,
     );
@@ -143,7 +182,9 @@ export default function FleetManagementPage() {
     } catch (err: any) {
       console.error("Deletion failed:", err);
       if (err.response?.status === 403) {
-        toast.error("Permission denied. You don't have access to delete vessels.");
+        toast.error(
+          "Permission denied. You don't have access to delete vessels.",
+        );
       } else {
         toast.error("Error: Could not remove vessel.");
       }
@@ -154,7 +195,7 @@ export default function FleetManagementPage() {
 
   const toggleAvailability = async (yacht: any) => {
     try {
-      const newStatus = yacht.status === 'Active' ? 'Inactive' : 'Active';
+      const newStatus = yacht.status === "Active" ? "Inactive" : "Active";
       await api.put(`/yachts/${yacht.id}`, { ...yacht, status: newStatus });
       fetchFleet();
       toast.success(`Vessel marked as ${newStatus}`);
@@ -166,133 +207,134 @@ export default function FleetManagementPage() {
 
   const getImageUrl = (imagePath: string | null | undefined) => {
     if (!imagePath) return PLACEHOLDER_IMAGE;
-    if (imagePath.startsWith('http')) return imagePath;
+    if (imagePath.startsWith("http")) return imagePath;
     return `${STORAGE_URL}${imagePath}`;
   };
 
   // Safe string access with null checks
   const safeString = (value: any): string => {
-    if (value === null || value === undefined) return '';
+    if (value === null || value === undefined) return "";
     return String(value).trim();
   };
 
   // Filter and sort fleet
   const filteredAndSortedFleet = fleet
-    .filter(yacht => {
+    .filter((yacht) => {
       if (!yacht) return false;
-      
+
       // Search filter - safe with null checks
       const boatName = safeString(yacht.boat_name).toLowerCase();
       const vesselId = safeString(yacht.vessel_id).toLowerCase();
       const location = safeString(yacht.where).toLowerCase();
       const query = searchQuery.toLowerCase();
-      
-      const matchesSearch = 
-        boatName.includes(query) || 
-        vesselId.includes(query) || 
+
+      const matchesSearch =
+        boatName.includes(query) ||
+        vesselId.includes(query) ||
         location.includes(query);
-      
+
       // Status filter
-      const yachtStatus = yacht.status || 'Draft';
-      const matchesStatus = selectedStatus === 'all' || yachtStatus === selectedStatus;
-      
+      const yachtStatus = yacht.status || "Draft";
+      const matchesStatus =
+        selectedStatus === "all" || yachtStatus === selectedStatus;
+
       return matchesSearch && matchesStatus;
     })
     .sort((a, b) => {
       // Sorting logic with null checks
-      let aValue: any = '';
-      let bValue: any = '';
-      
-      if (sortBy.includes('.')) {
+      let aValue: any = "";
+      let bValue: any = "";
+
+      if (sortBy.includes(".")) {
         // Handle nested properties if needed
-        const keys = sortBy.split('.');
-        aValue = keys.reduce((obj, key) => obj?.[key], a) || '';
-        bValue = keys.reduce((obj, key) => obj?.[key], b) || '';
+        const keys = sortBy.split(".");
+        aValue = keys.reduce((obj, key) => obj?.[key], a) || "";
+        bValue = keys.reduce((obj, key) => obj?.[key], b) || "";
       } else {
-        aValue = a[sortBy] || '';
-        bValue = b[sortBy] || '';
+        aValue = a[sortBy] || "";
+        bValue = b[sortBy] || "";
       }
-      
+
       // Handle numeric sorting for price, year, etc.
-      if (sortBy === 'price' || sortBy === 'year') {
+      if (sortBy === "price" || sortBy === "year") {
         const aNum = parseFloat(aValue) || 0;
         const bNum = parseFloat(bValue) || 0;
-        return sortOrder === 'asc' ? aNum - bNum : bNum - aNum;
+        return sortOrder === "asc" ? aNum - bNum : bNum - aNum;
       }
-      
+
       // Handle date sorting
-      if (sortBy.includes('_at')) {
+      if (sortBy.includes("_at")) {
         const aDate = new Date(aValue || 0).getTime();
         const bDate = new Date(bValue || 0).getTime();
-        return sortOrder === 'asc' ? aDate - bDate : bDate - aDate;
+        return sortOrder === "asc" ? aDate - bDate : bDate - aDate;
       }
-      
+
       // Handle string sorting
       const aStr = safeString(aValue);
       const bStr = safeString(bValue);
-      
-      return sortOrder === 'asc' 
+
+      return sortOrder === "asc"
         ? aStr.localeCompare(bStr)
         : bStr.localeCompare(aStr);
     });
 
   const formatCurrency = (amount: number | string | null | undefined) => {
-    if (amount === null || amount === undefined || amount === '') return '€ --';
+    if (amount === null || amount === undefined || amount === "") return "€ --";
     const numAmount = Number(amount);
-    if (isNaN(numAmount)) return '€ --';
-    return new Intl.NumberFormat('nl-NL', {
-      style: 'currency',
-      currency: 'EUR',
+    if (isNaN(numAmount)) return "€ --";
+    return new Intl.NumberFormat("nl-NL", {
+      style: "currency",
+      currency: "EUR",
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(numAmount);
   };
 
   const formatLength = (loa: string | number | null | undefined) => {
-    if (loa === null || loa === undefined || loa === '') return '-- m';
+    if (loa === null || loa === undefined || loa === "") return "-- m";
     return `${loa} m`;
   };
 
   const getStatusConfig = (status: string | null | undefined) => {
-    const safeStatus = status || 'Draft';
-    return statusConfig[safeStatus] || statusConfig['Draft'];
+    const safeStatus = status || "Draft";
+    return statusConfig[safeStatus] || statusConfig["Draft"];
   };
 
   const getYachtName = (yacht: any): string => {
-    return yacht.boat_name || yacht.name || 'Unnamed Vessel';
+    return yacht.boat_name || yacht.name || "Unnamed Vessel";
   };
 
   const getYachtStatus = (yacht: any): string => {
-    return yacht.status || 'Draft';
+    return yacht.status || "Draft";
   };
 
   const handleSortChange = (value: string) => {
-    const [newSortBy, newSortOrder] = value.split('-');
+    const [newSortBy, newSortOrder] = value.split("-");
     setSortBy(newSortBy);
-    setSortOrder(newSortOrder as 'asc' | 'desc');
+    setSortOrder(newSortOrder as "asc" | "desc");
   };
 
   // View toggle buttons
   const ViewToggle = () => (
     <div className="flex border border-slate-200 rounded-sm overflow-hidden">
       <button
-        onClick={() => setViewMode('grid')}
+        onClick={() => setViewMode("grid")}
         className={cn(
           "px-4 py-2 text-[10px] font-black uppercase tracking-widest transition-colors",
-          viewMode === 'grid' 
-            ? 'bg-[#003566] text-white' 
-            : 'bg-white text-slate-600 hover:bg-slate-50'
+          viewMode === "grid"
+            ? "bg-[#003566] text-white"
+            : "bg-white text-slate-600 hover:bg-slate-50",
         )}
       >
         <Grid3x3 size={14} />
       </button>
       <button
-        onClick={() => setViewMode('list')}
+        onClick={() => setViewMode("list")}
         className={cn(
           "px-4 py-2 text-[10px] font-black uppercase tracking-widest transition-colors border-l border-slate-200",
-          viewMode === 'list' 
-            ? 'bg-[#003566] text-white' 
-            : 'bg-white text-slate-600 hover:bg-slate-50'
+          viewMode === "list"
+            ? "bg-[#003566] text-white"
+            : "bg-white text-slate-600 hover:bg-slate-50",
         )}
       >
         <List size={14} />
@@ -302,10 +344,8 @@ export default function FleetManagementPage() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] p-6 lg:p-12">
-      <Toaster position="top-right" />
-      
-              <Sidebar onCollapse={setIsSidebarCollapsed} />
-
+      // <Toaster position="top-right" />
+      <Sidebar onCollapse={setIsSidebarCollapsed} />
       {/* HEADER */}
       <div className="mb-12">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
@@ -343,7 +383,9 @@ export default function FleetManagementPage() {
                 <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">
                   Total
                 </p>
-                <p className="text-xl font-bold text-[#003566]">{stats.total}</p>
+                <p className="text-xl font-bold text-[#003566]">
+                  {stats.total}
+                </p>
               </div>
               <BarChart3 className="text-blue-600" size={18} />
             </div>
@@ -354,7 +396,9 @@ export default function FleetManagementPage() {
                 <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">
                   For Sale
                 </p>
-                <p className="text-xl font-bold text-emerald-600">{stats.forSale}</p>
+                <p className="text-xl font-bold text-emerald-600">
+                  {stats.forSale}
+                </p>
               </div>
               <Euro className="text-emerald-600" size={18} />
             </div>
@@ -365,7 +409,9 @@ export default function FleetManagementPage() {
                 <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">
                   For Bid
                 </p>
-                <p className="text-xl font-bold text-blue-600">{stats.forBid}</p>
+                <p className="text-xl font-bold text-blue-600">
+                  {stats.forBid}
+                </p>
               </div>
               <Users className="text-blue-600" size={18} />
             </div>
@@ -387,7 +433,9 @@ export default function FleetManagementPage() {
                 <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">
                   Draft
                 </p>
-                <p className="text-xl font-bold text-slate-500">{stats.draft}</p>
+                <p className="text-xl font-bold text-slate-500">
+                  {stats.draft}
+                </p>
               </div>
               <AlertTriangle className="text-slate-500" size={18} />
             </div>
@@ -398,7 +446,9 @@ export default function FleetManagementPage() {
                 <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">
                   Active
                 </p>
-                <p className="text-xl font-bold text-emerald-600">{stats.active}</p>
+                <p className="text-xl font-bold text-emerald-600">
+                  {stats.active}
+                </p>
               </div>
               <CheckCircle className="text-emerald-600" size={18} />
             </div>
@@ -409,7 +459,9 @@ export default function FleetManagementPage() {
                 <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">
                   Inactive
                 </p>
-                <p className="text-xl font-bold text-red-600">{stats.inactive}</p>
+                <p className="text-xl font-bold text-red-600">
+                  {stats.inactive}
+                </p>
               </div>
               <XCircle className="text-red-600" size={18} />
             </div>
@@ -432,29 +484,32 @@ export default function FleetManagementPage() {
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            
+
             <div className="relative">
-              <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
+              <Filter
+                className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300"
+                size={18}
+              />
               <select
                 className="w-full bg-slate-50 border border-slate-200 p-3 pl-12 text-[11px] font-black tracking-widest outline-none appearance-none"
                 value={selectedStatus}
                 onChange={(e) => setSelectedStatus(e.target.value)}
               >
-                {statusOptions.map(option => (
+                {statusOptions.map((option) => (
                   <option key={option.value} value={option.value}>
                     {option.label}
                   </option>
                 ))}
               </select>
             </div>
-            
+
             <div className="relative">
               <select
                 className="w-full bg-slate-50 border border-slate-200 p-3 text-[11px] font-black tracking-widest outline-none"
                 value={`${sortBy}-${sortOrder}`}
                 onChange={(e) => handleSortChange(e.target.value)}
               >
-                {sortOptions.map(option => (
+                {sortOptions.map((option) => (
                   <option key={option.value} value={option.value}>
                     Sort: {option.label}
                   </option>
@@ -468,7 +523,6 @@ export default function FleetManagementPage() {
           </div>
         </div>
       </div>
-
       {/* LOADING STATE */}
       {loading && (
         <div className="col-span-full py-20 text-center">
@@ -478,7 +532,6 @@ export default function FleetManagementPage() {
           </p>
         </div>
       )}
-
       {/* EMPTY STATE */}
       {!loading && filteredAndSortedFleet.length === 0 && (
         <div className="text-center py-20">
@@ -487,9 +540,9 @@ export default function FleetManagementPage() {
             No vessels found
           </p>
           <p className="text-[10px] text-slate-400 mb-6">
-            {searchQuery || selectedStatus !== 'all' 
-              ? 'Try adjusting your search or filters' 
-              : 'No vessels in the registry yet'}
+            {searchQuery || selectedStatus !== "all"
+              ? "Try adjusting your search or filters"
+              : "No vessels in the registry yet"}
           </p>
           <Button
             onClick={() => router.push("/nl/dashboard/admin/yachts/new")}
@@ -500,9 +553,8 @@ export default function FleetManagementPage() {
           </Button>
         </div>
       )}
-
       {/* GRID VIEW */}
-      {!loading && viewMode === 'grid' && filteredAndSortedFleet.length > 0 && (
+      {!loading && viewMode === "grid" && filteredAndSortedFleet.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {filteredAndSortedFleet.map((yacht) => (
             <div
@@ -517,44 +569,50 @@ export default function FleetManagementPage() {
                   alt={getYachtName(yacht)}
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />
-                
+
                 {/* VESSEL ID BADGE */}
                 {yacht.vessel_id && (
                   <div className="absolute top-3 left-3 bg-black/80 text-white text-[8px] font-black uppercase tracking-widest px-2 py-1">
                     {yacht.vessel_id}
                   </div>
                 )}
-                
+
                 {/* STATUS BADGE */}
                 <div className="absolute top-3 right-3">
-                  <span className={cn(
-                    "text-[8px] font-black px-3 py-1 rounded-full uppercase tracking-widest border",
-                    getStatusConfig(yacht.status).color,
-                    getStatusConfig(yacht.status).bg,
-                    getStatusConfig(yacht.status).border
-                  )}>
+                  <span
+                    className={cn(
+                      "text-[8px] font-black px-3 py-1 rounded-full uppercase tracking-widest border",
+                      getStatusConfig(yacht.status).color,
+                      getStatusConfig(yacht.status).bg,
+                      getStatusConfig(yacht.status).border,
+                    )}
+                  >
                     {getYachtStatus(yacht)}
                   </span>
                 </div>
-                
+
                 {/* ACTION OVERLAY */}
                 <div className="absolute inset-0 bg-[#003566]/90 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-3 p-6">
                   <button
-                    onClick={() => router.push(`/nl/dashboard/admin/yachts/${yacht.id}`)}
+                    onClick={() =>
+                      router.push(`/nl/dashboard/admin/yachts/${yacht.id}`)
+                    }
                     className="w-full max-w-[200px] bg-white text-[#003566] px-4 py-3 font-black uppercase text-[9px] tracking-widest hover:bg-blue-600 hover:text-white transition-all flex items-center justify-center gap-2"
                   >
                     <Edit3 size={12} />
                     Edit Manifest
                   </button>
-                  
+
                   <button
-                    onClick={() => router.push(`/nl/dashboard/admin/yachts/${yacht.id}`)}
+                    onClick={() =>
+                      router.push(`/nl/dashboard/admin/yachts/${yacht.id}`)
+                    }
                     className="w-full max-w-[200px] bg-blue-600 text-white px-4 py-3 font-black uppercase text-[9px] tracking-widest hover:bg-blue-700 transition-all flex items-center justify-center gap-2"
                   >
                     <Eye size={12} />
                     View Details
                   </button>
-                  
+
                   <button
                     onClick={() => handleDelete(yacht)}
                     disabled={isSubmitting}
@@ -569,7 +627,7 @@ export default function FleetManagementPage() {
                   </button>
                 </div>
               </div>
-              
+
               {/* DETAILS SECTION */}
               <div className="p-5 space-y-4 flex-1 flex flex-col">
                 <div>
@@ -580,7 +638,7 @@ export default function FleetManagementPage() {
                     {formatCurrency(yacht.price)}
                   </p>
                 </div>
-                
+
                 {/* SPECIFICATIONS */}
                 <div className="grid grid-cols-2 gap-3 pt-4 border-t border-slate-100">
                   <div className="space-y-1">
@@ -590,17 +648,22 @@ export default function FleetManagementPage() {
                     <div className="space-y-1">
                       <div className="flex items-center gap-2 text-[10px] text-slate-600">
                         <Maximize2 size={12} className="text-blue-600" />
-                        <span className="font-medium">{formatLength(yacht.loa)} LOA</span>
+                        <span className="font-medium">
+                          {formatLength(yacht.loa)} LOA
+                        </span>
                       </div>
                       {yacht.beam && (
                         <div className="flex items-center gap-2 text-[10px] text-slate-600">
-                          <Maximize2 size={12} className="text-blue-600 rotate-90" />
+                          <Maximize2
+                            size={12}
+                            className="text-blue-600 rotate-90"
+                          />
                           <span>{yacht.beam}m Beam</span>
                         </div>
                       )}
                     </div>
                   </div>
-                  
+
                   <div className="space-y-1">
                     <p className="text-[9px] font-black uppercase text-slate-400 tracking-widest">
                       Details
@@ -621,11 +684,13 @@ export default function FleetManagementPage() {
                     </div>
                   </div>
                 </div>
-                
+
                 {/* FOOTER */}
                 <div className="pt-4 border-t border-slate-100 mt-auto">
                   <button
-                    onClick={() => router.push(`/nl/dashboard/admin/yachts/${yacht.id}`)}
+                    onClick={() =>
+                      router.push(`/nl/dashboard/admin/yachts/${yacht.id}`)
+                    }
                     className="w-full text-[9px] font-black uppercase text-blue-600 tracking-widest hover:text-blue-800 transition-colors flex items-center justify-center gap-1"
                   >
                     Manage Vessel
@@ -637,9 +702,8 @@ export default function FleetManagementPage() {
           ))}
         </div>
       )}
-
       {/* LIST VIEW */}
-      {!loading && viewMode === 'list' && filteredAndSortedFleet.length > 0 && (
+      {!loading && viewMode === "list" && filteredAndSortedFleet.length > 0 && (
         <div className="bg-white border border-slate-200">
           {/* TABLE HEADER */}
           <div className="grid grid-cols-12 gap-4 p-4 border-b border-slate-200 bg-slate-50 text-[10px] font-black uppercase tracking-widest text-slate-500">
@@ -650,10 +714,13 @@ export default function FleetManagementPage() {
             <div className="col-span-1">Year</div>
             <div className="col-span-2 text-right">Actions</div>
           </div>
-          
+
           {/* TABLE ROWS */}
           {filteredAndSortedFleet.map((yacht) => (
-            <div key={yacht.id} className="grid grid-cols-12 gap-4 p-4 border-b border-slate-100 hover:bg-slate-50 transition-colors">
+            <div
+              key={yacht.id}
+              className="grid grid-cols-12 gap-4 p-4 border-b border-slate-100 hover:bg-slate-50 transition-colors"
+            >
               {/* VESSEL */}
               <div className="col-span-3 flex items-center gap-3">
                 <div className="w-16 h-12 bg-slate-100 overflow-hidden flex-shrink-0">
@@ -665,18 +732,24 @@ export default function FleetManagementPage() {
                   />
                 </div>
                 <div>
-                  <p className="font-medium text-[#003566]">{getYachtName(yacht)}</p>
+                  <p className="font-medium text-[#003566]">
+                    {getYachtName(yacht)}
+                  </p>
                   {yacht.vessel_id && (
-                    <p className="text-[9px] text-slate-500 font-medium">ID: {yacht.vessel_id}</p>
+                    <p className="text-[9px] text-slate-500 font-medium">
+                      ID: {yacht.vessel_id}
+                    </p>
                   )}
                 </div>
               </div>
-              
+
               {/* PRICE */}
               <div className="col-span-2 flex items-center">
-                <p className="font-bold text-blue-900">{formatCurrency(yacht.price)}</p>
+                <p className="font-bold text-blue-900">
+                  {formatCurrency(yacht.price)}
+                </p>
               </div>
-              
+
               {/* SPECIFICATIONS */}
               <div className="col-span-2 flex items-center">
                 <div className="space-y-1">
@@ -692,35 +765,43 @@ export default function FleetManagementPage() {
                   )}
                 </div>
               </div>
-              
+
               {/* STATUS */}
               <div className="col-span-2 flex items-center">
-                <span className={cn(
-                  "inline-flex text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-widest border",
-                  getStatusConfig(yacht.status).color,
-                  getStatusConfig(yacht.status).bg,
-                  getStatusConfig(yacht.status).border
-                )}>
+                <span
+                  className={cn(
+                    "inline-flex text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-widest border",
+                    getStatusConfig(yacht.status).color,
+                    getStatusConfig(yacht.status).bg,
+                    getStatusConfig(yacht.status).border,
+                  )}
+                >
                   {getYachtStatus(yacht)}
                 </span>
               </div>
-              
+
               {/* YEAR */}
               <div className="col-span-1 flex items-center">
-                <span className="text-[11px] font-medium text-slate-600">{yacht.year || '--'}</span>
+                <span className="text-[11px] font-medium text-slate-600">
+                  {yacht.year || "--"}
+                </span>
               </div>
-              
+
               {/* ACTIONS */}
               <div className="col-span-2 flex items-center justify-end gap-2">
                 <button
-                  onClick={() => router.push(`/nl/dashboard/admin/yachts/${yacht.id}`)}
+                  onClick={() =>
+                    router.push(`/nl/dashboard/admin/yachts/${yacht.id}`)
+                  }
                   className="p-2 text-blue-600 hover:text-blue-800 transition-colors"
                   title="Edit"
                 >
                   <Edit3 size={16} />
                 </button>
                 <button
-                  onClick={() => router.push(`/nl/dashboard/admin/yachts/${yacht.id}`)}
+                  onClick={() =>
+                    router.push(`/nl/dashboard/admin/yachts/${yacht.id}`)
+                  }
                   className="p-2 text-emerald-600 hover:text-emerald-800 transition-colors"
                   title="View"
                 >
@@ -739,14 +820,15 @@ export default function FleetManagementPage() {
           ))}
         </div>
       )}
-      
       {/* FOOTER */}
       {!loading && filteredAndSortedFleet.length > 0 && (
         <div className="mt-8 pt-6 border-t border-slate-200">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-              <span className="text-blue-600">{filteredAndSortedFleet.length}</span> of{" "}
-              <span>{fleet.length}</span> vessels displayed
+              <span className="text-blue-600">
+                {filteredAndSortedFleet.length}
+              </span>{" "}
+              of <span>{fleet.length}</span> vessels displayed
             </div>
             <div className="flex items-center gap-4">
               <Button
@@ -758,7 +840,7 @@ export default function FleetManagementPage() {
                 Refresh
               </Button>
               <Button
-                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
                 variant="outline"
                 className="h-9 px-4 text-[10px] font-black uppercase tracking-widest"
               >

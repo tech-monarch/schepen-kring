@@ -80,8 +80,7 @@ export function DashboardHeader() {
           : "bg-white border-b border-slate-100",
       )}
     >
-      <Toaster position="top-right" reverseOrder={false} />
-
+      // <Toaster position="top-right" reverseOrder={false} />
       {/* Brand Logo Section */}
       <div className="flex items-center gap-12">
         <Link href="/nl/dashboard" className="flex items-center group">
@@ -104,7 +103,6 @@ export function DashboardHeader() {
           />
         </div>
       </div>
-
       {/* Navigation */}
       <nav className="hidden lg:flex items-center gap-3">
         {managementItems.map((item) => (
@@ -126,7 +124,6 @@ export function DashboardHeader() {
           </Link>
         ))}
       </nav>
-
       {/* User Actions */}
       <div className="flex items-center gap-8">
         <ReturnToAdmin />

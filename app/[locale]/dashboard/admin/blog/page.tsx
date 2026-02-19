@@ -140,8 +140,7 @@ export default function AdminBlogPage() {
 
   return (
     <div className="space-y-10 p-6 max-w-7xl mx-auto min-h-screen">
-      <Toaster position="top-right" />
-
+      // <Toaster position="top-right" />
       {/* HEADER */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-slate-100 pb-10">
         <div>
@@ -158,7 +157,6 @@ export default function AdminBlogPage() {
           </Button>
         </Link>
       </div>
-
       {/* FILTERS & SEARCH */}
       <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
         <div className="flex items-center gap-4">
@@ -191,7 +189,6 @@ export default function AdminBlogPage() {
           </span>
         </div>
       </div>
-
       {/* BLOG LIST */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-20">
         {loading ? (
@@ -307,7 +304,6 @@ export default function AdminBlogPage() {
           ))
         )}
       </div>
-
       {/* PAGINATION */}
       {pagination.last_page > 1 && (
         <div className="flex justify-center items-center gap-4 py-8">

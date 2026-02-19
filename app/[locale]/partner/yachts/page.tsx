@@ -71,8 +71,7 @@ export default function FleetManagementPage() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] p-6 lg:p-12 text-[#003566] -mt-20">
-      <Toaster position="top-right" />
-
+      // <Toaster position="top-right" />
       {/* HEADER */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-6">
         <div>
@@ -91,7 +90,6 @@ export default function FleetManagementPage() {
           Register New Vessel
         </Button>
       </div>
-
       {/* SEARCH */}
       <div className="relative mb-10 group">
         <Search
@@ -106,7 +104,6 @@ export default function FleetManagementPage() {
           onChange={(e) => setSearchQuery(e.target.value)}
         />
       </div>
-
       {/* GRID */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
         {loading ? (

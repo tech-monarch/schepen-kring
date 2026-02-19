@@ -85,8 +85,7 @@ export default function CleanDashboardContainer() {
 
   return (
     <div className="max-w-7xl mx-auto p-6 space-y-10 min-h-screen pb-20">
-      <Toaster position="top-right" />
-
+      // <Toaster position="top-right" />
       {/* WELCOME HEADER */}
       <div className="border-b border-slate-100 pb-8 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
         <div>
@@ -108,7 +107,6 @@ export default function CleanDashboardContainer() {
           </div>
         </div>
       </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
         {/* TASK MANAGEMENT COLUMN */}
         <div className="lg:col-span-2 space-y-6">

@@ -29,8 +29,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Toaster, toast } from "react-hot-toast";
 import axios from "axios";
-import {Sidebar} from "@/components/dashboard/Sidebar";
-
+import { Sidebar } from "@/components/dashboard/Sidebar";
 
 interface Task {
   id: string | number;
@@ -228,8 +227,7 @@ export default function TaskManifestPage() {
     <div className="min-h-screen bg-white text-[#003566]">
       <DashboardHeader />
       <div className="flex pt-20">
-              <Sidebar onCollapse={setIsSidebarCollapsed} />
-
+        <Sidebar onCollapse={setIsSidebarCollapsed} />
 
         {/* MAIN CONTENT - Removed -mt-20 and fixed Margin */}
         <motion.main
@@ -237,8 +235,7 @@ export default function TaskManifestPage() {
           className="flex-1 p-8 bg-white min-h-[calc(100vh-80px)] -mt-20"
         >
           <div className="max-w-[1600px] mx-auto space-y-12">
-            <Toaster position="top-right" />
-
+            // <Toaster position="top-right" />
             {/* Header */}
             <div className="flex justify-between items-end border-b border-slate-100 pb-8 mt-4">
               <div>
@@ -250,7 +247,6 @@ export default function TaskManifestPage() {
                 </p>
               </div>
             </div>
-
             {/* Analytics Section */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               {[
@@ -291,7 +287,6 @@ export default function TaskManifestPage() {
                 </div>
               ))}
             </div>
-
             {/* Task List */}
             <div className="space-y-4">
               <AnimatePresence mode="popLayout">

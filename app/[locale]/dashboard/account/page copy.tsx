@@ -17,7 +17,7 @@ import {
   Eye,
   EyeOff,
   Search,
-  Map
+  Map,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { motion } from "framer-motion";
@@ -80,18 +80,22 @@ export default function ProfileSettingsPage() {
   const [showPasswords, setShowPasswords] = useState({
     current: false,
     new: false,
-    confirm: false
+    confirm: false,
   });
 
   // Address autocomplete
-  const [addressSuggestions, setAddressSuggestions] = useState<AddressSuggestion[]>([]);
+  const [addressSuggestions, setAddressSuggestions] = useState<
+    AddressSuggestion[]
+  >([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isSearchingAddress, setIsSearchingAddress] = useState(false);
-  const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(null);
+  const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(
+    null,
+  );
 
   useEffect(() => {
     fetchProfile();
-    
+
     // Cleanup debounce timer on unmount
     return () => {
       if (debounceTimer) {
@@ -150,10 +154,10 @@ export default function ProfileSettingsPage() {
     try {
       // OpenStreetMap Nominatim API - FREE, no API key needed
       const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=nl&limit=5&addressdetails=1`
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=nl&limit=5&addressdetails=1`,
       );
       const data = await response.json();
-      
+
       if (Array.isArray(data) && data.length > 0) {
         setAddressSuggestions(data);
         setShowSuggestions(true);
@@ -162,7 +166,7 @@ export default function ProfileSettingsPage() {
         setShowSuggestions(false);
       }
     } catch (error) {
-      console.error('Address search error:', error);
+      console.error("Address search error:", error);
       toast.error("Failed to search address");
     } finally {
       setIsSearchingAddress(false);
@@ -172,43 +176,42 @@ export default function ProfileSettingsPage() {
   // Handle address input with debounce
   const handleAddressChange = (value: string) => {
     setFormData({ ...formData, address: value });
-    
+
     // Clear previous timer
     if (debounceTimer) {
       clearTimeout(debounceTimer);
     }
-    
+
     // Set new debounce timer (500ms delay)
     const timer = setTimeout(() => {
       searchAddress(value);
     }, 500);
-    
+
     setDebounceTimer(timer);
   };
 
   // Handle address selection from suggestions
   const handleAddressSelect = (suggestion: AddressSuggestion) => {
     const address = suggestion.display_name;
-    const city = suggestion.address.city || 
-                 suggestion.address.town || 
-                 suggestion.address.village || 
-                 suggestion.address.suburb || 
-                 "";
-    const state = suggestion.address.state || 
-                  suggestion.address.county || 
-                  "";
+    const city =
+      suggestion.address.city ||
+      suggestion.address.town ||
+      suggestion.address.village ||
+      suggestion.address.suburb ||
+      "";
+    const state = suggestion.address.state || suggestion.address.county || "";
     const postcode = suggestion.address.postcode || "";
     const country = suggestion.address.country || "Netherlands";
-    
-    setFormData(prev => ({
+
+    setFormData((prev) => ({
       ...prev,
       address: address,
       city: city,
       state: state,
       postcode: postcode,
-      country: country
+      country: country,
     }));
-    
+
     setShowSuggestions(false);
     setAddressSuggestions([]);
   };
@@ -226,7 +229,7 @@ export default function ProfileSettingsPage() {
     data.append("state", formData.state);
     data.append("postcode", formData.postcode);
     data.append("country", formData.country);
-    
+
     if (formData.profile_image) {
       data.append("profile_image", formData.profile_image);
     }
@@ -295,8 +298,7 @@ export default function ProfileSettingsPage() {
   return (
     <div className="min-h-screen bg-white text-[#003566]">
       <DashboardHeader />
-      <Toaster position="top-right" />
-
+      // <Toaster position="top-right" />
       <div className="flex pt-20">
         <Sidebar onCollapse={setIsSidebarCollapsed} />
 
@@ -306,20 +308,30 @@ export default function ProfileSettingsPage() {
         >
           <div className="max-w-4xl mx-auto space-y-12">
             <div className="border-b border-slate-100 pb-8 mt-4">
-              <h1 className="text-5xl font-serif italic text-[#003566]">Profile Identity</h1>
+              <h1 className="text-5xl font-serif italic text-[#003566]">
+                Profile Identity
+              </h1>
               <p className="text-[10px] font-black uppercase tracking-[0.4em] text-blue-600 mt-2">
                 Personnel Credentials & Asset Management
               </p>
             </div>
 
-            <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+            <form
+              onSubmit={handleSubmit}
+              className="grid grid-cols-1 lg:grid-cols-3 gap-12"
+            >
               {/* Left Column */}
               <div className="lg:col-span-1 space-y-6">
                 <div className="bg-white border border-slate-100 p-8 text-center shadow-sm relative">
                   <div className="relative inline-block group">
                     <div className="w-40 h-40 border border-slate-200 overflow-hidden bg-white mx-auto">
                       <img
-                        src={previewUrl || (user?.profile_image ? `${STORAGE_URL}${user.profile_image}` : DEFAULT_PFP.src)}
+                        src={
+                          previewUrl ||
+                          (user?.profile_image
+                            ? `${STORAGE_URL}${user.profile_image}`
+                            : DEFAULT_PFP.src)
+                        }
                         alt="Profile"
                         className="w-full h-full object-cover"
                       />
@@ -331,10 +343,18 @@ export default function ProfileSettingsPage() {
                     >
                       <Camera size={18} />
                     </button>
-                    <input type="file" ref={fileInputRef} onChange={handleImageChange} className="hidden" accept="image/*" />
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handleImageChange}
+                      className="hidden"
+                      accept="image/*"
+                    />
                   </div>
                   <div className="mt-8">
-                    <h2 className="text-xs font-black uppercase tracking-[0.2em] text-[#003566]">{user?.name}</h2>
+                    <h2 className="text-xs font-black uppercase tracking-[0.2em] text-[#003566]">
+                      {user?.name}
+                    </h2>
                     <p className="text-[9px] font-bold text-blue-500 uppercase tracking-widest mt-2">
                       {user?.userType || "Staff Member"}
                     </p>
@@ -353,7 +373,9 @@ export default function ProfileSettingsPage() {
                     <input
                       type="text"
                       value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, name: e.target.value })
+                      }
                       className="w-full bg-transparent border-b border-slate-200 py-2 text-sm font-bold text-[#003566] outline-none focus:border-[#003566] transition-all uppercase tracking-wider"
                       required
                     />
@@ -367,7 +389,9 @@ export default function ProfileSettingsPage() {
                     <input
                       type="email"
                       value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, email: e.target.value })
+                      }
                       className="w-full bg-transparent border-b border-slate-200 py-2 text-sm font-bold text-[#003566] outline-none focus:border-[#003566] transition-all lowercase"
                       required
                     />
@@ -381,7 +405,12 @@ export default function ProfileSettingsPage() {
                     <input
                       type="text"
                       value={formData.phone_number}
-                      onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          phone_number: e.target.value,
+                        })
+                      }
                       className="w-full bg-transparent border-b border-slate-200 py-2 text-sm font-bold text-[#003566] outline-none focus:border-[#003566]"
                     />
                   </div>
@@ -394,7 +423,9 @@ export default function ProfileSettingsPage() {
                     <input
                       type="text"
                       value={formData.city}
-                      onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, city: e.target.value })
+                      }
                       className="w-full bg-transparent border-b border-slate-200 py-2 text-sm font-bold text-[#003566] outline-none focus:border-[#003566]"
                     />
                   </div>
@@ -423,7 +454,7 @@ export default function ProfileSettingsPage() {
                         <Loader2 className="w-4 h-4 animate-spin text-slate-400" />
                       </div>
                     )}
-                    
+
                     {showSuggestions && addressSuggestions.length > 0 && (
                       <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 shadow-lg max-h-60 overflow-y-auto rounded-b-md">
                         <div className="px-3 py-2 bg-slate-50 border-b border-slate-200">
@@ -440,11 +471,20 @@ export default function ProfileSettingsPage() {
                             onClick={() => handleAddressSelect(suggestion)}
                           >
                             <div className="flex items-start gap-2">
-                              <Search size={12} className="text-slate-400 mt-0.5 flex-shrink-0" />
+                              <Search
+                                size={12}
+                                className="text-slate-400 mt-0.5 flex-shrink-0"
+                              />
                               <div className="text-left">
-                                <p className="font-medium">{suggestion.display_name.split(',')[0]}</p>
+                                <p className="font-medium">
+                                  {suggestion.display_name.split(",")[0]}
+                                </p>
                                 <p className="text-xs text-slate-500 truncate">
-                                  {suggestion.display_name.split(',').slice(1).join(',').trim()}
+                                  {suggestion.display_name
+                                    .split(",")
+                                    .slice(1)
+                                    .join(",")
+                                    .trim()}
                                 </p>
                               </div>
                             </div>
@@ -467,7 +507,9 @@ export default function ProfileSettingsPage() {
                     <input
                       type="text"
                       value={formData.state}
-                      onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, state: e.target.value })
+                      }
                       className="w-full bg-transparent border-b border-slate-200 py-2 text-sm font-bold text-[#003566] outline-none focus:border-[#003566]"
                     />
                   </div>
@@ -480,7 +522,9 @@ export default function ProfileSettingsPage() {
                     <input
                       type="text"
                       value={formData.postcode}
-                      onChange={(e) => setFormData({ ...formData, postcode: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, postcode: e.target.value })
+                      }
                       className="w-full bg-transparent border-b border-slate-200 py-2 text-sm font-bold text-[#003566] outline-none focus:border-[#003566] uppercase"
                       placeholder="1234 AB"
                     />
@@ -493,7 +537,9 @@ export default function ProfileSettingsPage() {
                     </label>
                     <select
                       value={formData.country}
-                      onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, country: e.target.value })
+                      }
                       className="w-full bg-transparent border-b border-slate-200 py-2 text-sm font-bold text-[#003566] outline-none focus:border-[#003566]"
                     >
                       <option value="Netherlands">Netherlands</option>
@@ -511,7 +557,7 @@ export default function ProfileSettingsPage() {
                   <h3 className="text-sm font-black uppercase tracking-[0.3em] text-[#003566] mb-6 flex items-center gap-2">
                     <Shield size={14} /> Change Password
                   </h3>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                     {/* Current Password */}
                     <div className="space-y-2">
@@ -522,16 +568,30 @@ export default function ProfileSettingsPage() {
                         <input
                           type={showPasswords.current ? "text" : "password"}
                           value={passwordData.current_password}
-                          onChange={(e) => setPasswordData({ ...passwordData, current_password: e.target.value })}
+                          onChange={(e) =>
+                            setPasswordData({
+                              ...passwordData,
+                              current_password: e.target.value,
+                            })
+                          }
                           className="w-full bg-transparent border-b border-slate-200 py-2 text-sm font-bold text-[#003566] outline-none focus:border-[#003566] pr-10"
                           placeholder="Enter current password"
                         />
                         <button
                           type="button"
-                          onClick={() => setShowPasswords({...showPasswords, current: !showPasswords.current})}
+                          onClick={() =>
+                            setShowPasswords({
+                              ...showPasswords,
+                              current: !showPasswords.current,
+                            })
+                          }
                           className="absolute right-2 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-[#003566]"
                         >
-                          {showPasswords.current ? <EyeOff size={14} /> : <Eye size={14} />}
+                          {showPasswords.current ? (
+                            <EyeOff size={14} />
+                          ) : (
+                            <Eye size={14} />
+                          )}
                         </button>
                       </div>
                     </div>
@@ -545,16 +605,30 @@ export default function ProfileSettingsPage() {
                         <input
                           type={showPasswords.new ? "text" : "password"}
                           value={passwordData.new_password}
-                          onChange={(e) => setPasswordData({ ...passwordData, new_password: e.target.value })}
+                          onChange={(e) =>
+                            setPasswordData({
+                              ...passwordData,
+                              new_password: e.target.value,
+                            })
+                          }
                           className="w-full bg-transparent border-b border-slate-200 py-2 text-sm font-bold text-[#003566] outline-none focus:border-[#003566] pr-10"
                           placeholder="Enter new password"
                         />
                         <button
                           type="button"
-                          onClick={() => setShowPasswords({...showPasswords, new: !showPasswords.new})}
+                          onClick={() =>
+                            setShowPasswords({
+                              ...showPasswords,
+                              new: !showPasswords.new,
+                            })
+                          }
                           className="absolute right-2 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-[#003566]"
                         >
-                          {showPasswords.new ? <EyeOff size={14} /> : <Eye size={14} />}
+                          {showPasswords.new ? (
+                            <EyeOff size={14} />
+                          ) : (
+                            <Eye size={14} />
+                          )}
                         </button>
                       </div>
                     </div>
@@ -568,16 +642,30 @@ export default function ProfileSettingsPage() {
                         <input
                           type={showPasswords.confirm ? "text" : "password"}
                           value={passwordData.new_password_confirmation}
-                          onChange={(e) => setPasswordData({ ...passwordData, new_password_confirmation: e.target.value })}
+                          onChange={(e) =>
+                            setPasswordData({
+                              ...passwordData,
+                              new_password_confirmation: e.target.value,
+                            })
+                          }
                           className="w-full bg-transparent border-b border-slate-200 py-2 text-sm font-bold text-[#003566] outline-none focus:border-[#003566] pr-10"
                           placeholder="Confirm new password"
                         />
                         <button
                           type="button"
-                          onClick={() => setShowPasswords({...showPasswords, confirm: !showPasswords.confirm})}
+                          onClick={() =>
+                            setShowPasswords({
+                              ...showPasswords,
+                              confirm: !showPasswords.confirm,
+                            })
+                          }
                           className="absolute right-2 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-[#003566]"
                         >
-                          {showPasswords.confirm ? <EyeOff size={14} /> : <Eye size={14} />}
+                          {showPasswords.confirm ? (
+                            <EyeOff size={14} />
+                          ) : (
+                            <Eye size={14} />
+                          )}
                         </button>
                       </div>
                     </div>
@@ -590,7 +678,11 @@ export default function ProfileSettingsPage() {
                       disabled={isSubmitting}
                       className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white hover:opacity-90 h-14 px-12 text-[10px] font-black uppercase tracking-[0.4em] transition-all shadow-lg disabled:opacity-50 flex items-center gap-3"
                     >
-                      {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Shield size={14} />}
+                      {isSubmitting ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Shield size={14} />
+                      )}
                       Update Password
                     </button>
                   </div>
@@ -602,7 +694,11 @@ export default function ProfileSettingsPage() {
                     disabled={isSubmitting}
                     className="bg-[#003566] text-white hover:bg-[#003566]/90 h-14 px-12 text-[10px] font-black uppercase tracking-[0.4em] transition-all shadow-lg disabled:opacity-50 flex items-center gap-3"
                   >
-                    {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save size={14} />}
+                    {isSubmitting ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Save size={14} />
+                    )}
                     Synchronize Profile
                   </button>
                 </div>
