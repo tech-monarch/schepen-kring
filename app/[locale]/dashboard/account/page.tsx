@@ -188,7 +188,7 @@ export default function ProfileSettingsPage() {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 2 * 1024 * 1024) {
+      if (file.size > 2 * 20024 * 20024) {
         toast.error("Image must be smaller than 2MB");
         return;
       }
