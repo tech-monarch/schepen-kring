@@ -198,24 +198,6 @@ const BlogComponent = () => {
         )}
       </div>
 
-      {/* --- Newsletter Section --- */}
-      <section className="bg-white border-t border-gray-100 py-16">
-        <div className="max-w-3xl mx-auto px-6 text-center">
-          <h2 className="text-3xl font-bold text-[#16161a] mb-4">Subscribe to our newsletter</h2>
-          <p className="text-[#626262] mb-8">
-            Get the latest updates directly to your inbox. No spam, just value.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-2 max-w-md mx-auto">
-            <Input
-              placeholder="Enter your email"
-              className="bg-gray-50 border-gray-200 h-12 rounded-sm focus:border-[#003566] focus:ring-[#003566]"
-            />
-            <Button className="bg-[#003566] hover:bg-[#002b4f] text-white h-12 px-8 rounded-sm">
-              Subscribe
-            </Button>
-          </div>
-        </div>
-      </section>
     </div>
   );
 };

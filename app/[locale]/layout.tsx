@@ -61,10 +61,10 @@ export default async function RootLayout({
           ${playfair.variable} 
           ${geistMono.variable} 
           antialiased 
-          bg-[#0a0a0a] 
-          text-white
+          bg-[#ffffff] 
+          text-black
           selection:bg-[#c5a572]/30 
-          selection:text-[#c5a572]
+          selection:text-[#7278c5]
         `}
       >
         <NextIntlClientProvider locale={locale}>
