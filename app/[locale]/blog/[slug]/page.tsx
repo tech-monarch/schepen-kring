@@ -38,14 +38,14 @@ export default function BlogDetailsPage() {
   if (!post) return <div className="h-screen flex items-center justify-center">Post not found</div>;
 
   return (
-    <article className="min-h-screen bg-white font-sans text-slate-800 top-10">
+    <article className="min-h-screen bg-white font-sans text-slate-800 top-20">
       
       {/* --- 35vh Hero Header (Post Title & Image) --- */}
       <header className="relative h-[35vh] min-h-[300px] flex items-center justify-center text-center px-4">
         {/* Background Image */}
         <div className="absolute inset-0 z-0">
           <Image
-            src={post.blog_image || "/placeholder.png"}
+            src={post.blog_image || "./placeholder.jpg"}
             alt={post.title}
             fill
             className="object-cover"

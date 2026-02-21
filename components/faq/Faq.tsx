@@ -496,7 +496,7 @@ export default function Faq() {
             Need more help? Contact our maritime support team
           </p>
           <p className="text-sm text-slate-600 mt-2">
-            support@schepen-kring.nl • +31 20 123 4567
+            support@schepen-kring.nl • +31 (0)320 711340
           </p>
         </div>
       </main>

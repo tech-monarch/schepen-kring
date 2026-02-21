@@ -8,7 +8,7 @@ import { Blog } from "@/types/blog.d";
 import BlogSkeleton from "@/components/blog/BlogSkeleton";
 import BLOGIMAGEPLACEHOLDER from "@/public/image.png";
 // Import the yacht image
-import YACHT_BG from "@/components/homepage/yacht.jpg";
+import YACHT_BG from "@/components/homepage/placeholder.jpg";
 import { useTranslations, useLocale } from "next-intl";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
