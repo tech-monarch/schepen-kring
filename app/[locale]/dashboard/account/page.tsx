@@ -185,17 +185,93 @@ export default function ProfileSettingsPage() {
     }
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 20 * 1024 * 1024) {
-          toast.error("Image must be smaller than 20MB");
-          return;
-      }
-      setFormData({ ...formData, profile_image: file });
-      setPreviewUrl(URL.createObjectURL(file));
-    }
-  };
+
+  const compressImage = (
+  file: File,
+  maxSizeMB: number = 5,
+  maxWidth: number = 1200,
+  initialQuality: number = 0.9
+): Promise<File> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (e) => {
+      const img = new Image();
+      img.src = e.target?.result as string;
+      img.onload = () => {
+        // Calculate new dimensions (keep aspect ratio)
+        let width = img.width;
+        let height = img.height;
+        if (width > maxWidth) {
+          height = Math.round((height * maxWidth) / width);
+          width = maxWidth;
+        }
+
+        // Create canvas and draw resized image
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx?.drawImage(img, 0, 0, width, height);
+
+        // Recursive compression until size fits or quality is too low
+        const compressRecursive = (quality: number): void => {
+          canvas.toBlob(
+            (blob) => {
+              if (!blob) {
+                reject(new Error('Canvas to Blob failed'));
+                return;
+              }
+              if (blob.size <= maxSizeMB * 1024 * 1024 || quality <= 0.2) {
+                // Accept if size is within limit or quality is already low
+                resolve(new File([blob], file.name, { type: file.type }));
+              } else {
+                // Try again with lower quality
+                compressRecursive(quality - 0.1);
+              }
+            },
+            file.type,
+            quality
+          );
+        };
+
+        compressRecursive(initialQuality);
+      };
+      img.onerror = (err) => reject(err);
+    };
+    reader.onerror = (err) => reject(err);
+  });
+};
+
+const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
+
+  // Optional: keep a generous sanity check (e.g., 50 MB) to avoid huge files crashing the browser
+  if (file.size > 50 * 1024 * 1024) {
+    toast.error("Image is too large (max 50 MB)");
+    return;
+  }
+
+  try {
+    // Show a loading toast (optional)
+    const toastId = toast.loading('Compressing image...');
+
+    // Compress the image to target ~5 MB
+    const compressedFile = await compressImage(file, 5, 1200, 0.9);
+
+    // Update form state and preview
+    setFormData({ ...formData, profile_image: compressedFile });
+    setPreviewUrl(URL.createObjectURL(compressedFile));
+
+    // Show success message with final size
+    toast.dismiss(toastId);
+    toast.success(`Image compressed to ${(compressedFile.size / 1024 / 1024).toFixed(2)} MB`);
+  } catch (error) {
+    console.error('Compression failed', error);
+    toast.error('Image compression failed. Please try another image.');
+  }
+};
 
   const searchAddress = async (query: string) => {
     if (!query || query.trim().length < 3) {
