@@ -514,68 +514,136 @@ export default function YachtTerminalPage() {
     }
   };
 
+  // const handleTestSailBooking = async () => {
+  //   if (!selectedDate || !selectedTime) {
+  //     toast.error("Selecteer een datum en tijd voor uw proefvaart");
+  //     return;
+  //   }
+  //   if (!bookingForm.name || !bookingForm.email) {
+  //     toast.error("Vul uw naam en e-mail in");
+  //     return;
+  //   }
+  //   setTestSailStatus("processing");
+  //   try {
+  //     const startDateTime = new Date(selectedDate);
+  //     const [hours, minutes] = selectedTime.split(":").map(Number);
+  //     startDateTime.setHours(hours, minutes, 0, 0);
+  //     const token = getAuthToken();
+  //     const headers: any = {
+  //       "Content-Type": "application/json",
+  //       Accept: "application/json",
+  //     };
+  //     if (token) headers["Authorization"] = `Bearer ${token}`;
+  //     const bookingResponse = await fetch(
+  //       `https://schepen-kring.nl/api/yachts/${yacht?.id}/book`,
+  //       {
+  //         method: "POST",
+  //         headers,
+  //         body: JSON.stringify({
+  //           start_at: startDateTime.toISOString(),
+  //           name: bookingForm.name,
+  //           email: bookingForm.email,
+  //           phone: bookingForm.phone,
+  //           notes: bookingForm.notes,
+  //         }),
+  //       },
+  //     );
+  //     if (!bookingResponse.ok) throw new Error("Booking failed");
+  //     await fetch("https://schepen-kring.nl/api/tasks", {
+  //       method: "POST",
+  //       headers,
+  //       body: JSON.stringify({
+  //         title: `PROEFVAART AANVRAAG: ${yacht?.boat_name}`,
+  //         description: `Klant heeft een proefvaart aangevraagd voor ${selectedDate?.toLocaleDateString("nl-NL")} om ${selectedTime}.\n\nKlantgegevens:\nNaam: ${bookingForm.name}\nEmail: ${bookingForm.email}\nTelefoon: ${bookingForm.phone || "Niet opgegeven"}\nOpmerkingen: ${bookingForm.notes || "Geen"}`,
+  //         priority: "Medium",
+  //         status: "To Do",
+  //         yacht_id: yacht?.id,
+  //       }),
+  //     });
+  //     setTestSailStatus("success");
+  //     toast.success("Proefvaart succesvol aangevraagd!");
+  //     setTimeout(() => {
+  //       setShowTestSailForm(false);
+  //       setTestSailStatus("idle");
+  //       setSelectedDate(null);
+  //       setSelectedTime(null);
+  //       setAvailableSlots([]);
+  //       // Keep the pre-filled user data, only clear notes
+  //       setBookingForm((prev) => ({ ...prev, notes: "" }));
+  //     }, 3000);
+  //   } catch (error) {
+  //     setTestSailStatus("idle");
+  //     toast.error("Boeking mislukt.");
+  //   }
+  // };
+
   const handleTestSailBooking = async () => {
-    if (!selectedDate || !selectedTime) {
-      toast.error("Selecteer een datum en tijd voor uw proefvaart");
-      return;
-    }
-    if (!bookingForm.name || !bookingForm.email) {
-      toast.error("Vul uw naam en e-mail in");
-      return;
-    }
-    setTestSailStatus("processing");
-    try {
-      const startDateTime = new Date(selectedDate);
-      const [hours, minutes] = selectedTime.split(":").map(Number);
-      startDateTime.setHours(hours, minutes, 0, 0);
-      const token = getAuthToken();
-      const headers: any = {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      };
-      if (token) headers["Authorization"] = `Bearer ${token}`;
-      const bookingResponse = await fetch(
-        `https://schepen-kring.nl/api/yachts/${yacht?.id}/book`,
-        {
-          method: "POST",
-          headers,
-          body: JSON.stringify({
-            start_at: startDateTime.toISOString(),
-            name: bookingForm.name,
-            email: bookingForm.email,
-            phone: bookingForm.phone,
-            notes: bookingForm.notes,
-          }),
-        },
-      );
-      if (!bookingResponse.ok) throw new Error("Booking failed");
-      await fetch("https://schepen-kring.nl/api/tasks", {
+  if (!selectedDate || !selectedTime) {
+    toast.error("Selecteer een datum en tijd voor uw proefvaart");
+    return;
+  }
+  if (!bookingForm.name || !bookingForm.email) {
+    toast.error("Vul uw naam en e-mail in");
+    return;
+  }
+  setTestSailStatus("processing");
+  try {
+    const startDateTime = new Date(selectedDate);
+    const [hours, minutes] = selectedTime.split(":").map(Number);
+    startDateTime.setHours(hours, minutes, 0, 0);
+
+    const token = getAuthToken();
+    const headers: any = {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    };
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+
+    // ✅ Step 1: Create the booking – send ONLY start_at
+    const bookingResponse = await fetch(
+      `https://schepen-kring.nl/api/yachts/${yacht?.id}/book`,
+      {
         method: "POST",
         headers,
         body: JSON.stringify({
-          title: `PROEFVAART AANVRAAG: ${yacht?.boat_name}`,
-          description: `Klant heeft een proefvaart aangevraagd voor ${selectedDate?.toLocaleDateString("nl-NL")} om ${selectedTime}.\n\nKlantgegevens:\nNaam: ${bookingForm.name}\nEmail: ${bookingForm.email}\nTelefoon: ${bookingForm.phone || "Niet opgegeven"}\nOpmerkingen: ${bookingForm.notes || "Geen"}`,
-          priority: "Medium",
-          status: "To Do",
-          yacht_id: yacht?.id,
+          start_at: startDateTime.toISOString(),
         }),
-      });
-      setTestSailStatus("success");
-      toast.success("Proefvaart succesvol aangevraagd!");
-      setTimeout(() => {
-        setShowTestSailForm(false);
-        setTestSailStatus("idle");
-        setSelectedDate(null);
-        setSelectedTime(null);
-        setAvailableSlots([]);
-        // Keep the pre-filled user data, only clear notes
-        setBookingForm((prev) => ({ ...prev, notes: "" }));
-      }, 3000);
-    } catch (error) {
-      setTestSailStatus("idle");
-      toast.error("Boeking mislukt.");
+      }
+    );
+
+    if (!bookingResponse.ok) {
+      const errorData = await bookingResponse.json();
+      throw new Error(errorData.error || "Booking failed");
     }
-  };
+
+    // ✅ Step 2: Create a task with all customer details (name, email, phone, notes)
+    await fetch("https://schepen-kring.nl/api/tasks", {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        title: `PROEFVAART AANVRAAG: ${yacht?.boat_name}`,
+        description: `Klant heeft een proefvaart aangevraagd voor ${selectedDate?.toLocaleDateString("nl-NL")} om ${selectedTime}.\n\nKlantgegevens:\nNaam: ${bookingForm.name}\nEmail: ${bookingForm.email}\nTelefoon: ${bookingForm.phone || "Niet opgegeven"}\nOpmerkingen: ${bookingForm.notes || "Geen"}`,
+        priority: "Medium",
+        status: "To Do",
+        yacht_id: yacht?.id,
+      }),
+    });
+
+    setTestSailStatus("success");
+    toast.success("Proefvaart succesvol aangevraagd!");
+    setTimeout(() => {
+      setShowTestSailForm(false);
+      setTestSailStatus("idle");
+      setSelectedDate(null);
+      setSelectedTime(null);
+      setAvailableSlots([]);
+      setBookingForm((prev) => ({ ...prev, notes: "" }));
+    }, 3000);
+  } catch (error: any) {
+    setTestSailStatus("idle");
+    toast.error(error.message || "Boeking mislukt.");
+  }
+};
 
   const handleBuyNow = async () => {
     setPaymentStatus("processing");
