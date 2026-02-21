@@ -254,7 +254,7 @@ export default function YachtTerminalPage() {
       setContactForm({
         name: userData.name || "",
         email: userData.email || "",
-        phone: userData.phone_number || "",
+        phone: userData.mobile || "", // Changed from phone_number to mobile
         requestType: "",
         comment: "",
       });
@@ -263,7 +263,7 @@ export default function YachtTerminalPage() {
       setBookingForm({
         name: userData.name || "",
         email: userData.email || "",
-        phone: userData.phone_number || "",
+        phone: userData.mobile || "", // Changed from phone_number to mobile
         notes: "",
       });
     } else {
@@ -718,7 +718,7 @@ export default function YachtTerminalPage() {
         .photos-holder-grid {
           position: relative;
           overflow: hidden;
-          max-width: 1400px;
+          width: 1400px;
           margin-left: auto;
           margin-right: auto;
           padding-left: 1.5rem;
@@ -732,7 +732,7 @@ export default function YachtTerminalPage() {
           padding-top: 10px;
           background-color: #f3f4fa;
           height: 500px;
-          max-width: 1400px;
+          width: 1400px;
         }
         .photo-of-object {
           overflow: hidden;
@@ -1284,7 +1284,6 @@ export default function YachtTerminalPage() {
             </div>
 
             {/* ----- RIGHT COLUMN (4/12) ----- */}
-            {/* ----- RIGHT COLUMN (4/12) ----- */}
             <div className="lg:col-span-1 space-y-8">
               {/* 🔁 BIDDING CARD – ONLY SHOW IF STATUS IS "For Bid" */}
               {yacht.status === "For Bid" && (
@@ -1300,7 +1299,7 @@ export default function YachtTerminalPage() {
                     </div>
                     <div className="mb-5">
                       <p className="text-sm text-gray-500 mb-1">
-                        Huidig hoogste bod:
+                        prijs?
                       </p>
                       <p className="text-2xl font-serif italic text-gray-900">
                         €

@@ -396,9 +396,9 @@ export default function YachtTerminalPage() {
 
   const placeBid = async () => {
     if (!yacht) return;
-    const amount = parseFloat(bidAmount);
+    const amount = parseInt(bidAmount, 10); // force integer
     if (isNaN(amount) || amount <= 0) {
-      setBidError("Voer een geldig bedrag in");
+      setBidError("Voer een geldig bedrag in (alleen hele euro's)");
       return;
     }
     const token = getAuthToken();
@@ -421,11 +421,14 @@ export default function YachtTerminalPage() {
       ? Number(yacht.current_bid)
       : Number(yacht.price);
     const minBidAmount = yacht.min_bid_amount || yacht.price * 0.9;
-    if (amount < minBidAmount) {
+    const minBidAmountInt = Math.ceil(minBidAmount); // round up to nearest euro
+    if (amount < minBidAmountInt) {
       setBidError(
-        `Bod moet minimaal €${minBidAmount.toLocaleString("nl-NL")} zijn (90% van vraagprijs)`,
+        `Bod moet minimaal €${minBidAmountInt.toLocaleString("nl-NL")} zijn (90% van vraagprijs, afgerond)`,
       );
-      toast.error("Bod is te laag. Minimaal bod is 90% van de vraagprijs.");
+      toast.error(
+        `Bod is te laag. Minimaal bod is €${minBidAmountInt.toLocaleString("nl-NL")}.`,
+      );
       return;
     }
     if (amount <= currentPrice) {
@@ -685,6 +688,20 @@ export default function YachtTerminalPage() {
     router.push("/login");
   };
 
+  const handleBidAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    if (val === "") {
+      setBidAmount("");
+    } else {
+      // allow only integer digits
+      const intVal = parseInt(val, 10);
+      if (!isNaN(intVal)) {
+        setBidAmount(intVal.toString());
+      }
+    }
+    setBidError("");
+  };
+
   if (loading || !yacht) {
     return (
       <div className="h-screen flex flex-col items-center justify-center bg-white font-roboto">
@@ -709,16 +726,18 @@ export default function YachtTerminalPage() {
     : allImages.slice(0, 8);
   const formattedPrice = `€ ${formatPrice(yacht.price)}`;
   const minBidAmount = yacht.min_bid_amount || yacht.price * 0.9;
+  const minBidAmountInt = Math.ceil(minBidAmount); // integer minimum
 
   return (
     <div className="min-h-screen bg-white text-[#333] selection:bg-blue-100 font-roboto antialiased">
       // <Toaster position="top-center" />
-      {/* ----- EXACT PHOTO GRID CSS (from original) ----- */}
+      {/* ----- EXACT PHOTO GRID CSS (from original, made responsive) ----- */}
       <style>{`
         .photos-holder-grid {
           position: relative;
           overflow: hidden;
-          width: 1400px;
+          width: 100%;
+          max-width: 1400px;
           margin-left: auto;
           margin-right: auto;
           padding-left: 1.5rem;
@@ -732,7 +751,7 @@ export default function YachtTerminalPage() {
           padding-top: 10px;
           background-color: #f3f4fa;
           height: 500px;
-          width: 1400px;
+          width: 100%;
         }
         .photo-of-object {
           overflow: hidden;
@@ -1320,9 +1339,9 @@ export default function YachtTerminalPage() {
                             Minimaal bod vereist:
                           </p>
                           <p className="text-lg font-bold text-amber-900">
-                            €{minBidAmount.toLocaleString("nl-NL")}
+                            €{minBidAmountInt.toLocaleString("nl-NL")}
                             <span className="text-sm font-normal text-amber-700 ml-2">
-                              (90% van vraagprijs)
+                              (90% van vraagprijs, afgerond)
                             </span>
                           </p>
                         </div>
@@ -1333,14 +1352,11 @@ export default function YachtTerminalPage() {
                         <input
                           type="number"
                           value={bidAmount}
-                          onChange={(e) => {
-                            setBidAmount(e.target.value);
-                            setBidError("");
-                          }}
-                          placeholder={`Minimaal €${minBidAmount.toLocaleString("nl-NL")}`}
+                          onChange={handleBidAmountChange}
+                          placeholder={`Minimaal €${minBidAmountInt.toLocaleString("nl-NL")}`}
                           className="w-full border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-gray-500 rounded-none"
-                          step="100"
-                          min={minBidAmount}
+                          step="1"
+                          min={minBidAmountInt}
                         />
                         {bidError && (
                           <p className="text-red-500 text-xs mt-1">
