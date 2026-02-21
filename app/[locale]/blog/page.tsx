@@ -10,6 +10,12 @@ import BLOGIMAGEPLACEHOLDER from "@/public/image.png";
 import { useTranslations, useLocale } from "next-intl";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+
+// Add Roboto font via next/font (or you can import in layout)
+// Example using next/font/google (install if not present)
+// import { Roboto } from "next/font/google";
+// const roboto = Roboto({ weight: ["400", "500", "700"], subsets: ["latin"] });
 
 const API_BASE = "https://schepen-kring.nl/api";
 
@@ -61,113 +67,187 @@ const BlogComponent = () => {
   if (isLoading) return <BlogSkeleton />;
 
   return (
-    <div className="min-h-screen bg-white text-slate-900 font-sans top-10">
-      
-      {/* --- 30vh Hero Section --- */}
-      <section className="relative h-[35vh] flex flex-col items-center justify-center text-center px-4">
-        {/* Background Image with Overlay */}
-        <div className="absolute inset-0 z-0">
-          <Image 
-            src={BLOGIMAGEPLACEHOLDER} 
-            alt="Blog Background" 
-            fill 
-            className="object-cover"
-            priority
-          />
-          <div className="absolute inset-0 bg-[#003566]/80" /> 
+    <div className="min-h-screen bg-[#f5f6f7] text-[#626262] font-['Roboto',sans-serif]">
+      {/* --- Magazine-style Header (simplified) --- */}
+      <header className="bg-white shadow-sm border-t-4 border-t-[#fd3a13]">
+        <div className="max-w-7xl mx-auto px-6 md:px-12 py-4 flex items-center justify-between">
+          <Link href="/" className="text-2xl font-bold text-[#16161a]">
+            Smart<span className="text-[#fd3a13]">Mag</span>
+          </Link>
+          <div className="flex items-center gap-4">
+            <button className="text-[#16161a] hover:text-[#fd3a13] transition-colors">
+              <Search size={20} />
+            </button>
+          </div>
         </div>
+      </header>
 
-        {/* Hero Content */}
-        <div className="relative z-10 w-full max-w-4xl mx-auto text-white space-y-6">
-          <h1 className="text-4xl md:text-5xl font-serif font-medium tracking-tight">
-            Insights & Updates
-          </h1>
-          <p className="text-blue-100 text-lg font-light max-w-2xl mx-auto">
-            Latest news, maritime insights, and stories from our team.
-          </p>
-          
-          {/* Simple Search Bar */}
-          <div className="max-w-md mx-auto relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-            <Input
-              placeholder="Search articles..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 h-11 bg-white text-slate-900 border-0 rounded-md focus-visible:ring-2 focus-visible:ring-blue-400"
-            />
-             {searchQuery && (
-              <button onClick={() => setSearchQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
-                <X size={14} />
-              </button>
-            )}
+      {/* --- Hero Section (magazine style) --- */}
+      <section className="relative bg-[#16161a] text-white">
+        <div className="absolute inset-0 z-0">
+          <Image
+            src={BLOGIMAGEPLACEHOLDER}
+            alt="Hero"
+            fill
+            className="object-cover opacity-30"
+          />
+        </div>
+        <div className="relative z-10 max-w-7xl mx-auto px-6 md:px-12 py-20 md:py-28">
+          <div className="max-w-2xl">
+            <span className="text-[#fd3a13] text-sm font-bold uppercase tracking-wider">
+              Insights & Updates
+            </span>
+            <h1 className="text-4xl md:text-5xl font-bold mt-2 mb-4 text-white">
+              Latest News & Maritime Insights
+            </h1>
+            <p className="text-gray-300 text-lg mb-8">
+              Stay informed with our team's latest articles and industry updates.
+            </p>
+            <div className="relative max-w-md">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Input
+                placeholder="Search articles..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 h-12 bg-white text-[#16161a] border-0 rounded-sm focus-visible:ring-2 focus-visible:ring-[#fd3a13]"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  <X size={14} />
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </section>
 
-      {/* --- Main Grid Layout --- */}
-      <div className="max-w-7xl mx-auto px-6 md:px-12 py-16">
+      {/* --- Trending Ticker (optional) --- */}
+      {filteredBlogs.length > 0 && (
+        <div className="bg-white border-b border-gray-100">
+          <div className="max-w-7xl mx-auto px-6 md:px-12 py-3 flex items-center gap-4 text-sm">
+            <span className="font-bold text-[#fd3a13] uppercase tracking-wider">
+              🔥 Trending
+            </span>
+            <div className="overflow-hidden whitespace-nowrap flex-1">
+              <div className="animate-marquee inline-block">
+                {filteredBlogs.slice(0, 5).map((blog) => (
+                  <Link
+                    key={blog.id}
+                    href={`/blog/${blog.slug}`}
+                    className="inline-block mr-8 text-[#16161a] hover:text-[#fd3a13] transition-colors"
+                  >
+                    {blog.title}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* --- Main Grid --- */}
+      <div className="max-w-7xl mx-auto px-6 md:px-12 py-12">
         {filteredBlogs.length > 0 ? (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {filteredBlogs.map((post) => (
-              <Link 
-                key={post.id} 
-                href={`/blog/${post.slug}`} 
-                className="group flex flex-col bg-white border border-slate-200 rounded-lg overflow-hidden hover:shadow-xl transition-all duration-300"
+              <article
+                key={post.id}
+                className="group bg-white rounded-sm shadow-sm hover:shadow-md transition-shadow border border-gray-100 overflow-hidden"
               >
-                {/* Card Image */}
-                <div className="relative aspect-[16/10] bg-slate-100 overflow-hidden">
-                  <Image 
-                    src={post.blog_image || BLOGIMAGEPLACEHOLDER} 
-                    alt={post.title} 
-                    fill 
-                    className="object-cover transition-transform duration-500 group-hover:scale-105" 
-                  />
-                </div>
-
-                {/* Card Content */}
-                <div className="p-6 flex flex-col flex-grow">
-                  <div className="flex items-center gap-2 mb-3 text-xs font-semibold uppercase tracking-wider text-blue-600">
-                    <Calendar size={12} />
-                    {post.published_at && new Date(post.published_at).toLocaleDateString(locale)}
+                <Link href={`/blog/${post.slug}`} className="block">
+                  <div className="relative aspect-[16/10] bg-gray-100 overflow-hidden">
+                    <Image
+                      src={post.blog_image || BLOGIMAGEPLACEHOLDER}
+                      alt={post.title}
+                      fill
+                      className="object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
                   </div>
-                  
-                  <h3 className="text-xl font-serif font-medium text-[#003566] mb-3 leading-snug group-hover:text-blue-700 transition-colors">
-                    {post.title}
-                  </h3>
-                  
-                  <p className="text-slate-500 text-sm line-clamp-3 mb-6 flex-grow leading-relaxed">
-                    {post.excerpt}
-                  </p>
-                  
-                  <div className="flex items-center text-sm font-semibold text-[#003566] group-hover:translate-x-1 transition-transform">
-                    Read Article <ArrowRight size={16} className="ml-2" />
+                  <div className="p-6">
+                    <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[#fd3a13] mb-3">
+                      <Calendar size={12} />
+                      {post.published_at && new Date(post.published_at).toLocaleDateString(locale)}
+                    </div>
+                    <h3 className="text-xl font-bold text-[#16161a] mb-3 leading-snug group-hover:text-[#fd3a13] transition-colors line-clamp-2">
+                      {post.title}
+                    </h3>
+                    <p className="text-[#626262] text-sm line-clamp-3 mb-4 leading-relaxed">
+                      {post.excerpt}
+                    </p>
+                    <span className="inline-flex items-center text-sm font-semibold text-[#16161a] group-hover:text-[#fd3a13] transition-colors">
+                      Read Article <ArrowRight size={16} className="ml-2 group-hover:translate-x-1 transition-transform" />
+                    </span>
                   </div>
-                </div>
-              </Link>
+                </Link>
+              </article>
             ))}
           </div>
         ) : (
           <div className="text-center py-20">
-            <p className="text-slate-500 text-lg">No articles found.</p>
-            <Button onClick={() => setSearchQuery("")} variant="link" className="text-blue-600 mt-2">
+            <p className="text-[#626262] text-lg">No articles found.</p>
+            <Button
+              onClick={() => setSearchQuery("")}
+              variant="link"
+              className="text-[#fd3a13] mt-2"
+            >
               Clear search
             </Button>
           </div>
         )}
       </div>
 
-      {/* --- Simple Newsletter Section --- */}
-      <section className="bg-slate-50 py-20 border-t border-slate-100">
+      {/* --- Newsletter Section (magazine style) --- */}
+      <section className="bg-white border-t border-gray-100 py-16">
         <div className="max-w-3xl mx-auto px-6 text-center">
-          <h2 className="text-3xl font-serif text-[#003566] mb-4">Subscribe to our newsletter</h2>
-          <p className="text-slate-500 mb-8">Get the latest updates directly to your inbox. No spam, just value.</p>
-          <div className="flex gap-2 max-w-md mx-auto">
-            <Input placeholder="Enter your email" className="bg-white border-slate-300" />
-            <Button className="bg-[#003566] hover:bg-blue-800 text-white px-8">Subscribe</Button>
+          <h2 className="text-3xl font-bold text-[#16161a] mb-4">Subscribe to our newsletter</h2>
+          <p className="text-[#626262] mb-8">
+            Get the latest updates directly to your inbox. No spam, just value.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-2 max-w-md mx-auto">
+            <Input
+              placeholder="Enter your email"
+              className="bg-gray-50 border-gray-200 h-12 rounded-sm focus:border-[#fd3a13] focus:ring-[#fd3a13]"
+            />
+            <Button className="bg-[#fd3a13] hover:bg-[#e03510] text-white h-12 px-8 rounded-sm">
+              Subscribe
+            </Button>
           </div>
         </div>
       </section>
 
+      {/* --- Footer (simplified) --- */}
+      <footer className="bg-[#16161a] text-white py-12">
+        <div className="max-w-7xl mx-auto px-6 md:px-12">
+          <div className="grid md:grid-cols-3 gap-8">
+            <div>
+              <h3 className="text-lg font-bold mb-4">About SmartMag</h3>
+              <p className="text-gray-400 text-sm">
+                A powerful, flexible magazine-style blog template for maritime insights and news.
+              </p>
+            </div>
+            <div>
+              <h3 className="text-lg font-bold mb-4">Quick Links</h3>
+              <ul className="space-y-2 text-sm">
+                <li><Link href="/" className="text-gray-400 hover:text-white transition-colors">Home</Link></li>
+                <li><Link href="/about" className="text-gray-400 hover:text-white transition-colors">About</Link></li>
+                <li><Link href="/contact" className="text-gray-400 hover:text-white transition-colors">Contact</Link></li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="text-lg font-bold mb-4">Follow Us</h3>
+              <div className="flex gap-4">
+                {/* Add social icons here */}
+              </div>
+            </div>
+          </div>
+          <div className="border-t border-gray-800 mt-8 pt-8 text-center text-sm text-gray-400">
+            © {new Date().getFullYear()} SmartMag. All rights reserved.
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };
