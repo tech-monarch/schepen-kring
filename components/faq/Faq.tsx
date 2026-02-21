@@ -215,7 +215,7 @@ export default function Faq() {
       {/* --- HERO --- */}
       <section className="relative min-h-[40vh] md:h-[45vh] flex items-center justify-center overflow-hidden bg-[#001D3D] pt-16">
         <Image
-          src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=2073"
+          src={"./placeholder.jpg"}
           alt="Ocean"
           fill
           className="object-cover opacity-40"
@@ -492,10 +492,10 @@ export default function Faq() {
 
         {/* --- FOOTER --- */}
         <div className="mt-20 pt-10 border-t border-slate-200 text-center">
-          <p className="text-[10px] uppercase tracking-widest text-slate-400 font-black">
+          <p className="text-sm uppercase tracking-widest text-slate-400 font-black">
             Need more help? Contact our maritime support team
           </p>
-          <p className="text-sm text-slate-600 mt-2">
+          <p className="text-base text-slate-600 mt-2">
             support@schepen-kring.nl • +31 (0)320 711340
           </p>
         </div>
