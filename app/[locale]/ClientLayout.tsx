@@ -122,7 +122,7 @@ export default function ClientLayout({
           <ChatWidget {...({ settings: widgetSettings } as any)} />
         )} */}
       {isDashboardPage || isUserTypePage ? null : <Footer />}
-      // <ToastContainer position="top-right" autoClose={5000} />
+       <ToastContainer position="top-right" autoClose={5000} />
     </AuthProvider>
   );
 }
