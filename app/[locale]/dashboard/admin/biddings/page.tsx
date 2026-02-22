@@ -21,7 +21,8 @@ import {
   Calendar,
   User,
   AlertTriangle,
-  BarChart3, Trash2
+  BarChart3,
+  Trash2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast, Toaster } from "react-hot-toast";
@@ -362,41 +363,46 @@ export default function GlobalBidManagementPage() {
   };
 
   const handleDeleteBid = async (bidId: number) => {
-  const token = getAuthToken();
-  if (!token) {
-    toast.error("Niet geautoriseerd. Log opnieuw in.");
-    router.push("/login");
-    return;
-  }
-
-  if (!window.confirm("Weet u zeker dat u dit bod permanent wilt verwijderen?")) {
-    return;
-  }
-
-  setActionInProgress(bidId);
-  try {
-    const response = await fetch(`https://schepen-kring.nl/api/bids/${bidId}`, {
-      method: "DELETE",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: "application/json",
-      },
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || "Verwijderen mislukt");
+    const token = getAuthToken();
+    if (!token) {
+      toast.error("Niet geautoriseerd. Log opnieuw in.");
+      router.push("/login");
+      return;
     }
 
-    toast.success("Bod permanent verwijderd.");
-    fetchBids(); // Refresh the list
-  } catch (error: any) {
-    console.error("Delete bid error:", error);
-    toast.error(error.message || "Verwijderen mislukt");
-  } finally {
-    setActionInProgress(null);
-  }
-};
+    if (
+      !window.confirm("Weet u zeker dat u dit bod permanent wilt verwijderen?")
+    ) {
+      return;
+    }
+
+    setActionInProgress(bidId);
+    try {
+      const response = await fetch(
+        `https://schepen-kring.nl/api/bids/${bidId}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+          },
+        },
+      );
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Verwijderen mislukt");
+      }
+
+      toast.success("Bod permanent verwijderd.");
+      fetchBids(); // Refresh the list
+    } catch (error: any) {
+      console.error("Delete bid error:", error);
+      toast.error(error.message || "Verwijderen mislukt");
+    } finally {
+      setActionInProgress(null);
+    }
+  };
 
   // ----- Helpers -----
   const getYachtName = (yacht: YachtInfo): string => {

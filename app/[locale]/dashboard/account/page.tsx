@@ -48,6 +48,8 @@ interface AddressSuggestion {
   address: {
     house_number?: string;
     road?: string;
+    pedestrian?: string;      // added
+    street?: string;          // added
     neighbourhood?: string;
     suburb?: string;
     city?: string;
@@ -185,93 +187,81 @@ export default function ProfileSettingsPage() {
     }
   };
 
-
   const compressImage = (
-  file: File,
-  maxSizeMB: number = 5,
-  maxWidth: number = 1200,
-  initialQuality: number = 0.9
-): Promise<File> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = (e) => {
-      const img = new Image();
-      img.src = e.target?.result as string;
-      img.onload = () => {
-        // Calculate new dimensions (keep aspect ratio)
-        let width = img.width;
-        let height = img.height;
-        if (width > maxWidth) {
-          height = Math.round((height * maxWidth) / width);
-          width = maxWidth;
-        }
+    file: File,
+    maxSizeMB: number = 5,
+    maxWidth: number = 1200,
+    initialQuality: number = 0.9
+  ): Promise<File> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (e) => {
+        const img = new Image();
+        img.src = e.target?.result as string;
+        img.onload = () => {
+          let width = img.width;
+          let height = img.height;
+          if (width > maxWidth) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          }
 
-        // Create canvas and draw resized image
-        const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        ctx?.drawImage(img, 0, 0, width, height);
+          const canvas = document.createElement("canvas");
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          ctx?.drawImage(img, 0, 0, width, height);
 
-        // Recursive compression until size fits or quality is too low
-        const compressRecursive = (quality: number): void => {
-          canvas.toBlob(
-            (blob) => {
-              if (!blob) {
-                reject(new Error('Canvas to Blob failed'));
-                return;
-              }
-              if (blob.size <= maxSizeMB * 1024 * 1024 || quality <= 0.2) {
-                // Accept if size is within limit or quality is already low
-                resolve(new File([blob], file.name, { type: file.type }));
-              } else {
-                // Try again with lower quality
-                compressRecursive(quality - 0.1);
-              }
-            },
-            file.type,
-            quality
-          );
+          const compressRecursive = (quality: number): void => {
+            canvas.toBlob(
+              (blob) => {
+                if (!blob) {
+                  reject(new Error("Canvas to Blob failed"));
+                  return;
+                }
+                if (blob.size <= maxSizeMB * 1024 * 1024 || quality <= 0.2) {
+                  resolve(new File([blob], file.name, { type: file.type }));
+                } else {
+                  compressRecursive(quality - 0.1);
+                }
+              },
+              file.type,
+              quality
+            );
+          };
+
+          compressRecursive(initialQuality);
         };
-
-        compressRecursive(initialQuality);
+        img.onerror = (err) => reject(err);
       };
-      img.onerror = (err) => reject(err);
-    };
-    reader.onerror = (err) => reject(err);
-  });
-};
+      reader.onerror = (err) => reject(err);
+    });
+  };
 
-const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-  const file = e.target.files?.[0];
-  if (!file) return;
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-  // Optional: keep a generous sanity check (e.g., 50 MB) to avoid huge files crashing the browser
-  if (file.size > 50 * 1024 * 1024) {
-    toast.error("Image is too large (max 50 MB)");
-    return;
-  }
+    if (file.size > 50 * 1024 * 1024) {
+      toast.error("Image is too large (max 50 MB)");
+      return;
+    }
 
-  try {
-    // Show a loading toast (optional)
-    const toastId = toast.loading('Compressing image...');
-
-    // Compress the image to target ~5 MB
-    const compressedFile = await compressImage(file, 5, 1200, 0.9);
-
-    // Update form state and preview
-    setFormData({ ...formData, profile_image: compressedFile });
-    setPreviewUrl(URL.createObjectURL(compressedFile));
-
-    // Show success message with final size
-    toast.dismiss(toastId);
-    toast.success(`Image compressed to ${(compressedFile.size / 1024 / 1024).toFixed(2)} MB`);
-  } catch (error) {
-    console.error('Compression failed', error);
-    toast.error('Image compression failed. Please try another image.');
-  }
-};
+    try {
+      const toastId = toast.loading("Compressing image...");
+      const compressedFile = await compressImage(file, 5, 1200, 0.9);
+      setFormData({ ...formData, profile_image: compressedFile });
+      setPreviewUrl(URL.createObjectURL(compressedFile));
+      toast.dismiss(toastId);
+      toast.success(
+        `Image compressed to ${(compressedFile.size / 1024 / 1024).toFixed(2)} MB`
+      );
+    } catch (error) {
+      console.error("Compression failed", error);
+      toast.error("Image compression failed. Please try another image.");
+    }
+  };
 
   const searchAddress = async (query: string) => {
     if (!query || query.trim().length < 3) {
@@ -284,8 +274,8 @@ const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     try {
       const response = await fetch(
         `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
-          query,
-        )}&countrycodes=nl&limit=5&addressdetails=1`,
+          query
+        )}&countrycodes=nl&limit=5&addressdetails=1`
       );
       const data = await response.json();
 
@@ -327,13 +317,23 @@ const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const state = suggestion.address.state || suggestion.address.county || "";
     const postcode = suggestion.address.postcode || "";
     const country = suggestion.address.country || "Netherlands";
+    // Extract street and house number
+    const street =
+      suggestion.address.road ||
+      suggestion.address.pedestrian ||
+      suggestion.address.street ||
+      "";
+    const houseNumber = suggestion.address.house_number || "";
+
     setFormData((prev) => ({
       ...prev,
-      address: address,
-      city: city,
-      state: state,
-      postcode: postcode,
-      country: country,
+      address,
+      city,
+      state,
+      postcode,
+      country,
+      street,
+      houseNumber,
     }));
     setShowSuggestions(false);
     setAddressSuggestions([]);
@@ -435,7 +435,7 @@ const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
   return (
     <div className="min-h-screen bg-white text-[#003566]">
       <DashboardHeader />
-      // <Toaster position="top-right" />
+      <Toaster position="top-right" />
       <div className="flex pt-20">
         <Sidebar onCollapse={setIsSidebarCollapsed} />
 
@@ -457,7 +457,7 @@ const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
               onSubmit={handleSubmit}
               className="grid grid-cols-1 lg:grid-cols-3 gap-12 mt-8"
             >
-              {/* Left column – Profile image (always visible) */}
+              {/* Left column – Profile image */}
               <div className="lg:col-span-1">
                 <div className="bg-white border border-slate-100 p-8 text-center shadow-sm sticky top-24">
                   <div className="relative inline-block group">
@@ -520,7 +520,7 @@ const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
                             | "personal"
                             | "address"
                             | "security"
-                            | "password",
+                            | "password"
                         )
                       }
                       className={`px-6 py-3 text-[10px] font-black uppercase tracking-[0.2em] transition-all border-b-2 ${
@@ -830,9 +830,76 @@ const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
                     </div>
                   )}
 
-                  {/* Address Tab */}
+                  {/* Address Tab - UPDATED: autocomplete at top, auto-fill street/houseNumber */}
                   {activeTab === "address" && (
                     <div className="space-y-6">
+                      {/* Full Address (autocomplete) - now at the top */}
+                      <div className="space-y-2 relative">
+                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-2">
+                          <MapPin size={12} /> Full Address (autocomplete)
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="text"
+                            value={formData.address}
+                            onChange={(e) => handleAddressChange(e.target.value)}
+                            onFocus={() => {
+                              if (formData.address.length >= 3) {
+                                searchAddress(formData.address);
+                              }
+                            }}
+                            className="w-full bg-transparent border-b border-slate-200 py-2 text-sm font-bold text-[#003566] outline-none focus:border-[#003566] pr-10"
+                            placeholder="Start typing your street or postcode..."
+                          />
+                          {isSearchingAddress && (
+                            <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                              <Loader2 className="w-4 h-4 animate-spin text-slate-400" />
+                            </div>
+                          )}
+                          {showSuggestions && addressSuggestions.length > 0 && (
+                            <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 shadow-lg max-h-60 overflow-y-auto rounded-b-md">
+                              <div className="px-3 py-2 bg-slate-50 border-b border-slate-200">
+                                <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">
+                                  <Map size={10} className="inline mr-1" />
+                                  OpenStreetMap Results
+                                </p>
+                              </div>
+                              {addressSuggestions.map((suggestion, index) => (
+                                <button
+                                  key={`${suggestion.lat}-${suggestion.lon}-${index}`}
+                                  type="button"
+                                  className="w-full text-left px-4 py-3 hover:bg-slate-50 text-sm text-slate-700 border-b border-slate-100 last:border-b-0"
+                                  onClick={() => handleAddressSelect(suggestion)}
+                                >
+                                  <div className="flex items-start gap-2">
+                                    <Search
+                                      size={12}
+                                      className="text-slate-400 mt-0.5 shrink-0"  // changed from flex-shrink-0
+                                    />
+                                    <div className="text-left">
+                                      <p className="font-medium">
+                                        {suggestion.display_name.split(",")[0]}
+                                      </p>
+                                      <p className="text-xs text-slate-500 truncate">
+                                        {suggestion.display_name
+                                          .split(",")
+                                          .slice(1)
+                                          .join(",")
+                                          .trim()}
+                                      </p>
+                                    </div>
+                                  </div>
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        <p className="text-[8px] text-slate-400 mt-1">
+                          Select your address – street and house number will be filled automatically.
+                        </p>
+                      </div>
+
+                      {/* Street and House Number grid */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
                           <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-2">
@@ -868,72 +935,7 @@ const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
                         </div>
                       </div>
 
-                      <div className="space-y-2 relative">
-                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-2">
-                          <MapPin size={12} /> Full Address (autocomplete)
-                        </label>
-                        <div className="relative">
-                          <input
-                            type="text"
-                            value={formData.address}
-                            onChange={(e) =>
-                              handleAddressChange(e.target.value)
-                            }
-                            onFocus={() => {
-                              if (formData.address.length >= 3) {
-                                searchAddress(formData.address);
-                              }
-                            }}
-                            className="w-full bg-transparent border-b border-slate-200 py-2 text-sm font-bold text-[#003566] outline-none focus:border-[#003566] pr-10"
-                            placeholder="Type your address..."
-                          />
-                          {isSearchingAddress && (
-                            <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
-                              <Loader2 className="w-4 h-4 animate-spin text-slate-400" />
-                            </div>
-                          )}
-                          {showSuggestions && addressSuggestions.length > 0 && (
-                            <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 shadow-lg max-h-60 overflow-y-auto rounded-b-md">
-                              <div className="px-3 py-2 bg-slate-50 border-b border-slate-200">
-                                <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">
-                                  <Map size={10} className="inline mr-1" />
-                                  OpenStreetMap Results
-                                </p>
-                              </div>
-                              {addressSuggestions.map((suggestion, index) => (
-                                <button
-                                  key={`${suggestion.lat}-${suggestion.lon}-${index}`}
-                                  type="button"
-                                  className="w-full text-left px-4 py-3 hover:bg-slate-50 text-sm text-slate-700 border-b border-slate-100 last:border-b-0"
-                                  onClick={() =>
-                                    handleAddressSelect(suggestion)
-                                  }
-                                >
-                                  <div className="flex items-start gap-2">
-                                    <Search
-                                      size={12}
-                                      className="text-slate-400 mt-0.5 flex-shrink-0"
-                                    />
-                                    <div className="text-left">
-                                      <p className="font-medium">
-                                        {suggestion.display_name.split(",")[0]}
-                                      </p>
-                                      <p className="text-xs text-slate-500 truncate">
-                                        {suggestion.display_name
-                                          .split(",")
-                                          .slice(1)
-                                          .join(",")
-                                          .trim()}
-                                      </p>
-                                    </div>
-                                  </div>
-                                </button>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
+                      {/* City, State, Postal Code */}
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div className="space-y-2">
                           <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-2">
@@ -983,6 +985,7 @@ const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
                         </div>
                       </div>
 
+                      {/* Country select */}
                       <div className="space-y-2">
                         <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-2">
                           <Globe size={12} /> Country
@@ -1201,7 +1204,7 @@ const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
                           type="button"
                           onClick={handlePasswordChange}
                           disabled={isSubmitting}
-                          className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white hover:opacity-90 h-12 px-8 text-[10px] font-black uppercase tracking-[0.3em] transition-all shadow-lg disabled:opacity-50 flex items-center gap-3"
+                          className="bg-linear-to-r from-blue-600 to-indigo-700 text-white hover:opacity-90 h-12 px-8 text-[10px] font-black uppercase tracking-[0.3em] transition-all shadow-lg disabled:opacity-50 flex items-center gap-3"  // changed from bg-gradient-to-r
                         >
                           {isSubmitting ? (
                             <Loader2 className="h-4 w-4 animate-spin" />
@@ -1215,7 +1218,7 @@ const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
                   )}
                 </div>
 
-                {/* Main Save Button (always visible) */}
+                {/* Main Save Button */}
                 <div className="flex justify-end pt-6 border-t border-slate-100">
                   <button
                     type="submit"
