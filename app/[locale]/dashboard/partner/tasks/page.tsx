@@ -858,7 +858,7 @@ export default function EmployeeTasksPage() {
   return (
     <div className="min-h-screen bg-white text-[#003566]">
       <DashboardHeader />
-      // <Toaster position="top-right" />
+      <Toaster position="top-right" />
       <div className="flex pt-20">
         <Sidebar onCollapse={setIsSidebarCollapsed} />
 

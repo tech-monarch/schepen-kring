@@ -749,7 +749,7 @@ export default function YachtTerminalPage() {
 
   return (
     <div className="min-h-screen bg-white text-[#333] selection:bg-blue-100">
-      // <Toaster position="top-center" />
+      <Toaster position="top-center" />
       {/* Simple Navigation */}
       <header className="fixed top-20 left-0 right-0 z-50 bg-white border-b border-gray-200 h-16 flex items-center px-6 justify-between">
         <Link

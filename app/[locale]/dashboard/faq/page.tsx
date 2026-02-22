@@ -216,7 +216,7 @@ export default function FAQPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-blue-50 p-6">
-      // <Toaster position="top-right" />
+      <Toaster position="top-right" />
       {/* Header */}
       <div className="max-w-6xl mx-auto">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10">

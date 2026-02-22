@@ -341,23 +341,23 @@ export default function FleetManagementPage() {
   );
 
   // Simple slugify function
-const slugify = (text: string): string => {
-  return text
-    .toLowerCase()
-    .replace(/[^\w\s-]/g, '') // remove special chars
-    .replace(/\s+/g, '-')      // spaces to hyphens
-    .replace(/--+/g, '-')      // collapse multiple hyphens
-    .replace(/^-+|-+$/g, '');  // trim hyphens
-};
+  const slugify = (text: string): string => {
+    return text
+      .toLowerCase()
+      .replace(/[^\w\s-]/g, "") // remove special chars
+      .replace(/\s+/g, "-") // spaces to hyphens
+      .replace(/--+/g, "-") // collapse multiple hyphens
+      .replace(/^-+|-+$/g, ""); // trim hyphens
+  };
 
-const getPublicUrl = (yacht: any): string => {
-  const slug = yacht.slug || slugify(yacht.boat_name || 'yacht');
-  return `/nl/yachts/${yacht.id}/${slug}`;
-};
+  const getPublicUrl = (yacht: any): string => {
+    const slug = yacht.slug || slugify(yacht.boat_name || "yacht");
+    return `/nl/yachts/${yacht.id}/${slug}`;
+  };
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] p-6 lg:p-12 -top-20">
-      // <Toaster position="top-right" />
+      <Toaster position="top-right" />
       {/* HEADER */}
       <div className="mb-12">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
@@ -616,7 +616,7 @@ const getPublicUrl = (yacht: any): string => {
                   </button>
 
                   <button
-                    onClick={() => window.open(getPublicUrl(yacht), '_blank')}
+                    onClick={() => window.open(getPublicUrl(yacht), "_blank")}
                     className="w-full max-w-[200px] bg-blue-600 text-white px-4 py-3 font-black uppercase text-[9px] tracking-widest hover:bg-blue-700 transition-all flex items-center justify-center gap-2"
                   >
                     <Eye size={12} />

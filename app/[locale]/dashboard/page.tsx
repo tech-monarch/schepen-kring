@@ -235,7 +235,7 @@ export default function TaskManifestPage() {
           className="flex-1 p-8 bg-white min-h-[calc(100vh-80px)] -mt-20"
         >
           <div className="max-w-[1600px] mx-auto space-y-12">
-            // <Toaster position="top-right" />
+            <Toaster position="top-right" />
             {/* Header */}
             <div className="flex justify-between items-end border-b border-slate-100 pb-8 mt-4">
               <div>

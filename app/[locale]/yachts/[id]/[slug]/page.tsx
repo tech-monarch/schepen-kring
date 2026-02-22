@@ -578,72 +578,72 @@ export default function YachtTerminalPage() {
   // };
 
   const handleTestSailBooking = async () => {
-  if (!selectedDate || !selectedTime) {
-    toast.error("Selecteer een datum en tijd voor uw proefvaart");
-    return;
-  }
-  if (!bookingForm.name || !bookingForm.email) {
-    toast.error("Vul uw naam en e-mail in");
-    return;
-  }
-  setTestSailStatus("processing");
-  try {
-    const startDateTime = new Date(selectedDate);
-    const [hours, minutes] = selectedTime.split(":").map(Number);
-    startDateTime.setHours(hours, minutes, 0, 0);
+    if (!selectedDate || !selectedTime) {
+      toast.error("Selecteer een datum en tijd voor uw proefvaart");
+      return;
+    }
+    if (!bookingForm.name || !bookingForm.email) {
+      toast.error("Vul uw naam en e-mail in");
+      return;
+    }
+    setTestSailStatus("processing");
+    try {
+      const startDateTime = new Date(selectedDate);
+      const [hours, minutes] = selectedTime.split(":").map(Number);
+      startDateTime.setHours(hours, minutes, 0, 0);
 
-    const token = getAuthToken();
-    const headers: any = {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-    };
-    if (token) headers["Authorization"] = `Bearer ${token}`;
+      const token = getAuthToken();
+      const headers: any = {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
 
-    // ✅ Step 1: Create the booking – send ONLY start_at
-    const bookingResponse = await fetch(
-      `https://schepen-kring.nl/api/yachts/${yacht?.id}/book`,
-      {
+      // ✅ Step 1: Create the booking – send ONLY start_at
+      const bookingResponse = await fetch(
+        `https://schepen-kring.nl/api/yachts/${yacht?.id}/book`,
+        {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            start_at: startDateTime.toISOString(),
+          }),
+        },
+      );
+
+      if (!bookingResponse.ok) {
+        const errorData = await bookingResponse.json();
+        throw new Error(errorData.error || "Booking failed");
+      }
+
+      // ✅ Step 2: Create a task with all customer details (name, email, phone, notes)
+      await fetch("https://schepen-kring.nl/api/tasks", {
         method: "POST",
         headers,
         body: JSON.stringify({
-          start_at: startDateTime.toISOString(),
+          title: `PROEFVAART AANVRAAG: ${yacht?.boat_name}`,
+          description: `Klant heeft een proefvaart aangevraagd voor ${selectedDate?.toLocaleDateString("nl-NL")} om ${selectedTime}.\n\nKlantgegevens:\nNaam: ${bookingForm.name}\nEmail: ${bookingForm.email}\nTelefoon: ${bookingForm.phone || "Niet opgegeven"}\nOpmerkingen: ${bookingForm.notes || "Geen"}`,
+          priority: "Medium",
+          status: "To Do",
+          yacht_id: yacht?.id,
         }),
-      }
-    );
+      });
 
-    if (!bookingResponse.ok) {
-      const errorData = await bookingResponse.json();
-      throw new Error(errorData.error || "Booking failed");
-    }
-
-    // ✅ Step 2: Create a task with all customer details (name, email, phone, notes)
-    await fetch("https://schepen-kring.nl/api/tasks", {
-      method: "POST",
-      headers,
-      body: JSON.stringify({
-        title: `PROEFVAART AANVRAAG: ${yacht?.boat_name}`,
-        description: `Klant heeft een proefvaart aangevraagd voor ${selectedDate?.toLocaleDateString("nl-NL")} om ${selectedTime}.\n\nKlantgegevens:\nNaam: ${bookingForm.name}\nEmail: ${bookingForm.email}\nTelefoon: ${bookingForm.phone || "Niet opgegeven"}\nOpmerkingen: ${bookingForm.notes || "Geen"}`,
-        priority: "Medium",
-        status: "To Do",
-        yacht_id: yacht?.id,
-      }),
-    });
-
-    setTestSailStatus("success");
-    toast.success("Proefvaart succesvol aangevraagd!");
-    setTimeout(() => {
-      setShowTestSailForm(false);
+      setTestSailStatus("success");
+      toast.success("Proefvaart succesvol aangevraagd!");
+      setTimeout(() => {
+        setShowTestSailForm(false);
+        setTestSailStatus("idle");
+        setSelectedDate(null);
+        setSelectedTime(null);
+        setAvailableSlots([]);
+        setBookingForm((prev) => ({ ...prev, notes: "" }));
+      }, 3000);
+    } catch (error: any) {
       setTestSailStatus("idle");
-      setSelectedDate(null);
-      setSelectedTime(null);
-      setAvailableSlots([]);
-      setBookingForm((prev) => ({ ...prev, notes: "" }));
-    }, 3000);
-  } catch (error: any) {
-    setTestSailStatus("idle");
-    toast.error(error.message || "Boeking mislukt.");
-  }
-};
+      toast.error(error.message || "Boeking mislukt.");
+    }
+  };
 
   const handleBuyNow = async () => {
     setPaymentStatus("processing");
@@ -798,7 +798,7 @@ export default function YachtTerminalPage() {
 
   return (
     <div className="min-h-screen bg-white text-[#333] selection:bg-blue-100 font-roboto antialiased">
-      // <Toaster position="top-center" />
+      <Toaster position="top-center" />
       {/* ----- EXACT PHOTO GRID CSS (from original, made responsive) ----- */}
       <style>{`
         .photos-holder-grid {
@@ -1385,9 +1385,7 @@ export default function YachtTerminalPage() {
                       </span>
                     </div>
                     <div className="mb-5">
-                      <p className="text-sm text-gray-500 mb-1">
-                        prijs?
-                      </p>
+                      <p className="text-sm text-gray-500 mb-1">prijs?</p>
                       <p className="text-2xl font-serif italic text-gray-900">
                         €
                         {(yacht.current_bid

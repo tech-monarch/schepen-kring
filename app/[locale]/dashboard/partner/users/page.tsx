@@ -305,7 +305,7 @@ export default function PartnerUserManagementPage() {
         style={{ marginLeft: isSidebarCollapsed ? "80px" : "280px" }}
       >
         <div className="space-y-8 p-8 max-w-7xl mx-auto">
-          // <Toaster position="top-right" />
+          <Toaster position="top-right" />
           {/* HEADER */}
           <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-gray-200 pb-8">
             <div>

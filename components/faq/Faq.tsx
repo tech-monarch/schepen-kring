@@ -211,7 +211,7 @@ export default function Faq() {
 
   return (
     <div className="bg-white min-h-screen text-[#003566]">
-      // <Toaster position="top-right" />
+      <Toaster position="top-right" />
       {/* --- HERO --- */}
       <section className="relative min-h-[40vh] md:h-[45vh] flex items-center justify-center overflow-hidden bg-[#001D3D] pt-16">
         <Image

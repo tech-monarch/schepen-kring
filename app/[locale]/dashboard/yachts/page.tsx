@@ -344,7 +344,7 @@ export default function FleetManagementPage() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] p-6 lg:p-12">
-      // <Toaster position="top-right" />
+      <Toaster position="top-right" />
       <Sidebar onCollapse={setIsSidebarCollapsed} />
       {/* HEADER */}
       <div className="mb-12">

@@ -297,7 +297,7 @@ export default function PartnerBidsPage() {
   // ------------------------------------------------------------------------
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
-      // <Toaster position="top-right" />
+      <Toaster position="top-right" />
       <Sidebar onCollapse={setIsSidebarCollapsed} />
       <div
         className={cn(

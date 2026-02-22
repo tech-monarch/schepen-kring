@@ -79,7 +79,7 @@ export default function CreateBlogPage() {
 
   return (
     <div className="p-6 max-w-4xl mx-auto min-h-screen">
-      // <Toaster position="top-right" />
+      <Toaster position="top-right" />
       {/* HEADER */}
       <div className="flex items-center justify-between mb-10 border-b border-slate-100 pb-6">
         <div>

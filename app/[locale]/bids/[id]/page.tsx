@@ -147,7 +147,7 @@ export default function LiveAuctionPage() {
 
   return (
     <div className="min-h-screen bg-white text-[#003566] flex flex-col md:flex-row">
-      // <Toaster position="top-center" />
+      <Toaster position="top-center" />
       {/* LEFT: VISUALS & HISTORY */}
       <div className="w-full md:w-1/2 lg:w-3/5 bg-slate-50 relative flex flex-col">
         {/* Back Nav */}

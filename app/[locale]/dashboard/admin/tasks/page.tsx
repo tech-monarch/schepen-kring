@@ -877,7 +877,7 @@ export default function AdminTaskBoardPage() {
   return (
     <div className="min-h-screen bg-white text-[#003566]">
       <DashboardHeader />
-      // <Toaster position="top-right" />
+      <Toaster position="top-right" />
       <div className="flex">
         <main className="flex-1 p-6 bg-white min-h-[calc(100vh-80px)]">
           <div className="max-w-7xl mx-auto space-y-6">

@@ -883,7 +883,7 @@ export default function PartnerTasksPage() {
   return (
     <div className="min-h-screen bg-white text-[#003566]">
       <DashboardHeader />
-      // <Toaster position="top-right" />
+      <Toaster position="top-right" />
       <div className="flex">
         <Sidebar onCollapse={setIsSidebarCollapsed} />
 

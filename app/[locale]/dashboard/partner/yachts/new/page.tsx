@@ -405,7 +405,7 @@ export default function PartnerCreateYachtPage() {
   // ----------------------------------------------------------------------
   return (
     <div className="min-h-screen bg-[#F8FAFC] pb-20">
-      // <Toaster position="top-right" />
+      <Toaster position="top-right" />
       <Sidebar onCollapse={setIsSidebarCollapsed} />
       {/* ========== ADMIN‑STYLE STICKY HEADER ========== */}
       <div className="bg-[#003566] text-white p-8 sticky top-0 z-40 shadow-xl flex justify-between items-center">

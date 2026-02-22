@@ -712,7 +712,7 @@ export default function YachtTerminalPage() {
 
   return (
     <div className="min-h-screen bg-white text-[#333] selection:bg-blue-100 font-roboto antialiased">
-      // <Toaster position="top-center" />
+      <Toaster position="top-center" />
       {/* ----- EXACT PHOTO GRID CSS (from original) ----- */}
       <style>{`
         .photos-holder-grid {
@@ -1298,9 +1298,7 @@ export default function YachtTerminalPage() {
                       </span>
                     </div>
                     <div className="mb-5">
-                      <p className="text-sm text-gray-500 mb-1">
-                        prijs?
-                      </p>
+                      <p className="text-sm text-gray-500 mb-1">prijs?</p>
                       <p className="text-2xl font-serif italic text-gray-900">
                         €
                         {(yacht.current_bid

@@ -593,7 +593,7 @@ export default function YachtEditorPage() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] pb-20">
-      // <Toaster position="top-right" />
+      <Toaster position="top-right" />
       {/* PAGE HEADER - now relative (not sticky) */}
       <div className="bg-[#003566] text-white p-8 relative shadow-xl flex justify-between items-center">
         <div className="flex items-center gap-6">

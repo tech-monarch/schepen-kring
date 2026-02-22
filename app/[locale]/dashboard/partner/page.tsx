@@ -457,7 +457,7 @@ export default function PartnerFleetManagementPage() {
   // ------------------------------------------------------------------------
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
-      // <Toaster position="top-right" />
+      <Toaster position="top-right" />
       {/* Sidebar - fixed */}
       <Sidebar onCollapse={setIsSidebarCollapsed} />
       {/* Main content - shifts based on sidebar state */}
