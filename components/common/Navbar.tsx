@@ -10,7 +10,7 @@ import {
   ArrowRight,
   ChevronDown,
   Settings,
-  LogOut,
+  LogOut,LogIn
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import LanguageSwitcher from "./LanguageSwitcher";
@@ -398,7 +398,13 @@ export function Navbar() {
               </DropdownMenu>
             </div>
           ) : (
-            <Link href="/login">{/* Login button if needed */}</Link>
+            <Link href="/">
+              <button className="flex items-center gap-3 px-8 py-3 bg-[#003566] text-white text-[9px] font-sans font-bold uppercase tracking-[0.3em] hover:bg-[#001d3d] transition-all group">
+                <LogIn size={12} />
+                Login
+                <ArrowRight size={12} className="group-hover:translate-x-1 transition-transform" />
+              </button>
+            </Link>
           )}
         </div>
 
@@ -496,11 +502,12 @@ export function Navbar() {
                   </Link>
                 </div>
               ) : (
-                <Link href="/" onClick={() => setIsMobileMenuOpen(false)}>
-                  <Button className="w-full bg-[#003566] text-white font-sans font-bold h-16 rounded-none uppercase tracking-[0.3em] hover:bg-[#001d3d]">
-                      <LayoutDashboard size={20} className="mr-3" />
-                      Login
-                    </Button>
+                <Link href="/">
+                  <button className="flex items-center gap-3 px-8 py-3 bg-[#003566] text-white text-[9px] font-sans font-bold uppercase tracking-[0.3em] hover:bg-[#001d3d] transition-all group">
+                    <LogIn size={12} />
+                    Login
+                    <ArrowRight size={12} className="group-hover:translate-x-1 transition-transform" />
+                  </button>
                 </Link>
               )}
             </div>
