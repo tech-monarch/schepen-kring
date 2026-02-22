@@ -143,13 +143,13 @@ export function Sidebar({ onCollapse }: { onCollapse?: (collapsed: boolean) => v
     roles: ["Partner"],
     page_key: "harbor_users" // optional, for permission control
   },
-    { 
-      title: "Tasks", 
-      href: userRole === "Admin" ? "/dashboard/tasks" : "/dashboard/tasks", 
-      icon: CheckSquare, 
-      roles: ["Admin", "Employee"],
-      page_key: "tasks"
-    },
+    // { 
+    //   title: "Tasks", 
+    //   href: userRole === "Admin" ? "/dashboard/tasks" : "/dashboard/tasks", 
+    //   icon: CheckSquare, 
+    //   roles: ["Admin", "Employee"],
+    //   page_key: "tasks"
+    // },
     { 
       title: "Tasks", 
       href:  "/dashboard/partner/tasks", 
@@ -175,7 +175,7 @@ export function Sidebar({ onCollapse }: { onCollapse?: (collapsed: boolean) => v
       title: "View Users", 
       href: "/dashboard/admin/users", 
       icon: Users, 
-      roles: ["Admin", "Employee"],
+      roles: ["Admin"],
       page_key: "view_users"
     },
     { 
