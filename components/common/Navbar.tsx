@@ -496,8 +496,11 @@ export function Navbar() {
                   </Link>
                 </div>
               ) : (
-                <Link href="/login" onClick={() => setIsMobileMenuOpen(false)}>
-                  {/* Login button if needed */}
+                <Link href="/" onClick={() => setIsMobileMenuOpen(false)}>
+                  <Button className="w-full bg-[#003566] text-white font-sans font-bold h-16 rounded-none uppercase tracking-[0.3em] hover:bg-[#001d3d]">
+                      <LayoutDashboard size={20} className="mr-3" />
+                      Login
+                    </Button>
                 </Link>
               )}
             </div>
