@@ -194,7 +194,7 @@ export function Sidebar({ onCollapse }: { onCollapse?: (collapsed: boolean) => v
     },
     { 
       title: "Biddings", 
-      href: userRole === "Admin" ? "/dashboard/admin/biddings" : "/dashboard/biddings", 
+      href: userRole === "Admin" ? "/dashboard/admin/biddings" : "/dashboard/partner/biddings", 
       icon: Gavel, 
       roles: ["Admin", "Employee"],
       page_key: "biddings"

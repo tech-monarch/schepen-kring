@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, SyntheticEvent, useEffect } from "react";
+import { useState, SyntheticEvent, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import {
@@ -283,6 +283,25 @@ export default function OnboardingYachtSetup() {
     fetchQuestions();
   }, [selectedBoatTypeId]);
 
+  // Calculate minimum bid based on price (90%)
+  const calculatedMinBid = useMemo(() => {
+    const priceNum = parseFloat(formData.price);
+    return isNaN(priceNum) ? null : priceNum * 0.9;
+  }, [formData.price]);
+
+  // Enforce min bid when price changes
+  useEffect(() => {
+    if (calculatedMinBid !== null) {
+      const currentMinBid = parseFloat(formData.min_bid_amount);
+      if (isNaN(currentMinBid) || currentMinBid < calculatedMinBid) {
+        setFormData((prev) => ({
+          ...prev,
+          min_bid_amount: calculatedMinBid.toString(),
+        }));
+      }
+    }
+  }, [calculatedMinBid, formData.min_bid_amount]);
+
   // Handlers ----------------------------------------------------------------
 
   const handleInputChange = (
@@ -292,6 +311,19 @@ export default function OnboardingYachtSetup() {
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleMinBidBlur = () => {
+    if (calculatedMinBid !== null) {
+      const currentVal = parseFloat(formData.min_bid_amount);
+      if (isNaN(currentVal) || currentVal < calculatedMinBid) {
+        setFormData((prev) => ({
+          ...prev,
+          min_bid_amount: calculatedMinBid.toString(),
+        }));
+        toast.error(`Minimum bid cannot be lower than ${calculatedMinBid}`);
+      }
+    }
   };
 
   const handleBooleanChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -521,7 +553,7 @@ export default function OnboardingYachtSetup() {
         yachtData.append("main_image", mainFile);
       }
 
-      // Auto‑calculate min_bid_amount if not set but price exists
+      // Auto‑calculate min_bid_amount if not set but price exists (already handled client-side, but keep as fallback)
       if (!formData.min_bid_amount && formData.price) {
         const priceVal = parseFloat(formData.price);
         if (!isNaN(priceVal)) {
@@ -685,6 +717,7 @@ export default function OnboardingYachtSetup() {
                     type="number"
                     value={formData.min_bid_amount}
                     onChange={handleInputChange}
+                    onBlur={handleMinBidBlur}
                     placeholder="Auto-calculates 90% of price if empty"
                     step="1000"
                   />
