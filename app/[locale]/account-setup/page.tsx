@@ -284,23 +284,23 @@ export default function OnboardingYachtSetup() {
   }, [selectedBoatTypeId]);
 
   // Calculate minimum bid based on price (90%)
-  const calculatedMinBid = useMemo(() => {
-    const priceNum = parseFloat(formData.price);
-    return isNaN(priceNum) ? null : priceNum * 0.9;
-  }, [formData.price]);
+const calculatedMinBid = useMemo(() => {
+  const priceNum = parseFloat(formData.price);
+  return isNaN(priceNum) ? null : Math.round(priceNum * 0.9);
+}, [formData.price]);
 
-  // Enforce min bid when price changes
-  useEffect(() => {
-    if (calculatedMinBid !== null) {
-      const currentMinBid = parseFloat(formData.min_bid_amount);
-      if (isNaN(currentMinBid) || currentMinBid < calculatedMinBid) {
-        setFormData((prev) => ({
-          ...prev,
-          min_bid_amount: calculatedMinBid.toString(),
-        }));
-      }
+// Enforce min bid when price changes – round and update
+useEffect(() => {
+  if (calculatedMinBid !== null) {
+    const currentMinBid = parseFloat(formData.min_bid_amount);
+    if (isNaN(currentMinBid) || currentMinBid < calculatedMinBid) {
+      setFormData((prev) => ({
+        ...prev,
+        min_bid_amount: calculatedMinBid.toString(),
+      }));
     }
-  }, [calculatedMinBid, formData.min_bid_amount]);
+  }
+}, [calculatedMinBid, formData.min_bid_amount]);
 
   // Handlers ----------------------------------------------------------------
 
@@ -313,18 +313,35 @@ export default function OnboardingYachtSetup() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleMinBidBlur = () => {
-    if (calculatedMinBid !== null) {
-      const currentVal = parseFloat(formData.min_bid_amount);
-      if (isNaN(currentVal) || currentVal < calculatedMinBid) {
-        setFormData((prev) => ({
-          ...prev,
-          min_bid_amount: calculatedMinBid.toString(),
-        }));
-        toast.error(`Minimum bid cannot be lower than ${calculatedMinBid}`);
-      }
+// On blur: round to nearest whole number and enforce minimum
+const handleMinBidBlur = () => {
+  if (calculatedMinBid !== null) {
+    let currentVal = parseFloat(formData.min_bid_amount);
+    if (isNaN(currentVal)) {
+      // If empty or invalid, set to calculated min
+      setFormData((prev) => ({
+        ...prev,
+        min_bid_amount: calculatedMinBid.toString(),
+      }));
+      return;
     }
-  };
+    // Round to nearest integer
+    const roundedVal = Math.round(currentVal);
+    if (roundedVal < calculatedMinBid) {
+      setFormData((prev) => ({
+        ...prev,
+        min_bid_amount: calculatedMinBid.toString(),
+      }));
+      toast.error(`Minimum bid cannot be lower than ${calculatedMinBid}`);
+    } else if (roundedVal !== currentVal) {
+      // Update to rounded value if it changed
+      setFormData((prev) => ({
+        ...prev,
+        min_bid_amount: roundedVal.toString(),
+      }));
+    }
+  }
+};
 
   const handleBooleanChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, checked } = e.target;
@@ -718,8 +735,8 @@ export default function OnboardingYachtSetup() {
                     value={formData.min_bid_amount}
                     onChange={handleInputChange}
                     onBlur={handleMinBidBlur}
-                    placeholder="Auto-calculates 90% of price if empty"
-                    step="1000"
+                    placeholder="Auto-calculates 90% of price (rounded)"
+                    step="1"        // optional, helps with arrow buttons
                   />
                 </div>
                 <div className="space-y-2">
