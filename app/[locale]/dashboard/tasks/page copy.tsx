@@ -1,3 +1,4 @@
+// app/[locale]/dashboard/tasks/page.tsx
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
@@ -5,13 +6,13 @@ import axios from "axios";
 import {
   Plus,
   User as UserIcon,
-  X,
   Trash2,
   Search,
   Loader2,
-  Calendar as CalendarIcon,
+  CalendarIcon,
   Eye,
   EyeOff,
+  Filter,
   List,
   CalendarDays,
   AlertTriangle,
@@ -20,8 +21,10 @@ import {
   Clock,
   Shield,
   Info,
+  Edit2,
   ChevronLeft,
   ChevronRight,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -31,28 +34,27 @@ import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 
 // ============================================
-// TYPES (same as Admin)
+// INTERFACES
 // ============================================
-interface User {
-  id: number;
-  name: string;
-  email: string;
-  role: string;
-  partner_id?: number;
-}
-
 interface Task {
-  id: number;
-  description: string;
+  id: number | string;
+  title: string;
+  description?: string;
   priority: "Low" | "Medium" | "High" | "Urgent" | "Critical";
   status: "To Do" | "In Progress" | "Done";
-  due_date: string;
+  due_date?: string;
   assigned_to?: number;
-  assigned_to_user?: User;
-  created_by?: number;
-  created_by_user?: User;
-  type: "personal" | "assigned";
-  assignment_status?: "pending" | "accepted" | "rejected";
+  assigned_to_user?: {
+    id: number;
+    name: string;
+    email: string;
+  };
+  yacht?: {
+    id: number;
+    name: string;
+  };
+  type: "assigned" | "personal";
+  user_id?: number;
   created_at: string;
   updated_at: string;
 }
@@ -60,83 +62,20 @@ interface Task {
 type ViewMode = "list" | "calendar";
 type StatusFilter = "all" | "To Do" | "In Progress" | "Done";
 type PriorityFilter = "all" | "Low" | "Medium" | "High" | "Urgent" | "Critical";
-type TypeFilter = "all" | "personal" | "assigned";
+type TypeFilter = "all" | "assigned" | "personal";
 
 // ============================================
-// HELPER FUNCTIONS (same as Admin)
+// CALENDAR VIEW COMPONENT
 // ============================================
-const getPriorityIcon = (priority: Task["priority"]) => {
-  switch (priority) {
-    case "Critical":
-      return <AlertTriangle className="text-red-600" size={16} />;
-    case "Urgent":
-      return <AlertCircle className="text-orange-500" size={16} />;
-    case "High":
-      return <AlertTriangle className="text-amber-500" size={16} />;
-    case "Medium":
-      return <Shield className="text-blue-500" size={16} />;
-    case "Low":
-      return <Info className="text-slate-500" size={16} />;
-    default:
-      return <Info size={16} />;
-  }
-};
+interface CalendarViewProps {
+  tasks: Task[];
+  onTaskClick?: (task: Task) => void;
+}
 
-const getPriorityStyles = (priority: Task["priority"]) => {
-  switch (priority) {
-    case "Critical":
-      return "bg-red-50 border-red-200 text-red-700";
-    case "Urgent":
-      return "bg-orange-50 border-orange-200 text-orange-700";
-    case "High":
-      return "bg-amber-50 border-amber-200 text-amber-700";
-    case "Medium":
-      return "bg-blue-50 border-blue-200 text-blue-700";
-    case "Low":
-      return "bg-slate-50 border-slate-200 text-slate-700";
-    default:
-      return "bg-slate-50 border-slate-200 text-slate-700";
-  }
-};
-
-const getStatusStyles = (status: Task["status"]) => {
-  switch (status) {
-    case "Done":
-      return "bg-emerald-50 text-emerald-600 border-emerald-200";
-    case "In Progress":
-      return "bg-blue-50 text-blue-600 border-blue-200";
-    case "To Do":
-      return "bg-slate-50 text-slate-600 border-slate-200";
-    default:
-      return "bg-slate-50 text-slate-600 border-slate-200";
-  }
-};
-
-const formatDate = (dateString: string) => {
-  if (!dateString) return "No date";
-  const date = new Date(dateString);
-  return date.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-};
-
-const isOverdue = (dueDate: string) => {
-  if (!dueDate) return false;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const due = new Date(dueDate);
-  due.setHours(0, 0, 0, 0);
-  return due < today;
-};
-
-// ============================================
-// CALENDAR VIEW (same as Admin)
-// ============================================
-function CalendarView({ tasks }: { tasks: Task[] }) {
+function CalendarView({ tasks, onTaskClick }: CalendarViewProps) {
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
 
+  // Get priority color
   const getPriorityColor = (priority: string): string => {
     switch (priority) {
       case "Critical":
@@ -154,6 +93,7 @@ function CalendarView({ tasks }: { tasks: Task[] }) {
     }
   };
 
+  // Get days in month
   const getDaysInMonth = (date: Date) => {
     const year = date.getFullYear();
     const month = date.getMonth();
@@ -161,15 +101,19 @@ function CalendarView({ tasks }: { tasks: Task[] }) {
     const lastDay = new Date(year, month + 1, 0);
     const daysInMonth = lastDay.getDate();
     const startingDay = firstDay.getDay();
+
     return { firstDay, lastDay, daysInMonth, startingDay };
   };
 
+  // Get week days
   const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
+  // Get month name
   const getMonthName = (date: Date) => {
     return date.toLocaleDateString("en-US", { month: "long", year: "numeric" });
   };
 
+  // Navigate to previous month
   const prevMonth = () => {
     setCurrentDate((prev) => {
       const newDate = new Date(prev);
@@ -178,6 +122,7 @@ function CalendarView({ tasks }: { tasks: Task[] }) {
     });
   };
 
+  // Navigate to next month
   const nextMonth = () => {
     setCurrentDate((prev) => {
       const newDate = new Date(prev);
@@ -186,10 +131,12 @@ function CalendarView({ tasks }: { tasks: Task[] }) {
     });
   };
 
+  // Navigate to today
   const goToToday = () => {
     setCurrentDate(new Date());
   };
 
+  // Get tasks for a specific day
   const getTasksForDay = (day: number) => {
     const date = new Date(
       currentDate.getFullYear(),
@@ -207,10 +154,12 @@ function CalendarView({ tasks }: { tasks: Task[] }) {
     });
   };
 
+  // Get calendar grid
   const getCalendarGrid = () => {
     const { daysInMonth, startingDay } = getDaysInMonth(currentDate);
     const days = [];
 
+    // Previous month days
     const prevMonth = new Date(
       currentDate.getFullYear(),
       currentDate.getMonth(),
@@ -230,6 +179,7 @@ function CalendarView({ tasks }: { tasks: Task[] }) {
       });
     }
 
+    // Current month days
     for (let i = 1; i <= daysInMonth; i++) {
       days.push({
         day: i,
@@ -238,7 +188,8 @@ function CalendarView({ tasks }: { tasks: Task[] }) {
       });
     }
 
-    const totalCells = 42;
+    // Next month days
+    const totalCells = 42; // 6 weeks
     for (let i = 1; days.length < totalCells; i++) {
       days.push({
         day: i,
@@ -259,6 +210,7 @@ function CalendarView({ tasks }: { tasks: Task[] }) {
 
   return (
     <div className="bg-white p-6 rounded-lg border border-slate-200">
+      {/* Calendar Header */}
       <div className="flex flex-col md:flex-row justify-between items-center mb-6">
         <div className="flex items-center gap-4 mb-4 md:mb-0">
           <button
@@ -285,7 +237,9 @@ function CalendarView({ tasks }: { tasks: Task[] }) {
         </div>
       </div>
 
+      {/* Calendar Grid */}
       <div className="grid grid-cols-7 gap-px bg-slate-200 rounded-lg overflow-hidden">
+        {/* Week Days Header */}
         {weekDays.map((day) => (
           <div
             key={day}
@@ -295,6 +249,7 @@ function CalendarView({ tasks }: { tasks: Task[] }) {
           </div>
         ))}
 
+        {/* Calendar Days */}
         {calendarGrid.map(({ day, isCurrentMonth, date }, index) => {
           const dayTasks = getTasksForDay(day);
           const isToday =
@@ -328,6 +283,7 @@ function CalendarView({ tasks }: { tasks: Task[] }) {
                 )}
               </div>
 
+              {/* Tasks for this day */}
               <div className="space-y-1 max-h-20 overflow-y-auto">
                 {dayTasks.slice(0, 3).map((task) => (
                   <div
@@ -337,6 +293,10 @@ function CalendarView({ tasks }: { tasks: Task[] }) {
                       borderLeftColor: getPriorityColor(task.priority),
                       backgroundColor: `${getPriorityColor(task.priority)}10`,
                       color: getPriorityColor(task.priority),
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onTaskClick?.(task);
                     }}
                   >
                     <div className="flex items-center gap-1">
@@ -352,7 +312,7 @@ function CalendarView({ tasks }: { tasks: Task[] }) {
                       {["Medium", "Low"].includes(task.priority) && (
                         <Clock className="text-blue-500" size={10} />
                       )}
-                      <span className="truncate">{task.description}</span>
+                      <span className="truncate">{task.title}</span>
                     </div>
                   </div>
                 ))}
@@ -367,6 +327,7 @@ function CalendarView({ tasks }: { tasks: Task[] }) {
         })}
       </div>
 
+      {/* Legend */}
       <div className="flex flex-wrap gap-4 mt-6 pt-6 border-t border-slate-200">
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded-full bg-blue-600"></div>
@@ -394,55 +355,113 @@ function CalendarView({ tasks }: { tasks: Task[] }) {
 }
 
 // ============================================
-// TASK FORM MODAL (same as Admin)
+// TASK MODAL COMPONENT (User Version)
 // ============================================
 interface TaskModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (data: any) => void;
-  task?: Task;
-  users: User[];
+  task?: Task; // Changed from task?: Task | null
 }
 
-function TaskModal({ isOpen, onClose, onSubmit, task, users }: TaskModalProps) {
+function TaskModal({ isOpen, onClose, onSubmit, task }: TaskModalProps) {
   const [formData, setFormData] = useState({
+    title: "",
     description: "",
     priority: "Medium" as Task["priority"],
+    status: "To Do" as Task["status"],
     due_date: new Date().toISOString().split("T")[0],
-    type: "personal" as "personal" | "assigned",
-    assigned_to: "",
+    type: "personal" as "personal",
   });
+
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (task) {
       setFormData({
+        title: task.title || "",
         description: task.description || "",
         priority: task.priority || "Medium",
-        due_date: task.due_date ? task.due_date.split("T")[0] : new Date().toISOString().split("T")[0],
-        type: task.type || "personal",
-        assigned_to: task.assigned_to?.toString() || "",
+        status: task.status || "To Do",
+        due_date: task.due_date
+          ? task.due_date.split("T")[0]
+          : new Date().toISOString().split("T")[0],
+        type: "personal",
       });
     } else {
       setFormData({
+        title: "",
         description: "",
         priority: "Medium",
+        status: "To Do",
         due_date: new Date().toISOString().split("T")[0],
         type: "personal",
-        assigned_to: "",
       });
     }
+    setErrors({});
   }, [task, isOpen]);
+
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+
+    if (!formData.title.trim()) {
+      newErrors.title = "Title is required";
+    }
+
+    if (!formData.due_date) {
+      newErrors.due_date = "Due date is required";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const payload = {
-      description: formData.description,
-      priority: formData.priority,
-      due_date: formData.due_date,
-      type: formData.type,
-      assigned_to: formData.type === "assigned" ? parseInt(formData.assigned_to) : null,
-    };
-    onSubmit(payload);
+
+    if (!validateForm()) {
+      return;
+    }
+
+    onSubmit(formData);
+  };
+
+  const handlePrioritySelect = (priority: Task["priority"]) => {
+    setFormData((prev) => ({ ...prev, priority }));
+  };
+
+  const getPriorityIcon = (priority: string) => {
+    switch (priority) {
+      case "Critical":
+        return <AlertTriangle className="text-red-600" size={20} />;
+      case "Urgent":
+        return <AlertCircle className="text-orange-500" size={20} />;
+      case "High":
+        return <AlertTriangle className="text-amber-500" size={20} />;
+      case "Medium":
+        return <Shield className="text-blue-500" size={20} />;
+      case "Low":
+        return <Info className="text-slate-500" size={20} />;
+      default:
+        return <Info size={20} />;
+    }
+  };
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case "Critical":
+        return "bg-red-50 border-red-500 text-red-700";
+      case "Urgent":
+        return "bg-orange-50 border-orange-500 text-orange-700";
+      case "High":
+        return "bg-amber-50 border-amber-500 text-amber-700";
+      case "Medium":
+        return "bg-blue-50 border-blue-500 text-blue-700";
+      case "Low":
+        return "bg-slate-50 border-slate-500 text-slate-700";
+      default:
+        return "bg-slate-50 border-slate-500 text-slate-700";
+    }
   };
 
   if (!isOpen) return null;
@@ -450,9 +469,10 @@ function TaskModal({ isOpen, onClose, onSubmit, task, users }: TaskModalProps) {
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        {/* Header */}
         <div className="flex justify-between items-center p-6 border-b border-slate-200">
           <h2 className="text-2xl font-bold text-[#003566]">
-            {task ? "Edit Task" : "Create Task"}
+            {task ? "Edit Task" : "Create Personal Task"}
           </h2>
           <button
             onClick={onClose}
@@ -462,112 +482,129 @@ function TaskModal({ isOpen, onClose, onSubmit, task, users }: TaskModalProps) {
           </button>
         </div>
 
+        {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          {/* Title */}
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-slate-700">
+              Task Title *
+            </label>
+            <input
+              type="text"
+              value={formData.title}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, title: e.target.value }))
+              }
+              className={cn(
+                "w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all",
+                errors.title ? "border-red-500" : "border-slate-200",
+              )}
+              placeholder="Enter task title"
+            />
+            {errors.title && (
+              <p className="text-red-500 text-sm">{errors.title}</p>
+            )}
+          </div>
+
           {/* Description */}
           <div className="space-y-2">
-            <label className="block text-sm font-medium text-slate-700">Description *</label>
+            <label className="block text-sm font-medium text-slate-700">
+              Description
+            </label>
             <textarea
               value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  description: e.target.value,
+                }))
+              }
+              className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
               placeholder="Enter task description"
               rows={3}
-              required
             />
           </div>
 
-          {/* Priority */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Priority */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-slate-700">
+                Priority *
+              </label>
+              <div className="grid grid-cols-5 gap-2">
+                {(["Low", "Medium", "High", "Urgent", "Critical"] as const).map(
+                  (priority) => (
+                    <button
+                      key={priority}
+                      type="button"
+                      onClick={() => handlePrioritySelect(priority)}
+                      className={cn(
+                        "flex flex-col items-center justify-center p-3 border rounded-lg transition-all",
+                        formData.priority === priority
+                          ? getPriorityColor(priority)
+                          : "border-slate-200 hover:border-slate-300",
+                      )}
+                    >
+                      {getPriorityIcon(priority)}
+                      <span className="text-xs mt-1">{priority}</span>
+                    </button>
+                  ),
+                )}
+              </div>
+            </div>
+
+            {/* Due Date */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-slate-700">
+                Due Date *
+              </label>
+              <input
+                type="date"
+                value={formData.due_date}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, due_date: e.target.value }))
+                }
+                className={cn(
+                  "w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all",
+                  errors.due_date ? "border-red-500" : "border-slate-200",
+                )}
+                min={new Date().toISOString().split("T")[0]}
+              />
+              {errors.due_date && (
+                <p className="text-red-500 text-sm">{errors.due_date}</p>
+              )}
+            </div>
+          </div>
+
+          {/* Status */}
           <div className="space-y-2">
-            <label className="block text-sm font-medium text-slate-700">Priority *</label>
-            <div className="grid grid-cols-5 gap-2">
-              {(["Low", "Medium", "High", "Urgent", "Critical"] as const).map((priority) => (
+            <label className="block text-sm font-medium text-slate-700">
+              Status
+            </label>
+            <div className="flex gap-4">
+              {(["To Do", "In Progress", "Done"] as const).map((status) => (
                 <button
-                  key={priority}
+                  key={status}
                   type="button"
-                  onClick={() => setFormData({ ...formData, priority })}
+                  onClick={() => setFormData((prev) => ({ ...prev, status }))}
                   className={cn(
-                    "flex flex-col items-center justify-center p-3 border rounded-lg transition-all",
-                    formData.priority === priority
-                      ? getPriorityStyles(priority)
-                      : "border-slate-200 hover:border-slate-300"
+                    "flex-1 py-3 px-4 border rounded-lg text-center transition-all",
+                    formData.status === status
+                      ? status === "Done"
+                        ? "border-emerald-500 bg-emerald-50 text-emerald-700"
+                        : status === "In Progress"
+                          ? "border-blue-500 bg-blue-50 text-blue-700"
+                          : "border-slate-500 bg-slate-50 text-slate-700"
+                      : "border-slate-200 hover:border-slate-300",
                   )}
                 >
-                  {priority === "Critical" && <AlertTriangle className="text-red-600" size={20} />}
-                  {priority === "Urgent" && <AlertCircle className="text-orange-500" size={20} />}
-                  {priority === "High" && <AlertTriangle className="text-amber-500" size={20} />}
-                  {priority === "Medium" && <Shield className="text-blue-500" size={20} />}
-                  {priority === "Low" && <Info className="text-slate-500" size={20} />}
-                  <span className="text-xs mt-1">{priority}</span>
+                  {status}
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Type */}
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-slate-700">Task Type</label>
-            <div className="flex gap-4">
-              <button
-                type="button"
-                onClick={() => setFormData({ ...formData, type: "personal", assigned_to: "" })}
-                className={cn(
-                  "flex-1 py-3 px-4 border rounded-lg text-center transition-all",
-                  formData.type === "personal"
-                    ? "bg-purple-50 text-purple-600 border-purple-200"
-                    : "border-slate-200 hover:border-slate-300"
-                )}
-              >
-                Personal
-              </button>
-              <button
-                type="button"
-                onClick={() => setFormData({ ...formData, type: "assigned" })}
-                className={cn(
-                  "flex-1 py-3 px-4 border rounded-lg text-center transition-all",
-                  formData.type === "assigned"
-                    ? "bg-blue-50 text-blue-600 border-blue-200"
-                    : "border-slate-200 hover:border-slate-300"
-                )}
-              >
-                Assigned
-              </button>
-            </div>
-          </div>
-
-          {/* Assignee (only if type=assigned) */}
-          {formData.type === "assigned" && (
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-slate-700">Assign to</label>
-              <select
-                value={formData.assigned_to}
-                onChange={(e) => setFormData({ ...formData, assigned_to: e.target.value })}
-                className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                required
-              >
-                <option value="">Select user...</option>
-                {users.map((u) => (
-                  <option key={u.id} value={u.id}>
-                    {u.name} ({u.role})
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-
-          {/* Due Date */}
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-slate-700">Due Date *</label>
-            <input
-              type="date"
-              value={formData.due_date}
-              onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
-              className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-              min={new Date().toISOString().split("T")[0]}
-              required
-            />
-          </div>
-
-          {/* Buttons */}
+          {/* Footer */}
           <div className="flex justify-end gap-4 pt-6 border-t border-slate-200">
             <Button
               type="button"
@@ -591,18 +628,17 @@ function TaskModal({ isOpen, onClose, onSubmit, task, users }: TaskModalProps) {
 }
 
 // ============================================
-// MAIN PARTNER PAGE
+// MAIN USER TASKS PAGE
 // ============================================
-export default function PartnerTasksPage() {
+export default function UserTasksPage() {
+  // State
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [users, setUsers] = useState<User[]>([]);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  const [editingTask, setEditingTask] = useState<Task | undefined>(undefined);
+  const [editingTask, setEditingTask] = useState<Task | undefined>(undefined); // Changed from null to undefined
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>("list");
-  const [showDone, setShowDone] = useState(true);
+  const [showDone, setShowDone] = useState(false);
   const [filters, setFilters] = useState({
     search: "",
     status: "all" as StatusFilter,
@@ -612,144 +648,221 @@ export default function PartnerTasksPage() {
 
   const API_BASE = "https://schepen-kring.nl/api";
 
-  const getHeaders = () => ({
-    headers: { Authorization: `Bearer ${localStorage.getItem("auth_token")}` },
-  });
-
-  const fetchCurrentUser = async () => {
-    try {
-      const res = await axios.get(`${API_BASE}/user`, getHeaders());
-      setCurrentUser(res.data);
-      return res.data;
-    } catch (error) {
-      console.error("Failed to fetch current user", error);
-      toast.error("Could not verify your user. Please log in again.");
-      return null;
-    }
-  };
+  // Fetch data on mount
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   const fetchData = async () => {
     setLoading(true);
     try {
-      const user = await fetchCurrentUser();
-      if (!user) {
-        setLoading(false);
+      const token = localStorage.getItem("auth_token");
+      const headers = { Authorization: `Bearer ${token}` };
+
+      // Get current user
+      const userData = localStorage.getItem("user_data");
+      if (!userData) {
+        toast.error("Please log in first");
         return;
       }
 
-      // Partner sees tasks of users under their partner_id
-      const tasksRes = await axios.get(`${API_BASE}/tasks`, getHeaders());
+      // Fetch user's tasks
+      const tasksRes = await axios.get(`${API_BASE}/tasks/my`, { headers });
       setTasks(tasksRes.data);
-
-      // Partner sees users under them (excluding Customers/Sellers)
-      const usersRes = await axios.get(`${API_BASE}/partner/users`, getHeaders());
-      // Filter out Customers and Sellers (backend may already do this)
-      const assignableUsers = usersRes.data.filter(
-        (u: User) => !["Customer", "Seller"].includes(u.role)
-      );
-      setUsers(assignableUsers);
     } catch (error: any) {
-      console.error("Error fetching data:", error);
-      toast.error(error.response?.data?.error || "Failed to load data");
+      console.error("Error fetching tasks:", error);
+      toast.error(error.response?.data?.error || "Failed to load tasks");
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
+  // Filter tasks
   const filteredTasks = useMemo(() => {
     let filtered = [...tasks];
-    if (filters.status !== "all")
-      filtered = filtered.filter((t) => t.status === filters.status);
-    if (filters.priority !== "all")
-      filtered = filtered.filter((t) => t.priority === filters.priority);
-    if (filters.type !== "all")
-      filtered = filtered.filter((t) => t.type === filters.type);
+
+    // Apply status filter
+    if (filters.status !== "all") {
+      filtered = filtered.filter((task) => task.status === filters.status);
+    }
+
+    // Apply priority filter
+    if (filters.priority !== "all") {
+      filtered = filtered.filter((task) => task.priority === filters.priority);
+    }
+
+    // Apply type filter
+    if (filters.type !== "all") {
+      filtered = filtered.filter((task) => task.type === filters.type);
+    }
+
+    // Apply search filter
     if (filters.search) {
       const searchLower = filters.search.toLowerCase();
       filtered = filtered.filter(
-        (t) =>
-          t.description.toLowerCase().includes(searchLower) ||
-          t.assigned_to_user?.name.toLowerCase().includes(searchLower)
+        (task) =>
+          task.title.toLowerCase().includes(searchLower) ||
+          task.description?.toLowerCase().includes(searchLower),
       );
     }
-    if (!showDone) filtered = filtered.filter((t) => t.status !== "Done");
+
+    // Apply showDone filter
+    if (!showDone) {
+      filtered = filtered.filter((task) => task.status !== "Done");
+    }
+
     return filtered;
   }, [tasks, filters, showDone]);
 
-  // CRUD
-  const handleCreateTask = async (taskData: any) => {
+  // Handle create/update task
+  const handleTaskSubmit = async (taskData: any) => {
     try {
-      await axios.post(`${API_BASE}/tasks`, taskData, getHeaders());
-      toast.success("Task created");
-      setIsModalOpen(false);
+      const token = localStorage.getItem("auth_token");
+      const headers = { Authorization: `Bearer ${token}` };
+
+      // Add user_id for personal tasks
+      const userData = localStorage.getItem("user_data");
+      if (userData) {
+        const user = JSON.parse(userData);
+        taskData.user_id = user.id;
+        taskData.type = "personal";
+      }
+
+      if (editingTask) {
+        // Update task
+        await axios.put(`${API_BASE}/tasks/${editingTask.id}`, taskData, {
+          headers,
+        });
+        toast.success("Task updated successfully");
+      } else {
+        // Create task
+        await axios.post(`${API_BASE}/tasks`, taskData, { headers });
+        toast.success("Task created successfully");
+      }
+
       await fetchData();
+      setIsModalOpen(false);
+      setEditingTask(undefined); // Changed from null to undefined
     } catch (error: any) {
-      console.error("Error creating task:", error);
-      toast.error(error.response?.data?.error || "Failed to create task");
+      console.error("Error saving task:", error);
+      toast.error(error.response?.data?.error || "Failed to save task");
     }
   };
 
-  const handleUpdateTask = async (taskId: number, taskData: any) => {
-    try {
-      await axios.put(`${API_BASE}/tasks/${taskId}`, taskData, getHeaders());
-      toast.success("Task updated");
-      setEditingTask(undefined);
-      setIsModalOpen(false);
-      await fetchData();
-    } catch (error: any) {
-      console.error("Error updating task:", error);
-      toast.error(error.response?.data?.error || "Failed to update task");
-    }
-  };
+  // Handle delete task
+  const handleDeleteTask = async (taskId: number | string) => {
+    if (!confirm("Are you sure you want to delete this task?")) return;
 
-  const handleDeleteTask = async (taskId: number) => {
-    if (!confirm("Delete this task?")) return;
     try {
-      await axios.delete(`${API_BASE}/tasks/${taskId}`, getHeaders());
-      toast.success("Task deleted");
+      const token = localStorage.getItem("auth_token");
+      const headers = { Authorization: `Bearer ${token}` };
+
+      await axios.delete(`${API_BASE}/tasks/${taskId}`, { headers });
+      toast.success("Task deleted successfully");
       await fetchData();
     } catch (error: any) {
+      console.error("Error deleting task:", error);
       toast.error(error.response?.data?.error || "Failed to delete task");
     }
   };
 
-  const handleStatusChange = async (taskId: number, newStatus: Task["status"]) => {
+  // Handle status change
+  const handleStatusChange = async (
+    taskId: number | string,
+    newStatus: Task["status"],
+  ) => {
     try {
+      const token = localStorage.getItem("auth_token");
+      const headers = { Authorization: `Bearer ${token}` };
+
       await axios.patch(
         `${API_BASE}/tasks/${taskId}/status`,
         { status: newStatus },
-        getHeaders()
+        { headers },
       );
+
       setTasks((prev) =>
-        prev.map((t) => (t.id === taskId ? { ...t, status: newStatus } : t))
+        prev.map((task) =>
+          task.id === taskId ? { ...task, status: newStatus } : task,
+        ),
       );
+
       toast.success("Status updated");
     } catch (error: any) {
+      console.error("Error updating status:", error);
       toast.error(error.response?.data?.error || "Failed to update status");
     }
   };
 
-  const handleAssignTask = async (taskId: number, newAssigneeId: string) => {
-    if (!newAssigneeId) return;
-    try {
-      await axios.put(
-        `${API_BASE}/tasks/${taskId}`,
-        {
-          assigned_to: parseInt(newAssigneeId),
-          type: "assigned",
-        },
-        getHeaders()
-      );
-      toast.success("Task assigned");
-      await fetchData();
-    } catch (error: any) {
-      console.error("Error assigning task:", error);
-      toast.error(error.response?.data?.error || "Failed to assign task");
+  // Get priority icon
+  const getPriorityIcon = (priority: Task["priority"]) => {
+    switch (priority) {
+      case "Critical":
+        return <AlertTriangle className="text-red-600" size={16} />;
+      case "Urgent":
+        return <AlertCircle className="text-orange-500" size={16} />;
+      case "High":
+        return <AlertTriangle className="text-amber-500" size={16} />;
+      case "Medium":
+        return <Shield className="text-blue-500" size={16} />;
+      case "Low":
+        return <Info className="text-slate-500" size={16} />;
+      default:
+        return <Info size={16} />;
     }
+  };
+
+  // Get priority styles
+  const getPriorityStyles = (priority: Task["priority"]) => {
+    switch (priority) {
+      case "Critical":
+        return "bg-red-50 border-red-200 text-red-700";
+      case "Urgent":
+        return "bg-orange-50 border-orange-200 text-orange-700";
+      case "High":
+        return "bg-amber-50 border-amber-200 text-amber-700";
+      case "Medium":
+        return "bg-blue-50 border-blue-200 text-blue-700";
+      case "Low":
+        return "bg-slate-50 border-slate-200 text-slate-700";
+      default:
+        return "bg-slate-50 border-slate-200 text-slate-700";
+    }
+  };
+
+  // Get status styles
+  const getStatusStyles = (status: Task["status"]) => {
+    switch (status) {
+      case "Done":
+        return "bg-emerald-50 text-emerald-600 border-emerald-200";
+      case "In Progress":
+        return "bg-blue-50 text-blue-600 border-blue-200";
+      case "To Do":
+        return "bg-slate-50 text-slate-600 border-slate-200";
+      default:
+        return "bg-slate-50 text-slate-600 border-slate-200";
+    }
+  };
+
+  // Format date
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return "No date";
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  };
+
+  // Check if overdue
+  const isOverdue = (dueDate?: string) => {
+    if (!dueDate) return false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const due = new Date(dueDate);
+    due.setHours(0, 0, 0, 0);
+    return due < today && due.toDateString() !== today.toDateString();
   };
 
   return (
@@ -767,15 +880,16 @@ export default function PartnerTasksPage() {
             {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
               <div>
-                <h1 className="text-4xl font-serif italic text-[#003566]">
-                  Partner Tasks
+                <h1 className="text-3xl font-serif italic text-[#003566]">
+                  Task Manifest
                 </h1>
                 <p className="text-[10px] uppercase tracking-widest text-blue-600 font-black mt-2">
-                  Manage Your Team
+                  Your Assignments & Personal Tasks
                 </p>
               </div>
 
               <div className="flex flex-col md:flex-row w-full md:w-auto gap-4">
+                {/* Search */}
                 <div className="relative w-full md:w-64">
                   <Search
                     className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
@@ -787,31 +901,38 @@ export default function PartnerTasksPage() {
                     className="w-full bg-white border border-slate-200 pl-10 pr-4 py-3 text-[10px] font-bold tracking-widest uppercase focus:border-blue-400 outline-none"
                     value={filters.search}
                     onChange={(e) =>
-                      setFilters((prev) => ({ ...prev, search: e.target.value }))
+                      setFilters((prev) => ({
+                        ...prev,
+                        search: e.target.value,
+                      }))
                     }
                   />
                 </div>
 
+                {/* View Toggle */}
                 <div className="flex gap-2">
                   <Button
                     variant={viewMode === "list" ? "default" : "outline"}
                     onClick={() => setViewMode("list")}
                     className="rounded-none h-12 px-4 border text-xs"
                   >
-                    <List size={16} className="mr-2" /> List
+                    <List size={16} className="mr-2" />
+                    List
                   </Button>
                   <Button
                     variant={viewMode === "calendar" ? "default" : "outline"}
                     onClick={() => setViewMode("calendar")}
                     className="rounded-none h-12 px-4 border text-xs"
                   >
-                    <CalendarDays size={16} className="mr-2" /> Calendar
+                    <CalendarDays size={16} className="mr-2" />
+                    Calendar
                   </Button>
                 </div>
 
+                {/* New Task Button */}
                 <Button
                   onClick={() => {
-                    setEditingTask(undefined);
+                    setEditingTask(undefined); // Changed from null to undefined
                     setIsModalOpen(true);
                   }}
                   className="bg-[#003566] text-white rounded-none h-12 px-8 uppercase text-xs tracking-widest font-black shadow-lg hover:bg-[#003566]/90"
@@ -821,10 +942,13 @@ export default function PartnerTasksPage() {
               </div>
             </div>
 
-            {/* Filters (same as Admin) */}
+            {/* Filters */}
             <div className="flex flex-wrap items-center gap-4 p-4 bg-slate-50 border border-slate-200 rounded-lg">
+              {/* Status Filter */}
               <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-slate-600">Status:</span>
+                <span className="text-sm font-medium text-slate-600">
+                  Status:
+                </span>
                 <select
                   className="bg-white border border-slate-200 px-3 py-2 text-sm font-medium outline-none rounded"
                   value={filters.status}
@@ -842,8 +966,11 @@ export default function PartnerTasksPage() {
                 </select>
               </div>
 
+              {/* Priority Filter */}
               <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-slate-600">Priority:</span>
+                <span className="text-sm font-medium text-slate-600">
+                  Priority:
+                </span>
                 <select
                   className="bg-white border border-slate-200 px-3 py-2 text-sm font-medium outline-none rounded"
                   value={filters.priority}
@@ -863,8 +990,11 @@ export default function PartnerTasksPage() {
                 </select>
               </div>
 
+              {/* Type Filter */}
               <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-slate-600">Type:</span>
+                <span className="text-sm font-medium text-slate-600">
+                  Type:
+                </span>
                 <select
                   className="bg-white border border-slate-200 px-3 py-2 text-sm font-medium outline-none rounded"
                   value={filters.type}
@@ -876,11 +1006,12 @@ export default function PartnerTasksPage() {
                   }
                 >
                   <option value="all">All Types</option>
-                  <option value="personal">Personal</option>
                   <option value="assigned">Assigned</option>
+                  <option value="personal">Personal</option>
                 </select>
               </div>
 
+              {/* Show Done Toggle */}
               <Button
                 variant={showDone ? "default" : "outline"}
                 onClick={() => setShowDone(!showDone)}
@@ -897,14 +1028,20 @@ export default function PartnerTasksPage() {
                 <Loader2 className="animate-spin text-[#003566]" size={32} />
                 <span className="ml-3 text-slate-600">Loading tasks...</span>
               </div>
-            ) : viewMode === "calendar" ? (
-              <CalendarView tasks={filteredTasks} />
-            ) : (
+            ) : viewMode === "list" ? (
+              /* List View */
               <div className="space-y-4">
                 <AnimatePresence mode="popLayout">
                   {filteredTasks.length === 0 ? (
                     <div className="text-center p-12 border-2 border-dashed border-slate-200 rounded-lg">
                       <p className="text-slate-400">No tasks found</p>
+                      <p className="text-sm text-slate-300 mt-2">
+                        {filters.search ||
+                        filters.status !== "all" ||
+                        filters.priority !== "all"
+                          ? "Try changing your filters"
+                          : "Create your first task"}
+                      </p>
                     </div>
                   ) : (
                     filteredTasks.map((task) => (
@@ -919,29 +1056,31 @@ export default function PartnerTasksPage() {
                           task.status === "Done" && "opacity-70",
                           task.priority === "Critical" &&
                             task.status !== "Done" &&
-                            "border-l-4 border-l-red-600"
+                            "border-l-4 border-l-red-600 animate-pulse",
                         )}
                       >
-                        {/* Left Section (same as Admin) */}
+                        {/* Left Section */}
                         <div className="flex items-start gap-4 flex-1">
+                          {/* Priority Icon */}
                           <div
                             className={cn(
                               "w-12 h-12 flex items-center justify-center rounded-full border-2",
-                              getPriorityStyles(task.priority)
+                              getPriorityStyles(task.priority),
                             )}
                           >
                             {getPriorityIcon(task.priority)}
                           </div>
 
+                          {/* Task Details */}
                           <div className="flex-1">
-                            <div className="flex items-center gap-3 mb-2 flex-wrap">
+                            <div className="flex items-center gap-3 mb-2">
                               <h3 className="text-lg font-bold text-[#003566]">
-                                {task.description}
+                                {task.title}
                               </h3>
                               <span
                                 className={cn(
                                   "px-2 py-1 text-xs font-bold uppercase border rounded",
-                                  getPriorityStyles(task.priority)
+                                  getPriorityStyles(task.priority),
                                 )}
                               >
                                 {task.priority}
@@ -949,7 +1088,7 @@ export default function PartnerTasksPage() {
                               <span
                                 className={cn(
                                   "px-2 py-1 text-xs font-bold uppercase border rounded",
-                                  getStatusStyles(task.status)
+                                  getStatusStyles(task.status),
                                 )}
                               >
                                 {task.status}
@@ -961,61 +1100,60 @@ export default function PartnerTasksPage() {
                               )}
                             </div>
 
+                            {task.description && (
+                              <p className="text-sm text-slate-600 mb-3">
+                                {task.description}
+                              </p>
+                            )}
+
                             <div className="flex flex-wrap items-center gap-4 text-sm text-slate-500">
-                              {task.assigned_to_user && task.type === "assigned" && (
+                              {task.assigned_to_user &&
+                                task.type === "assigned" && (
+                                  <span className="flex items-center gap-1.5">
+                                    <UserIcon size={14} />
+                                    {task.assigned_to_user.name}
+                                  </span>
+                                )}
+                              {task.yacht && (
                                 <span className="flex items-center gap-1.5">
-                                  <UserIcon size={14} /> Assigned to:{" "}
-                                  {task.assigned_to_user.name}
-                                </span>
-                              )}
-                              {task.created_by_user && (
-                                <span className="flex items-center gap-1.5">
-                                  <UserIcon size={14} /> Created by:{" "}
-                                  {task.created_by_user.name}
+                                  <Shield size={14} />
+                                  {task.yacht.name}
                                 </span>
                               )}
                               <span
                                 className={cn(
                                   "flex items-center gap-1.5",
-                                  isOverdue(task.due_date) && "text-red-600 font-bold"
+                                  isOverdue(task.due_date) &&
+                                    "text-red-600 font-bold",
                                 )}
                               >
-                                <CalendarIcon size={14} /> Due:{" "}
-                                {formatDate(task.due_date)}
+                                <CalendarIcon size={14} />
+                                Due: {formatDate(task.due_date)}
                                 {isOverdue(task.due_date) && " (OVERDUE)"}
                               </span>
                             </div>
                           </div>
                         </div>
 
-                        {/* Actions */}
-                        <div className="flex items-center gap-3 flex-wrap">
-                          {/* Assign dropdown */}
-                          <select
-                            className="border border-slate-300 bg-white rounded px-2 py-1 text-sm"
-                            value=""
-                            onChange={(e) => handleAssignTask(task.id, e.target.value)}
-                          >
-                            <option value="">Assign to...</option>
-                            {users.map((u) => (
-                              <option key={u.id} value={u.id}>
-                                {u.name} ({u.role})
-                              </option>
-                            ))}
-                          </select>
-
-                          {/* Status change */}
+                        {/* Right Section - Actions */}
+                        <div className="flex items-center gap-3">
+                          {/* Status Change */}
                           {task.status !== "Done" ? (
                             <Button
-                              onClick={() => handleStatusChange(task.id, "Done")}
+                              onClick={() =>
+                                handleStatusChange(task.id, "Done")
+                              }
                               className="bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100"
                               size="sm"
                             >
-                              <CheckCircle2 size={16} className="mr-2" /> Mark Done
+                              <CheckCircle2 size={16} className="mr-2" />
+                              Mark Done
                             </Button>
                           ) : (
                             <Button
-                              onClick={() => handleStatusChange(task.id, "To Do")}
+                              onClick={() =>
+                                handleStatusChange(task.id, "To Do")
+                              }
                               variant="outline"
                               size="sm"
                             >
@@ -1023,8 +1161,8 @@ export default function PartnerTasksPage() {
                             </Button>
                           )}
 
-                          {/* Edit - only if creator */}
-                          {task.created_by === currentUser?.id && (
+                          {/* Edit Button (only for personal tasks) */}
+                          {task.type === "personal" && (
                             <Button
                               onClick={() => {
                                 setEditingTask(task);
@@ -1033,12 +1171,12 @@ export default function PartnerTasksPage() {
                               variant="outline"
                               size="sm"
                             >
-                              Edit
+                              <Edit2 size={16} />
                             </Button>
                           )}
 
-                          {/* Delete - only if creator */}
-                          {task.created_by === currentUser?.id && (
+                          {/* Delete Button (only for personal tasks) */}
+                          {task.type === "personal" && (
                             <Button
                               onClick={() => handleDeleteTask(task.id)}
                               variant="outline"
@@ -1054,20 +1192,32 @@ export default function PartnerTasksPage() {
                   )}
                 </AnimatePresence>
               </div>
+            ) : (
+              /* Calendar View */
+              <div className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
+                <CalendarView
+                  tasks={filteredTasks}
+                  onTaskClick={(task) => {
+                    if (task.type === "personal") {
+                      setEditingTask(task);
+                      setIsModalOpen(true);
+                    }
+                  }}
+                />
+              </div>
             )}
           </div>
         </motion.main>
       </div>
-
+      {/* Task Modal */}
       <TaskModal
         isOpen={isModalOpen}
         onClose={() => {
           setIsModalOpen(false);
-          setEditingTask(undefined);
+          setEditingTask(undefined); // Changed from null to undefined
         }}
-        onSubmit={editingTask ? (data) => handleUpdateTask(editingTask.id, data) : handleCreateTask}
-        task={editingTask}
-        users={users}
+        onSubmit={handleTaskSubmit}
+        task={editingTask} // Now this is Task | undefined which matches TaskModalProps
       />
     </div>
   );

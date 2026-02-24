@@ -43,8 +43,7 @@ interface User {
 
 interface Task {
   id: number;
-  title: string;
-  description?: string;
+  description: string;
   priority: "Low" | "Medium" | "High" | "Urgent" | "Critical";
   status: "To Do" | "In Progress" | "Done";
   due_date: string;
@@ -353,7 +352,7 @@ function CalendarView({ tasks }: { tasks: Task[] }) {
                       {["Medium", "Low"].includes(task.priority) && (
                         <Clock className="text-blue-500" size={10} />
                       )}
-                      <span className="truncate">{task.title}</span>
+                      <span className="truncate">{task.description}</span>
                     </div>
                   </div>
                 ))}
@@ -407,7 +406,6 @@ interface TaskModalProps {
 
 function TaskModal({ isOpen, onClose, onSubmit, task, users }: TaskModalProps) {
   const [formData, setFormData] = useState({
-    title: "",
     description: "",
     priority: "Medium" as Task["priority"],
     due_date: new Date().toISOString().split("T")[0],
@@ -418,7 +416,6 @@ function TaskModal({ isOpen, onClose, onSubmit, task, users }: TaskModalProps) {
   useEffect(() => {
     if (task) {
       setFormData({
-        title: task.title || "",
         description: task.description || "",
         priority: task.priority || "Medium",
         due_date: task.due_date ? task.due_date.split("T")[0] : new Date().toISOString().split("T")[0],
@@ -427,7 +424,6 @@ function TaskModal({ isOpen, onClose, onSubmit, task, users }: TaskModalProps) {
       });
     } else {
       setFormData({
-        title: "",
         description: "",
         priority: "Medium",
         due_date: new Date().toISOString().split("T")[0],
@@ -440,7 +436,10 @@ function TaskModal({ isOpen, onClose, onSubmit, task, users }: TaskModalProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const payload = {
-      ...formData,
+      description: formData.description,
+      priority: formData.priority,
+      due_date: formData.due_date,
+      type: formData.type,
       assigned_to: formData.type === "assigned" ? parseInt(formData.assigned_to) : null,
     };
     onSubmit(payload);
@@ -464,28 +463,16 @@ function TaskModal({ isOpen, onClose, onSubmit, task, users }: TaskModalProps) {
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          {/* Title */}
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-slate-700">Title *</label>
-            <input
-              type="text"
-              value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-              placeholder="Enter task title"
-              required
-            />
-          </div>
-
           {/* Description */}
           <div className="space-y-2">
-            <label className="block text-sm font-medium text-slate-700">Description</label>
+            <label className="block text-sm font-medium text-slate-700">Description *</label>
             <textarea
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
               placeholder="Enter task description"
               rows={3}
+              required
             />
           </div>
 
@@ -681,8 +668,7 @@ export default function AdminTasksPage() {
       const searchLower = filters.search.toLowerCase();
       filtered = filtered.filter(
         (t) =>
-          t.title.toLowerCase().includes(searchLower) ||
-          t.description?.toLowerCase().includes(searchLower) ||
+          t.description.toLowerCase().includes(searchLower) ||
           t.assigned_to_user?.name.toLowerCase().includes(searchLower)
       );
     }
@@ -946,7 +932,7 @@ export default function AdminTasksPage() {
                           <div className="flex-1">
                             <div className="flex items-center gap-3 mb-2 flex-wrap">
                               <h3 className="text-lg font-bold text-[#003566]">
-                                {task.title}
+                                {task.description}
                               </h3>
                               <span
                                 className={cn(
@@ -970,12 +956,6 @@ export default function AdminTasksPage() {
                                 </span>
                               )}
                             </div>
-
-                            {task.description && (
-                              <p className="text-sm text-slate-600 mb-3">
-                                {task.description}
-                              </p>
-                            )}
 
                             <div className="flex flex-wrap items-center gap-4 text-sm text-slate-500">
                               {task.assigned_to_user && task.type === "assigned" && (
